@@ -42,6 +42,7 @@ These invariants apply to EVERY slide in EVERY presentation:
 - Images: `max-height: min(50vh, 400px)`
 - Breakpoints required for heights: 700px, 600px, 500px
 - Include `prefers-reduced-motion` support
+- Never negate CSS functions directly (`-clamp()`, `-min()`, `-max()` are silently ignored) — use `calc(-1 * clamp(...))` instead
 
 **When generating, read `viewport-base.css` and include its full contents in every presentation.**
 
@@ -66,13 +67,25 @@ Determine what the user wants:
 
 - **Mode A: New Presentation** — Create from scratch. Go to Phase 1.
 - **Mode B: PPT Conversion** — Convert a .pptx file. Go to Phase 4.
-- **Mode C: Enhancement** — Improve an existing HTML presentation. Read it, understand it, enhance.
+- **Mode C: Enhancement** — Improve an existing HTML presentation. Read it, understand it, enhance. **Follow Mode C modification rules below.**
+
+### Mode C: Modification Rules
+
+When enhancing existing presentations, viewport fitting is the biggest risk:
+
+1. **Before adding content:** Count existing elements, check against density limits
+2. **Adding images:** Must have `max-height: min(50vh, 400px)`. If slide already has max content, split into two slides
+3. **Adding text:** Max 4-6 bullets per slide. Exceeds limits? Split into continuation slides
+4. **After ANY modification, verify:** `.slide` has `overflow: hidden`, new elements use `clamp()`, images have viewport-relative max-height, content fits at 1280x720
+5. **Proactively reorganize:** If modifications will cause overflow, automatically split content and inform the user. Don't wait to be asked
+
+**When adding images to existing slides:** Move image to new slide or reduce other content first. Never add images without checking if existing content already fills the viewport.
 
 ---
 
 ## Phase 1: Content Discovery (New Presentations)
 
-Ask via AskUserQuestion (can combine up to 4 questions per call):
+**Ask ALL questions in a single AskUserQuestion call** so the user fills everything out at once:
 
 **Question 1 — Purpose** (header: "Purpose"):
 What is this presentation for? Options: Pitch deck / Teaching-Tutorial / Conference talk / Internal presentation
@@ -91,6 +104,19 @@ Do you need to edit text directly in the browser after generation? Options:
 **Remember the user's editing choice — it determines whether edit-related code is included in Phase 3.**
 
 If user has content, ask them to share it.
+
+### Step 1.2: Image Evaluation (if images provided)
+
+If user selected "No images" → skip to Phase 2.
+
+If user provides an image folder:
+1. **Scan** — List all image files (.png, .jpg, .svg, .webp, etc.)
+2. **View each image** — Use the Read tool (Claude is multimodal)
+3. **Evaluate** — For each: what it shows, USABLE or NOT USABLE (with reason), what concept it represents, dominant colors
+4. **Co-design the outline** — Curated images inform slide structure alongside text. This is NOT "plan slides then add images" — design around both from the start (e.g., 3 screenshots → 3 feature slides, 1 logo → title/closing slide)
+5. **Confirm via AskUserQuestion** (header: "Outline"): "Does this slide outline and image selection look right?" Options: Looks good / Adjust images / Adjust outline
+
+**Logo in previews:** If a usable logo was identified, embed it (base64) into each style preview in Phase 2 — the user sees their brand styled three different ways.
 
 ---
 
@@ -141,7 +167,9 @@ If "Mix elements", ask for specifics.
 
 ## Phase 3: Generate Presentation
 
-Generate the full presentation using content from Phase 1 and style from Phase 2.
+Generate the full presentation using content from Phase 1 (text, or text + curated images) and style from Phase 2.
+
+If images were provided, the slide outline already incorporates them from Step 1.2. If not, CSS-generated visuals (gradients, shapes, patterns) provide visual interest — this is a fully supported first-class path.
 
 **Before generating, read these supporting files:**
 - [html-template.md](html-template.md) — HTML architecture and JS features
