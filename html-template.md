@@ -15,6 +15,9 @@ Reference architecture for generating slide presentations. Every presentation fo
     <!-- Fonts: use Fontshare or Google Fonts — never system fonts -->
     <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=...">
 
+    <!-- Chart.js: Include ONLY if presentation uses Chart components -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
     <style>
         /* ===========================================
            CSS CUSTOM PROPERTIES (THEME)

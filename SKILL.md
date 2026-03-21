@@ -56,6 +56,7 @@ These invariants apply to EVERY slide in EVERY presentation:
 | Code slide | 1 heading + 8-10 lines of code |
 | Quote slide | 1 quote (max 3 lines) + attribution |
 | Image slide | 1 heading + 1 image (max 60vh height) |
+| Chart slide | 1 heading + 1 chart (max 50vh height) + optional subtitle |
 
 **Content exceeds limits? Split into multiple slides. Never cram, never scroll.**
 
@@ -179,9 +180,10 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [animation-patterns.md](animation-patterns.md) — Animation reference for the chosen feeling
 
 **For Dark Interactive (preset 13 — structured component mode):**
-- [component-templates.md](component-templates.md) — 11 HTML component templates with decision table
+- [component-templates.md](component-templates.md) — 12 HTML component templates with decision table
 - [dark-interactive.css](dark-interactive.css) — Complete CSS (copy verbatim into `<style>`)
 - [dark-interactive-nav.js](dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
+- If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
 - Single self-contained HTML file, all CSS/JS inline
@@ -224,7 +226,7 @@ When converting PowerPoint files:
 | [viewport-base.css](viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
 | [html-template.md](html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](component-templates.md) | 11 structured HTML component templates with decision table (preset 13) | Phase 3 (Dark Interactive) |
+| [component-templates.md](component-templates.md) | 12 structured HTML component templates with decision table (preset 13) | Phase 3 (Dark Interactive) |
 | [dark-interactive.css](dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
 | [dark-interactive-nav.js](dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |

@@ -478,3 +478,22 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
   transition: all 0.3s ease;
 }
 .cta-box:hover { border-color: rgba(88,166,255,0.3); box-shadow: 0 8px 40px rgba(88,166,255,0.06); }
+
+/* ====== CHART ====== */
+.chart-container {
+  width: 100%; max-width: 820px; height: min(50vh, 400px);
+  margin-top: 24px; position: relative;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 24px;
+  transition: all 0.35s ease;
+}
+.chart-container:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.chart-container.chart-square {
+  max-width: 480px; height: min(50vh, 420px);
+}
+.chart-container canvas {
+  width: 100% !important; height: 100% !important;
+}

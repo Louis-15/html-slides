@@ -6,7 +6,7 @@ Structured, copy-ready HTML component templates for building slide presentations
 
 Use these templates when:
 - You need **deterministic, consistent output** across different AI agents
-- The content fits naturally into one of the 11 component types below
+- The content fits naturally into one of the 12 component types below
 - You want interactive elements (flip cards, expandable cards, code blocks)
 
 For more creative, style-diverse presentations, use the style presets in [STYLE_PRESETS.md](STYLE_PRESETS.md) instead.
@@ -29,6 +29,7 @@ Use this table to pick the right component for each piece of content:
 | 3 metrics or numbers | **Stats Cards** | Large bouncing numbers with labels |
 | 4 items with hidden details | **Expandable Cards** | Click to reveal hidden content |
 | 3-6 status items or timeline | **Status Timeline** | Vertical list with colored dots |
+| Data visualization, trends, distributions | **Chart** | Canvas-rendered Chart.js with automatic theming |
 | Resources, links, next steps | **CTA Box** | Gradient box with bullet list |
 
 ## Recommended Slide Narrative Structure
@@ -39,7 +40,7 @@ Use this table to pick the right component for each piece of content:
 | 2 | **Hook** — dramatic statement or question | Statement Slide |
 | 3-4 | **Problem** — what's broken/missing | Flip Cards or Statement |
 | 5-6 | **Solution** — introduce the answer | VS/Comparison or Architecture |
-| 7-9 | **Evidence** — show how it works | Code Block, Stats, Expandable Cards |
+| 7-9 | **Evidence** — show how it works | Code Block, Stats, Chart, Expandable Cards |
 | 10-11 | **Depth** — deeper details or comparison | Auth Flip Compare, Status Timeline |
 | 12-13 | **Impact** — results, metrics, outcomes | Stats Cards or Statement |
 | Last | **CTA** — resources and next steps | CTA Box (always) |
@@ -377,6 +378,73 @@ A call-to-action slide with resources list in a gradient-bordered box.
 ```
 
 **When to use**: Always the last slide. Resources, links, next steps.
+
+### 12. Chart
+
+Interactive Chart.js visualization that auto-themes from CSS custom properties. Supports bar, line, pie, doughnut, radar, polar area, scatter, and bubble chart types.
+
+**CRITICAL**: Chart.js must be loaded via CDN in `<head>`:
+```html
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+```
+
+The chart configuration goes in a `<script type="application/json">` block — write JSON only, not JavaScript. Colors are auto-assigned from the theme palette.
+
+```html
+<div class="slide" data-slide="[N]">
+  <p class="slide-tag anim-1">[TAG]</p>
+  <h2 class="anim-2">[HEADING] <span class="highlight-[COLOR]">[HIGHLIGHT]</span></h2>
+  <p class="subtitle anim-2" style="font-size:14px;">[CHART_DESCRIPTION]</p>
+  <div class="chart-container anim-3">
+    <canvas id="chart-[N]"></canvas>
+    <script type="application/json" data-chart-config="chart-[N]">
+    {
+      "type": "[TYPE]",
+      "data": {
+        "labels": ["[LABEL_1]", "[LABEL_2]", "[LABEL_3]", "[LABEL_4]"],
+        "datasets": [{
+          "label": "[DATASET_LABEL]",
+          "data": [VALUE_1, VALUE_2, VALUE_3, VALUE_4]
+        }]
+      }
+    }
+    </script>
+  </div>
+  <p class="subtitle anim-4 mt-16" style="font-size:14px;">[BOTTOM_TEXT]</p>
+</div>
+```
+
+For circular charts (pie, doughnut, radar, polarArea), add `chart-square` class:
+
+```html
+<div class="chart-container chart-square anim-3">
+```
+
+**Chart type reference:**
+
+| Type | Use for | Container class |
+|---|---|---|
+| `bar` | Comparisons, rankings | `.chart-container` |
+| `line` | Trends over time | `.chart-container` |
+| `pie` | Parts of a whole (few slices) | `.chart-container chart-square` |
+| `doughnut` | Parts of a whole (with center stat) | `.chart-container chart-square` |
+| `radar` | Multi-dimensional comparison | `.chart-container chart-square` |
+| `polarArea` | Circular comparison with magnitude | `.chart-container chart-square` |
+| `scatter` | Correlation between two variables | `.chart-container` |
+| `bubble` | Three-variable correlation | `.chart-container` |
+
+**Multiple datasets** (e.g., grouped bar, multi-line):
+
+```json
+"datasets": [
+  { "label": "[SERIES_1]", "data": [V1, V2, V3] },
+  { "label": "[SERIES_2]", "data": [V1, V2, V3] }
+]
+```
+
+Each dataset auto-receives the next color in the theme palette cycle (blue → green → orange → purple → yellow → red).
+
+**When to use**: Performance metrics over time, distribution breakdowns, survey results, benchmark comparisons, growth trends.
 
 ---
 
