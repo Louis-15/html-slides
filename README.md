@@ -24,27 +24,66 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 ## Installation
 
+### Auto Install (Recommended)
+
 ```bash
 git clone https://github.com/bluedusk/html-slides.git
 cd html-slides
 ./install.sh
 ```
 
-The install script:
-1. Symlinks the repo into `~/.agents/skills/html-slides` ([Agent Skills standard](https://agentskills.io/specification)) — works for all agents
-2. If Claude Code is detected, also installs as a plugin for marketplace updates and `/html-slides` slash command
+The script detects which agents you have, asks user vs project scope, and symlinks the skill into each agent's discovery path. Restart your agent after installing.
 
-Or install manually:
+### Manual Install
+
+Pick your agent(s) below. Replace `/path/to/html-slides` with the actual path to your cloned repo.
+
+#### Claude Code
 
 ```bash
-# All agents (Agent Skills standard)
-ln -s /path/to/html-slides ~/.agents/skills/html-slides
+# User-level (available in all projects)
+ln -s /path/to/html-slides ~/.claude/skills/html-slides
 
-# Claude Code plugin (optional, for marketplace support)
+# Project-level (available only in current project)
+ln -s /path/to/html-slides .claude/skills/html-slides
+```
+
+Optional — install as a Claude Code plugin for marketplace updates:
+
+```bash
 ln -s /path/to/html-slides ~/.claude/plugins/local-marketplace/plugins/html-slides
 claude plugin marketplace update local-plugins
 claude plugin install html-slides@local-plugins
 ```
+
+#### Gemini CLI
+
+```bash
+# User-level (available in all projects)
+ln -s /path/to/html-slides ~/.gemini/skills/html-slides
+
+# Project-level (available only in current project)
+ln -s /path/to/html-slides .gemini/skills/html-slides
+```
+
+#### GitHub Copilot
+
+```bash
+# Project-level only (Copilot reads .github/skills/)
+ln -s /path/to/html-slides .github/skills/html-slides
+```
+
+#### OpenAI Codex
+
+```bash
+# User-level (available in all projects)
+ln -s /path/to/html-slides ~/.codex/skills/html-slides
+
+# Project-level (available only in current project)
+ln -s /path/to/html-slides .codex/skills/html-slides
+```
+
+All agents also support the universal `~/.agents/skills/` path as defined by the [Agent Skills standard](https://agentskills.io/specification).
 
 ## Usage
 

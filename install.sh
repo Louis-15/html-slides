@@ -4,59 +4,133 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_NAME="html-slides"
 
-echo "HTML Slides Installer"
-echo "====================="
-echo "Repo: $REPO_DIR"
+echo ""
+echo "  HTML Slides Installer"
+echo "  ====================="
+echo "  Repo: $REPO_DIR"
 echo ""
 
-# --- Agent Skills standard (all agents) ---
-AGENTS_DIR="$HOME/.agents/skills"
-SKILL_LINK="$AGENTS_DIR/$SKILL_NAME"
+# --- Detect available agents ---
+agents=()
+command -v claude &>/dev/null && agents+=("claude")
+command -v gemini &>/dev/null && agents+=("gemini")
+command -v gh &>/dev/null     && agents+=("copilot")
+command -v codex &>/dev/null  && agents+=("codex")
 
-mkdir -p "$AGENTS_DIR"
-
-if [ -e "$SKILL_LINK" ]; then
-  current="$(readlink "$SKILL_LINK" 2>/dev/null || true)"
-  if [ "$current" != "$REPO_DIR" ]; then
-    rm -f "$SKILL_LINK"
-    ln -s "$REPO_DIR" "$SKILL_LINK"
-    echo "[Agent Skills] Updated symlink to $REPO_DIR"
-  else
-    echo "[Agent Skills] Already installed at $SKILL_LINK"
-  fi
-else
-  ln -s "$REPO_DIR" "$SKILL_LINK"
-  echo "[Agent Skills] Installed to $SKILL_LINK"
+if [ ${#agents[@]} -eq 0 ]; then
+  echo "  No supported agents detected."
+  echo "  You can install manually — see README.md"
+  exit 0
 fi
 
-# --- Claude Code plugin (optional, for marketplace/slash command support) ---
-if command -v claude &>/dev/null; then
-  echo ""
-  MARKETPLACE_DIR="$HOME/.claude/plugins/local-marketplace"
-  PLUGIN_LINK="$MARKETPLACE_DIR/plugins/$SKILL_NAME"
+echo "  Detected: ${agents[*]}"
+echo ""
+echo "  Choose install scope:"
+echo ""
+echo "    1) User-level  — available in all projects (recommended)"
+echo "    2) Project-level — available only in current project"
+echo "    3) Both"
+echo ""
+read -rp "  Enter choice [1]: " choice
+choice="${choice:-1}"
 
-  if [ -d "$MARKETPLACE_DIR" ]; then
-    if [ -e "$PLUGIN_LINK" ]; then
-      echo "[Claude Code] Plugin already linked"
+installed=0
+
+install_skill() {
+  local target_dir="$1"
+  local label="$2"
+  local link="$target_dir/$SKILL_NAME"
+
+  mkdir -p "$target_dir"
+  if [ -L "$link" ]; then
+    current="$(readlink "$link" 2>/dev/null || true)"
+    if [ "$current" = "$REPO_DIR" ]; then
+      echo "  ✓ $label — already installed"
     else
-      ln -s "$REPO_DIR" "$PLUGIN_LINK"
-      echo "[Claude Code] Linked plugin into local marketplace"
+      rm -f "$link"
+      ln -s "$REPO_DIR" "$link"
+      echo "  ✓ $label — updated symlink"
     fi
-    claude plugin marketplace update local-plugins 2>/dev/null || true
-    claude plugin update "$SKILL_NAME@local-plugins" 2>/dev/null \
-      || claude plugin install "$SKILL_NAME@local-plugins" 2>/dev/null \
-      || true
-    echo "[Claude Code] Plugin installed. Restart to apply."
+  elif [ -e "$link" ]; then
+    echo "  ✗ $label — path exists but is not a symlink, skipping"
   else
-    echo "[Claude Code] No local marketplace found. Skill is still available via Agent Skills path."
+    ln -s "$REPO_DIR" "$link"
+    echo "  ✓ $label — installed"
   fi
-fi
+  installed=$((installed + 1))
+}
 
 echo ""
-echo "Done. This skill is now available to:"
-echo "  - Claude Code"
-echo "  - Gemini CLI"
-echo "  - GitHub Copilot"
-echo "  - OpenAI Codex"
+
+# --- User-level installs ---
+if [ "$choice" = "1" ] || [ "$choice" = "3" ]; then
+  echo "  Installing user-level skills..."
+  echo ""
+
+  # Universal Agent Skills path
+  install_skill "$HOME/.agents/skills" "~/.agents/skills (all agents)"
+
+  # Agent-specific paths
+  for agent in "${agents[@]}"; do
+    case "$agent" in
+      claude)
+        install_skill "$HOME/.claude/skills" "~/.claude/skills (Claude Code)"
+        ;;
+      gemini)
+        install_skill "$HOME/.gemini/skills" "~/.gemini/skills (Gemini CLI)"
+        ;;
+      codex)
+        install_skill "$HOME/.codex/skills" "~/.codex/skills (OpenAI Codex)"
+        ;;
+    esac
+  done
+
+  # Claude Code plugin (optional extra)
+  if [[ " ${agents[*]} " == *" claude "* ]]; then
+    MARKETPLACE_DIR="$HOME/.claude/plugins/local-marketplace"
+    PLUGIN_LINK="$MARKETPLACE_DIR/plugins/$SKILL_NAME"
+    if [ -d "$MARKETPLACE_DIR" ]; then
+      if [ ! -e "$PLUGIN_LINK" ]; then
+        ln -s "$REPO_DIR" "$PLUGIN_LINK"
+      fi
+      claude plugin marketplace update local-plugins 2>/dev/null || true
+      claude plugin update "$SKILL_NAME@local-plugins" 2>/dev/null \
+        || claude plugin install "$SKILL_NAME@local-plugins" 2>/dev/null \
+        || true
+      echo "  ✓ Claude Code plugin installed (marketplace)"
+    fi
+  fi
+  echo ""
+fi
+
+# --- Project-level installs ---
+if [ "$choice" = "2" ] || [ "$choice" = "3" ]; then
+  echo "  Installing project-level skills..."
+  echo ""
+
+  # Universal Agent Skills path
+  install_skill ".agents/skills" ".agents/skills (all agents)"
+
+  # Agent-specific paths
+  for agent in "${agents[@]}"; do
+    case "$agent" in
+      claude)
+        install_skill ".claude/skills" ".claude/skills (Claude Code)"
+        ;;
+      gemini)
+        install_skill ".gemini/skills" ".gemini/skills (Gemini CLI)"
+        ;;
+      copilot)
+        install_skill ".github/skills" ".github/skills (GitHub Copilot)"
+        ;;
+      codex)
+        install_skill ".codex/skills" ".codex/skills (OpenAI Codex)"
+        ;;
+    esac
+  done
+  echo ""
+fi
+
+echo "  Done. $installed path(s) configured."
+echo "  Restart your agent to pick up the new skill."
 echo ""
-echo "Restart your agent to pick up the new skill."
