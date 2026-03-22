@@ -255,10 +255,18 @@ Every generated presentation must include a separate `.notes.json` file alongsid
 
 **Guidelines for generating notes:**
 - `script`: One brief sentence capturing what this slide is about.
-- `notes`: Brief talking points — short phrases the presenter can expand on. Not full sentences.
+- `notes`: Brief talking points — the key facts, claims, or ideas the presenter should mention. Short phrases, not full sentences.
 - Every slide must have an entry, including title and CTA slides.
 
-**Example — Stats slide showing "3.2x faster, 47% fewer incidents, 89% satisfaction":**
+**NEVER include these in notes:**
+- Delivery instructions ("Pause here", "Slow down", "Keep brisk")
+- Transition cues ("Transition to next slide", "Move on to...")
+- Presentation advice ("Emphasize this", "If short on time skip")
+- Meta commentary ("This is the summary slide", "Use as closing")
+
+Notes are CONTENT, not stage directions.
+
+**Good example — Stats slide showing "3.2x faster, 47% fewer incidents, 89% satisfaction":**
 ```json
 {
   "script": "AI-assisted development delivers measurable results.",
@@ -266,6 +274,18 @@ Every generated presentation must include a separate `.notes.json` file alongsid
     "3.2x faster code review",
     "47% fewer production incidents",
     "89% developer satisfaction"
+  ]
+}
+```
+
+**Bad example — delivery instructions instead of content:**
+```json
+{
+  "script": "AI-assisted development delivers measurable results.",
+  "notes": [
+    "Emphasize the 3.2x number",
+    "Keep this slide brisk",
+    "Transition to the next section"
   ]
 }
 ```
