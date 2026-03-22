@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/github/v/tag/bluedusk/html-slides?label=version)](https://github.com/bluedusk/html-slides/releases) [![Agent Skills](https://img.shields.io/badge/Agent_Skills-compatible-green)](https://agentskills.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A skill for creating stunning, animation-rich HTML presentations — from scratch or by converting PowerPoint files. Works with AI coding agents (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex).
+A skill for creating stunning, animation-rich HTML presentations — from scratch, by converting PowerPoint files, or by converting any existing HTML. Works with AI coding agents (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex).
 
 **[htmlslides.com](https://htmlslides.com)** | **[Live Demo: Intro to MCP](https://bluedusk.github.io/html-slides/intro-to-mcp.html)**
 
@@ -20,6 +20,7 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
 - **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
+- **HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides exports, articles, generic pages) into HTMLSlides format.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
 
 ## Installation
@@ -150,6 +151,12 @@ Best for: pitch decks, keynotes, non-technical presentations.
 
 > "Convert my presentation.pptx to a web slideshow"
 
+### Convert Any HTML
+
+> "Convert my-page.html to a presentation"
+
+Handles reveal.js, Marp, impress.js, Slidev, Google Slides exports, blog posts, articles, and generic HTML pages. Auto-detects the source format, extracts content, and generates a spec-compliant HTMLSlides file.
+
 ## Output
 
 Every generated presentation produces two files:
@@ -175,7 +182,8 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Simple) |
 | `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Advanced) |
 | `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Advanced) |
-| `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (conversion) |
+| `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
+| `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 
 ## Requirements
 

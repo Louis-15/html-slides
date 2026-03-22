@@ -72,6 +72,7 @@ Determine what the user wants:
 - **Mode A: New Presentation** — Create from scratch. Go to Phase 1.
 - **Mode B: PPT Conversion** — Convert a .pptx file. Go to Phase 4.
 - **Mode C: Enhancement** — Improve an existing HTML presentation. Read it, understand it, enhance. **Follow Mode C modification rules below.**
+- **Mode D: HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides export, article, generic page) into HTMLSlides format. Go to Phase 5.
 
 ### Mode C: Modification Rules
 
@@ -254,7 +255,70 @@ When converting PowerPoint files:
 
 ---
 
-## Phase 5: Delivery
+## Phase 5: HTML Conversion (Mode D)
+
+Convert existing HTML files into spec-compliant HTMLSlides presentations.
+
+### Step 5.1: Analyze Input
+
+Read the HTML file and classify the source. Read [conversion-patterns.md](references/conversion-patterns.md) for framework detection patterns.
+
+| Source Type | Detection | Extraction Strategy |
+|-------------|-----------|-------------------|
+| reveal.js | `<div class="reveal">` + `<section>` elements | Map sections 1:1 to slides |
+| Marp | `<!-- marp: true -->` or `class="marpit"` | Map Marp slides 1:1 |
+| impress.js | `<div id="impress">` + `div.step` | Map steps 1:1 to slides |
+| Slidev | `class="slidev-layout"` or Slidev-specific classes | Map layouts 1:1 to slides |
+| Google Slides | Deeply nested divs with Google-specific classes | Extract text/images from structure |
+| HTMLSlides (partial) | Has some but not all of the 7 spec rules | Fix compliance gaps only |
+| Article/Blog | `<article>`, `<main>`, or heading-structured HTML | Split at headings |
+| Generic HTML | None of the above | Split at headings, analyze structure |
+
+Run a compliance audit against the 7 spec rules. If all pass, tell the user the file is already compliant — no conversion needed. If partially compliant, offer to fix only the failing rules.
+
+Report content inventory to the user: slide count, content types, external dependencies, estimated output slides. Ask for confirmation before proceeding.
+
+### Step 5.2: Extract Content
+
+**For slide frameworks (reveal.js, Marp, impress.js, Slidev):**
+- Map existing slides 1:1 to HTMLSlides slides
+- Extract title, body content, images, code blocks from each slide
+- Preserve slide order
+- If a source slide exceeds density limits, split it
+
+**For articles/blog posts/generic HTML:**
+- Split content at heading boundaries (h1/h2 = new slide)
+- First heading becomes the title slide
+- Group related paragraphs, lists, and images under their nearest heading
+- Code blocks → code slides, tables → table slides, blockquotes → quote slides
+- Long lists get split across multiple slides (max 6 items per slide)
+
+**For partially compliant HTMLSlides files:**
+- Keep existing slide structure intact
+- Only fix the specific failing rules
+
+**Handle dependencies:**
+- External CSS → inline it. External JS → strip framework JS, keep content JS.
+- Images → keep URLs, apply `max-height: min(50vh, 400px)`.
+- Fonts → keep Google Fonts / Fontshare, replace others.
+
+### Step 5.3: Style Selection
+
+Same as Phase 2 — ask Simple or Advanced. Default to Advanced.
+
+### Step 5.4: Generate
+
+Same as Phase 3 — read the appropriate supporting files and generate. For Advanced mode, map extracted content to components using the decision table in component-templates.md.
+
+Always generate the `.notes.json` file. If the source had speaker notes, preserve them.
+
+### Step 5.5: Validate & Save
+
+Before saving, verify all 7 spec rules pass. Fix any that fail. Save both the HTML and `.notes.json` files.
+
+---
+
+## Phase 6: Delivery
 
 1. **Clean up** — Delete `.claude-design/slide-previews/` if it exists
 2. **Open** — Use `open [filename].html` to launch in browser
@@ -277,4 +341,5 @@ When converting PowerPoint files:
 | [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table (Advanced mode) | Phase 3 (Dark Interactive) |
 | [dark-interactive.css](assets/dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
 | [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
-| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |
+| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
+| [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 5 (HTML conversion) |
