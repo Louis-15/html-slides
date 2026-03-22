@@ -196,16 +196,24 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [viewport-base.css](assets/viewport-base.css) — Mandatory CSS (include in full)
 - [animation-patterns.md](references/animation-patterns.md) — Animation reference for the chosen feeling
 
-**For Dark Interactive (preset 13 — structured component mode):**
+**For Advanced mode (structured component mode):**
 - [component-templates.md](references/component-templates.md) — HTML component templates with decision table
-- [dark-interactive.css](assets/dark-interactive.css) — Complete CSS (copy verbatim into `<style>`)
+- [components.css](assets/components.css) — Shared component CSS (copy verbatim into `<style>`)
+- Theme CSS from `assets/themes/` — copy verbatim into `<style>`, BEFORE components.css
 - [dark-interactive-nav.js](assets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
+**Available Advanced themes** (user specifies in prompt, default: dark-interactive):
+
+| Theme | File | Vibe |
+|-------|------|------|
+| Dark Interactive (default) | `assets/themes/dark-interactive.css` | Dark background, blue/green/orange accents |
+| Excalidraw | `assets/themes/excalidraw.css` | Hand-drawn, warm cream, sketch-like feel |
+
 **Key requirements:**
 - Single self-contained HTML file, all CSS/JS inline
-- For presets 1-12: include the FULL contents of viewport-base.css in the `<style>` block
-- For preset 13: include the FULL contents of dark-interactive.css in the `<style>` block, and dark-interactive-nav.js in the `<script>` block
+- For Simple mode: include the FULL contents of viewport-base.css in the `<style>` block
+- For Advanced mode: include the chosen theme CSS + components.css in the `<style>` block, and dark-interactive-nav.js in the `<script>` block
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
@@ -338,8 +346,9 @@ Before saving, verify all 7 spec rules pass. Fix any that fail. Save both the HT
 | [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table (Advanced mode) | Phase 3 (Dark Interactive) |
-| [dark-interactive.css](assets/dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
-| [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
+| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table | Phase 3 (Advanced) |
+| [components.css](assets/components.css) | Shared component CSS for all Advanced themes — copy verbatim | Phase 3 (Advanced) |
+| [themes/](assets/themes/) | Theme CSS files (dark-interactive.css, excalidraw.css) — pick one | Phase 3 (Advanced) |
+| [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS — copy verbatim | Phase 3 (Advanced) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
 | [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 5 (HTML conversion) |

@@ -1,0 +1,25 @@
+/* Excalidraw Theme
+   Hand-drawn aesthetic with warm cream background,
+   sketch-like feel, and playful colors. */
+
+@import url('https://fonts.googleapis.com/css2?family=Virgil:wght@400;700&family=Cascadia+Code:wght@400;600&display=swap');
+
+:root {
+  --font-body: 'Virgil', 'Comic Sans MS', cursive;
+  --font-mono: 'Cascadia Code', monospace;
+
+  --bg: #ffffff;
+  --bg-card: #f9f7f3;
+  --bg-card-hover: #f0ece4;
+  --text: #1e1e1e;
+  --text-muted: #555555;
+  --text-dim: #888888;
+  --accent-blue: #1e90ff;
+  --accent-green: #2ecc71;
+  --accent-orange: #e67e22;
+  --accent-red: #e74c3c;
+  --accent-purple: #9b59b6;
+  --accent-yellow: #f1c40f;
+  --border: rgba(0,0,0,0.12);
+  --border-hover: rgba(0,0,0,0.25);
+}

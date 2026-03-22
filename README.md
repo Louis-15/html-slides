@@ -117,11 +117,22 @@ Restart your agent after updating.
 
 HTML Slides offers two modes. **Advanced is the default** — if you don't specify a mode, you get the full interactive component system.
 
-### Advanced Mode — Dark Interactive (Default)
+### Advanced Mode (Default)
 
-Structured interactive components with deterministic output. The AI maps your content to the right component type automatically.
+Structured interactive components with deterministic output. The AI maps your content to the right component type automatically. Multiple themes available — same components, different visual styles.
 
 > "Create a presentation about [topic]"
+
+or specify a theme:
+
+> "Create a presentation about [topic] using the Excalidraw theme"
+
+**Available themes:**
+
+| Theme | Vibe |
+|-------|------|
+| Dark Interactive (default) | Dark background, blue/green/orange accents |
+| Excalidraw | Hand-drawn, warm cream, sketch-like feel |
 
 **Components included:**
 
@@ -224,7 +235,8 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Simple) |
 | `references/component-templates.md` | Structured component templates | Phase 3 (Advanced) |
 | `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Simple) |
-| `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Advanced) |
+| `assets/components.css` | Shared component CSS for all Advanced themes | Phase 3 (Advanced) |
+| `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Advanced) |
 | `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Advanced) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
