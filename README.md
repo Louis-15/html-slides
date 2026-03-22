@@ -8,10 +8,11 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 ## What This Does
 
-**HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
+**HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript.
 
-1. **Advanced (Recommended)** — Interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output. This is the default when no mode is specified.
-2. **Simple** — Multiple creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
+> **Default mode: Advanced (Dark Interactive)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
+
+It also offers a **Simple mode** with 12 creative themes for non-technical presentations — say "create a simple presentation" to use it.
 
 ### Key Features
 
