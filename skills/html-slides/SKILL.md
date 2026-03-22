@@ -1,6 +1,6 @@
 ---
-name: frontend-slides
-description: Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploration rather than abstract choices.
+name: html-slides
+description: Generate polished single-file HTML slide presentations with a dark theme design system featuring 12 interactive component types (flip cards, expandable cards, code blocks, architecture flows, stats, charts, timelines, comparisons, and more). Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
 ---
 
 # Frontend Slides
@@ -131,7 +131,7 @@ Ask how they want to choose (header: "Style"):
 - "Show me options" (recommended) — Generate 3 previews based on mood
 - "I know what I want" — Pick from preset list directly
 
-**If direct selection:** Show preset picker and skip to Phase 3. Available presets are defined in [STYLE_PRESETS.md](STYLE_PRESETS.md).
+**If direct selection:** Show preset picker and skip to Phase 3. Available presets are defined in [STYLE_PRESETS.md](${CLAUDE_PLUGIN_ROOT}/docs/STYLE_PRESETS.md).
 
 ### Step 2.1: Mood Selection (Guided Discovery)
 
@@ -144,7 +144,7 @@ What feeling should the audience have? Options:
 
 ### Step 2.2: Generate 3 Style Previews
 
-Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for available presets and their specifications.
+Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](${CLAUDE_PLUGIN_ROOT}/docs/STYLE_PRESETS.md) for available presets and their specifications.
 
 | Mood | Suggested Presets |
 |------|-------------------|
@@ -175,14 +175,14 @@ If images were provided, the slide outline already incorporates them from Step 1
 **Before generating, read these supporting files based on the chosen style:**
 
 **For creative presets (presets 1-12):**
-- [html-template.md](html-template.md) — HTML architecture and JS features
-- [viewport-base.css](viewport-base.css) — Mandatory CSS (include in full)
-- [animation-patterns.md](animation-patterns.md) — Animation reference for the chosen feeling
+- [html-template.md](${CLAUDE_PLUGIN_ROOT}/docs/html-template.md) — HTML architecture and JS features
+- [viewport-base.css](${CLAUDE_PLUGIN_ROOT}/presets/viewport-base.css) — Mandatory CSS (include in full)
+- [animation-patterns.md](${CLAUDE_PLUGIN_ROOT}/docs/animation-patterns.md) — Animation reference for the chosen feeling
 
 **For Dark Interactive (preset 13 — structured component mode):**
-- [component-templates.md](component-templates.md) — 12 HTML component templates with decision table
-- [dark-interactive.css](dark-interactive.css) — Complete CSS (copy verbatim into `<style>`)
-- [dark-interactive-nav.js](dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
+- [component-templates.md](${CLAUDE_PLUGIN_ROOT}/docs/component-templates.md) — 12 HTML component templates with decision table
+- [dark-interactive.css](${CLAUDE_PLUGIN_ROOT}/presets/dark-interactive.css) — Complete CSS (copy verbatim into `<style>`)
+- [dark-interactive-nav.js](${CLAUDE_PLUGIN_ROOT}/presets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
@@ -222,11 +222,11 @@ When converting PowerPoint files:
 
 | File | Purpose | When to Read |
 |------|---------|-------------|
-| [STYLE_PRESETS.md](STYLE_PRESETS.md) | 13 curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
-| [viewport-base.css](viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
-| [html-template.md](html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
-| [animation-patterns.md](animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](component-templates.md) | 12 structured HTML component templates with decision table (preset 13) | Phase 3 (Dark Interactive) |
-| [dark-interactive.css](dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
-| [dark-interactive-nav.js](dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
-| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |
+| [STYLE_PRESETS.md](${CLAUDE_PLUGIN_ROOT}/docs/STYLE_PRESETS.md) | 13 curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
+| [viewport-base.css](${CLAUDE_PLUGIN_ROOT}/presets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
+| [html-template.md](${CLAUDE_PLUGIN_ROOT}/docs/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
+| [animation-patterns.md](${CLAUDE_PLUGIN_ROOT}/docs/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
+| [component-templates.md](${CLAUDE_PLUGIN_ROOT}/docs/component-templates.md) | 12 structured HTML component templates with decision table (preset 13) | Phase 3 (Dark Interactive) |
+| [dark-interactive.css](${CLAUDE_PLUGIN_ROOT}/presets/dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
+| [dark-interactive-nav.js](${CLAUDE_PLUGIN_ROOT}/presets/dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
+| [scripts/extract-pptx.py](${CLAUDE_PLUGIN_ROOT}/scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |

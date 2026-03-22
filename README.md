@@ -1,102 +1,73 @@
 # HTML Slides
 
-A skill for creating stunning, animation-rich HTML presentations — from scratch or by converting PowerPoint files. Works with any IDE-based AI agent (Claude Code, Cursor, Copilot, Windsurf, Aider, etc.).
+A skill for creating stunning, animation-rich HTML presentations — from scratch or by converting PowerPoint files. Works with AI coding agents (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex).
+
+**[Live Demo: Intro to MCP](https://bluedusk.github.io/html-slides/intro-to-mcp.html)**
 
 ## What This Does
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
 
 1. **Creative mode** — "show, don't tell" style discovery with 12 curated visual presets
-2. **Structured mode** — deterministic output using 11 interactive component templates (flip cards, code blocks, architecture flows, stats, etc.)
+2. **Structured mode** — deterministic output using 12 interactive component templates (flip cards, code blocks, architecture flows, stats, etc.)
 
 ### Key Features
 
 - **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools, no frameworks.
 - **Cross-Agent Compatible** — Works with any AI agent that can read local files (Claude Code, Cursor, Copilot, Windsurf, etc.)
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
-- **11 Interactive Components** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, timelines, and more.
+- **12 Interactive Components** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), timelines, and more.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
 
 ## Installation
 
-First, clone the repo somewhere on your machine:
-
 ```bash
 git clone https://github.com/bluedusk/html-slides.git
+cd html-slides
+./install.sh
 ```
 
-Then set up your agent to use it:
+The install script auto-detects which agents you have (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex) and configures each one. You can also set up manually:
 
 ### Claude Code
 
+Install as a local plugin:
+
 ```bash
-git clone https://github.com/bluedusk/html-slides.git ~/.claude/skills/html-slides
+ln -s /path/to/html-slides ~/.claude/plugins/local-marketplace/plugins/html-slides
+claude plugin marketplace update local-plugins
+claude plugin install html-slides@local-plugins
 ```
 
-Then type `/html-slides` in any session.
+Then use `/html-slides` in any session, or ask Claude to create a presentation.
 
-### Cursor
+### Gemini CLI
 
-Create `.cursor/rules/html-slides.mdc` in your project:
-
-```yaml
----
-description: "HTML slide presentation generator"
-alwaysApply: false
----
-When asked to create a presentation or slides, read and follow
-the instructions in html-slides/SKILL.md
-```
-
-Then in chat: `@html-slides.mdc create a presentation about [topic]`
-Or simply: `@SKILL.md` to reference the file directly.
-
-### Windsurf
-
-Create `.windsurf/rules/html-slides.md` in your project:
+Add to your `GEMINI.md` or project instructions:
 
 ```markdown
 When asked to create a presentation or slides, read and follow
-the instructions in html-slides/SKILL.md
+the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
 ```
 
-Set activation to "Model Decision". Then ask Cascade to create slides.
-
-### GitHub Copilot (VS Code)
+### GitHub Copilot
 
 Add to `.github/copilot-instructions.md`:
 
 ```markdown
 When asked to create a presentation or slides, read and follow
-the instructions in html-slides/SKILL.md
+the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
 ```
 
-Or reference directly in chat: `#file:html-slides/SKILL.md create a presentation about [topic]`
+### OpenAI Codex
 
-### Aider
-
-Add to `.aider.conf.yml`:
-
-```yaml
-read: html-slides/SKILL.md
-```
-
-Or in-session: `/read html-slides/SKILL.md`
-
-### Cline
-
-Create `.clinerules/html-slides.md`:
+Add to your `AGENTS.md`:
 
 ```markdown
 When asked to create a presentation or slides, read and follow
-the instructions in html-slides/SKILL.md
+the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
 ```
-
-### Any other IDE-based agent
-
-As long as the agent can read local files, point it at `SKILL.md` as the entry point:
-> "Read html-slides/SKILL.md and follow it to create a presentation about [topic]."
 
 ## Usage
 
@@ -117,7 +88,7 @@ The skill will:
 For technical presentations with deterministic output:
 > "Create a presentation about [topic] using the Dark Interactive preset from html-slides"
 
-This uses the 11 component templates with copy-verbatim CSS/JS for consistent results across different AI agents.
+This uses the 12 component templates with copy-verbatim CSS/JS for consistent results across different AI agents.
 
 ### Convert a PowerPoint
 
@@ -144,7 +115,7 @@ This uses the 11 component templates with copy-verbatim CSS/JS for consistent re
 - **Paper & Ink** — Literary, drop caps, pull quotes
 
 ### Structured
-- **Dark Interactive** — 11 interactive component templates with deterministic output. Best for technical presentations and cross-agent reliability.
+- **Dark Interactive** — 12 interactive component templates with deterministic output. Best for technical presentations and cross-agent reliability.
 
 ## Architecture
 
@@ -152,14 +123,14 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 
 | File | Purpose | Loaded When |
 |------|---------|-------------|
-| `SKILL.md` | Core workflow and rules | Always (entry point) |
-| `STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
-| `viewport-base.css` | Mandatory responsive CSS | Phase 3 (creative presets) |
-| `html-template.md` | HTML structure and JS features | Phase 3 (creative presets) |
-| `animation-patterns.md` | CSS/JS animation reference | Phase 3 (creative presets) |
-| `component-templates.md` | 11 structured component templates | Phase 3 (Dark Interactive) |
-| `dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Dark Interactive) |
-| `dark-interactive-nav.js` | Navigation JS for Dark Interactive | Phase 3 (Dark Interactive) |
+| `skills/html-slides/SKILL.md` | Core workflow and rules | Always (entry point) |
+| `docs/STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
+| `docs/html-template.md` | HTML structure and JS features | Phase 3 (creative presets) |
+| `docs/animation-patterns.md` | CSS/JS animation reference | Phase 3 (creative presets) |
+| `docs/component-templates.md` | 12 structured component templates | Phase 3 (Dark Interactive) |
+| `presets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (creative presets) |
+| `presets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Dark Interactive) |
+| `presets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Dark Interactive) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (conversion) |
 
 ## Requirements

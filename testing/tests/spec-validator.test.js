@@ -8,6 +8,7 @@ import { validateSlides } from '../lib/validate.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, 'fixtures');
 const projectRoot = path.join(__dirname, '..', '..');
+const examplesDir = path.join(projectRoot, 'examples');
 
 function loadFixture(name) {
   return fs.readFileSync(path.join(fixturesDir, name), 'utf-8');
@@ -47,7 +48,7 @@ describe('valid files', () => {
   });
 
   it('passes all 7 rules for intro-to-mcp.html', () => {
-    const html = fs.readFileSync(path.join(projectRoot, 'intro-to-mcp.html'), 'utf-8');
+    const html = fs.readFileSync(path.join(examplesDir, 'intro-to-mcp.html'), 'utf-8');
     const results = validateSlides(html);
     assert.equal(results.length, 7);
     assertAllPass(results);
@@ -198,12 +199,13 @@ describe('edge cases', () => {
 // --- Integration: validate all HTML files in project root ---
 
 describe('integration: project HTML files', () => {
-  const htmlFiles = fs.readdirSync(projectRoot)
-    .filter(f => f.endsWith('.html') && !f.startsWith('.'));
+  const htmlFiles = fs.existsSync(examplesDir)
+    ? fs.readdirSync(examplesDir).filter(f => f.endsWith('.html'))
+    : [];
 
   for (const file of htmlFiles) {
     it(`${file} passes all spec rules`, () => {
-      const html = fs.readFileSync(path.join(projectRoot, file), 'utf-8');
+      const html = fs.readFileSync(path.join(examplesDir, file), 'utf-8');
       const results = validateSlides(html);
       assertAllPass(results);
     });
