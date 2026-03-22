@@ -95,6 +95,23 @@ ln -s /path/to/html-slides .codex/skills/html-slides
 
 All agents also support the universal `~/.agents/skills/` path as defined by the [Agent Skills standard](https://agentskills.io/specification).
 
+### Updating
+
+Re-run the install command to update:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/bluedusk/html-slides/main/remote-install.sh | bash
+```
+
+For Claude Code plugin specifically:
+
+```bash
+claude plugin marketplace update html-slides
+claude plugin update html-slides@html-slides
+```
+
+Restart your agent after updating.
+
 ## Two Modes
 
 HTML Slides offers two modes. **Advanced is the default** — if you don't specify a mode, you get the full interactive component system.
@@ -155,7 +172,17 @@ Best for: pitch decks, keynotes, non-technical presentations.
 
 > "Convert my-page.html to a presentation"
 
-Handles reveal.js, Marp, impress.js, Slidev, Google Slides exports, blog posts, articles, and generic HTML pages. Auto-detects the source format, extracts content, and generates a spec-compliant HTMLSlides file.
+Auto-detects the source format, extracts content, and generates a spec-compliant HTMLSlides file.
+
+| Source Format | Detection |
+|---------------|-----------|
+| reveal.js | `<div class="reveal">` + `<section>` |
+| Marp | `<!-- marp: true -->` or `class="marpit"` |
+| impress.js | `<div id="impress">` + `div.step` |
+| Slidev | `class="slidev-layout"` |
+| Google Slides | Google-specific nested div structure |
+| Article / Blog | `<article>`, `<main>`, or heading-structured HTML |
+| Generic HTML | Falls back to heading-based splitting |
 
 ## Output
 
@@ -166,7 +193,23 @@ my-deck.html              ← the presentation (self-contained, open in any brow
 my-deck.notes.json        ← speaker notes (for presenter apps)
 ```
 
-The `.notes.json` file contains a script (full speech) and bullet point reminders for each slide, keyed by slide index. Presenter applications can read this file to display speaker notes alongside the presentation.
+The `.notes.json` file is keyed by slide index. Each entry contains:
+
+```json
+{
+  "0": {
+    "title": "Introduction",
+    "script": "Welcome everyone. Today we'll look at how...",
+    "notes": ["Pause after welcome", "Gauge audience familiarity"]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Slide heading (for presenter app navigation) |
+| `script` | string | Full natural language — read verbatim or paraphrase |
+| `notes` | string[] | Bullet point reminders — timing, transitions, delivery tips |
 
 ## Architecture
 
