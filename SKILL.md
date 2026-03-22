@@ -208,6 +208,38 @@ If images were provided, the slide outline already incorporates them from Step 1
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
+- **Always generate speaker notes** — see Speaker Notes below
+
+### Speaker Notes (Mandatory)
+
+Every generated presentation must include a separate `.notes.json` file alongside the HTML file. If the presentation is `my-deck.html`, the notes file is `my-deck.notes.json`. This file is read by external presenter applications.
+
+```json
+{
+  "0": {
+    "title": "Introduction",
+    "script": "Welcome everyone. Today we're going to look at how HTML Slides lets you create beautiful presentations without any design skills.",
+    "notes": ["Pause after welcome", "Gauge audience familiarity with AI tools"]
+  },
+  "1": {
+    "title": "The Problem",
+    "script": "Most presentation tools force you into rigid templates or require design expertise. What if your AI agent could handle all of that?",
+    "notes": ["Rhetorical question — don't wait for answer", "Transition: next slide shows the solution"]
+  }
+}
+```
+
+**File naming:** `<presentation-name>.notes.json` — must match the HTML filename.
+
+**Format:** Object keyed by `data-slide` index (as string). Each entry has:
+- `title` — Slide heading (for presenter app navigation)
+- `script` — Full natural language the presenter can read verbatim or paraphrase
+- `notes` — Array of bullet point reminders (timing cues, transitions, delivery tips)
+
+**Guidelines for generating notes:**
+- `script`: Write as natural speech, 2-4 sentences per slide. Focus on what to **say**, not what's on screen.
+- `notes`: 2-3 short bullet points. Include transition cues ("After this, we'll look at..."), timing hints ("Skip if short on time"), and delivery tips ("Pause here for effect").
+- Every slide must have an entry, including title and CTA slides.
 
 ---
 

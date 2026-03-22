@@ -401,12 +401,14 @@ Save processed images with `_processed` suffix. Never overwrite originals.
 
 Single presentations:
 ```
-presentation.html    # Self-contained, all CSS/JS inline
-assets/              # Images only, if any
+presentation.html              # Self-contained, all CSS/JS inline
+presentation.notes.json        # Speaker notes (always generated)
+assets/                        # Images only, if any
 ```
 
 Multiple presentations in one project:
 ```
 [name].html
+[name].notes.json
 [name]-assets/
 ```
