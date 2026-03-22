@@ -3,7 +3,7 @@ name: html-slides
 metadata:
   version: "0.3.0"
   author: danzhu
-description: Generate polished single-file HTML slide presentations with a dark theme design system featuring 13 interactive component types (flip cards, expandable cards, code blocks, architecture flows, stats, charts, timelines, comparisons, and more). Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
+description: Generate polished single-file HTML slide presentations with interactive components (flip cards, charts, tables, code blocks, architecture flows, stats, timelines, and more) or creative visual themes. Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
 ---
 
 # Frontend Slides
@@ -134,8 +134,8 @@ If user provides an image folder:
 
 Ask which mode they want (header: "Mode"):
 
-- **Advanced (Recommended)** (Dark Interactive) — 13 structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
-- **Simple** (12 creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
+- **Advanced (Recommended)** (Dark Interactive) — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
+- **Simple** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
 
 **If Advanced:** Skip to Step 2.4.
 
@@ -196,7 +196,7 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [animation-patterns.md](references/animation-patterns.md) — Animation reference for the chosen feeling
 
 **For Dark Interactive (preset 13 — structured component mode):**
-- [component-templates.md](references/component-templates.md) — 13 HTML component templates with decision table
+- [component-templates.md](references/component-templates.md) — HTML component templates with decision table
 - [dark-interactive.css](assets/dark-interactive.css) — Complete CSS (copy verbatim into `<style>`)
 - [dark-interactive-nav.js](assets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
@@ -238,11 +238,11 @@ When converting PowerPoint files:
 
 | File | Purpose | When to Read |
 |------|---------|-------------|
-| [STYLE_PRESETS.md](references/STYLE_PRESETS.md) | 13 curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
+| [STYLE_PRESETS.md](references/STYLE_PRESETS.md) | Curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
 | [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](references/component-templates.md) | 13 structured HTML component templates with decision table (preset 13) | Phase 3 (Dark Interactive) |
+| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table (Advanced mode) | Phase 3 (Dark Interactive) |
 | [dark-interactive.css](assets/dark-interactive.css) | Complete CSS for Dark Interactive preset — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
 | [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS for Dark Interactive — copy verbatim (preset 13) | Phase 3 (Dark Interactive) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |

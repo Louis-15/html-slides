@@ -10,15 +10,15 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
 
-1. **Advanced (Recommended)** — 13 interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output. This is the default when no mode is specified.
-2. **Simple** — 12 creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
+1. **Advanced (Recommended)** — Interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output. This is the default when no mode is specified.
+2. **Simple** — Multiple creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
 
 ### Key Features
 
 - **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools, no frameworks.
 - **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
-- **13 Interactive Components** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
+- **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
 
@@ -91,7 +91,7 @@ HTML Slides offers two modes. **Advanced is the default** — if you don't speci
 
 ### Advanced Mode — Dark Interactive (Default)
 
-13 structured interactive components with deterministic output. The AI maps your content to the right component type automatically.
+Structured interactive components with deterministic output. The AI maps your content to the right component type automatically.
 
 > "Create a presentation about [topic]"
 
@@ -115,7 +115,7 @@ HTML Slides offers two modes. **Advanced is the default** — if you don't speci
 
 Best for: technical talks, product demos, data-rich presentations, API overviews.
 
-### Simple Mode — 12 Creative Themes
+### Simple Mode — Creative Themes
 
 AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
 
@@ -148,10 +148,10 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | File | Purpose | Loaded When |
 |------|---------|-------------|
 | `SKILL.md` | Core workflow and rules | Always (entry point) |
-| `references/STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
+| `references/STYLE_PRESETS.md` | Curated visual presets | Phase 2 (style selection) |
 | `references/html-template.md` | HTML structure and JS features | Phase 3 (Simple) |
 | `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Simple) |
-| `references/component-templates.md` | 13 structured component templates | Phase 3 (Advanced) |
+| `references/component-templates.md` | Structured component templates | Phase 3 (Advanced) |
 | `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Simple) |
 | `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Advanced) |
 | `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Advanced) |
