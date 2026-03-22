@@ -40,20 +40,21 @@ Pick your agent(s) below. Replace `/path/to/html-slides` with the actual path to
 
 #### Claude Code
 
+**Via plugin marketplace (recommended):**
+
+```bash
+claude plugin marketplace add bluedusk/html-slides
+claude plugin install html-slides
+```
+
+**Via skill symlink:**
+
 ```bash
 # User-level (available in all projects)
 ln -s /path/to/html-slides ~/.claude/skills/html-slides
 
 # Project-level (available only in current project)
 ln -s /path/to/html-slides .claude/skills/html-slides
-```
-
-Optional — install as a Claude Code plugin for marketplace updates:
-
-```bash
-ln -s /path/to/html-slides ~/.claude/plugins/local-marketplace/plugins/html-slides
-claude plugin marketplace update local-plugins
-claude plugin install html-slides@local-plugins
 ```
 
 #### Gemini CLI

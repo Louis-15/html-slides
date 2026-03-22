@@ -85,20 +85,19 @@ if [ "$choice" = "1" ] || [ "$choice" = "3" ]; then
     esac
   done
 
-  # Claude Code plugin (optional extra)
+  # Claude Code plugin via GitHub marketplace
   if [[ " ${agents[*]} " == *" claude "* ]]; then
-    MARKETPLACE_DIR="$HOME/.claude/plugins/local-marketplace"
-    PLUGIN_LINK="$MARKETPLACE_DIR/plugins/$SKILL_NAME"
-    if [ -d "$MARKETPLACE_DIR" ]; then
-      if [ ! -e "$PLUGIN_LINK" ]; then
-        ln -s "$REPO_DIR" "$PLUGIN_LINK"
-      fi
-      claude plugin marketplace update local-plugins 2>/dev/null || true
-      claude plugin update "$SKILL_NAME@local-plugins" 2>/dev/null \
-        || claude plugin install "$SKILL_NAME@local-plugins" 2>/dev/null \
-        || true
-      echo "  ✓ Claude Code plugin installed (marketplace)"
+    if claude plugin marketplace list 2>/dev/null | grep -q "html-slides"; then
+      echo "  ✓ Claude Code marketplace already added"
+      claude plugin marketplace update html-slides 2>/dev/null || true
+    else
+      claude plugin marketplace add bluedusk/html-slides 2>/dev/null || true
+      echo "  ✓ Claude Code marketplace added (bluedusk/html-slides)"
     fi
+    claude plugin update "$SKILL_NAME@html-slides" 2>/dev/null \
+      || claude plugin install "$SKILL_NAME@html-slides" 2>/dev/null \
+      || echo "  Note: Run 'claude plugin install html-slides' manually if needed"
+    echo "  ✓ Claude Code plugin installed"
   fi
   echo ""
 fi
