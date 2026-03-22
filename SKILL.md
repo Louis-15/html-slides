@@ -128,7 +128,16 @@ If user provides an image folder:
 
 **This is the "show, don't tell" phase.** Most people can't articulate design preferences in words.
 
-### Step 2.0: Style Path
+### Step 2.0: Choose Mode
+
+Ask which mode they want (header: "Mode"):
+
+- **Simple** (12 creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
+- **Advanced** (Dark Interactive) — 13 structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
+
+**If Advanced:** Skip to Step 2.4.
+
+### Step 2.1: Simple — Style Path
 
 Ask how they want to choose (header: "Style"):
 - "Show me options" (recommended) — Generate 3 previews based on mood
@@ -136,7 +145,7 @@ Ask how they want to choose (header: "Style"):
 
 **If direct selection:** Show preset picker and skip to Phase 3. Available presets are defined in [STYLE_PRESETS.md](references/STYLE_PRESETS.md).
 
-### Step 2.1: Mood Selection (Guided Discovery)
+### Step 2.2: Simple — Mood Selection
 
 Ask (header: "Vibe", multiSelect: true, max 2):
 What feeling should the audience have? Options:
@@ -145,7 +154,7 @@ What feeling should the audience have? Options:
 - Calm/Focused — Clear, thoughtful
 - Inspired/Moved — Emotional, memorable
 
-### Step 2.2: Generate 3 Style Previews
+### Step 2.3: Simple — Generate 3 Style Previews
 
 Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
 
@@ -160,12 +169,14 @@ Save previews to `.claude-design/slide-previews/` (style-a.html, style-b.html, s
 
 Open each preview automatically for the user.
 
-### Step 2.3: User Picks
-
 Ask (header: "Style"):
 Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / Style C: [Name] / Mix elements
 
 If "Mix elements", ask for specifics.
+
+### Step 2.4: Advanced — Dark Interactive
+
+No style selection needed — Advanced mode uses the Dark Interactive preset with the full component system. Proceed directly to Phase 3.
 
 ---
 

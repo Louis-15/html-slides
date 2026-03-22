@@ -10,8 +10,8 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
 
-1. **Creative mode** — "show, don't tell" style discovery with 13 curated visual presets
-2. **Structured mode** — deterministic output using 13 interactive component templates (flip cards, code blocks, architecture flows, stats, etc.)
+1. **Simple** — 12 creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
+2. **Advanced** — 13 interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output.
 
 ### Key Features
 
@@ -85,53 +85,61 @@ ln -s /path/to/html-slides .codex/skills/html-slides
 
 All agents also support the universal `~/.agents/skills/` path as defined by the [Agent Skills standard](https://agentskills.io/specification).
 
-## Usage
+## Two Modes
 
-### Create a New Presentation
+HTML Slides offers two distinct modes. The skill asks which mode you want when you start.
 
-Tell your AI agent:
-> "Create a presentation about [topic] using the html-slides skill"
+### Simple Mode — 12 Creative Themes
+
+AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
+
+> "Create a presentation about [topic]"
 
 The skill will:
 1. Ask about your content (slides, messages, images)
 2. Ask about the feeling you want (impressed? excited? calm?)
-3. Generate 3 visual style previews for you to compare
+3. Generate 3 visual style previews to compare
 4. Create the full presentation in your chosen style
-5. Open it in your browser
 
-### Use Structured Components (Dark Interactive)
+**Available themes:**
 
-For technical presentations with deterministic output:
-> "Create a presentation about [topic] using the Dark Interactive preset from html-slides"
+| Category | Themes |
+|----------|--------|
+| Dark | Bold Signal, Electric Studio, Creative Voltage, Dark Botanical |
+| Light | Notebook Tabs, Pastel Geometry, Split Pastel, Vintage Editorial |
+| Specialty | Neon Cyber, Terminal Green, Swiss Modern, Paper & Ink |
 
-This uses the 13 component templates with copy-verbatim CSS/JS for consistent results across different AI agents.
+Best for: pitch decks, keynotes, non-technical presentations.
+
+### Advanced Mode — Dark Interactive
+
+13 structured interactive components with deterministic output. The AI maps your content to the right component type automatically.
+
+> "Create an advanced presentation about [topic]"
+
+**Components included:**
+
+| Component | What it does |
+|-----------|-------------|
+| Title Slide | Opening with hero text and rainbow gradient |
+| Statement | Bold centered text with glow |
+| Flip Cards | 2x2 grid, click to reveal back side |
+| VS/Comparison | Side-by-side with visual contrast |
+| Architecture Flow | Connected boxes showing a pipeline |
+| Code Block | Syntax-highlighted terminal window |
+| Auth Flip Compare | Before/after with red/green flip cards |
+| Stats Cards | Large animated numbers |
+| Expandable Cards | Click to reveal hidden details |
+| Status Timeline | Vertical list with colored status dots |
+| Table | Styled data table with hover highlights |
+| Chart | 8 chart types via Chart.js (bar, line, pie, doughnut, radar, polar, scatter, bubble) |
+| CTA Box | Call-to-action with resource links |
+
+Best for: technical talks, product demos, data-rich presentations, API overviews.
 
 ### Convert a PowerPoint
 
-> "Convert my presentation.pptx to a web slideshow using html-slides"
-
-## Included Styles
-
-### Dark Themes
-- **Bold Signal** — Confident, high-impact, vibrant card on dark
-- **Electric Studio** — Clean, professional, split-panel
-- **Creative Voltage** — Energetic, retro-modern, electric blue + neon
-- **Dark Botanical** — Elegant, sophisticated, warm accents
-
-### Light Themes
-- **Notebook Tabs** — Editorial, organized, paper with colorful tabs
-- **Pastel Geometry** — Friendly, approachable, vertical pills
-- **Split Pastel** — Playful, modern, two-color vertical split
-- **Vintage Editorial** — Witty, personality-driven, geometric shapes
-
-### Specialty
-- **Neon Cyber** — Futuristic, particle backgrounds, neon glow
-- **Terminal Green** — Developer-focused, hacker aesthetic
-- **Swiss Modern** — Minimal, Bauhaus-inspired, geometric
-- **Paper & Ink** — Literary, drop caps, pull quotes
-
-### Structured
-- **Dark Interactive** — 13 interactive component templates with deterministic output. Best for technical presentations and cross-agent reliability.
+> "Convert my presentation.pptx to a web slideshow"
 
 ## Architecture
 
@@ -141,12 +149,12 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 |------|---------|-------------|
 | `SKILL.md` | Core workflow and rules | Always (entry point) |
 | `references/STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
-| `references/html-template.md` | HTML structure and JS features | Phase 3 (creative presets) |
-| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (creative presets) |
-| `references/component-templates.md` | 13 structured component templates | Phase 3 (Dark Interactive) |
-| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (creative presets) |
-| `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Dark Interactive) |
-| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Dark Interactive) |
+| `references/html-template.md` | HTML structure and JS features | Phase 3 (Simple) |
+| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Simple) |
+| `references/component-templates.md` | 13 structured component templates | Phase 3 (Advanced) |
+| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Simple) |
+| `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Advanced) |
+| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Advanced) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (conversion) |
 
 ## Requirements
