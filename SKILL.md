@@ -130,10 +130,12 @@ If user provides an image folder:
 
 ### Step 2.0: Choose Mode
 
+**If the user has not specified a mode, default to Advanced.**
+
 Ask which mode they want (header: "Mode"):
 
+- **Advanced (Recommended)** (Dark Interactive) — 13 structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
 - **Simple** (12 creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
-- **Advanced** (Dark Interactive) — 13 structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
 
 **If Advanced:** Skip to Step 2.4.
 

@@ -10,8 +10,8 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
 
-1. **Simple** — 12 creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
-2. **Advanced** — 13 interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output.
+1. **Advanced (Recommended)** — 13 interactive components (flip cards, charts, tables, code blocks, and more) with deterministic output. This is the default when no mode is specified.
+2. **Simple** — 12 creative themes with AI-driven layout. Pick a mood, see previews, get a polished deck.
 
 ### Key Features
 
@@ -87,35 +87,13 @@ All agents also support the universal `~/.agents/skills/` path as defined by the
 
 ## Two Modes
 
-HTML Slides offers two distinct modes. The skill asks which mode you want when you start.
+HTML Slides offers two modes. **Advanced is the default** — if you don't specify a mode, you get the full interactive component system.
 
-### Simple Mode — 12 Creative Themes
-
-AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
-
-> "Create a presentation about [topic]"
-
-The skill will:
-1. Ask about your content (slides, messages, images)
-2. Ask about the feeling you want (impressed? excited? calm?)
-3. Generate 3 visual style previews to compare
-4. Create the full presentation in your chosen style
-
-**Available themes:**
-
-| Category | Themes |
-|----------|--------|
-| Dark | Bold Signal, Electric Studio, Creative Voltage, Dark Botanical |
-| Light | Notebook Tabs, Pastel Geometry, Split Pastel, Vintage Editorial |
-| Specialty | Neon Cyber, Terminal Green, Swiss Modern, Paper & Ink |
-
-Best for: pitch decks, keynotes, non-technical presentations.
-
-### Advanced Mode — Dark Interactive
+### Advanced Mode — Dark Interactive (Default)
 
 13 structured interactive components with deterministic output. The AI maps your content to the right component type automatically.
 
-> "Create an advanced presentation about [topic]"
+> "Create a presentation about [topic]"
 
 **Components included:**
 
@@ -136,6 +114,28 @@ Best for: pitch decks, keynotes, non-technical presentations.
 | CTA Box | Call-to-action with resource links |
 
 Best for: technical talks, product demos, data-rich presentations, API overviews.
+
+### Simple Mode — 12 Creative Themes
+
+AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
+
+> "Create a simple presentation about [topic]"
+
+The skill will:
+1. Ask about your content (slides, messages, images)
+2. Ask about the feeling you want (impressed? excited? calm?)
+3. Generate 3 visual style previews to compare
+4. Create the full presentation in your chosen style
+
+**Available themes:**
+
+| Category | Themes |
+|----------|--------|
+| Dark | Bold Signal, Electric Studio, Creative Voltage, Dark Botanical |
+| Light | Notebook Tabs, Pastel Geometry, Split Pastel, Vintage Editorial |
+| Specialty | Neon Cyber, Terminal Green, Swiss Modern, Paper & Ink |
+
+Best for: pitch decks, keynotes, non-technical presentations.
 
 ### Convert a PowerPoint
 
