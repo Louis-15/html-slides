@@ -6,7 +6,7 @@ Structured, copy-ready HTML component templates for building slide presentations
 
 Use these templates when:
 - You need **deterministic, consistent output** across different AI agents
-- The content fits naturally into one of the 12 component types below
+- The content fits naturally into one of the 13 component types below
 - You want interactive elements (flip cards, expandable cards, code blocks)
 
 For more creative, style-diverse presentations, use the style presets in [STYLE_PRESETS.md](STYLE_PRESETS.md) instead.
@@ -30,6 +30,7 @@ Use this table to pick the right component for each piece of content:
 | 4 items with hidden details | **Expandable Cards** | Click to reveal hidden content |
 | 3-6 status items or timeline | **Status Timeline** | Vertical list with colored dots |
 | Data visualization, trends, distributions | **Chart** | Canvas-rendered Chart.js with automatic theming |
+| Structured data, comparisons, specs | **Table** | Styled rows with hover and highlights |
 | Resources, links, next steps | **CTA Box** | Gradient box with bullet list |
 
 ## Recommended Slide Narrative Structure
@@ -40,7 +41,7 @@ Use this table to pick the right component for each piece of content:
 | 2 | **Hook** — dramatic statement or question | Statement Slide |
 | 3-4 | **Problem** — what's broken/missing | Flip Cards or Statement |
 | 5-6 | **Solution** — introduce the answer | VS/Comparison or Architecture |
-| 7-9 | **Evidence** — show how it works | Code Block, Stats, Chart, Expandable Cards |
+| 7-9 | **Evidence** — show how it works | Code Block, Stats, Chart, Table, Expandable Cards |
 | 10-11 | **Depth** — deeper details or comparison | Auth Flip Compare, Status Timeline |
 | 12-13 | **Impact** — results, metrics, outcomes | Stats Cards or Statement |
 | Last | **CTA** — resources and next steps | CTA Box (always) |
@@ -445,6 +446,56 @@ For circular charts (pie, doughnut, radar, polarArea), add `chart-square` class:
 Each dataset auto-receives the next color in the theme palette cycle (blue → green → orange → purple → yellow → red).
 
 **When to use**: Performance metrics over time, distribution breakdowns, survey results, benchmark comparisons, growth trends.
+
+### 13. Table
+
+A styled data table with header row and hover highlights. Fits up to 5 columns and 6 rows comfortably within viewport constraints.
+
+```html
+<div class="slide" data-slide="[N]">
+  <p class="slide-tag anim-1">[TAG]</p>
+  <h2 class="anim-2">[HEADING] <span class="highlight-[COLOR]">[HIGHLIGHT]</span></h2>
+  <div class="table-wrap anim-3">
+    <table>
+      <thead>
+        <tr>
+          <th>[COL_1]</th>
+          <th>[COL_2]</th>
+          <th>[COL_3]</th>
+          <th>[COL_4]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell-highlight">[ROW_1_COL_1]</td>
+          <td>[ROW_1_COL_2]</td>
+          <td>[ROW_1_COL_3]</td>
+          <td>[ROW_1_COL_4]</td>
+        </tr>
+        <tr>
+          <td class="cell-highlight">[ROW_2_COL_1]</td>
+          <td>[ROW_2_COL_2]</td>
+          <td>[ROW_2_COL_3]</td>
+          <td>[ROW_2_COL_4]</td>
+        </tr>
+        <tr>
+          <td class="cell-highlight">[ROW_3_COL_1]</td>
+          <td>[ROW_3_COL_2]</td>
+          <td>[ROW_3_COL_3]</td>
+          <td>[ROW_3_COL_4]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="subtitle anim-4 mt-16" style="font-size:14px;">[BOTTOM_TEXT]</p>
+</div>
+```
+
+Use `cell-highlight` on the first column (or key cells) for emphasis. Use `cell-muted` for secondary values.
+
+**Content limits**: Max 5 columns, 6 rows to fit 100vh. If data exceeds this, split across multiple slides or use a Chart instead.
+
+**When to use**: Feature comparisons, pricing tables, spec sheets, benchmark results, structured data with multiple attributes.
 
 ---
 

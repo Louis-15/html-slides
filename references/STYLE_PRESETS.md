@@ -2,7 +2,7 @@
 
 Curated visual styles for Frontend Slides. Each preset is inspired by real design references — no generic "AI slop" aesthetics. **Abstract shapes only — no illustrations.**
 
-**Viewport CSS:** For mandatory base styles, see [viewport-base.css](../presets/viewport-base.css). Include in every presentation.
+**Viewport CSS:** For mandatory base styles, see [viewport-base.css](../assets/viewport-base.css). Include in every presentation.
 
 ---
 
@@ -349,7 +349,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Rainbow gradient text for hero titles
 - Glow blob ambient lighting
 
-**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 11 HTML templates, [dark-interactive.css](../presets/dark-interactive.css) for the complete CSS, and [dark-interactive-nav.js](../presets/dark-interactive-nav.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
+**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 11 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [dark-interactive-nav.js](../assets/dark-interactive-nav.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
 
 **Best for:** Technical presentations, developer talks, API/architecture overviews, and cases where deterministic output across different AI agents is more important than visual variety.
 

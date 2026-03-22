@@ -2,21 +2,21 @@
 
 A skill for creating stunning, animation-rich HTML presentations — from scratch or by converting PowerPoint files. Works with AI coding agents (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex).
 
-**[Live Demo: Intro to MCP](https://bluedusk.github.io/html-slides/intro-to-mcp.html)**
+**[htmlslides.com](https://htmlslides.com)** | **[Live Demo: Intro to MCP](https://bluedusk.github.io/html-slides/intro-to-mcp.html)**
 
 ## What This Does
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript. It offers two modes:
 
-1. **Creative mode** — "show, don't tell" style discovery with 12 curated visual presets
-2. **Structured mode** — deterministic output using 12 interactive component templates (flip cards, code blocks, architecture flows, stats, etc.)
+1. **Creative mode** — "show, don't tell" style discovery with 13 curated visual presets
+2. **Structured mode** — deterministic output using 13 interactive component templates (flip cards, code blocks, architecture flows, stats, etc.)
 
 ### Key Features
 
 - **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools, no frameworks.
-- **Cross-Agent Compatible** — Works with any AI agent that can read local files (Claude Code, Cursor, Copilot, Windsurf, etc.)
+- **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
-- **12 Interactive Components** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), timelines, and more.
+- **13 Interactive Components** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
 
@@ -28,45 +28,12 @@ cd html-slides
 ./install.sh
 ```
 
-The install script auto-detects which agents you have (Claude Code, Gemini CLI, GitHub Copilot, OpenAI Codex) and configures each one. You can also set up manually:
+The install script symlinks the repo into `~/.agents/skills/html-slides`, which is the [Agent Skills standard](https://agentskills.io/specification) discovery path. All compatible agents will automatically find and load the skill.
 
-### Claude Code
-
-Install as a local plugin:
+Or install manually:
 
 ```bash
-ln -s /path/to/html-slides ~/.claude/plugins/local-marketplace/plugins/html-slides
-claude plugin marketplace update local-plugins
-claude plugin install html-slides@local-plugins
-```
-
-Then use `/html-slides` in any session, or ask Claude to create a presentation.
-
-### Gemini CLI
-
-Add to your `GEMINI.md` or project instructions:
-
-```markdown
-When asked to create a presentation or slides, read and follow
-the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
-```
-
-### GitHub Copilot
-
-Add to `.github/copilot-instructions.md`:
-
-```markdown
-When asked to create a presentation or slides, read and follow
-the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
-```
-
-### OpenAI Codex
-
-Add to your `AGENTS.md`:
-
-```markdown
-When asked to create a presentation or slides, read and follow
-the instructions in /path/to/html-slides/skills/html-slides/SKILL.md
+ln -s /path/to/html-slides ~/.agents/skills/html-slides
 ```
 
 ## Usage
@@ -88,7 +55,7 @@ The skill will:
 For technical presentations with deterministic output:
 > "Create a presentation about [topic] using the Dark Interactive preset from html-slides"
 
-This uses the 12 component templates with copy-verbatim CSS/JS for consistent results across different AI agents.
+This uses the 13 component templates with copy-verbatim CSS/JS for consistent results across different AI agents.
 
 ### Convert a PowerPoint
 
@@ -115,7 +82,7 @@ This uses the 12 component templates with copy-verbatim CSS/JS for consistent re
 - **Paper & Ink** — Literary, drop caps, pull quotes
 
 ### Structured
-- **Dark Interactive** — 12 interactive component templates with deterministic output. Best for technical presentations and cross-agent reliability.
+- **Dark Interactive** — 13 interactive component templates with deterministic output. Best for technical presentations and cross-agent reliability.
 
 ## Architecture
 
@@ -123,19 +90,19 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 
 | File | Purpose | Loaded When |
 |------|---------|-------------|
-| `skills/html-slides/SKILL.md` | Core workflow and rules | Always (entry point) |
-| `docs/STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
-| `docs/html-template.md` | HTML structure and JS features | Phase 3 (creative presets) |
-| `docs/animation-patterns.md` | CSS/JS animation reference | Phase 3 (creative presets) |
-| `docs/component-templates.md` | 12 structured component templates | Phase 3 (Dark Interactive) |
-| `presets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (creative presets) |
-| `presets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Dark Interactive) |
-| `presets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Dark Interactive) |
+| `SKILL.md` | Core workflow and rules | Always (entry point) |
+| `references/STYLE_PRESETS.md` | 13 curated visual presets | Phase 2 (style selection) |
+| `references/html-template.md` | HTML structure and JS features | Phase 3 (creative presets) |
+| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (creative presets) |
+| `references/component-templates.md` | 13 structured component templates | Phase 3 (Dark Interactive) |
+| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (creative presets) |
+| `assets/dark-interactive.css` | Complete CSS for Dark Interactive | Phase 3 (Dark Interactive) |
+| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Dark Interactive) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (conversion) |
 
 ## Requirements
 
-- Any IDE-based AI agent that can read local files
+- Any agent supporting the [Agent Skills standard](https://agentskills.io)
 - For PPT conversion: Python with `python-pptx` library
 
 ## Credits
