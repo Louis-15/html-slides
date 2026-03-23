@@ -139,7 +139,7 @@ If user provides an image folder:
 
 Ask which mode they want (header: "Mode"):
 
-- **Advanced (Recommended)** (Dark Interactive) — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Best for technical talks, product demos, and data-rich presentations.
+- **Advanced (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Multiple themes available. Best for technical talks, product demos, and data-rich presentations.
 - **Simple** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
 
 **If Advanced:** Skip to Step 2.4.
@@ -181,9 +181,17 @@ Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / 
 
 If "Mix elements", ask for specifics.
 
-### Step 2.4: Advanced — Dark Interactive
+### Step 2.4: Advanced — Theme Selection
 
-No style selection needed — Advanced mode uses the Dark Interactive preset with the full component system. Proceed directly to Phase 3.
+Ask which theme they want (header: "Theme"):
+
+- **Dark Interactive (default)** — Dark background, blue/green/orange accents
+- **Excalidraw Light** — Hand-drawn, white background, sketch borders
+- **Excalidraw Dark** — Hand-drawn, dark background, sketch borders
+
+If the user already specified a theme in their prompt, skip this question and use that theme. If no preference, default to Dark Interactive.
+
+Each theme uses the same components and navigation — only the visual style changes. Theme files are in `assets/themes/`.
 
 ---
 
