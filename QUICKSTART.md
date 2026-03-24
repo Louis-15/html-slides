@@ -99,7 +99,7 @@ Use the screenshot at ./whiteboard-photo.png as the basis for a presentation
 
 ## Pick a visual style
 
-Add a theme name to any prompt above. If you don't, you get Dark Interactive by default.
+Add a theme name to any prompt above. If you don't, you get Obsidian by default.
 
 ```
 Create a presentation about API design using the Excalidraw theme
@@ -111,7 +111,7 @@ Create a presentation about our startup using the Editorial Light theme
 
 | Theme | What it looks like |
 |-------|-------------------|
-| Dark Interactive | Dark background, polished, interactive components |
+| Obsidian | Dark background, polished, interactive components |
 | Excalidraw Light | Hand-drawn look on white, like a whiteboard |
 | Excalidraw Dark | Hand-drawn look on dark background |
 | Editorial Light | Clean, bright, magazine-like elegance |

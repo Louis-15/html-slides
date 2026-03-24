@@ -10,7 +10,7 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript.
 
-> **Default mode: Advanced (Dark Interactive)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
+> **Default mode: Advanced (Obsidian)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
 
 It also offers a **Simple mode** with 12 creative themes for non-technical presentations — say "create a simple presentation" to use it.
 
@@ -131,7 +131,7 @@ or specify a theme:
 
 | Theme | Vibe |
 |-------|------|
-| Dark Interactive (default) | Dark background, blue/green/orange accents |
+| Obsidian (default) | Dark background, blue/green/orange accents |
 | Excalidraw Light | Hand-drawn, sketchy, whiteboard on white |
 | Excalidraw Dark | Hand-drawn, sketchy, whiteboard on dark |
 | Editorial Light | Luminous, editorial, tech-forward minimalism |
@@ -251,7 +251,7 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 ## Credits
 
 Originally created by [@zarazhangrui](https://github.com/zarazhangrui) with Claude Code.
-Dark Interactive component system added by [@bluedusk](https://github.com/bluedusk).
+Obsidian component system added by [@bluedusk](https://github.com/bluedusk).
 
 ## License
 

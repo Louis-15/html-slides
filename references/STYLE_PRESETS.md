@@ -320,7 +320,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 ## Structured Themes
 
-### 13. Dark Interactive
+### 13. Obsidian
 
 **Vibe:** Technical, polished, GitHub-dark aesthetic with interactive components
 
@@ -362,7 +362,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Hand-drawn, sketchy, whiteboard aesthetic inspired by excalidraw.com
 
-**Layout:** Same structured component system as Dark Interactive, but with a hand-drawn visual overlay on a white background.
+**Layout:** Same structured component system as Obsidian, but with a hand-drawn visual overlay on a white background.
 
 **Typography:**
 - Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
@@ -388,9 +388,9 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Offset drop shadows (hand-drawn feel)
 - Rounded corners (14px) on all components
 - Subdued glow blobs and particles for light background
-- Same 13 component templates as Dark Interactive
+- Same 13 component templates as Obsidian
 
-**Special:** Uses the same component templates as Dark Interactive. Load [excalidraw.css](../assets/themes/excalidraw.css) as the theme CSS alongside the shared component CSS.
+**Special:** Uses the same component templates as Obsidian. Load [excalidraw.css](../assets/themes/excalidraw.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Informal presentations, brainstorming sessions, educational content, whiteboard-style walkthroughs.
 
@@ -400,7 +400,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Hand-drawn, sketchy, whiteboard aesthetic on a dark background
 
-**Layout:** Same structured component system as Dark Interactive, with hand-drawn visual overlay on a dark background.
+**Layout:** Same structured component system as Obsidian, with hand-drawn visual overlay on a dark background.
 
 **Typography:**
 - Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
@@ -426,9 +426,9 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Light offset drop shadows
 - Rounded corners (14px) on all components
 - Subtle glow blobs and particles
-- Same 13 component templates as Dark Interactive
+- Same 13 component templates as Obsidian
 
-**Special:** Uses the same component templates as Dark Interactive. Load [excalidraw-dark.css](../assets/themes/excalidraw-dark.css) as the theme CSS alongside the shared component CSS.
+**Special:** Uses the same component templates as Obsidian. Load [excalidraw-dark.css](../assets/themes/excalidraw-dark.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Informal presentations in dark mode, brainstorming sessions, educational content with a cozy feel.
 
@@ -438,7 +438,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Luminous, editorial, tech-forward minimalism — "The Lucid Gallery"
 
-**Layout:** Same structured component system as Dark Interactive, with an airy light-mode aesthetic. Elements float in generous white space with ambient shadows.
+**Layout:** Same structured component system as Obsidian, with an airy light-mode aesthetic. Elements float in generous white space with ambient shadows.
 
 **Typography:**
 - Display/Body: `Inter` (300–900) — tight letter-spacing (-0.02em) for headlines
@@ -468,9 +468,9 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Primary-to-container gradient accents (blue #0060aa → #58a6ff)
 - Code windows stay dark (editorial contrast against light canvas)
 - Surface hierarchy: surface → surface-container-low → surface-container-lowest
-- Same 13 component templates as Dark Interactive
+- Same 13 component templates as Obsidian
 
-**Special:** Uses the same component templates as Dark Interactive. Load [editorial-light.css](../assets/themes/editorial-light.css) as the theme CSS alongside the shared component CSS.
+**Special:** Uses the same component templates as Obsidian. Load [editorial-light.css](../assets/themes/editorial-light.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Product launches, investor decks, design-forward technical presentations, any context where editorial polish matters.
 

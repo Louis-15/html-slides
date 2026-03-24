@@ -201,12 +201,12 @@ If "Mix elements", ask for specifics.
 
 Ask which theme they want (header: "Theme"):
 
-- **Dark Interactive (default)** — Dark background, blue/green/orange accents
+- **Obsidian (default)** — Dark background, blue/green/orange accents
 - **Excalidraw Light** — Hand-drawn, white background, sketch borders
 - **Excalidraw Dark** — Hand-drawn, dark background, sketch borders
 - **Editorial Light** — Luminous, editorial, tech-forward minimalism
 
-If the user already specified a theme in their prompt, skip this question and use that theme. If no preference, default to Dark Interactive.
+If the user already specified a theme in their prompt, skip this question and use that theme. If no preference, default to Obsidian.
 
 Each theme uses the same components and navigation — only the visual style changes. Theme files are in `assets/themes/`.
 
@@ -232,11 +232,11 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [dark-interactive-nav.js](assets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
-**Available Advanced themes** (user specifies in prompt, default: dark-interactive):
+**Available Advanced themes** (user specifies in prompt, default: Obsidian):
 
 | Theme | File | Vibe |
 |-------|------|------|
-| Dark Interactive (default) | `assets/themes/dark-interactive.css` | Dark background, blue/green/orange accents |
+| Obsidian (default) | `assets/themes/dark-interactive.css` | Dark background, blue/green/orange accents |
 | Excalidraw Light | `assets/themes/excalidraw.css` | Hand-drawn, white background, sketch borders |
 | Excalidraw Dark | `assets/themes/excalidraw-dark.css` | Hand-drawn, dark background, sketch borders |
 | Editorial Light | `assets/themes/editorial-light.css` | Luminous, editorial, tech-forward minimalism |

@@ -2,7 +2,7 @@
 
 **Author:** HTML Slides Team
 **Purpose:** Product introduction / launch deck
-**Style:** Dark Interactive (preset 13 — use all 13 component templates)
+**Style:** Obsidian (preset 13 — use all 13 component templates)
 **Length:** 21 slides
 
 ---
@@ -120,7 +120,7 @@ Card 4 (green glow): "Narrative Components" — Expanded: "Statement slides for 
 **Tag:** Roadmap
 **Heading:** HTML Slides Development Timeline
 
-Item 1 (green): "v0.1 — 11 component templates with Dark Interactive preset"
+Item 1 (green): "v0.1 — 11 component templates with Obsidian preset"
 Item 2 (green): "v0.2 — Chart.js integration with 8 chart types"
 Item 3 (green): "v0.3 — Table component, Agent Skills standard, universal installer"
 Item 4 (yellow): "v0.4 — Slide export to PDF, presenter notes view"
@@ -178,7 +178,7 @@ Dataset: "Usage %" — [28, 22, 18, 14, 10, 8]
 **Tag:** Breakdown
 **Heading:** Style Preset Popularity
 
-Labels: ["Dark Interactive", "Neon Cyber", "Bold Signal", "Swiss Modern", "Notebook Tabs", "Other"]
+Labels: ["Obsidian", "Neon Cyber", "Bold Signal", "Swiss Modern", "Notebook Tabs", "Other"]
 Dataset: "Decks generated" — [42, 15, 12, 10, 9, 12]
 
 ---
@@ -224,7 +224,7 @@ Y-axis: Generation time (minutes)
 
 Dataset: "Presets" — bubble chart where x = design complexity, y = user satisfaction, r = number of decks generated:
 [{x:30,y:92,r:22},{x:70,y:88,r:15},{x:85,y:82,r:12},{x:50,y:90,r:10},{x:40,y:85,r:9}]
-Labels: Dark Interactive, Neon Cyber, Creative Voltage, Bold Signal, Swiss Modern
+Labels: Obsidian, Neon Cyber, Creative Voltage, Bold Signal, Swiss Modern
 
 ---
 
