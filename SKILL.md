@@ -151,16 +151,16 @@ If user provides an image folder:
 
 ### Step 2.0: Choose Mode
 
-**If the user has not specified a mode, default to Advanced.**
+**If the user has not specified a mode, default to Pro.**
 
 Ask which mode they want (header: "Mode"):
 
-- **Advanced (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Multiple themes available. Best for technical talks, product demos, and data-rich presentations.
-- **Simple** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
+- **Pro (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Multiple themes available. Best for technical talks, product demos, and data-rich presentations.
+- **Vibe** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
 
-**If Advanced:** Skip to Step 2.4.
+**If Pro:** Skip to Step 2.4.
 
-### Step 2.1: Simple — Style Path
+### Step 2.1: Vibe — Style Path
 
 Ask how they want to choose (header: "Style"):
 - "Show me options" (recommended) — Generate 3 previews based on mood
@@ -168,7 +168,7 @@ Ask how they want to choose (header: "Style"):
 
 **If direct selection:** Show preset picker and skip to Phase 3. Available presets are defined in [STYLE_PRESETS.md](references/STYLE_PRESETS.md).
 
-### Step 2.2: Simple — Mood Selection
+### Step 2.2: Vibe — Mood Selection
 
 Ask (header: "Vibe", multiSelect: true, max 2):
 What feeling should the audience have? Options:
@@ -177,7 +177,7 @@ What feeling should the audience have? Options:
 - Calm/Focused — Clear, thoughtful
 - Inspired/Moved — Emotional, memorable
 
-### Step 2.3: Simple — Generate 3 Style Previews
+### Step 2.3: Vibe — Generate 3 Style Previews
 
 Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
 
@@ -197,7 +197,7 @@ Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / 
 
 If "Mix elements", ask for specifics.
 
-### Step 2.4: Advanced — Theme Selection
+### Step 2.4: Pro — Theme Selection
 
 Ask which theme they want (header: "Theme"):
 
@@ -226,14 +226,14 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [viewport-base.css](assets/viewport-base.css) — Mandatory CSS (include in full)
 - [animation-patterns.md](references/animation-patterns.md) — Animation reference for the chosen feeling
 
-**For Advanced mode (structured component mode):**
+**For Pro mode (structured component mode):**
 - [component-templates.md](references/component-templates.md) — HTML component templates with decision table
 - [components.css](assets/components.css) — Shared component CSS (copy verbatim into `<style>`)
 - Theme CSS from `assets/themes/` — copy verbatim into `<style>`, BEFORE components.css
 - [dark-interactive-nav.js](assets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
-**Available Advanced themes** (user specifies in prompt, default: Obsidian):
+**Available Pro themes** (user specifies in prompt, default: Obsidian):
 
 | Theme | File | Vibe |
 |-------|------|------|
@@ -245,8 +245,8 @@ If images were provided, the slide outline already incorporates them from Step 1
 
 **Key requirements:**
 - Single self-contained HTML file, all CSS/JS inline
-- For Simple mode: include the FULL contents of viewport-base.css in the `<style>` block
-- For Advanced mode: include the chosen theme CSS + components.css in the `<style>` block, and dark-interactive-nav.js in the `<script>` block
+- For Vibe mode: include the FULL contents of viewport-base.css in the `<style>` block
+- For Pro mode: include the chosen theme CSS + components.css in the `<style>` block, and dark-interactive-nav.js in the `<script>` block
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
@@ -383,11 +383,11 @@ Report content inventory to the user: slide count, content types, external depen
 
 ### Step 5.3: Style Selection
 
-Same as Phase 2 — ask Simple or Advanced. Default to Advanced.
+Same as Phase 2 — ask Vibe or Pro. Default to Pro.
 
 ### Step 5.4: Generate
 
-Same as Phase 3 — read the appropriate supporting files and generate. For Advanced mode, map extracted content to components using the decision table in component-templates.md.
+Same as Phase 3 — read the appropriate supporting files and generate. For Pro mode, map extracted content to components using the decision table in component-templates.md.
 
 Always generate the `.notes.json` file. If the source had speaker notes, preserve them.
 
@@ -417,9 +417,9 @@ Before saving, verify all 7 spec rules pass. Fix any that fail. Save both the HT
 | [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table | Phase 3 (Advanced) |
-| [components.css](assets/components.css) | Shared component CSS for all Advanced themes — copy verbatim | Phase 3 (Advanced) |
-| [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one | Phase 3 (Advanced) |
-| [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS — copy verbatim | Phase 3 (Advanced) |
+| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table | Phase 3 (Pro) |
+| [components.css](assets/components.css) | Shared component CSS for all Pro themes — copy verbatim | Phase 3 (Pro) |
+| [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one | Phase 3 (Pro) |
+| [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS — copy verbatim | Phase 3 (Pro) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
 | [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 5 (HTML conversion) |

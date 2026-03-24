@@ -10,9 +10,9 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 **HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript.
 
-> **Default mode: Advanced (Obsidian)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
+> **Default mode: Pro (Obsidian)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
 
-It also offers a **Simple mode** with 12 creative themes for non-technical presentations — say "create a simple presentation" to use it.
+It also offers a **Vibe mode** with 12 creative themes for non-technical presentations — say "create a vibe presentation" to use it.
 
 ### Key Features
 
@@ -115,9 +115,9 @@ Restart your agent after updating.
 
 ## Two Modes
 
-HTML Slides offers two modes. **Advanced is the default** — if you don't specify a mode, you get the full interactive component system.
+HTML Slides offers two modes. **Pro is the default** — if you don't specify a mode, you get the full interactive component system.
 
-### Advanced Mode (Default)
+### Pro Mode (Default)
 
 Structured interactive components with deterministic output. The AI maps your content to the right component type automatically. Multiple themes available — same components, different visual styles.
 
@@ -157,11 +157,11 @@ or specify a theme:
 
 Best for: technical talks, product demos, data-rich presentations, API overviews.
 
-### Simple Mode — Creative Themes
+### Vibe Mode — Creative Themes
 
 AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
 
-> "Create a simple presentation about [topic]"
+> "Create a vibe presentation about [topic]"
 
 The skill will:
 1. Ask about your content (slides, messages, images)
@@ -234,13 +234,13 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 |------|---------|-------------|
 | `SKILL.md` | Core workflow and rules | Always (entry point) |
 | `references/STYLE_PRESETS.md` | Curated visual presets | Phase 2 (style selection) |
-| `references/html-template.md` | HTML structure and JS features | Phase 3 (Simple) |
-| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Simple) |
-| `references/component-templates.md` | Structured component templates | Phase 3 (Advanced) |
-| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Simple) |
-| `assets/components.css` | Shared component CSS for all Advanced themes | Phase 3 (Advanced) |
-| `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Advanced) |
-| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Advanced) |
+| `references/html-template.md` | HTML structure and JS features | Phase 3 (Vibe) |
+| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Vibe) |
+| `references/component-templates.md` | Structured component templates | Phase 3 (Pro) |
+| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Vibe) |
+| `assets/components.css` | Shared component CSS for all Pro themes | Phase 3 (Pro) |
+| `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
+| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Pro) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 

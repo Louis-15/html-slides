@@ -206,8 +206,8 @@ Framework navigation JS is **completely replaced**, not merged:
    - Data-processing scripts that feed into charts or dynamic content
 
 3. **Replace with:**
-   - Standard HTMLSlides navigation from [html-template.md](html-template.md) (for Simple presets)
-   - Or [dark-interactive-nav.js](../assets/dark-interactive-nav.js) verbatim (for Advanced mode)
+   - Standard HTMLSlides navigation from [html-template.md](html-template.md) (for Vibe presets)
+   - Or [dark-interactive-nav.js](../assets/dark-interactive-nav.js) verbatim (for Pro mode)
 
 ## Image Handling
 

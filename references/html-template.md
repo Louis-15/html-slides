@@ -1,6 +1,6 @@
 # HTML Presentation Template
 
-Reference architecture for generating slide presentations. **All presets (Simple and Advanced) must follow this structure.** This ensures every generated presentation passes the spec validator.
+Reference architecture for generating slide presentations. **All presets (Vibe and Pro) must follow this structure.** This ensures every generated presentation passes the spec validator.
 
 ## Output Format Spec (Mandatory)
 

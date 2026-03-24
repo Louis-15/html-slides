@@ -117,10 +117,10 @@ Create a presentation about our startup using the Editorial Light theme
 | Editorial Light | Clean, bright, magazine-like elegance |
 | Binary Architect | Hacker-elite, neon on void-black, zero rounded corners |
 
-Want a more artistic, non-technical style? Say "simple":
+Want a more artistic, non-technical style? Say "vibe":
 
 ```
-Create a simple presentation about sustainable design
+Create a vibe presentation about sustainable design
 ```
 
 You'll get to pick from 12 creative visual themes with a live preview.
