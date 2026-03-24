@@ -132,7 +132,8 @@ or specify a theme:
 | Theme | Vibe |
 |-------|------|
 | Dark Interactive (default) | Dark background, blue/green/orange accents |
-| Excalidraw | Hand-drawn, warm cream, sketch-like feel |
+| Excalidraw Light | Hand-drawn, sketchy, whiteboard on white |
+| Excalidraw Dark | Hand-drawn, sketchy, whiteboard on dark |
 
 **Components included:**
 

@@ -312,6 +312,8 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 | Vintage Editorial | Fraunces | Work Sans | Google |
 | Neon Cyber | Clash Display | Satoshi | Fontshare |
 | Terminal Green | JetBrains Mono | JetBrains Mono | JetBrains |
+| Excalidraw Light | Virgil | Virgil / Caveat | Bundled / Google |
+| Excalidraw Dark | Virgil | Virgil / Caveat | Bundled / Google |
 
 ---
 
@@ -349,9 +351,85 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Rainbow gradient text for hero titles
 - Glow blob ambient lighting
 
-**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 11 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [dark-interactive-nav.js](../assets/dark-interactive-nav.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
+**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 13 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [dark-interactive-nav.js](../assets/dark-interactive-nav.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
 
 **Best for:** Technical presentations, developer talks, API/architecture overviews, and cases where deterministic output across different AI agents is more important than visual variety.
+
+---
+
+### 14. Excalidraw Light
+
+**Vibe:** Hand-drawn, sketchy, whiteboard aesthetic inspired by excalidraw.com
+
+**Layout:** Same structured component system as Dark Interactive, but with a hand-drawn visual overlay on a white background.
+
+**Typography:**
+- Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
+- Mono: `Cascadia Code`
+
+**Colors:**
+```css
+:root {
+    --bg: #ffffff;
+    --bg-card: #fcfcfa;
+    --accent-blue: #1971c2;
+    --accent-green: #2f9e44;
+    --accent-orange: #e8590c;
+    --accent-red: #e03131;
+    --accent-purple: #9c36b5;
+    --accent-yellow: #e8b627;
+    --border: #1e1e1e;
+}
+```
+
+**Signature Elements:**
+- Hachure fill patterns on cards (single-direction diagonal lines at -37deg)
+- Offset drop shadows (hand-drawn feel)
+- Rounded corners (14px) on all components
+- Subdued glow blobs and particles for light background
+- Same 13 component templates as Dark Interactive
+
+**Special:** Uses the same component templates as Dark Interactive. Load [excalidraw.css](../assets/themes/excalidraw.css) as the theme CSS alongside the shared component CSS.
+
+**Best for:** Informal presentations, brainstorming sessions, educational content, whiteboard-style walkthroughs.
+
+---
+
+### 15. Excalidraw Dark
+
+**Vibe:** Hand-drawn, sketchy, whiteboard aesthetic on a dark background
+
+**Layout:** Same structured component system as Dark Interactive, with hand-drawn visual overlay on a dark background.
+
+**Typography:**
+- Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
+- Mono: `Cascadia Code`
+
+**Colors:**
+```css
+:root {
+    --bg: #121212;
+    --bg-card: #232329;
+    --accent-blue: #4dabf7;
+    --accent-green: #51cf66;
+    --accent-orange: #ff922b;
+    --accent-red: #ff6b6b;
+    --accent-purple: #cc5de8;
+    --accent-yellow: #fcc419;
+    --border: #e3e3e8;
+}
+```
+
+**Signature Elements:**
+- Hachure fill patterns on cards (single-direction diagonal lines at -37deg, tuned for dark bg)
+- Light offset drop shadows
+- Rounded corners (14px) on all components
+- Subtle glow blobs and particles
+- Same 13 component templates as Dark Interactive
+
+**Special:** Uses the same component templates as Dark Interactive. Load [excalidraw-dark.css](../assets/themes/excalidraw-dark.css) as the theme CSS alongside the shared component CSS.
+
+**Best for:** Informal presentations in dark mode, brainstorming sessions, educational content with a cozy feel.
 
 ---
 

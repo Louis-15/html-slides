@@ -1,6 +1,6 @@
 /* Excalidraw Light Theme
    Hand-drawn aesthetic inspired by excalidraw.com.
-   Rough borders, visible cross-hatch fills, sketch shadows. */
+   Rough borders, visible hachure fills, sketch shadows. */
 
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cascadia+Code:wght@400;600&display=swap');
 
@@ -81,7 +81,7 @@
   overflow: visible;
 }
 
-/* Cross-hatch fill — colorful, like Excalidraw's colored fills */
+/* Hachure fill — two slightly offset angles for hand-drawn feel */
 .flip-front,
 .card-v2,
 .stat-card,
@@ -92,20 +92,8 @@
 .chart-container,
 .table-wrap {
   background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 5px,
-      rgba(25,113,194,0.06) 5px,
-      rgba(25,113,194,0.06) 6px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 5px,
-      rgba(156,54,181,0.04) 5px,
-      rgba(156,54,181,0.04) 6px
-    ),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.12) 4px, rgba(25,113,194,0.12) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.08) 6px, rgba(25,113,194,0.08) 7px),
     var(--bg-card) !important;
 }
 
@@ -113,100 +101,88 @@
 .flip-front.border-orange,
 .card-v2.glow-orange {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(232,89,12,0.08) 5px, rgba(232,89,12,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(232,89,12,0.04) 5px, rgba(232,89,12,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(232,89,12,0.14) 4px, rgba(232,89,12,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(232,89,12,0.09) 6px, rgba(232,89,12,0.09) 7px),
     var(--bg-card) !important;
 }
 .flip-front.border-yellow {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(232,182,39,0.08) 5px, rgba(232,182,39,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(232,182,39,0.04) 5px, rgba(232,182,39,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(232,182,39,0.14) 4px, rgba(232,182,39,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(232,182,39,0.09) 6px, rgba(232,182,39,0.09) 7px),
     var(--bg-card) !important;
 }
 .flip-front.border-red {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(224,49,49,0.08) 5px, rgba(224,49,49,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(224,49,49,0.04) 5px, rgba(224,49,49,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(224,49,49,0.14) 4px, rgba(224,49,49,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(224,49,49,0.09) 6px, rgba(224,49,49,0.09) 7px),
     var(--bg-card) !important;
 }
 .card-v2.glow-blue {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(25,113,194,0.08) 5px, rgba(25,113,194,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(25,113,194,0.04) 5px, rgba(25,113,194,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.14) 4px, rgba(25,113,194,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.09) 6px, rgba(25,113,194,0.09) 7px),
     var(--bg-card) !important;
 }
 .card-v2.glow-purple {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(156,54,181,0.08) 5px, rgba(156,54,181,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(156,54,181,0.04) 5px, rgba(156,54,181,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(156,54,181,0.14) 4px, rgba(156,54,181,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(156,54,181,0.09) 6px, rgba(156,54,181,0.09) 7px),
     var(--bg-card) !important;
 }
 .card-v2.glow-green {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(47,158,68,0.08) 5px, rgba(47,158,68,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(47,158,68,0.04) 5px, rgba(47,158,68,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(47,158,68,0.14) 4px, rgba(47,158,68,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(47,158,68,0.09) 6px, rgba(47,158,68,0.09) 7px),
     var(--bg-card) !important;
 }
 .arch-box.box-blue {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(25,113,194,0.08) 5px, rgba(25,113,194,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(25,113,194,0.04) 5px, rgba(25,113,194,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.14) 4px, rgba(25,113,194,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.09) 6px, rgba(25,113,194,0.09) 7px),
     var(--bg-card) !important;
 }
 .arch-box.box-yellow {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(232,182,39,0.08) 5px, rgba(232,182,39,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(232,182,39,0.04) 5px, rgba(232,182,39,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(232,182,39,0.14) 4px, rgba(232,182,39,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(232,182,39,0.09) 6px, rgba(232,182,39,0.09) 7px),
     var(--bg-card) !important;
 }
 .arch-box.box-green {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(47,158,68,0.08) 5px, rgba(47,158,68,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(47,158,68,0.04) 5px, rgba(47,158,68,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(47,158,68,0.14) 4px, rgba(47,158,68,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(47,158,68,0.09) 6px, rgba(47,158,68,0.09) 7px),
     var(--bg-card) !important;
 }
 .vs-card.card-left {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(156,54,181,0.08) 5px, rgba(156,54,181,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(156,54,181,0.04) 5px, rgba(156,54,181,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(156,54,181,0.14) 4px, rgba(156,54,181,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(156,54,181,0.09) 6px, rgba(156,54,181,0.09) 7px),
     var(--bg-card) !important;
 }
 .vs-card.card-right {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(25,113,194,0.08) 5px, rgba(25,113,194,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(25,113,194,0.04) 5px, rgba(25,113,194,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.14) 4px, rgba(25,113,194,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.09) 6px, rgba(25,113,194,0.09) 7px),
     var(--bg-card) !important;
 }
 .auth-front.bad {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(224,49,49,0.08) 5px, rgba(224,49,49,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(224,49,49,0.04) 5px, rgba(224,49,49,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(224,49,49,0.14) 4px, rgba(224,49,49,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(224,49,49,0.09) 6px, rgba(224,49,49,0.09) 7px),
     var(--bg-card) !important;
 }
 .auth-front.good {
   background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(47,158,68,0.08) 5px, rgba(47,158,68,0.08) 6px),
-    repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(47,158,68,0.04) 5px, rgba(47,158,68,0.04) 6px),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(47,158,68,0.14) 4px, rgba(47,158,68,0.14) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(47,158,68,0.09) 6px, rgba(47,158,68,0.09) 7px),
     var(--bg-card) !important;
 }
 
 .flip-back,
 .auth-back {
   background:
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 5px,
-      rgba(25,113,194,0.06) 5px,
-      rgba(25,113,194,0.06) 6px
-    ),
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 5px,
-      rgba(156,54,181,0.04) 5px,
-      rgba(156,54,181,0.04) 6px
-    ),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.12) 4px, rgba(25,113,194,0.12) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.08) 6px, rgba(25,113,194,0.08) 7px),
     var(--bg-card) !important;
 }
 
@@ -290,13 +266,8 @@
 /* Table header */
 .table-wrap thead th {
   background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 5px,
-      rgba(0,0,0,0.04) 5px,
-      rgba(0,0,0,0.04) 6px
-    ),
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(0,0,0,0.06) 4px, rgba(0,0,0,0.06) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(0,0,0,0.04) 6px, rgba(0,0,0,0.04) 7px),
     rgba(0,0,0,0.02) !important;
 }
 
