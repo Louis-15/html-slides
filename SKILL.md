@@ -12,7 +12,7 @@ Create zero-dependency, animation-rich HTML presentations that run entirely in t
 
 ## Agent Compatibility
 
-This skill is optimized for **Claude Code** and uses `AskUserQuestion` for interactive prompts. If `AskUserQuestion` is not available (Gemini CLI, OpenAI Codex, or other agents), ask the same questions as plain text in the conversation and wait for the user to respond before proceeding.
+This skill is optimized for **Claude Code** and uses `AskUserQuestion` for interactive prompts. If `AskUserQuestion` is not available (Gemini CLI, GitHub Copilot, OpenAI Codex, or other agents), ask the same questions as plain text in the conversation and wait for the user to respond before proceeding.
 
 ## Core Principles
 
