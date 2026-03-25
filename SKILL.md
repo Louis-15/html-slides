@@ -109,9 +109,59 @@ When modifying existing presentations, make **minimal changes** — only touch w
 
 ---
 
-## Phase 1: Content Discovery (New Presentations)
+## Phase 1: Choose Mode
 
-**Ask ALL questions in a single AskUserQuestion call** so the user fills everything out at once:
+**If the user has not specified a mode, default to Pro.**
+
+Ask which mode they want (header: "Mode"):
+
+- **Pro (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Multiple themes available. Best for technical talks, product demos, and data-rich presentations.
+- **Vibe** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
+
+If the user already specified a mode or theme in their prompt, skip this question.
+
+**If Pro:** Go to Phase 2A.
+**If Vibe:** Go to Phase 2B.
+
+---
+
+## Phase 2A: Pro — Content & Theme
+
+**Ask ALL questions in a single AskUserQuestion call:**
+
+**Question 1 — Content** (header: "Content"):
+Do you have content ready? Options: All content ready / Rough notes / Topic only
+
+**Question 2 — Editing** (header: "Editing"):
+Do you need to edit text directly in the browser after generation? Options:
+- "Yes (Recommended)" — Can edit text in-browser, auto-save to localStorage, export file
+- "No" — Presentation only, keeps file smaller
+
+**Question 3 — Theme** (header: "Theme"):
+
+- **Obsidian (default)** — Dark background, blue/green/orange accents
+- **Excalidraw Light** — Hand-drawn, white background, sketch borders
+- **Excalidraw Dark** — Hand-drawn, dark background, sketch borders
+- **Editorial Light** — Luminous, editorial, tech-forward minimalism
+- **Binary Architect** — Hacker-elite, sharp corners, neon on void-black
+
+If the user already specified a theme in their prompt, skip Question 3 and use that theme. If no preference, default to Obsidian.
+
+**Remember the editing choice — it determines whether edit-related code is included in Phase 3.**
+
+If user has content, ask them to share it. Then go to Phase 3.
+
+Each theme uses the same components and navigation — only the visual style changes. Theme files are in `assets/themes/`.
+
+---
+
+## Phase 2B: Vibe — Content & Style Discovery
+
+**This is the "show, don't tell" phase.** Most people can't articulate design preferences in words.
+
+### Step 2B.1: Content Discovery
+
+**Ask ALL questions in a single AskUserQuestion call:**
 
 **Question 1 — Purpose** (header: "Purpose"):
 What is this presentation for? Options: Pitch deck / Teaching-Tutorial / Conference talk / Internal presentation
@@ -122,18 +172,18 @@ Approximately how many slides? Options: Short 5-10 / Medium 10-20 / Long 20+
 **Question 3 — Content** (header: "Content"):
 Do you have content ready? Options: All content ready / Rough notes / Topic only
 
-**Question 4 — Inline Editing** (header: "Editing"):
+**Question 4 — Editing** (header: "Editing"):
 Do you need to edit text directly in the browser after generation? Options:
 - "Yes (Recommended)" — Can edit text in-browser, auto-save to localStorage, export file
 - "No" — Presentation only, keeps file smaller
 
-**Remember the user's editing choice — it determines whether edit-related code is included in Phase 3.**
+**Remember the editing choice — it determines whether edit-related code is included in Phase 3.**
 
 If user has content, ask them to share it.
 
-### Step 1.2: Image Evaluation (if images provided)
+### Step 2B.2: Image Evaluation (if images provided)
 
-If user selected "No images" → skip to Phase 2.
+If user selected "No images" → skip to Step 2B.3.
 
 If user provides an image folder:
 1. **Scan** — List all image files (.png, .jpg, .svg, .webp, etc.)
@@ -142,26 +192,9 @@ If user provides an image folder:
 4. **Co-design the outline** — Curated images inform slide structure alongside text. This is NOT "plan slides then add images" — design around both from the start (e.g., 3 screenshots → 3 feature slides, 1 logo → title/closing slide)
 5. **Confirm via AskUserQuestion** (header: "Outline"): "Does this slide outline and image selection look right?" Options: Looks good / Adjust images / Adjust outline
 
-**Logo in previews:** If a usable logo was identified, embed it (base64) into each style preview in Phase 2 — the user sees their brand styled three different ways.
+**Logo in previews:** If a usable logo was identified, embed it (base64) into each style preview in Step 2B.4.
 
----
-
-## Phase 2: Style Discovery
-
-**This is the "show, don't tell" phase.** Most people can't articulate design preferences in words.
-
-### Step 2.0: Choose Mode
-
-**If the user has not specified a mode, default to Pro.**
-
-Ask which mode they want (header: "Mode"):
-
-- **Pro (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, and more. Multiple themes available. Best for technical talks, product demos, and data-rich presentations.
-- **Vibe** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
-
-**If Pro:** Skip to Step 2.4.
-
-### Step 2.1: Vibe — Style Path
+### Step 2B.3: Style Path
 
 Ask how they want to choose (header: "Style"):
 - "Show me options" (recommended) — Generate 3 previews based on mood
@@ -169,7 +202,7 @@ Ask how they want to choose (header: "Style"):
 
 **If direct selection:** Show preset picker and skip to Phase 3. Available presets are defined in [STYLE_PRESETS.md](references/STYLE_PRESETS.md).
 
-### Step 2.2: Vibe — Mood Selection
+### Step 2B.4: Mood Selection
 
 Ask (header: "Vibe", multiSelect: true, max 2):
 What feeling should the audience have? Options:
@@ -178,7 +211,7 @@ What feeling should the audience have? Options:
 - Calm/Focused — Clear, thoughtful
 - Inspired/Moved — Emotional, memorable
 
-### Step 2.3: Vibe — Generate 3 Style Previews
+### Step 2B.5: Generate 3 Style Previews
 
 Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
 
@@ -197,20 +230,6 @@ Ask (header: "Style"):
 Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / Style C: [Name] / Mix elements
 
 If "Mix elements", ask for specifics.
-
-### Step 2.4: Pro — Theme Selection
-
-Ask which theme they want (header: "Theme"):
-
-- **Obsidian (default)** — Dark background, blue/green/orange accents
-- **Excalidraw Light** — Hand-drawn, white background, sketch borders
-- **Excalidraw Dark** — Hand-drawn, dark background, sketch borders
-- **Editorial Light** — Luminous, editorial, tech-forward minimalism
-- **Binary Architect** — Hacker-elite, sharp corners, neon on void-black
-
-If the user already specified a theme in their prompt, skip this question and use that theme. If no preference, default to Obsidian.
-
-Each theme uses the same components and navigation — only the visual style changes. Theme files are in `assets/themes/`.
 
 ---
 
@@ -384,7 +403,7 @@ Report content inventory to the user: slide count, content types, external depen
 
 ### Step 5.3: Style Selection
 
-Same as Phase 2 — ask Vibe or Pro. Default to Pro.
+Same as Phase 1 — ask Vibe or Pro. Default to Pro. Then follow Phase 2A or 2B accordingly.
 
 ### Step 5.4: Generate
 
