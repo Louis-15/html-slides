@@ -63,7 +63,7 @@ Record:
 **Input:** `presentation.html`
 **Output:** `slides/slide-{N}.png`, `slides/slide-{N}-snapshot.md`, and per-slide evaluation scores
 
-Steps 3 and 4 from the spec are merged: screenshot each slide and evaluate it immediately (avoids loading all screenshots into memory at once).
+Screenshot each slide and evaluate it immediately (avoids loading all screenshots into memory at once).
 
 1. Read `eval/metrics/visual-criteria.md` — this is your scoring rubric for the visual evaluation.
 
@@ -118,9 +118,9 @@ agent-browser close
 kill $SERVER_PID
 ```
 
-## Step 5 — Score & Write results.json
+## Step 4 — Score & Write results.json
 
-**Input:** Results from Steps 2-4
+**Input:** Results from Steps 2-3
 **Output:** `eval/output/{RUN}/results.json`
 
 Aggregate all results into `results.json` with this exact schema:
@@ -185,7 +185,7 @@ Aggregate all results into `results.json` with this exact schema:
 - **D** (1.5–2.4) — Significant problems
 - **F** (<1.5) — Broken
 
-## Step 6 — Write report.md
+## Step 5 — Write report.md
 
 **Input:** `results.json`
 **Output:** `eval/output/{RUN}/report.md`
