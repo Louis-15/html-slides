@@ -1,7 +1,7 @@
 ---
 name: html-slides
 metadata:
-  version: "0.6.7"
+  version: "0.7.0"
   author: danzhu
 description: Generate polished single-file HTML slide presentations with interactive components (flip cards, charts, tables, code blocks, architecture flows, stats, timelines, and more) or creative visual themes. Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
 ---
@@ -87,7 +87,7 @@ When modifying existing presentations, make **minimal changes** — only touch w
 - Modify only the requested slide(s), keep everything else intact
 - If adding/removing slides, renumber all `data-slide` attributes sequentially from 0
 - If changing a component type (e.g., code block → table), use the template from component-templates.md
-- Update the `.notes.json` file to match any content changes
+- Update the inline `<script class="slide-notes">` block to match any content changes
 
 **Viewport fitting (always check):**
 - Before adding content, check against density limits
@@ -291,39 +291,27 @@ If images were provided, the slide outline already incorporates them from Step 1
 
 ### Speaker Notes (Mandatory)
 
-Every generated presentation must include a separate `.notes.json` file alongside the HTML file. If the presentation is `my-deck.html`, the notes file is `my-deck.notes.json`. This file is read by external presenter applications.
+Speaker notes are **embedded inline** in each slide as a hidden JSON block. They are displayed in the browser's developer console when navigating slides — open DevTools, detach to a separate window, and you have a presenter view.
 
-```json
-{
-  "0": {
-    "title": "Introduction",
-    "script": "HTML Slides lets you create beautiful presentations without design skills.",
-    "notes": [
-      "Zero dependencies",
-      "Works with 4 AI agents",
-      "Describe topic, get a deck"
-    ]
-  },
-  "1": {
-    "title": "The Problem",
-    "script": "Current tools are slow and require design expertise.",
-    "notes": [
-      "PowerPoint: hours of manual work",
-      "Vendor lock-in, version control pain",
-      "AI builds the deck in minutes"
-    ]
-  }
-}
+Every slide must include a `<script type="application/json" class="slide-notes">` block as its last child:
+
+```html
+<div class="slide" data-slide="0">
+  <!-- visible slide content -->
+  <script type="application/json" class="slide-notes">
+  {"title":"Introduction","script":"HTML Slides lets you create beautiful presentations without design skills.","notes":["Zero dependencies","Works with 4 AI agents"]}
+  </script>
+</div>
 ```
 
-**File naming:** `<presentation-name>.notes.json` — must match the HTML filename.
-
-**Format:** Object keyed by `data-slide` index (as string). Each entry has:
-- `title` — Slide heading (for presenter app navigation)
+**Format:** Each slide-notes block contains:
+- `title` — Slide heading (for console display and presenter apps)
 - `script` — Brief summary of what this slide delivers, in presenter tone
-- `notes` — Key points from the slide content, summarized as short phrases
+- `notes` — Key talking points, summarized as short phrases
 
 Both `script` and `notes` summarize the **slide content** — what the slide is saying to the audience. Write in presenter tone, as if the presenter is reading these to remind themselves what this slide covers.
+
+**Console output:** On each slide change, the navigation JS logs the notes to the console with styled formatting. The presenter opens DevTools (F12), detaches it to a separate window, and reads notes while presenting. A link to the HTML Slides presenter app is shown for a richer experience.
 
 **NEVER include:**
 - Delivery instructions ("Pause here", "Slow down")
@@ -426,11 +414,11 @@ Same as Phase 1 — ask Vibe or Pro. Default to Pro. Then follow Phase 2A or 2B 
 
 Same as Phase 3 — read the appropriate supporting files and generate. For Pro mode, map extracted content to components using the decision table in component-templates.md.
 
-Always generate the `.notes.json` file. If the source had speaker notes, preserve them.
+Always embed inline speaker notes in each slide. If the source had speaker notes, preserve them as inline `<script class="slide-notes">` blocks.
 
 ### Step 5.5: Validate & Save
 
-Before saving, verify all 8 spec rules pass. Fix any that fail. Save both the HTML and `.notes.json` files.
+Before saving, verify all 8 spec rules pass. Fix any that fail. Save the HTML file.
 
 ---
 
@@ -441,6 +429,7 @@ Before saving, verify all 8 spec rules pass. Fix any that fail. Save both the HT
 3. **Summarize** — Tell the user:
    - File location, style name, slide count
    - Navigation: Arrow keys, Space, scroll/swipe, click nav dots
+   - Speaker notes: Open DevTools (F12), detach to separate window — notes appear in console on each slide change
    - How to customize: `:root` CSS variables for colors, font link for typography, `.reveal` class for animations
    - If inline editing was enabled: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save
 

@@ -51,6 +51,29 @@ Use this table to pick the right component for each piece of content:
 
 ## HTML Component Templates
 
+## Speaker Notes
+
+Every slide **must** include an inline `<script class="slide-notes">` block with speaker notes. This is hidden from the audience and displayed in the browser console when navigating slides.
+
+```html
+<div class="slide" data-slide="[N]">
+  <!-- visible slide content here -->
+  <script type="application/json" class="slide-notes">
+  {"title":"[SLIDE_HEADING]","script":"[PRESENTER_SCRIPT]","notes":["[NOTE_1]","[NOTE_2]"]}
+  </script>
+</div>
+```
+
+- `title` — Slide heading (for console display and presenter apps)
+- `script` — What this slide communicates, in presenter tone
+- `notes` — Key talking points, delivery tips, or reminders
+
+The notes JSON goes **inside** each `<div class="slide">`, as the last child element. It is invisible to the audience.
+
+---
+
+## HTML Component Templates
+
 ### 1. Title Slide
 
 The opening slide with large hero text, rainbow gradient title, glow blobs, and a rainbow divider line.
@@ -64,6 +87,9 @@ The opening slide with large hero text, rainbow gradient title, glow blobs, and 
   <p class="subtitle anim-3">[SUBTITLE_TEXT]</p>
   <div class="rainbow-line anim-4"></div>
   <p class="subtitle anim-5" style="font-size:14px;margin-top:8px;">by <strong>[AUTHOR]</strong></p>
+  <script type="application/json" class="slide-notes">
+  {"title":"[TITLE]","script":"[PRESENTER_SCRIPT]","notes":["[NOTE_1]","[NOTE_2]"]}
+  </script>
 </div>
 ```
 

@@ -39,7 +39,6 @@ Follow Steps 1-6 below in order.
    - **Images:** Yes, I have an image folder — path: `eval/output/{DATE}-{MODE}-{THEME}/assets/`
    - **Content:** All content ready — provide the full content from `all-components.md`
 6. Save the generated HTML as `eval/output/{DATE}-{MODE}-{THEME}/presentation.html`
-7. Save the `.notes.json` file alongside it as `presentation.notes.json`
 
 **Important:** The filename MUST be `presentation.html`. If the skill saves with a different name, rename it.
 

@@ -43,6 +43,7 @@ function goTo(index) {
   current = index;
   slides.forEach((s,i) => s.classList.toggle('active', i===current));
   updateUI();
+  showSpeakerNotes(current);
 
   // Chart lifecycle: destroy on exit, create on entry
   if (typeof Chart !== 'undefined') {
@@ -205,3 +206,38 @@ if (typeof Chart !== 'undefined') {
     slides[0].querySelectorAll('.chart-container canvas').forEach(c => createChart(c.id));
   }, 400);
 }
+
+// =========================================
+// Speaker Notes (Console)
+// =========================================
+
+function showSpeakerNotes(index) {
+  const slide = slides[index];
+  const notesEl = slide.querySelector('.slide-notes');
+  console.clear();
+  if (notesEl) {
+    try {
+      const n = JSON.parse(notesEl.textContent);
+      const title = n.title || 'Slide ' + (index + 1);
+      const script = n.script || '';
+      const notes = n.notes || [];
+      console.log('%c\ud83d\udccb Slide ' + (index+1) + ': ' + title,
+        'font-size:16px;font-weight:bold;color:#58a6ff;');
+      console.log('%c\u2501'.repeat(48), 'color:#333;');
+      if (script) console.log('%c' + script, 'font-size:14px;color:#e6edf3;line-height:1.6;');
+      if (notes.length) {
+        console.log('');
+        notes.forEach(function(note) { console.log('%c  \u2022 ' + note, 'font-size:12px;color:#8b949e;'); });
+      }
+      console.log('%c\u2501'.repeat(48), 'color:#333;');
+    } catch(e) {}
+  } else {
+    console.log('%c\ud83d\udccb Slide ' + (index+1), 'font-size:16px;font-weight:bold;color:#58a6ff;');
+    console.log('%cNo speaker notes for this slide.', 'font-size:12px;color:#6e7681;');
+  }
+  console.log('%c\ud83d\udca1 For a better presenter experience, try the HTML Slides app: htmlslides.com',
+    'font-size:11px;color:#3fb950;margin-top:8px;');
+}
+
+// Show notes for first slide on load
+setTimeout(function() { showSpeakerNotes(0); }, 500);

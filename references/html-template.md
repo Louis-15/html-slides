@@ -23,7 +23,7 @@ Every generated HTML file **must** comply with these rules:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="html-slides v0.6.7">
+    <meta name="generator" content="html-slides v0.7.0">
     <title>Presentation Title</title>
 
     <!-- Fonts: use Fontshare or Google Fonts — never system fonts -->
@@ -403,14 +403,12 @@ Save processed images with `_processed` suffix. Never overwrite originals.
 
 Single presentations:
 ```
-presentation.html              # Self-contained, all CSS/JS inline
-presentation.notes.json        # Speaker notes (always generated)
+presentation.html              # Self-contained, all CSS/JS/speaker notes inline
 assets/                        # Images only, if any
 ```
 
 Multiple presentations in one project:
 ```
 [name].html
-[name].notes.json
 [name]-assets/
 ```

@@ -17,7 +17,7 @@ Check the HTML for these patterns to identify the source format.
 **Extraction:**
 - Each top-level `<section>` = one slide
 - Nested `<section>` elements = vertical slides (flatten into sequential slides)
-- Speaker notes in `<aside class="notes">` — preserve for `.notes.json`
+- Speaker notes in `<aside class="notes">` — preserve as inline `<script class="slide-notes">` blocks
 - Fragments (`class="fragment"`) — include all content (remove fragment animation)
 - Code blocks in `<pre><code>` — preserve language class for syntax highlighting
 - Backgrounds via `data-background` attributes — convert to CSS background on slide div

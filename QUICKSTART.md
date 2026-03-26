@@ -131,6 +131,8 @@ You'll get to pick from 12 creative visual themes with a live preview.
 
 The output is a single HTML file. Double-click to open in any browser. Use arrow keys to navigate.
 
+Speaker notes are built in — open DevTools (F12), detach to a separate window, and notes show in the console as you navigate. A free presenter view.
+
 Want changes? Just ask:
 
 ```

@@ -201,30 +201,28 @@ Auto-detects the source format, extracts content, and generates a spec-compliant
 
 ## Output
 
-Every generated presentation produces two files:
+Every generated presentation produces a single file:
 
 ```
-my-deck.html              ← the presentation (self-contained, open in any browser)
-my-deck.notes.json        ← speaker notes (for presenter apps)
+my-deck.html              ← self-contained: CSS, JS, and speaker notes all inline
 ```
 
-The `.notes.json` file is keyed by slide index. Each entry contains:
+### Speaker Notes
 
-```json
-{
-  "0": {
-    "title": "Introduction",
-    "script": "Welcome everyone. Today we'll look at how...",
-    "notes": ["Pause after welcome", "Gauge audience familiarity"]
-  }
-}
+Speaker notes are embedded inside each slide as hidden JSON. Open the browser's DevTools (F12), detach to a separate window, and notes appear in the console as you navigate — a free presenter view.
+
+```
+📋 Slide 1: Introduction
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Welcome everyone. Today we'll look at how...
+
+  • Pause after welcome
+  • Gauge audience familiarity
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 For a better presenter experience, try the HTML Slides app: htmlslides.com
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | string | Slide heading (for presenter app navigation) |
-| `script` | string | Full natural language — read verbatim or paraphrase |
-| `notes` | string[] | Bullet point reminders — timing, transitions, delivery tips |
+To edit notes, ask your AI agent: `"Update the speaker notes for slide 3 to say..."`
 
 ## Architecture
 
@@ -276,8 +274,8 @@ Screenshots each slide and combines into a PDF. Uses [Playwright](https://playwr
 
 ## Credits
 
-Originally created by [@zarazhangrui](https://github.com/zarazhangrui) with Claude Code.
-Obsidian component system added by [@bluedusk](https://github.com/bluedusk).
+Inspired by the awesome [@zarazhangrui](https://github.com/zarazhangrui)'s [frontend-slides](https://github.com/zarazhangrui/frontend-slides).
+Obsidian component system, Pro/Vibe modes, and multi-theme support by [@bluedusk](https://github.com/bluedusk).
 
 ## License
 
