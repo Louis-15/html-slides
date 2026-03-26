@@ -207,7 +207,7 @@ Framework navigation JS is **completely replaced**, not merged:
 
 3. **Replace with:**
    - Standard HTMLSlides navigation from [html-template.md](html-template.md) (for Vibe presets)
-   - Or [dark-interactive-nav.js](../assets/dark-interactive-nav.js) verbatim (for Pro mode)
+   - Or [slides-runtime.js](../assets/slides-runtime.js) verbatim (for Pro mode)
 
 ## Image Handling
 

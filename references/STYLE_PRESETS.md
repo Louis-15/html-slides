@@ -353,7 +353,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Rainbow gradient text for hero titles
 - Glow blob ambient lighting
 
-**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 13 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [dark-interactive-nav.js](../assets/dark-interactive-nav.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
+**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 13 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [slides-runtime.js](../assets/slides-runtime.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
 
 **Best for:** Technical presentations, developer talks, API/architecture overviews, and cases where deterministic output across different AI agents is more important than visual variety.
 

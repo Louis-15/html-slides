@@ -267,7 +267,7 @@ If images were provided, the slide outline already incorporates them from Step 1
 - [component-templates.md](references/component-templates.md) — HTML component templates with decision table
 - [components.css](assets/components.css) — Shared component CSS (copy verbatim into `<style>`)
 - Theme CSS from `assets/themes/` — copy verbatim into `<style>`, BEFORE components.css
-- [dark-interactive-nav.js](assets/dark-interactive-nav.js) — Navigation JS (copy verbatim into `<script>`)
+- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (copy verbatim into `<script>`)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Available Pro themes** (user specifies in prompt, default: Obsidian):
@@ -283,7 +283,7 @@ If images were provided, the slide outline already incorporates them from Step 1
 **Key requirements:**
 - Single self-contained HTML file, all CSS/JS inline
 - For Vibe mode: include the FULL contents of viewport-base.css in the `<style>` block
-- For Pro mode: include the chosen theme CSS + components.css in the `<style>` block, and dark-interactive-nav.js in the `<script>` block
+- For Pro mode: include the chosen theme CSS + components.css in the `<style>` block, and slides-runtime.js in the `<script>` block
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
@@ -497,7 +497,7 @@ Captures each slide as a screenshot and combines into a single PDF. Animations a
 | [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table | Phase 3 (Pro) |
 | [components.css](assets/components.css) | Shared component CSS for all Pro themes — copy verbatim | Phase 3 (Pro) |
 | [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one | Phase 3 (Pro) |
-| [dark-interactive-nav.js](assets/dark-interactive-nav.js) | Navigation JS — copy verbatim | Phase 3 (Pro) |
+| [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — copy verbatim | Phase 3 (Pro) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
 | [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 5 (HTML conversion) |
 | [scripts/deploy.sh](scripts/deploy.sh) | Deploy slides to Vercel for instant sharing | Phase 7 (sharing) |

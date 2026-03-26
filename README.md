@@ -238,7 +238,7 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Vibe) |
 | `assets/components.css` | Shared component CSS for all Pro themes | Phase 3 (Pro) |
 | `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
-| `assets/dark-interactive-nav.js` | Navigation JS + Chart.js integration | Phase 3 (Pro) |
+| `assets/slides-runtime.js` | Navigation JS + Chart.js integration | Phase 3 (Pro) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 | `scripts/deploy.sh` | Deploy to Vercel | Phase 7 (sharing) |

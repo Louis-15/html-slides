@@ -1,7 +1,9 @@
 /* ===========================================
-   DARK INTERACTIVE NAVIGATION
-   Copy this script into the <script> tag at the
-   end of <body> when using the Dark Interactive preset.
+   SLIDES RUNTIME
+   Shared by all Pro themes. Copy verbatim into
+   the <script> tag at the end of <body>.
+   Handles: particles, navigation, charts,
+   speaker notes console logging.
    =========================================== */
 
 // Particles
