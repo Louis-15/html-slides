@@ -213,7 +213,7 @@ if (typeof Chart !== 'undefined') {
 
 function showSpeakerNotes(index) {
   const slide = slides[index];
-  const notesEl = slide.querySelector('.slide-notes');
+  const notesEl = slide.querySelector('script.slide-notes') || slide.querySelector('[class="slide-notes"]');
   console.clear();
   if (notesEl) {
     try {
@@ -221,22 +221,23 @@ function showSpeakerNotes(index) {
       const title = n.title || 'Slide ' + (index + 1);
       const script = n.script || '';
       const notes = n.notes || [];
-      console.log('%c\ud83d\udccb Slide ' + (index+1) + ': ' + title,
+      console.group('%c\ud83d\udccb Slide ' + (index+1) + '/' + total + ': ' + title,
         'font-size:16px;font-weight:bold;color:#58a6ff;');
-      console.log('%c\u2501'.repeat(48), 'color:#333;');
-      if (script) console.log('%c' + script, 'font-size:14px;color:#e6edf3;line-height:1.6;');
+      if (script) console.log('%c' + script, 'font-size:14px;color:#e6edf3;line-height:1.6;padding:4px 0;');
       if (notes.length) {
-        console.log('');
+        console.log('%cKey points:', 'font-size:11px;color:#6e7681;margin-top:4px;');
         notes.forEach(function(note) { console.log('%c  \u2022 ' + note, 'font-size:12px;color:#8b949e;'); });
       }
-      console.log('%c\u2501'.repeat(48), 'color:#333;');
+      console.groupEnd();
     } catch(e) {}
   } else {
-    console.log('%c\ud83d\udccb Slide ' + (index+1), 'font-size:16px;font-weight:bold;color:#58a6ff;');
+    console.group('%c\ud83d\udccb Slide ' + (index+1) + '/' + total,
+      'font-size:16px;font-weight:bold;color:#58a6ff;');
     console.log('%cNo speaker notes for this slide.', 'font-size:12px;color:#6e7681;');
+    console.groupEnd();
   }
-  console.log('%c\ud83d\udca1 For a better presenter experience, try the HTML Slides app: htmlslides.com',
-    'font-size:11px;color:#3fb950;margin-top:8px;');
+  console.log('%c\ud83d\udca1 htmlslides.com — presenter app for a richer experience',
+    'font-size:10px;color:#3fb950;');
 }
 
 // Show notes for first slide on load
