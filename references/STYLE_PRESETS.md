@@ -312,20 +312,21 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 | Vintage Editorial | Fraunces | Work Sans | Google |
 | Neon Cyber | Clash Display | Satoshi | Fontshare |
 | Terminal Green | JetBrains Mono | JetBrains Mono | JetBrains |
-| Excalidraw Light | Virgil | Virgil / Caveat | Bundled / Google |
-| Excalidraw Dark | Virgil | Virgil / Caveat | Bundled / Google |
+| Obsidian | Inter | JetBrains Mono | Google / JetBrains |
+| Excalidraw Light | Caveat | Caveat | Google |
+| Excalidraw Dark | Caveat | Caveat | Google |
 | Editorial Light | Inter | Space Grotesk | Google |
 | Binary Architect | Space Grotesk | JetBrains Mono | Google / JetBrains |
 
 ---
 
-## Structured Themes
+## Additional Themes
 
 ### 13. Obsidian
 
-**Vibe:** Technical, polished, GitHub-dark aesthetic with interactive components
+**Vibe:** Technical, polished, GitHub-dark aesthetic
 
-**Layout:** Centered content on dark background. Floating particles. 11 structured component types.
+**Layout:** Centered content on dark background. Floating particles. Glow accents.
 
 **Typography:**
 - Display: `Inter` (700/800/900)
@@ -346,16 +347,14 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 ```
 
 **Signature Elements:**
-- 11 structured component templates (flip cards, expandable cards, code blocks, architecture flows, stats, timelines, comparisons, etc.)
-- Floating particle background
-- Interactive flip/expand animations on click
-- One Dark Pro syntax highlighting for code blocks
+- Floating particle background (CSS-animated dots)
+- One Dark Pro-inspired syntax highlighting for code blocks
 - Rainbow gradient text for hero titles
-- Glow blob ambient lighting
+- Glow blob ambient lighting (radial gradients)
+- Card surfaces with subtle borders and hover glow
+- Six accent colors for visual variety across slides
 
-**Special:** This preset uses a **structured component system** instead of creative interpretation. Read [component-templates.md](component-templates.md) for the 13 HTML templates, [dark-interactive.css](../assets/dark-interactive.css) for the complete CSS, and [slides-runtime.js](../assets/slides-runtime.js) for the navigation JS. Copy CSS and JS verbatim, use HTML templates as building blocks.
-
-**Best for:** Technical presentations, developer talks, API/architecture overviews, and cases where deterministic output across different AI agents is more important than visual variety.
+**Best for:** Technical presentations, developer talks, API/architecture overviews.
 
 ---
 
@@ -363,10 +362,10 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Hand-drawn, sketchy, whiteboard aesthetic inspired by excalidraw.com
 
-**Layout:** Same structured component system as Obsidian, but with a hand-drawn visual overlay on a white background.
+**Layout:** Centered content on white background. Sketch-style borders and fills.
 
 **Typography:**
-- Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
+- Body: `Caveat` (hand-drawn feel), cursive
 - Mono: `Cascadia Code`
 
 **Colors:**
@@ -385,13 +384,18 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 ```
 
 **Signature Elements:**
-- Hachure fill patterns on cards (single-direction diagonal lines at -37deg)
-- Offset drop shadows (hand-drawn feel)
-- Rounded corners (14px) on all components
-- Subdued glow blobs and particles for light background
-- Same 14 component templates as Obsidian
-
-**Special:** Uses the same component templates as Obsidian. Load [excalidraw.css](../assets/themes/excalidraw.css) as the theme CSS alongside the shared component CSS.
+- **CSS hachure fill patterns** on all card-like elements — two slightly offset diagonal line layers for a hand-drawn feel:
+  ```css
+  background:
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(25,113,194,0.12) 4px, rgba(25,113,194,0.12) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(25,113,194,0.08) 6px, rgba(25,113,194,0.08) 7px),
+    var(--bg-card);
+  ```
+  Vary the color per card using accent colors (orange, green, purple, etc.) at similar alpha values.
+- Offset drop shadows: `box-shadow: 3px 3px 0 rgba(0,0,0,0.1)` resting, `5px 5px 0 rgba(0,0,0,0.18)` on hover with `transform: translate(-2px, -2px)`
+- Rounded corners (14px) on all elements
+- CSS hachure fills and offset shadows handle the hand-drawn aesthetic — no JavaScript needed.
+- Subdued particles for light background
 
 **Best for:** Informal presentations, brainstorming sessions, educational content, whiteboard-style walkthroughs.
 
@@ -401,10 +405,10 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Hand-drawn, sketchy, whiteboard aesthetic on a dark background
 
-**Layout:** Same structured component system as Obsidian, with hand-drawn visual overlay on a dark background.
+**Layout:** Centered content on dark background. Sketch-style borders and fills.
 
 **Typography:**
-- Body: `Virgil` (Excalidraw's hand-drawn font), fallback `Caveat`, cursive
+- Body: `Caveat` (hand-drawn feel), cursive
 - Mono: `Cascadia Code`
 
 **Colors:**
@@ -423,13 +427,18 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 ```
 
 **Signature Elements:**
-- Hachure fill patterns on cards (single-direction diagonal lines at -37deg, tuned for dark bg)
-- Light offset drop shadows
-- Rounded corners (14px) on all components
+- **CSS hachure fill patterns** on all card-like elements — two offset diagonal line layers, tuned for dark backgrounds:
+  ```css
+  background:
+    repeating-linear-gradient(-37deg, transparent, transparent 4px, rgba(77,171,247,0.12) 4px, rgba(77,171,247,0.12) 5px),
+    repeating-linear-gradient(-41deg, transparent, transparent 6px, rgba(77,171,247,0.08) 6px, rgba(77,171,247,0.08) 7px),
+    var(--bg-card);
+  ```
+  Vary the color per card using accent colors at similar alpha values.
+- Light offset drop shadows: `box-shadow: 3px 3px 0 rgba(255,255,255,0.08)` resting, `5px 5px 0 rgba(255,255,255,0.12)` on hover
+- Rounded corners (14px) on all elements
+- CSS hachure fills and offset shadows handle the hand-drawn aesthetic — no JavaScript needed.
 - Subtle glow blobs and particles
-- Same 14 component templates as Obsidian
-
-**Special:** Uses the same component templates as Obsidian. Load [excalidraw-dark.css](../assets/themes/excalidraw-dark.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Informal presentations in dark mode, brainstorming sessions, educational content with a cozy feel.
 
@@ -439,7 +448,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Luminous, editorial, tech-forward minimalism — "The Lucid Gallery"
 
-**Layout:** Same structured component system as Obsidian, with an airy light-mode aesthetic. Elements float in generous white space with ambient shadows.
+**Layout:** Airy light-mode aesthetic. Elements float in generous white space with ambient shadows.
 
 **Typography:**
 - Display/Body: `Inter` (300–900) — tight letter-spacing (-0.02em) for headlines
@@ -469,9 +478,6 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Primary-to-container gradient accents (blue #0060aa → #58a6ff)
 - Code windows stay dark (editorial contrast against light canvas)
 - Surface hierarchy: surface → surface-container-low → surface-container-lowest
-- Same 14 component templates as Obsidian
-
-**Special:** Uses the same component templates as Obsidian. Load [editorial-light.css](../assets/themes/editorial-light.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Product launches, investor decks, design-forward technical presentations, any context where editorial polish matters.
 
@@ -481,7 +487,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Vibe:** Hacker-elite, organic brutalism, "command center" aesthetic
 
-**Layout:** Same structured component system as Obsidian, with sharp 0px corners, void-black canvas, and neon signal accents. 24px grid overlay.
+**Layout:** Void-black canvas with sharp corners and neon signal accents. 24px grid overlay.
 
 **Typography:**
 - Display: `Space Grotesk` (500–700) — all-caps, +0.05em letter-spacing ("System Headers")
@@ -512,9 +518,6 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 - Ghost borders (outline-variant at 20% opacity)
 - Monospaced body text throughout (JetBrains Mono)
 - All headings uppercase with letter-spacing
-- Same 14 component templates as Obsidian
-
-**Special:** Uses the same component templates as Obsidian. Load [binary-architect.css](../assets/themes/binary-architect.css) as the theme CSS alongside the shared component CSS.
 
 **Best for:** Developer talks, security/infosec presentations, CLI tool demos, anything where a terminal/hacker aesthetic fits the content.
 

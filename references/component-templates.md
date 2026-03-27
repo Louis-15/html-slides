@@ -1,51 +1,10 @@
-# Component Templates Reference
+# Component Style Reference
 
-Structured, copy-ready HTML component templates for building slide presentations with deterministic output. Use these when you need reliable, interactive slide components rather than creative interpretation.
+Pre-built, copy-ready HTML/CSS patterns for common slide elements. These provide **consistent styling** — not a menu to pick from.
 
-## When to Use Component Templates
+## How to Use This File
 
-Use these templates when:
-- You need **deterministic, consistent output** across different AI agents
-- The content fits naturally into one of the 14 component types below
-- You want interactive elements (flip cards, expandable cards, code blocks)
-
-For more creative, style-diverse presentations, use the style presets in [STYLE_PRESETS.md](STYLE_PRESETS.md) instead.
-
----
-
-## Content-to-Component Decision Table
-
-Use this table to pick the right component for each piece of content:
-
-| Content Pattern | Best Component | Why |
-|---|---|---|
-| Opening / title / author | **Title Slide** | Sets the topic and tone |
-| Bold statement or key insight | **Statement Slide** | Large centered text with glow |
-| 4 related concepts/features | **Flip Cards** | Each gets a front (summary) + back (detail) |
-| 2 things being compared | **VS/Comparison** | Side-by-side with visual contrast |
-| 3-step process or pipeline | **Architecture Flow** | Boxes with arrows show flow |
-| Code example, config, or API | **Code Block** | Syntax-highlighted macOS terminal |
-| Good vs bad / before vs after | **Auth Flip Compare** | Two large flip cards with red/green |
-| 3 metrics or numbers | **Stats Cards** | Large bouncing numbers with labels |
-| 4 items with hidden details | **Expandable Cards** | Click to reveal hidden content |
-| 3-6 status items or timeline | **Status Timeline** | Vertical list with colored dots |
-| Data visualization, trends, distributions | **Chart** | Canvas-rendered Chart.js with automatic theming |
-| Structured data, comparisons, specs | **Table** | Styled rows with hover and highlights |
-| Single image, screenshot, diagram, photo | **Image Slide** | Heading + image with optional caption |
-| Resources, links, next steps | **CTA Box** | Gradient box with bullet list |
-
-## Recommended Slide Narrative Structure
-
-| Slide Position | Purpose | Recommended Component |
-|---|---|---|
-| 1 | **Title** — topic + author | Title Slide (always) |
-| 2 | **Hook** — dramatic statement or question | Statement Slide |
-| 3-4 | **Problem** — what's broken/missing | Flip Cards or Statement |
-| 5-6 | **Solution** — introduce the answer | VS/Comparison or Architecture |
-| 7-9 | **Evidence** — show how it works | Code Block, Stats, Chart, Table, Image Slide, Expandable Cards |
-| 10-11 | **Depth** — deeper details or comparison | Auth Flip Compare, Status Timeline |
-| 12-13 | **Impact** — results, metrics, outcomes | Stats Cards or Statement |
-| Last | **CTA** — resources and next steps | CTA Box (always) |
+Design each slide based on what the content needs. When your design calls for one of these common elements, reference the template below for consistent styling. You are **not limited to these patterns** — create any custom HTML/CSS that serves the content.
 
 ---
 

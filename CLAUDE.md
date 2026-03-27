@@ -1,5 +1,9 @@
 # Project Instructions
 
+## Upstream Dependency
+
+This project (html-slides) builds on top of **frontend-slides** (https://github.com/zarazhangrui/frontend-slides), a third-party Claude Code plugin for generating HTML presentations. We extend it with content-driven design, additional CDN libraries (Mermaid.js, anime.js), and improved style discovery. The upstream project's files (viewport-base.css, components.css, slides-runtime.js, theme CSS, component-templates.md, html-template.md, STYLE_PRESETS.md) should not be modified unless fixing a confirmed upstream bug.
+
 ## Version Bumps
 
 See [RELEASE.md](RELEASE.md) for the release process. Version must be updated in **all 4 locations** simultaneously — never update just one:

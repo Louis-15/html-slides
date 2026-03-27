@@ -1,7 +1,7 @@
 ---
 name: html-slides
 metadata:
-  version: "0.7.1"
+  version: "0.8.0"
   author: danzhu
 description: Generate polished single-file HTML slide presentations with interactive components (flip cards, charts, tables, code blocks, architecture flows, stats, timelines, and more) or creative visual themes. Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
 ---
@@ -19,7 +19,8 @@ This skill is optimized for **Claude Code** and uses `AskUserQuestion` for inter
 1. **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools.
 2. **Show, Don't Tell** — Generate visual previews, not abstract choices. People discover what they want by seeing it.
 3. **Distinctive Design** — No generic "AI slop." Every presentation must feel custom-crafted.
-4. **Viewport Fitting (NON-NEGOTIABLE)** — Every slide MUST fit exactly within 100vh. No scrolling within slides, ever. Content overflows? Split into multiple slides.
+4. **Content-Driven Design** — The content decides the visual treatment. Design each slide based on what it's communicating, not by cycling through a component catalog.
+5. **Viewport Fitting (NON-NEGOTIABLE)** — Every slide MUST fit exactly within 100vh. No scrolling within slides, ever. Content overflows? Split into multiple slides.
 
 ## Design Aesthetics
 
@@ -101,7 +102,7 @@ When modifying existing presentations, make **minimal changes** — only touch w
 3. First slide has `class="slide active"`, no other slide has `active`
 4. Global `goTo()`, `next()`, `prev()` functions exist
 5. All CSS inline (except font imports)
-6. All JS inline (except Chart.js CDN)
+6. All JS inline (except CDN libraries: Chart.js, Mermaid, anime.js)
 7. No broken numbering gaps after insertions or deletions
 8. `<meta name="generator" content="html-slides vX.Y.Z">` exists in `<head>`
 
@@ -142,7 +143,6 @@ Do you need to edit text directly in the browser after generation? Options:
 - **Obsidian (default)** — Dark background, blue/green/orange accents
 - **Excalidraw Light** — Hand-drawn, white background, sketch borders
 - **Excalidraw Dark** — Hand-drawn, dark background, sketch borders
-- **Editorial Light** — Luminous, editorial, tech-forward minimalism
 - **Binary Architect** — Hacker-elite, sharp corners, neon on void-black
 
 If the user already specified a theme in their prompt, skip Question 3 and use that theme. If no preference, default to Obsidian.
@@ -228,23 +228,40 @@ What feeling should the audience have? Options:
 - Calm/Focused — Clear, thoughtful
 - Inspired/Moved — Emotional, memorable
 
-### Step 2B.5: Generate 3 Style Previews
+### Step 2B.5: Show Matching Presets
 
-Based on mood, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
+Based on mood, show matching presets as a **numbered text list** in chat. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
 
-| Mood | Suggested Presets |
-|------|-------------------|
-| Impressed/Confident | Bold Signal, Electric Studio, Dark Botanical |
-| Excited/Energized | Creative Voltage, Neon Cyber, Split Pastel |
-| Calm/Focused | Notebook Tabs, Paper & Ink, Swiss Modern |
-| Inspired/Moved | Dark Botanical, Vintage Editorial, Pastel Geometry |
+**Impressed / Confident:**
+1. Obsidian — Dark, glowing, GitHub-dark aesthetic
+2. Bold Signal — Confident, high-impact colored cards on dark
+3. Electric Studio — Clean, high contrast split panels
+4. Dark Botanical — Elegant, sophisticated, warm accents
+5. Editorial Light — Luminous, editorial, tech-forward
 
-Save previews to `.claude-design/slide-previews/` (style-a.html, style-b.html, style-c.html). Each should be self-contained, ~50-100 lines, showing one animated title slide.
+**Excited / Energized:**
+1. Creative Voltage — Retro-modern, electric blue + neon yellow
+2. Neon Cyber — Futuristic, particles, cyan/magenta
+3. Binary Architect — Hacker-elite, sharp corners, neon on black
+4. Terminal Green — Developer-focused, scan lines, cursor
+5. Split Pastel — Playful, two-color vertical split
 
-Open each preview automatically for the user.
+**Calm / Focused:**
+1. Notebook Tabs — Editorial, organized, paper tabs
+2. Paper & Ink — Literary, thoughtful, drop caps
+3. Swiss Modern — Bauhaus-inspired, precise grid
+4. Excalidraw Light — Hand-drawn, whiteboard feel
+5. Pastel Geometry — Friendly, rounded, approachable
 
-Ask (header: "Style"):
-Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / Style C: [Name] / Mix elements
+**Inspired / Moved:**
+1. Dark Botanical — Elegant, artistic, premium
+2. Vintage Editorial — Witty, personality-driven
+3. Excalidraw Dark — Hand-drawn, cozy dark mode
+4. Pastel Geometry — Warm, approachable
+
+Tell the user to type a number to select, or "preview N" to see a sample first.
+
+If the user asks for a preview, generate a single-slide HTML preview of that preset, save to `.claude-design/slide-previews/`, and open it.
 
 If "Mix elements", ask for specifics.
 
@@ -256,18 +273,35 @@ Generate the full presentation using content from Phase 1 (text, or text + curat
 
 If images were provided, the slide outline already incorporates them from Step 1.2. If not, CSS-generated visuals (gradients, shapes, patterns) provide visual interest — this is a fully supported first-class path.
 
+### Content Analysis (Pro and Vibe)
+
+Before writing any HTML, analyze the content and plan each slide. For each slide, determine:
+
+1. **Purpose** — What is this slide communicating?
+2. **Content elements** — What specific content goes on this slide?
+3. **Visual treatment** — What's the best way to present this visually?
+
+**Key principle:** If two slides have similar content (e.g., four roadmap themes each with status items), do NOT give them all the same treatment. Vary the visual approach — different layouts, different component types, different visual metaphors. Repetition kills engagement.
+
+**This analysis is internal — do not present the plan to the user.**
+
+### Supporting Files
+
 **Before generating, read these supporting files based on the chosen style:**
 
 **For creative presets (presets 1-12):**
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [viewport-base.css](assets/viewport-base.css) — Mandatory CSS (include in full)
 - [animation-patterns.md](references/animation-patterns.md) — Animation reference for the chosen feeling
+- [libraries.md](references/libraries.md) — CDN libraries for diagrams and animations (use when content needs them)
 
 **For Pro mode (structured component mode):**
-- [component-templates.md](references/component-templates.md) — HTML component templates with decision table
+- [component-templates.md](references/component-templates.md) — Component style reference for charts, code blocks, cards, tables, images. Use as a **styling guide** when your design calls for these elements — not a menu to cycle through.
 - [components.css](assets/components.css) — Shared component CSS (copy verbatim into `<style>`)
 - Theme CSS from `assets/themes/` — copy verbatim into `<style>`, BEFORE components.css
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (copy verbatim into `<script>`)
+- **Excalidraw themes** use CSS-only for the hand-drawn aesthetic. The theme CSS (excalidraw.css / excalidraw-dark.css) handles hachure fills, offset shadows, and rounded corners entirely with CSS — no JavaScript needed.
+- [libraries.md](references/libraries.md) — CDN libraries for diagrams (Mermaid.js), orchestrated animations (anime.js). Use when the content calls for them.
 - If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Available Pro themes** (user specifies in prompt, default: Obsidian):
@@ -282,7 +316,7 @@ If images were provided, the slide outline already incorporates them from Step 1
 
 **Key requirements:**
 - Single self-contained HTML file, all CSS/JS inline
-- For Vibe mode: include the FULL contents of viewport-base.css in the `<style>` block
+- For Vibe mode: include the FULL contents of viewport-base.css in the `<style>` block. **CRITICAL: Do NOT redefine `.slide` positioning or layout after pasting viewport-base.css** — it already defines `.slide` with `position: relative`, `scroll-snap-align`, and flex layout. Adding a second `.slide { position: absolute; opacity: 0; }` will conflict and cause blank or overlapping slides. Only add visual styles (colors, backgrounds, typography, animations) on top.
 - For Pro mode: include the chosen theme CSS + components.css in the `<style>` block, and slides-runtime.js in the `<script>` block
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
@@ -418,7 +452,7 @@ Same as Phase 1 — ask Vibe or Pro. Default to Pro. Then follow Phase 2A or 2B 
 
 ### Step 5.4: Generate
 
-Same as Phase 3 — read the appropriate supporting files and generate. For Pro mode, map extracted content to components using the decision table in component-templates.md.
+Same as Phase 3 — read the appropriate supporting files and generate. Design each slide based on its content, using component templates as a style reference when they fit.
 
 Always embed inline speaker notes in each slide. If the source had speaker notes, preserve them as inline `<script class="slide-notes">` blocks.
 
@@ -494,10 +528,12 @@ Captures each slide as a screenshot and combines into a single PDF. Animations a
 | [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
-| [component-templates.md](references/component-templates.md) | Structured HTML component templates with decision table | Phase 3 (Pro) |
+| [component-templates.md](references/component-templates.md) | Component style reference — use when your design calls for these elements | Phase 3 (Pro) |
 | [components.css](assets/components.css) | Shared component CSS for all Pro themes — copy verbatim | Phase 3 (Pro) |
 | [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one | Phase 3 (Pro) |
 | [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — copy verbatim | Phase 3 (Pro) |
+| [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js (diagrams), anime.js (animations), Chart.js (charts) | Phase 3 (when content needs them) |
+| [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 8 validation rules, navigation | Phase 3 (reference) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
 | [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 5 (HTML conversion) |
 | [scripts/deploy.sh](scripts/deploy.sh) | Deploy slides to Vercel for instant sharing | Phase 7 (sharing) |

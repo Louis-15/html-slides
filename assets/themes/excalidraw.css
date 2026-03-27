@@ -57,7 +57,7 @@
   border-radius: 14px !important;
 }
 
-/* All card-like elements: sketch borders + rough filter */
+/* All card-like elements: no hard border, offset shadow provides edge definition */
 .flip-front, .flip-back,
 .card-v2,
 .stat-card,
@@ -70,15 +70,6 @@
 .cta-box {
   border: none !important;
   position: relative;
-}
-
-/* Rough.js SVG overlay */
-.rough-border {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  overflow: visible;
 }
 
 /* Hachure fill — two slightly offset angles for hand-drawn feel */

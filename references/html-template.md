@@ -1,6 +1,6 @@
 # HTML Presentation Template
 
-Reference architecture for generating slide presentations. **All presets (Vibe and Pro) must follow this structure.** This ensures every generated presentation passes the spec validator.
+Reference architecture for generating slide presentations. **All presets must follow this structure.** This ensures every generated presentation passes the spec validator.
 
 ## Output Format Spec (Mandatory)
 
@@ -23,7 +23,7 @@ Every generated HTML file **must** comply with these rules:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="html-slides v0.7.1">
+    <meta name="generator" content="html-slides v0.8.0">
     <title>Presentation Title</title>
 
     <!-- Fonts: use Fontshare or Google Fonts — never system fonts -->
@@ -68,20 +68,9 @@ Every generated HTML file **must** comply with these rules:
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         /* --- PASTE viewport-base.css CONTENTS HERE --- */
-
-        /* Deck & Slides — stacked, absolute positioned */
-        .deck { position: relative; width: 100vw; height: 100vh; }
-
-        .slide {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            padding: var(--slide-padding);
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.45s cubic-bezier(.4,0,.2,1);
-            overflow: hidden;
-        }
-        .slide.active { opacity: 1; pointer-events: auto; }
+        /* viewport-base.css defines .slide layout (position, sizing, scroll-snap).
+           Do NOT redefine .slide positioning or display here — it will conflict.
+           Only add preset-specific visual styles below. */
 
         /* ===========================================
            ANIMATIONS
@@ -143,6 +132,7 @@ Every generated HTML file **must** comply with these rules:
             slides.forEach(function(s, i) {
                 s.classList.toggle('active', i === current);
             });
+            slides[current].scrollIntoView({ behavior: 'smooth' });
             updateUI();
             showSpeakerNotes(current);
         }

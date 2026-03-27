@@ -2,8 +2,9 @@
 
 **Author:** HTML Slides Team
 **Purpose:** Product introduction / launch deck
-**Style:** Obsidian (preset 14 — use all 14 component templates)
-**Length:** 24 slides
+**Style:** Obsidian (Pro mode — use all 14 component templates + CDN libraries)
+**Length:** 31 slides
+**Note:** Excalidraw hand-drawn aesthetic is CSS-only — test it in a separate Excalidraw-themed presentation (see vibe-presets.md).
 
 ---
 
@@ -278,3 +279,145 @@ Caption: "Designed for AI agents"
 
 Image: `assets/hero.jpg` (full-bleed variant — background image with text overlay)
 Subtitle: "One file. Every screen. No dependencies."
+
+---
+
+## Slide 25 — Mermaid Diagram (Library: Mermaid.js)
+
+**Tag:** Architecture
+**Heading:** How AI Agents Use HTML Slides
+
+Mermaid flowchart (LR):
+```
+graph LR
+  A[User Prompt] --> B[AI Agent]
+  B --> C[Read SKILL.md]
+  C --> D{Pro or Vibe?}
+  D -->|Pro| E[Theme CSS + Components]
+  D -->|Vibe| F[Style Preset + Custom CSS]
+  E --> G[Generate HTML]
+  F --> G
+  G --> H[Open in Browser]
+```
+
+Use the zoomable lightbox pattern from libraries.md so the diagram can be clicked to enlarge.
+
+---
+
+## Slide 26 — Mermaid Sequence Diagram (Library: Mermaid.js)
+
+**Tag:** Protocol
+**Heading:** MCP Client-Server Handshake
+
+Mermaid sequence diagram:
+```
+sequenceDiagram
+  participant H as Host
+  participant C as Client
+  participant S as Server
+  H->>C: Create client
+  C->>S: initialize request
+  S-->>C: capabilities response
+  C->>S: tools/list
+  S-->>C: available tools
+  C->>S: tools/call
+  S-->>C: result
+```
+
+---
+
+## Slide 27 — Mermaid State Diagram (Library: Mermaid.js)
+
+**Tag:** Lifecycle
+**Heading:** Presentation States
+
+Mermaid state diagram:
+```
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Generating : AI agent starts
+  Generating --> Review : HTML complete
+  Review --> Editing : user edits
+  Review --> Published : deploy
+  Editing --> Review : save
+  Published --> [*]
+```
+
+---
+
+## Slide 28 — Mermaid ER Diagram (Library: Mermaid.js)
+
+**Tag:** Data Model
+**Heading:** Skill Plugin Schema
+
+Mermaid ER diagram:
+```
+erDiagram
+  PLUGIN ||--o{ SKILL : contains
+  PLUGIN ||--o{ COMMAND : contains
+  PLUGIN ||--o{ AGENT : contains
+  SKILL { string name PK }
+  COMMAND { string name PK }
+  AGENT { string name PK }
+  PLUGIN { string version }
+```
+
+---
+
+## Slide 29 — Mermaid Mind Map (Library: Mermaid.js)
+
+**Tag:** Overview
+**Heading:** HTML Slides Ecosystem
+
+Mermaid mind map:
+```
+mindmap
+  root((HTML Slides))
+    Modes
+      Pro
+      Vibe
+    Themes
+      Obsidian
+      Excalidraw
+      Editorial
+      Binary Architect
+    Libraries
+      Chart.js
+      Mermaid.js
+    Agents
+      Claude Code
+      Gemini CLI
+      Copilot
+```
+
+---
+
+## Slide 30 — anime.js Staggered Entrance (Library: anime.js)
+
+**Tag:** Animation
+**Heading:** Orchestrated Reveal
+
+Six feature cards that enter with staggered timing using anime.js:
+- Card 1: "Zero Dependencies" (delay: 200ms)
+- Card 2: "AI-Native" (delay: 280ms)
+- Card 3: "14 Components" (delay: 360ms)
+- Card 4: "5 Themes" (delay: 440ms)
+- Card 5: "Speaker Notes" (delay: 520ms)
+- Card 6: "PDF Export" (delay: 600ms)
+
+Use anime.js stagger pattern from libraries.md with `easeOutCubic` easing. Include `prefers-reduced-motion` fallback.
+
+---
+
+## Slide 31 — anime.js Count-Up Stats (Library: anime.js)
+
+**Tag:** Metrics
+**Heading:** Platform Scale
+
+Three numbers that count up from 0 using anime.js:
+- "2,400" — Presentations generated (count from 0 to 2400, duration: 1200ms)
+- "17" — Style presets (count from 0 to 17, duration: 800ms)
+- "98%" — User satisfaction (count from 0 to 98, duration: 1000ms)
+
+Use anime.js count-up pattern from libraries.md with `easeOutExpo` easing.
+
