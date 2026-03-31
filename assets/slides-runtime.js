@@ -223,25 +223,28 @@ function showSpeakerNotes(index) {
       const title = n.title || 'Slide ' + (index + 1);
       const script = n.script || '';
       const notes = n.notes || [];
-      console.group('%c\ud83d\udccb Slide ' + (index+1) + '/' + total + ': ' + title,
-        'font-size:16px;font-weight:bold;color:#58a6ff;');
-      if (script) console.log('%c' + script, 'font-size:14px;color:#e6edf3;line-height:1.6;padding:4px 0;');
-      if (notes.length) {
-        console.log('%cKey points:', 'font-size:11px;color:#6e7681;margin-top:4px;');
-        notes.forEach(function(note) { console.log('%c  \u2022 ' + note, 'font-size:12px;color:#8b949e;'); });
+      var parts = ['\n%c\ud83d\udccb Slide ' + (index+1) + '/' + total + ': ' + title + '\n'];
+      var styles = ['font-size:16px;font-weight:bold;color:#2563eb;'];
+      if (script) {
+        parts.push('\n%c' + script + '\n');
+        styles.push('font-size:14px;color:#d97706;line-height:1.6;');
       }
-      console.groupEnd();
+      if (notes.length) {
+        notes.forEach(function(note) {
+          parts.push('\n  %c\u2022%c ' + note);
+          styles.push('color:#16a34a;font-size:14px;');
+          styles.push('color:#16a34a;font-size:14px;');
+        });
+        parts.push('\n');
+      }
+      parts.push('\n\n\n\n%cUse HTMLSlides presenter app for notes editing and more features.\nhtmlslides.com\n');
+      styles.push('font-size:10px;color:#9ca3af;');
+      console.log.apply(console, [parts.join('')].concat(styles));
     } catch(e) {}
   } else {
-    console.group('%c\ud83d\udccb Slide ' + (index+1) + '/' + total,
-      'font-size:16px;font-weight:bold;color:#58a6ff;');
-    console.log('%cNo speaker notes for this slide.', 'font-size:12px;color:#6e7681;');
-    console.groupEnd();
+    console.log('%c\ud83d\udccb Slide ' + (index+1) + '/' + total + '\n\n%cNo speaker notes for this slide.',
+      'font-size:16px;font-weight:bold;color:#2563eb;', 'font-size:12px;color:#9ca3af;');
   }
-  console.log('%c\ud83d\udca1 htmlslides.com — presenter app for a richer experience',
-    'font-size:10px;color:#3fb950;');
-  console.log('%c\u270f\ufe0f  Want to update the notes? See htmlslides.com/blog/update-inline-notes.html',
-    'font-size:10px;color:#8b949e;');
 }
 
 // Show notes for first slide on load
