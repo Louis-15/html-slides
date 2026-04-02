@@ -228,42 +228,30 @@ What feeling should the audience have? Options:
 - Calm/Focused — Clear, thoughtful
 - Inspired/Moved — Emotional, memorable
 
-### Step 2B.5: Show Matching Presets
+### Step 2B.5: Preview Matching Presets
 
-Based on mood, show matching presets as a **numbered text list** in chat. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
+**Show, don't tell.** Instead of listing preset names, generate visual previews.
 
-**Impressed / Confident:**
-1. Obsidian — Dark, glowing, GitHub-dark aesthetic
-2. Bold Signal — Confident, high-impact colored cards on dark
-3. Electric Studio — Clean, high contrast split panels
-4. Dark Botanical — Elegant, sophisticated, warm accents
-5. Editorial Light — Luminous, editorial, tech-forward
+1. Read [STYLE_PRESETS.md](references/STYLE_PRESETS.md) for available presets and their specifications.
+2. From the mood-matched presets below, **randomly pick 3** and generate a single-slide HTML preview for each. Save previews to `.claude-design/slide-previews/` and open them.
+3. Ask the user to pick one (header: "Pick a Style"):
+   - Options: "1" / "2" / "3" / "Show 3 more" / "I know what I want"
 
-**Excited / Energized:**
-1. Creative Voltage — Retro-modern, electric blue + neon yellow
-2. Neon Cyber — Futuristic, particles, cyan/magenta
-3. Binary Architect — Hacker-elite, sharp corners, neon on black
-4. Terminal Green — Developer-focused, scan lines, cursor
-5. Split Pastel — Playful, two-color vertical split
+**Mood → Preset Pool:**
 
-**Calm / Focused:**
-1. Notebook Tabs — Editorial, organized, paper tabs
-2. Paper & Ink — Literary, thoughtful, drop caps
-3. Swiss Modern — Bauhaus-inspired, precise grid
-4. Excalidraw Light — Hand-drawn, whiteboard feel
-5. Pastel Geometry — Friendly, rounded, approachable
+**Impressed / Confident:** Obsidian, Bold Signal, Electric Studio, Dark Botanical, Editorial Light
 
-**Inspired / Moved:**
-1. Dark Botanical — Elegant, artistic, premium
-2. Vintage Editorial — Witty, personality-driven
-3. Excalidraw Dark — Hand-drawn, cozy dark mode
-4. Pastel Geometry — Warm, approachable
+**Excited / Energized:** Creative Voltage, Neon Cyber, Binary Architect, Terminal Green, Split Pastel
 
-Tell the user to type a number to select, or "preview N" to see a sample first.
+**Calm / Focused:** Notebook Tabs, Paper & Ink, Swiss Modern, Excalidraw Light, Pastel Geometry
 
-If the user asks for a preview, generate a single-slide HTML preview of that preset, save to `.claude-design/slide-previews/`, and open it.
+**Inspired / Moved:** Dark Botanical, Vintage Editorial, Excalidraw Dark, Pastel Geometry
 
-If "Mix elements", ask for specifics.
+If "Show 3 more" — pick 3 different presets from the same pool (avoid repeats from previous round). If the pool is exhausted, show remaining presets.
+
+If "I know what I want" — show the full preset list for their mood category and let them pick by name.
+
+If "Mix elements" — ask for specifics.
 
 ---
 
