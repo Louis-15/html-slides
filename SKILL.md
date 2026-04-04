@@ -1,7 +1,7 @@
 ---
 name: html-slides
 metadata:
-  version: "0.9.3"
+  version: "0.9.4"
   author: danzhu
 description: Generate polished single-file HTML slide presentations with interactive components (flip cards, charts, tables, code blocks, architecture flows, stats, timelines, and more) or creative visual themes. Use this skill whenever the user wants to create slides, presentations, decks, or any visual slide-based content as HTML. Also trigger when the user invokes /html-slides or mentions creating an HTML presentation, pitch deck, or slide deck.
 ---
@@ -112,12 +112,12 @@ When modifying existing presentations, make **minimal changes** — only touch w
 
 ## Phase 1: Choose Mode
 
-**If the user has not specified a mode, default to Pro.**
+**Always ask the user to choose a mode** unless they already specified one (or a specific theme) in their prompt.
 
 Ask which mode they want (header: "Mode"):
 
-- **Pro (Recommended)** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, image slides, and more. Multiple themes available. Supports user-provided images. Best for technical talks, product demos, and data-rich presentations.
 - **Vibe** (Creative themes) — AI interprets your content freely with distinctive visual styles. Best for pitch decks, keynotes, and non-technical presentations.
+- **Pro** — Structured interactive components: flip cards, charts, tables, code blocks, architecture flows, image slides, and more. Multiple themes available. Supports user-provided images. Best for technical talks, product demos, and data-rich presentations.
 
 If the user already specified a mode or theme in their prompt, skip this question.
 
