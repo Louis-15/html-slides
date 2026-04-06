@@ -56,11 +56,11 @@
     function getCurrentSlideIndex() {
         var slides = getAllSlides();
         if (!slides || slides.length === 0) return 0;
-        
+
         var bestIndex = 0;
         var minDistance = Infinity;
         var centerY = window.innerHeight / 2;
-        
+
         for (var i = 0; i < slides.length; i++) {
             var rect = slides[i].getBoundingClientRect();
             var slideCenter = rect.top + rect.height / 2;
@@ -370,7 +370,7 @@
             // ====== 生死劫修复：暴力清理从 innerHTML (撤销操作/重水化) 恢复回来的死节点 ======
             if (target && target.querySelectorAll) {
                 var zombies = target.querySelectorAll('.box-controls, .rs-handle');
-                zombies.forEach(function(node) { node.remove(); });
+                zombies.forEach(function (node) { node.remove(); });
             }
 
             // td 元素不注入（表格单元格拖不动）
@@ -392,7 +392,7 @@
             var isResizable = (wrap && wrap.classList.contains('image-box')) || (el.tagName === 'IMG');
             if (isResizable && target && !target.querySelector('.rs-se')) {
                 var corners = ['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'];
-                corners.forEach(function(dir) {
+                corners.forEach(function (dir) {
                     var r = document.createElement('div');
                     r.className = 'rs-handle rs-' + dir;
                     r.setAttribute('data-dir', dir);
@@ -471,13 +471,13 @@
         },
 
         /** 专门绑定 8 点缩放逻辑 */
-        _bindResize: function(handle, target) {
+        _bindResize: function (handle, target) {
             var rsState = null;
-            handle.addEventListener('pointerdown', function(e) {
+            handle.addEventListener('pointerdown', function (e) {
                 if (!window.editorCore || !window.editorCore.isActive) return;
                 e.preventDefault(); e.stopPropagation();
                 handle.setPointerCapture(e.pointerId);
-                
+
                 // 缩放前定死原有的位置，使其脱离 flex 布局的流式计算（针对原生图片外壳）
                 var cs = window.getComputedStyle(target);
                 if (cs.position === 'static') target.style.position = 'relative';
@@ -486,7 +486,7 @@
                 target.style.maxWidth = 'none';
                 target.style.maxHeight = 'none';
                 target.style.flexShrink = '0';
-                
+
                 // 设置内部图片充满框架，防止外壳缩放但图片不跟着走
                 var innerImg = target.querySelector('img.slide-image');
                 if (innerImg) {
@@ -508,16 +508,16 @@
                 };
             });
 
-            handle.addEventListener('pointermove', function(e) {
+            handle.addEventListener('pointermove', function (e) {
                 if (!rsState) return;
                 var dx = e.clientX - rsState.startX;
                 var dy = e.clientY - rsState.startY;
                 var t = rsState.target;
-                
+
                 // 右与下，只改宽高
                 if (rsState.dir.indexOf('e') > -1) t.style.width = Math.max(20, rsState.w + dx) + 'px';
                 if (rsState.dir.indexOf('s') > -1) t.style.height = Math.max(20, rsState.h + dy) + 'px';
-                
+
                 // 左与上，根据原本的相对基座进行抵消反推，防止位置跳跃
                 if (rsState.dir.indexOf('w') > -1) {
                     var pw = Math.max(20, rsState.w - dx);
@@ -529,7 +529,7 @@
                 }
             });
 
-            handle.addEventListener('pointerup', function() {
+            handle.addEventListener('pointerup', function () {
                 if (!rsState) return;
                 rsState = null;
                 // 更新两种可能受影响的缓存
@@ -630,7 +630,7 @@
 
             // Resize 事件极难直接监听，故利用 MutationObserver 或者直接在 moseup 里顺带持久化
             if (typeof ResizeObserver !== 'undefined') {
-                var ro = new ResizeObserver(function() {
+                var ro = new ResizeObserver(function () {
                     if (window.editorCore && window.editorCore.isActive) {
                         PersistenceLayer.saveCustomBoxes();
                     }
@@ -651,7 +651,7 @@
                 var editArea = wrap.querySelector('[data-edit-id]');
                 if (!editArea) return;
                 if (editArea.tagName === 'IMG' && typeof ResizeObserver !== 'undefined') {
-                    var ro = new ResizeObserver(function() {
+                    var ro = new ResizeObserver(function () {
                         if (window.editorCore && window.editorCore.isActive) {
                             PersistenceLayer.saveCustomBoxes();
                         }
@@ -675,22 +675,42 @@
     var RichTextToolbar = {
         savedRange: null,
 
-        /** 可选字体列表（源自 STYLE_PRESETS.md 推荐，禁用 Inter/Arial 等 AI 泛型字体） */
-        FONTS: [
-            { name: 'Space Grotesk', family: "'Space Grotesk', sans-serif" },
-            { name: 'Manrope', family: "'Manrope', sans-serif" },
-            { name: 'Plus Jakarta Sans', family: "'Plus Jakarta Sans', sans-serif" },
-            { name: 'Outfit', family: "'Outfit', sans-serif" },
-            { name: 'DM Sans', family: "'DM Sans', sans-serif" },
-            { name: 'Work Sans', family: "'Work Sans', sans-serif" },
-            { name: 'IBM Plex Sans', family: "'IBM Plex Sans', sans-serif" },
-            { name: 'Syne', family: "'Syne', sans-serif" },
-            { name: 'Archivo', family: "'Archivo', sans-serif" },
-            { name: 'Cormorant', family: "'Cormorant', serif" },
-            { name: 'Bodoni Moda', family: "'Bodoni Moda', serif" },
-            { name: 'Fraunces', family: "'Fraunces', serif" },
-            { name: 'JetBrains Mono', family: "'JetBrains Mono', monospace" },
-            { name: 'Space Mono', family: "'Space Mono', monospace" }
+        /** 可选字体列表（英文框） */
+        FONTS_ENG: [
+            { name: 'Space Grotesk', family: "'Space Grotesk'" },
+            { name: 'Manrope', family: "'Manrope'" },
+            { name: 'Plus Jakarta Sans', family: "'Plus Jakarta Sans'" },
+            { name: 'Outfit', family: "'Outfit'" },
+            { name: 'DM Sans', family: "'DM Sans'" },
+            { name: 'Work Sans', family: "'Work Sans'" },
+            { name: 'IBM Plex Sans', family: "'IBM Plex Sans'" },
+            { name: 'Syne', family: "'Syne'" },
+            { name: 'Archivo', family: "'Archivo'" },
+            { name: 'Cormorant', family: "'Cormorant'" },
+            { name: 'Bodoni Moda', family: "'Bodoni Moda'" },
+            { name: 'Fraunces', family: "'Fraunces'" },
+            { name: 'JetBrains Mono', family: "'JetBrains Mono'" },
+            { name: 'Space Mono', family: "'Space Mono'" },
+            { name: '--- 手写体 ---', family: '' },
+            { name: 'MV Boli', family: "'MV Boli'" },
+            { name: 'Caveat', family: "'Caveat'" },
+            { name: '--- 汉字体 ---', family: '' },
+            { name: '微软雅黑', family: "'Microsoft YaHei', 'PingFang SC', sans-serif" },
+            { name: '等线', family: "DengXian, 'PingFang SC', sans-serif" },
+            { name: '宋体', family: "SimSun, 'Songti SC', serif" },
+            { name: '楷体', family: "KaiTi, 'Kaiti SC', serif" },
+            { name: '仿宋', family: "FangSong, 'FangSong SC', serif" }
+        ],
+
+        /** 可选字体列表（中文框） */
+        FONTS_ZH: [
+            { name: '微软雅黑', family: "'Microsoft YaHei', 'PingFang SC', sans-serif" },
+            { name: '等线', family: "DengXian, 'PingFang SC', sans-serif" },
+            { name: '宋体', family: "SimSun, 'Songti SC', serif" },
+            { name: '楷体', family: "KaiTi, 'Kaiti SC', serif" },
+            { name: '仿宋', family: "FangSong, 'FangSong SC', serif" },
+            { name: '--- 手写体 ---', family: '' },
+            { name: '华文行楷', family: "'STXingkai', 'Xingkai SC', '华文行楷', cursive" }
         ],
 
         init: function () {
@@ -706,12 +726,19 @@
                     el = el.nodeType === 3 ? el.parentNode : el;
                     if (el && el.closest && el.closest('[contenteditable="true"]')) {
                         self.savedRange = range;
+                    } else {
+                        // 关键拦截：如果选区已经离开了可编辑范围（如点到了幻灯片背景上），那么就当做释放，把缓存选区置空
+                        self.savedRange = null;
                     }
+                } else {
+                    self.savedRange = null;
                 }
+                self.syncFontIndicators();
             });
 
             this._initPalettes();
-            this._initFontMenu();
+            this._initFontMenu('engFontDropdown', this.FONTS_ENG, 'eng');
+            this._initFontMenu('zhFontDropdown', this.FONTS_ZH, 'zh');
         },
 
         restoreSelection: function () {
@@ -954,23 +981,7 @@
         removeUnderline: function () {
             this.restoreSelection();
             var sel = window.getSelection();
-            if (!sel.rangeCount || sel.isCollapsed) return;
-            var container = getActiveEditContainer();
-            if (!container) return;
-
-            var range = sel.getRangeAt(0);
-            this._splitDecoSpanAtRange(range, container, 'underline');
-            this.restoreSelection();
-            sel = window.getSelection();
-            if (!sel.rangeCount) return;
-            range = sel.getRangeAt(0);
-
-            var fragment = range.extractContents();
-            this._cleanDecoration(fragment, 'underline');
-            this._cleanEmptyDecoSpans(container, 'underline');
-            range.insertNode(fragment);
-            container.normalize();
-            PersistenceLayer.saveElement(container);
+            // 无选区：这部分逻辑已被移除，由 applyMixedFontFamily 全局接管。但如果需要兼容旧代码可留在这是因为旧的 applyFontFamily 被废弃了。yer.saveElement(container);
             window.historyMgr.recordState(true);
             this.closeDropdowns();
         },
@@ -1002,7 +1013,7 @@
                     if (parent && parent.tagName === 'A') {
                         parent.setAttribute('target', '_blank');
                     } else if (parent) {
-                        parent.querySelectorAll('a').forEach(function(a) { 
+                        parent.querySelectorAll('a').forEach(function (a) {
                             if (a.getAttribute('href') === url) {
                                 a.setAttribute('target', '_blank');
                             }
@@ -1149,7 +1160,9 @@
             document.querySelectorAll('.rt-dropdown-menu.show').forEach(function (m) { if (m.id !== id) m.classList.remove('show'); });
             if (!id) return;
             var m = document.getElementById(id);
-            if (m) m.classList.toggle('show');
+            if (m) {
+                m.classList.toggle('show');
+            }
         },
 
         closeDropdowns: function () {
@@ -1159,8 +1172,8 @@
         /** 初始化调色板 */
         _initPalettes: function () {
             var self = this;
-            var tc = ['#000000','#2C3E50','#7F8C8D','#BDC3C7','#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#FFFFFF'];
-            var hc = ['#F5B7B1','#FAD7A1','#F9E79F','#A9DFBF','#A3E4D7','#AED6F1','#D2B4DE','#EBDEF0','#E5E7E9','#EAEDED','#D5C4A1','transparent'];
+            var tc = ['#000000', '#2C3E50', '#7F8C8D', '#BDC3C7', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FFFFFF'];
+            var hc = ['#F5B7B1', '#FAD7A1', '#F9E79F', '#A9DFBF', '#A3E4D7', '#AED6F1', '#D2B4DE', '#EBDEF0', '#E5E7E9', '#EAEDED', '#D5C4A1', 'transparent'];
             var tg = document.querySelector('.text-colors');
             var bg = document.querySelector('.bg-colors');
 
@@ -1204,23 +1217,134 @@
             });
         },
 
+        /**
+             * 获取当前容器的真实内外 Computed 字体数组
+             */
+        _getCurrentFontTuple: function () {
+            var target = document.body;
+            var sel = window.getSelection();
+            if (sel.rangeCount > 0 && !sel.isCollapsed) { // 有选中区才算
+                var anchor = sel.anchorNode;
+                var el = anchor ? (anchor.nodeType === 3 ? anchor.parentNode : anchor) : null;
+                if (el && el.closest && el.closest('[data-edit-id]')) target = el;
+            } else {
+                var container = getActiveEditContainer();
+                if (container) target = container;
+            }
+
+            var ff = window.getComputedStyle(target).fontFamily;
+            var fonts = ff.split(',').map(function (s) { return s.trim().replace(/['"]/g, ''); });
+            var eng = fonts[0] || 'sans-serif';
+            var zh = fonts.length > 1 ? fonts[1] : fonts[0];
+            return { eng: eng, zh: zh };
+        },
+
+        /**
+         * 实时同步状态按钮内的文字
+         */
+        syncFontIndicators: function () {
+            var engBtn = document.getElementById('engFontToggle');
+            var zhBtn = document.getElementById('zhFontToggle');
+            if (!engBtn || !zhBtn) return;
+            var t = this._getCurrentFontTuple();
+            var engRaw = t.eng;
+            var zhRaw = t.zh;
+
+            function getShortName(raw, isZhFallback) {
+                var name = raw;
+                if (/YaHei/i.test(raw)) name = '微软雅黑';
+                else if (/SimSun|Songti/i.test(raw)) name = '宋体';
+                else if (/KaiTi/i.test(raw)) name = '楷体';
+                else if (/FangSong/i.test(raw)) name = '仿宋';
+                else if (/DengXian/i.test(raw)) name = '等线';
+                else if (/PingFang/i.test(raw)) name = '苹方';
+                else if (raw === 'sans-serif') name = isZhFallback ? '默认黑体' : '默认体系';
+                else if (raw === 'serif') name = isZhFallback ? '默认宋体' : '默认衬线';
+                else if (name.length > 12) name = name.substring(0, 10) + '..';
+                return name;
+            }
+
+            var isPrimaryChinese = /[\u4e00-\u9fa5]|YaHei|SimSun|KaiTi|FangSong|Songti|PingFang|DengXian/i.test(engRaw);
+
+            engBtn.innerHTML = '<span style="font-weight:700;">' + getShortName(engRaw, false) + '</span>';
+            // 若英文被中文霸占，中文按钮显示关联状态
+            if (isPrimaryChinese) {
+                zhBtn.innerHTML = '<span style="font-size:0.9em;font-weight:500;color:var(--editor-text-muted);">(同左)</span>';
+            } else {
+                zhBtn.innerHTML = '<span style="font-weight:700;">' + getShortName(zhRaw, true) + '</span>';
+            }
+        },
+
+        applyMixedFontFamily: function (fontFamily, type) {
+            var t = this._getCurrentFontTuple();
+            var engRaw = t.eng;
+            var zhRaw = t.zh;
+
+            var mergedFontStr = '';
+            if (type === 'eng') {
+                mergedFontStr = fontFamily + ", '" + zhRaw + "', sans-serif";
+                // 如果左侧选的本来就是中文（用户执意要全段中文），直接应用即可，不需挂后面的尾巴
+                var isChinese = /[\u4e00-\u9fa5]|YaHei|SimSun|KaiTi|FangSong|Songti|PingFang|DengXian/i.test(fontFamily);
+                if (isChinese) mergedFontStr = fontFamily;
+            } else if (type === 'zh') {
+                mergedFontStr = "'" + engRaw + "', " + fontFamily + ", sans-serif";
+            }
+
+            var container = getActiveEditContainer();
+            var sel = window.getSelection();
+
+            if (sel.rangeCount > 0 && !sel.isCollapsed && container) {
+                // 选中部分修改
+                this.restoreSelection();
+                document.execCommand('fontName', false, mergedFontStr);
+            } else {
+                // 无选区模式：修改全局层
+                document.documentElement.style.setProperty('--font-body', mergedFontStr);
+                document.documentElement.style.setProperty('--font-display', mergedFontStr);
+                // 兼容 editor-test.html 等没有严谨使用 var() 而是写死 body { font-family } 的环境
+                document.body.style.fontFamily = mergedFontStr;
+
+                // 对所有标题元素强行压入字体（因为 h1~h6 有权重较高的独立定义）
+                document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function (h) {
+                    h.style.fontFamily = mergedFontStr;
+                });
+            }
+
+            if (container) PersistenceLayer.saveElement(container);
+            window.historyMgr.recordState(true);
+            this.closeDropdowns();
+            this.syncFontIndicators();
+        },
+
         /** 初始化字体选择菜单 */
-        _initFontMenu: function () {
+        _initFontMenu: function (menuId, fontsArray, type) {
             var self = this;
-            var menu = document.getElementById('fontDropdown');
+            var menu = document.getElementById(menuId);
             if (!menu) return;
 
-            this.FONTS.forEach(function (f) {
+            fontsArray.forEach(function (f) {
                 var opt = document.createElement('div');
                 opt.className = 'font-option';
                 opt.textContent = f.name;
-                opt.style.fontFamily = f.family;
-                opt.addEventListener('pointerdown', function (e) {
-                    e.preventDefault();
-                    self.applyFontFamily(f.family);
-                });
+                if (!f.family) {
+                    opt.style.cssText = 'background:none; text-align:center; color:var(--editor-text-muted); font-size:10px; cursor:default;';
+                } else {
+                    opt.style.fontFamily = f.family;
+                    opt.addEventListener('pointerdown', function (e) {
+                        e.preventDefault();
+                        self.applyMixedFontFamily(f.family, type);
+                    });
+                    opt.addEventListener('mouseenter', function () {
+                        if (f.family) opt.style.fontFamily = f.family;
+                    });
+                }
                 menu.appendChild(opt);
             });
+
+            // 防止滚轮事件继续往外冒泡被其他东西错误拦截
+            menu.addEventListener('wheel', function(e) {
+                e.stopPropagation();
+            }, { passive: true });
         }
     };
 
@@ -1244,6 +1368,9 @@
             this.editableSet = new Set(document.querySelectorAll('[data-edit-id]'));
             if (this.isActive) {
                 this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'true'); });
+            }
+            if (typeof RichTextToolbar !== 'undefined' && RichTextToolbar.syncFontIndicators) {
+                RichTextToolbar.syncFontIndicators();
             }
         },
 
@@ -1367,7 +1494,7 @@
         // 关键修复：在 contenteditable 内打空格不再触发翻页
         if (editorCore._navLocked) {
             var navKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight',
-                           ' ', 'PageDown', 'PageUp', 'Home', 'End'];
+                ' ', 'PageDown', 'PageUp', 'Home', 'End'];
             if (navKeys.indexOf(e.key) !== -1) {
                 e.stopPropagation();
                 if (!e.target.isContentEditable) {
@@ -1380,13 +1507,20 @@
     // 编辑模式下彻底阻止原生滚轮翻页与触控翻页
     document.addEventListener('wheel', function (e) {
         if (editorCore._navLocked) {
+            // 放行富文本工具栏内的滚轮事件
+            if (e.target.closest && e.target.closest('.rich-toolbar')) {
+                return;
+            }
             e.preventDefault();
             e.stopPropagation();
         }
     }, { capture: true, passive: false });
-    
+
     document.addEventListener('touchmove', function (e) {
         if (editorCore._navLocked) {
+            if (e.target.closest && e.target.closest('.rich-toolbar')) {
+                return;
+            }
             e.preventDefault();
             e.stopPropagation();
         }
@@ -1421,9 +1555,11 @@
     if (colorToggle) colorToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('colorDropdown'); });
     if (bgToggle) bgToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('bgDropdown'); });
 
-    // 字体
-    var fontToggle = document.getElementById('fontToggle');
-    if (fontToggle) fontToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('fontDropdown'); });
+    // 字体 (中英文分离)
+    var engFontToggle = document.getElementById('engFontToggle');
+    var zhFontToggle = document.getElementById('zhFontToggle');
+    if (engFontToggle) engFontToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('engFontDropdown'); });
+    if (zhFontToggle) zhFontToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('zhFontDropdown'); });
 
     // 顶标
     var rubyBtn = document.getElementById('rubyBtn');
@@ -1436,11 +1572,11 @@
     // 插入图片
     var imageToggle = document.getElementById('imageToggle');
     if (imageToggle) imageToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('imageDropdown'); });
-    
+
     var applyImageBtn = document.getElementById('applyImageBtn');
     var imageUrlInput = document.getElementById('imageUrlInput');
     if (applyImageBtn && imageUrlInput) {
-        applyImageBtn.addEventListener('click', function(e) {
+        applyImageBtn.addEventListener('click', function (e) {
             e.preventDefault();
             var url = imageUrlInput.value.trim();
             if (!url) return;
@@ -1456,14 +1592,14 @@
     var triggerImageFileBtn = document.getElementById('triggerImageFileBtn');
     var imageFileInput = document.getElementById('imageFileInput');
     if (triggerImageFileBtn && imageFileInput) {
-        triggerImageFileBtn.addEventListener('click', function(e) { e.preventDefault(); imageFileInput.click(); });
-        imageFileInput.addEventListener('change', function(e) {
+        triggerImageFileBtn.addEventListener('click', function (e) { e.preventDefault(); imageFileInput.click(); });
+        imageFileInput.addEventListener('change', function (e) {
             var file = e.target.files[0];
             if (!file) return;
             var reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = function (evt) {
                 var img = new Image();
-                img.onload = function() {
+                img.onload = function () {
                     var canvas = document.createElement('canvas');
                     var maxW = 1000; var maxH = 1000;
                     var w = img.width; var h = img.height;
@@ -1486,7 +1622,7 @@
                 img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
-            imageFileInput.value = ''; 
+            imageFileInput.value = '';
         });
     }
 
@@ -1496,9 +1632,9 @@
     var applyLinkBtn = document.getElementById('applyLinkBtn');
     var linkUrlInput = document.getElementById('linkUrlInput');
     var removeLinkBtn = document.getElementById('removeLinkBtn');
-    
+
     if (applyLinkBtn && linkUrlInput) {
-        applyLinkBtn.addEventListener('click', function(e) {
+        applyLinkBtn.addEventListener('click', function (e) {
             e.preventDefault();
             var url = linkUrlInput.value.trim();
             if (!url) return;
@@ -1508,15 +1644,15 @@
         });
     }
     if (removeLinkBtn) {
-        removeLinkBtn.addEventListener('click', function(e) {
+        removeLinkBtn.addEventListener('click', function (e) {
             e.preventDefault();
             RichTextToolbar.removeHyperlink();
         });
     }
 
     // 防止在工具栏输入框中打字时触发快捷键
-    document.querySelectorAll('.rt-dropdown-menu input').forEach(function(input) {
-        input.addEventListener('keydown', function(e) { e.stopPropagation(); });
+    document.querySelectorAll('.rt-dropdown-menu input').forEach(function (input) {
+        input.addEventListener('keydown', function (e) { e.stopPropagation(); });
     });
 
     // 导出公共 API
