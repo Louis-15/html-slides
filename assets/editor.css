@@ -122,6 +122,11 @@
     background: var(--editor-hover-bg);
 }
 
+.rt-btn.active {
+    background: rgba(52, 152, 219, 0.15); /* 蓝色半透明高光垫背 */
+    color: #3498db; /* SVG 图标本体转为激活蓝 */
+}
+
 .rt-btn.wide {
     width: auto;
     padding: 0 10px;

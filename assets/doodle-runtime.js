@@ -19,7 +19,7 @@
             'laser': 0,
             'pen': 4,
             'highlighter': 16,
-            'magic': 6
+            'magic': 4
         },
 
         init: function () {
@@ -83,25 +83,30 @@
             });
 
             // 颜色块选择器 (小圆点阵列)
-            var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#34495e', '#ecf0f1'];
+            var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#34495e', '#ffffff'];
             var colorGrid = document.createElement('div');
             colorGrid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; margin-bottom: 8px; width: 100%;';
             colors.forEach(function(c) {
                 var cb = document.createElement('div');
-                cb.style.cssText = 'width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); background: ' + c;
+                // 默认形态：添加极其微弱的一层阴影区分白底即可
+                cb.style.cssText = 'width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: all 0.2s; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1); background: ' + c;
                 cb.setAttribute('data-color', c);
                 cb.addEventListener('click', function(e) {
                     e.stopPropagation();
                     self.setColor(c);
-                    Array.from(colorGrid.children).forEach(function(kid) { kid.style.transform = 'scale(1)'; kid.style.border = 'none'; });
+                    Array.from(colorGrid.children).forEach(function(kid) { 
+                        kid.style.transform = 'scale(1)'; 
+                        kid.style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1)'; 
+                    });
                     cb.style.transform = 'scale(1.2)';
-                    cb.style.border = '2px solid white';
+                    // 多层投影叠加法：一层纯白描边兜底 + 一层灰色外扩高光 + 一层物理悬浮深阴影
+                    cb.style.boxShadow = '0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,0.2), 0 3px 8px rgba(0,0,0,0.25)';
                 });
                 colorGrid.appendChild(cb);
             });
             // 默认选中第一个颜色
             colorGrid.children[0].style.transform = 'scale(1.2)';
-            colorGrid.children[0].style.border = '2px solid white';
+            colorGrid.children[0].style.boxShadow = '0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,0.2), 0 3px 8px rgba(0,0,0,0.25)';
             tb.appendChild(colorGrid);
 
             // 清理按钮 (替换为用户指定的原生极简 Lucide 线框扫把图标)
