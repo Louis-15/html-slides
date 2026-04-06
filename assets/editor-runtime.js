@@ -422,6 +422,7 @@
 
             var controls = document.createElement('div');
             controls.className = 'box-controls';
+            controls.setAttribute('contenteditable', 'false'); // 核心修复：强制禁止被退格/删除键拉入变为文本
             controls.innerHTML = '<span class="drag-handle" title="按住拖动📍">📍</span><span class="del-btn" title="删除/隐藏">✖</span>';
 
             if (target) target.appendChild(controls);
@@ -434,6 +435,7 @@
                     var r = document.createElement('div');
                     r.className = 'rs-handle rs-' + dir;
                     r.setAttribute('data-dir', dir);
+                    r.setAttribute('contenteditable', 'false'); // 核心修复：防止缩放把手被文书吃掉
                     target.appendChild(r);
                     self._bindResize(r, target);
                 });
