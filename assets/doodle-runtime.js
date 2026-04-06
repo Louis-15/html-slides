@@ -104,10 +104,10 @@
             colorGrid.children[0].style.border = '2px solid white';
             tb.appendChild(colorGrid);
 
-            // 清理按钮 (直接植入世界顶级开源图库 Phosphor Icons 官方原装 Broom，绝对无懈可击)
+            // 清理按钮 (替换为用户指定的原生极简 Lucide 线框扫把图标)
             var clearCurrentBtn = document.createElement('button');
             clearCurrentBtn.className = 'rt-btn rt-danger';
-            clearCurrentBtn.innerHTML = '<svg viewBox="0 0 256 256" style="fill:currentColor;stroke:transparent;"><path d="M235.5,216.81c-22.56-11-35.5-34.58-35.5-64.8V134.73a15.94,15.94,0,0,0-10.09-14.87L165,110a8,8,0,0,1-4.48-10.34l21.32-53a28,28,0,0,0-16.1-37,28.14,28.14,0,0,0-35.82,16,.61.61,0,0,0,0,.12L108.9,79a8,8,0,0,1-10.37,4.49L73.11,73.14A15.89,15.89,0,0,0,55.74,76.8C34.68,98.45,24,123.75,24,152a111.45,111.45,0,0,0,31.18,77.53A8,8,0,0,0,61,232H232a8,8,0,0,0,3.5-15.19ZM67.14,88l25.41,10.3a24,24,0,0,0,31.23-13.45l21-53c2.56-6.11,9.47-9.27,15.43-7a12,12,0,0,1,6.88,15.92L145.69,93.76a24,24,0,0,0,13.43,31.14L184,134.73V152c0,.33,0,.66,0,1L55.77,101.71A108.84,108.84,0,0,1,67.14,88Zm48,128a87.53,87.53,0,0,1-24.34-42,8,8,0,0,0-15.49,4,105.16,105.16,0,0,0,18.36,38H64.44A95.54,95.54,0,0,1,40,152a85.9,85.9,0,0,1,7.73-36.29l137.8,55.12c3,18,10.56,33.48,21.89,45.16Z"/></svg>';
+            clearCurrentBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brush-cleaning-icon lucide-brush-cleaning"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg>';
             clearCurrentBtn.title = '清空本页';
             clearCurrentBtn.style.marginTop = '8px';
             clearCurrentBtn.addEventListener('click', function(e) {
@@ -136,10 +136,11 @@
         _injectLaserCursor: function () {
             var cursor = document.createElement('div');
             cursor.id = 'doodleLaserPointer';
-            // 实体化背景和阴影（颜色将在 setColor 里被直接刷新）
-            cursor.style.cssText = 'position:fixed; width:14px; height:14px; border-radius:50%; pointer-events:none; z-index:99999; transform:translate(-50%, -50%); display:none; opacity:0; transition: opacity 0.15s; mix-blend-mode: normal;';
+            // 取消写死的宽高与形状。增加物理形变缓冲 (切记避开 left/top 否则光标会延迟失控)
+            cursor.style.cssText = 'position:fixed; pointer-events:none; z-index:99999; display:none; opacity:0; transition: width 0.2s, height 0.2s, border-radius 0.2s, transform 0.2s, box-shadow 0.2s, background-color 0.2s, opacity 0.15s; mix-blend-mode: normal;';
             document.body.appendChild(cursor);
             this.laserCursor = cursor;
+            this._updateCursorStyle(); // 注入装载后立刻赋予初始形体
         },
 
         _bindEvents: function () {
@@ -249,14 +250,49 @@
             Array.from(this.uiContainer.querySelectorAll('.doodle-tool-btn')).forEach(function(btn) {
                 btn.classList.toggle('active', btn.getAttribute('data-tool') === tool);
             });
+            this._updateCursorStyle();
         },
 
         setColor: function (c) {
             this.currentColor = c;
-            if (this.laserCursor) {
-                // 抛弃 currentColor 绑定，直接由 JS 高强度直写物理颜色
+            this._updateCursorStyle();
+        },
+
+        _updateCursorStyle: function () {
+            if (!this.laserCursor) return;
+            var c = this.currentColor;
+            var tool = this.currentTool;
+
+            // 恢复所有默认基准物态
+            this.laserCursor.innerHTML = ''; // 清除内嵌 SVG
+            this.laserCursor.style.backgroundColor = 'transparent';
+            this.laserCursor.style.backgroundImage = 'none';
+            this.laserCursor.style.boxShadow = 'none';
+            this.laserCursor.style.border = 'none';
+            this.laserCursor.style.borderRadius = '50%';
+            this.laserCursor.style.transform = 'translate(-50%, -50%)';
+
+            if (tool === 'magic' || tool === 'pen') {
+                // 笔类：精致的小发光点
+                this.laserCursor.style.width = '8px';
+                this.laserCursor.style.height = '8px';
                 this.laserCursor.style.backgroundColor = c;
-                this.laserCursor.style.boxShadow = '0 0 10px ' + c + ', 0 0 20px ' + c + ', inset 0 0 4px #fff';
+                this.laserCursor.style.boxShadow = '0 0 6px ' + c + ', 0 0 10px ' + c + ', inset 0 0 2px #fff';
+            } else if (tool === 'highlighter') {
+                // 荧光笔：和物理宽度一比一精确契合的半透明遮罩圆，不发光
+                var size = this.strokeWidths['highlighter'] + 'px';
+                this.laserCursor.style.width = size;
+                this.laserCursor.style.height = size;
+                this.laserCursor.style.backgroundColor = c;
+                this.laserCursor.style.boxShadow = '0 0 0 1px rgba(0,0,0,0.1)';
+            } else if (tool === 'eraser') {
+                // 橡皮擦：返璞归真，直接使用 UI 层面的原生极简线框 SVG 图标，大小精确匹配
+                this.laserCursor.style.width = '24px';
+                this.laserCursor.style.height = '24px';
+                this.laserCursor.style.color = '#546e7a'; // 保持统一的沉稳蓝灰主题色
+                this.laserCursor.style.borderRadius = '0';
+                // 纯净灌入 SVG，不再附带任何物理背景框
+                this.laserCursor.innerHTML = '<svg viewBox="0 0 24 24" style="width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>';
             }
         },
 
@@ -288,11 +324,15 @@
             this.currentSvg = this.getCurrentSvg();
             if (!this.currentSvg) return;
 
-            // 物理橡皮擦模式（点击即擦除）
+            // 物理橡皮擦模式（点击即进行 24x24 极高致密网格探测，81点无漏斗全覆盖）
             if (this.currentTool === 'eraser') {
-                var el = document.elementFromPoint(e.clientX, e.clientY);
-                if (el && el.tagName.toLowerCase() === 'path' && el.closest('svg.doodle-layer')) {
-                    el.remove();
+                for (var dx = -12; dx <= 12; dx += 3) {
+                    for (var dy = -12; dy <= 12; dy += 3) {
+                        var el = document.elementFromPoint(e.clientX + dx, e.clientY + dy);
+                        if (el && el.tagName.toLowerCase() === 'path' && el.closest('svg.doodle-layer')) {
+                            el.remove();
+                        }
+                    }
                 }
                 return;
             }
@@ -326,11 +366,15 @@
         _onPointerMove: function (e) {
             if (!this.isDrawing) return;
 
-            // 物理橡皮擦模式（拖拽路径经过即擦除）
+            // 物理橡皮擦模式（拖拽路径经过即擦除，极高致密网格模拟真实 24x24 碰撞面）
             if (this.currentTool === 'eraser') {
-                var el = document.elementFromPoint(e.clientX, e.clientY);
-                if (el && el.tagName.toLowerCase() === 'path' && el.closest('svg.doodle-layer')) {
-                    el.remove();
+                for (var dx = -12; dx <= 12; dx += 3) {
+                    for (var dy = -12; dy <= 12; dy += 3) {
+                        var el = document.elementFromPoint(e.clientX + dx, e.clientY + dy);
+                        if (el && el.tagName.toLowerCase() === 'path' && el.closest('svg.doodle-layer')) {
+                            el.remove();
+                        }
+                    }
                 }
                 return;
             }
