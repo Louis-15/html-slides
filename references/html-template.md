@@ -263,86 +263,140 @@ Optional enhancements (match to chosen style):
 - Magnetic buttons
 - Counter animations
 
-## Inline Editing Implementation (Opt-In Only)
+## Inline Editing Implementation (Default ON for Teaching)
 
-**If the user chose "No" for inline editing in Phase 1, do NOT generate any edit-related HTML, CSS, or JS.**
+**For teaching courseware, inline editing is enabled by default.** For other use cases, it can be opted out in Phase 1.
 
-**Do NOT use CSS `~` sibling selector for hover-based show/hide.** The CSS-only approach (`edit-hotzone:hover ~ .edit-toggle`) fails because `pointer-events: none` on the toggle button breaks the hover chain: user hovers hotzone -> button becomes visible -> mouse moves toward button -> leaves hotzone -> button disappears before click.
+The editing system is powered by two dedicated asset files:
+- **`editor.css`** — All editing UI styles (toolbar, outlines, controls, palettes, dark/light theme)
+- **`editor-runtime.js`** — 5 modular components + plugin hook system
 
-**Required approach: JS-based hover with 400ms delay timeout.**
+### 1. CSS Reference
 
-HTML:
+Include `editor.css` content inside the `<style>` tag, **after** the theme CSS:
 ```html
+<style>
+    /* ... theme CSS (dark-interactive.css / viewport-base.css) ... */
+    /* === EDITOR CSS (from assets/editor.css) === */
+    /* Copy entire contents of assets/editor.css here */
+</style>
+```
+
+### 2. HTML Skeleton
+
+Place these elements **at the top of `<body>`**, before any slides:
+
+```html
+<!-- 编辑模式热区 & 开关按钮 -->
 <div class="edit-hotzone"></div>
-<button class="edit-toggle" id="editToggle" title="Edit mode (E)">✏️</button>
+<button class="edit-toggle" id="editToggle" title="编辑模式 (按E键)">✏️</button>
+
+<!-- 富文本工具栏 -->
+<div class="rich-toolbar" id="richToolbar">
+    <!-- 撤销/重做 -->
+    <button class="rt-btn wide" id="undobtn" title="撤销 (Ctrl+Z)" style="opacity:0.4;">
+        <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+    </button>
+    <button class="rt-btn wide" id="redobtn" title="重做 (Ctrl+Y)" style="opacity:0.4;">
+        <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+    </button>
+    <div class="rt-divider"></div>
+
+    <!-- 格式化 -->
+    <button class="rt-btn" data-cmd="bold" title="加粗"><b>B</b></button>
+    <button class="rt-btn" data-cmd="italic" title="斜体"><i>I</i></button>
+    <div class="rt-dropdown" title="下划线（可选颜色）">
+        <button class="rt-btn" id="ulColorToggle"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
+        <div class="rt-dropdown-menu" id="ulColorDropdown"><div class="palette-grid ul-colors"></div></div>
+    </div>
+    <button class="rt-btn" data-cmd="strikethrough" title="删除线"><s>S</s></button>
+    <div class="rt-divider"></div>
+
+    <!-- 字体 -->
+    <div class="rt-dropdown" title="字体">
+        <button class="rt-btn wide" id="fontToggle">字体</button>
+        <div class="rt-dropdown-menu font-menu" id="fontDropdown"></div>
+    </div>
+
+    <!-- 字号 -->
+    <button class="rt-btn wide" id="fontSizeUp" title="增大字号">A+</button>
+    <button class="rt-btn wide" id="fontSizeDown" title="缩小字号">A-</button>
+    <div class="rt-divider"></div>
+
+    <!-- 颜色 -->
+    <div class="rt-dropdown" title="文字颜色">
+        <button class="rt-btn" id="colorToggle">
+            <span style="font-weight:bold;color:#e74c3c;border-bottom:3px solid #e74c3c;">A</span>
+        </button>
+        <div class="rt-dropdown-menu" id="colorDropdown"><div class="palette-grid text-colors"></div></div>
+    </div>
+    <div class="rt-dropdown" title="背景高亮">
+        <button class="rt-btn" id="bgToggle"><span>🖌️</span></button>
+        <div class="rt-dropdown-menu" id="bgDropdown"><div class="palette-grid bg-colors"></div></div>
+    </div>
+    <div class="rt-divider"></div>
+
+    <!-- 清除格式 -->
+    <button class="rt-btn" data-cmd="removeFormat" title="清除格式">🆑</button>
+    <div class="rt-divider"></div>
+
+    <!-- 顶标 & 文本框 -->
+    <button class="rt-btn wide" id="rubyBtn" title="为选中文字添加顶部批注">📚 顶标</button>
+    <button class="rt-btn wide" id="addTextBoxBtn" title="在当前页添加新文本框">+ 文本框</button>
+</div>
 ```
 
-CSS (visibility controlled by JS classes only):
-```css
-/* Do NOT use CSS ~ sibling selector for this!
-   pointer-events: none breaks the hover chain.
-   Must use JS with delay timeout. */
-.edit-hotzone {
-    position: fixed; top: 0; left: 0;
-    width: 80px; height: 80px;
-    z-index: 10000;
-    cursor: pointer;
-}
-.edit-toggle {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 10001;
-}
-.edit-toggle.show,
-.edit-toggle.active {
-    opacity: 1;
-    pointer-events: auto;
-}
+### 3. Editable Elements
+
+Every text element that should be editable MUST have a unique `data-edit-id` attribute:
+```html
+<h2 data-edit-id="s1-title">Slide Title</h2>
+<p data-edit-id="s1-body">Body text</p>
+```
+**Naming:** `s{slideNumber}-{type}{index}` (e.g., `s3-l2` for slide 3, list item 2).
+
+All elements get **unified drag/delete controls** (📍✖) via `BoxManager._injectControls()` at runtime. No separate CSS wrappers needed for native elements.
+
+### 4. JS Reference
+
+Include `editor-runtime.js` content at the **end of `<body>`**, AFTER the slide controller:
+```html
+<script>
+    /* ... SlidePresentation controller ... */
+    /* === EDITOR RUNTIME (from assets/editor-runtime.js) === */
+</script>
 ```
 
-JS (three interaction methods):
+### 5. Plugin Hook System (for future extensions)
+
+The runtime exposes `window.EditorHooks` for future modules (drawing, recording, etc.):
 ```javascript
-// 1. Click handler on the toggle button
-document.getElementById('editToggle').addEventListener('click', function() {
-    editor.toggleEditMode();
-});
-
-// 2. Hotzone hover with 400ms grace period
-var hotzone = document.querySelector('.edit-hotzone');
-var editToggle = document.getElementById('editToggle');
-var hideTimeout = null;
-
-hotzone.addEventListener('mouseenter', function() {
-    clearTimeout(hideTimeout);
-    editToggle.classList.add('show');
-});
-hotzone.addEventListener('mouseleave', function() {
-    hideTimeout = setTimeout(function() {
-        if (!editor.isActive) editToggle.classList.remove('show');
-    }, 400);
-});
-editToggle.addEventListener('mouseenter', function() {
-    clearTimeout(hideTimeout);
-});
-editToggle.addEventListener('mouseleave', function() {
-    hideTimeout = setTimeout(function() {
-        if (!editor.isActive) editToggle.classList.remove('show');
-    }, 400);
-});
-
-// 3. Hotzone direct click
-hotzone.addEventListener('click', function() {
-    editor.toggleEditMode();
-});
-
-// 4. Keyboard shortcut (E key, skip when editing text)
-document.addEventListener('keydown', function(e) {
-    if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
-        editor.toggleEditMode();
-    }
+// 涂鸦模块注册示例
+EditorHooks.register('onEditModeEnter', function() { showDrawingToolbar(); });
+EditorHooks.register('onEditModeExit', function() { hideDrawingToolbar(); });
+EditorHooks.register('onExportClean', function(clonedDoc) {
+    // 将 canvas 涂鸦转为 img 标签
+    clonedDoc.querySelectorAll('.draw-canvas').forEach(c => { /* ... */ });
 });
 ```
+
+### 6. Feature Summary
+
+| Feature | Shortcut | Notes |
+|---------|----------|-------|
+| Toggle edit mode | `E` key / top-left | Hotzone hover reveals button |
+| Bold / Italic / Underline / Strikethrough | Toolbar | Strikethrough renders in red |
+| Font family | Toolbar dropdown | 8 presets (Inter, Arial, 微软雅黑…) |
+| Font size ±2px | A+ / A- | Smart: selection → partial, no selection → whole box |
+| Text / Highlight color | Palette dropdowns | 12 colors each |
+| Ruby annotation | 📚 顶标 | Requires text selection |
+| Add text box | + 文本框 | Absolute positioned, draggable |
+| Drag any element | 📍 handle | Unified PointerEvent engine |
+| Delete/hide any element | ✖ button | Confirm dialog |
+| Undo / Redo | Ctrl+Z / Ctrl+Y | Per-slide, max 50 steps |
+| Export clean HTML | Ctrl+S | Always active |
+| **Space key** | Normal typing | **No longer triggers page navigation in edit mode** |
+
 
 ## Image Pipeline (Skip If No Images)
 
