@@ -1702,4 +1702,55 @@
     window.RichTextToolbar = RichTextToolbar;
     window.EditorHooks = EditorHooks;
 
+    // ==========================================
+    // 【架构级自愈：排版剥离与溢出解绑】
+    // 1. 修复由于 CSS 中的 overflow: hidden 导致顶标（如 "批注" tag）超高时被切掉一半的问题
+    document.querySelectorAll('.slide-content, .slide-inner').forEach(function(sc) {
+        sc.style.overflow = 'visible';
+    });
+
+    // 2. 修复误将内联 tag 塞入 h1 等长文本块导致"物理粘连"（一选全选中）的问题
+    document.querySelectorAll('[data-edit-id] .tag').forEach(function(tag) {
+        var parentBlock = tag.closest('[data-edit-id]');
+        // 只要 tag 还在别人肚子里，就立刻进行物理隔离剖腹产
+        if (parentBlock && parentBlock !== tag) {
+            // 如果用户是手敲的回车换行，tag 后面大概率跟着一个脏 <br>，一起消灭掉
+            var sibling = tag.nextSibling;
+            if (sibling && sibling.nodeType === 1 && sibling.tagName === 'BR') {
+                sibling.remove();
+            } else if (sibling && sibling.nodeType === 3 && sibling.textContent.trim() === '') {
+                // 清理可能跟随的空文本节点
+                if (sibling.nextSibling && sibling.nextSibling.tagName === 'BR') {
+                    sibling.nextSibling.remove();
+                }
+                sibling.remove();
+            }
+            
+            // 赋予它独立的人权（可编辑 ID）
+            if (!tag.hasAttribute('data-edit-id')) {
+                tag.setAttribute('data-edit-id', 'tag-' + Math.random().toString(36).substr(2, 6));
+            }
+            // 剥离并置于父块的头顶（由于 flex 它是会自动换行的）
+            parentBlock.parentNode.insertBefore(tag, parentBlock);
+        }
+    });
+
+    // 3. 实现顶标注音文字（rt）的交互解耦：拦截双击/三击导致选中穿透主文本的通病
+    document.addEventListener('mousedown', function(e) {
+        if (e.detail >= 2) {
+            var rt = e.target.closest('rt');
+            if (rt) {
+                // 阻止浏览器默认的双击切词或三击全行选中的穿透行为
+                e.preventDefault();
+                e.stopPropagation();
+                // 强制建立一个精确包裹整个顶标内部文本的安全选区
+                var sel = window.getSelection();
+                var range = document.createRange();
+                range.selectNodeContents(rt);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+    });
+
 })();

@@ -409,9 +409,26 @@ ruby rt {
     color: var(--editor-danger);
     font-weight: bold;
     font-size: 0.55em;
-    user-select: text;
-    position: relative;
-    top: -0.4em;
+    user-select: text; /* 恢复可双击编辑性 */
+    padding-bottom: 0.1em; /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
+    white-space: nowrap; /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
+    word-break: keep-all;
+}
+
+/* 编辑防呆：即使全部删空，也保留物理宽度和占位提示，防止误删整个节点 */
+ruby rt:empty {
+    min-width: 2em;
+    display: inline-block;
+}
+ruby rt:empty::after {
+    content: "输入";
+    opacity: 0.4;
+}
+
+/* 视觉反馈：不再用完全透明，而是用淡红色表示它被选中，区别于主文字的深蓝色，达到解耦感的同时保留选中可见性 */
+ruby rt::selection {
+    background: rgba(231, 76, 60, 0.2);
+    color: var(--editor-danger);
 }
 
 /* ===========================================
