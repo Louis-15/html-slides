@@ -1188,6 +1188,32 @@
             var fragment = range.extractContents();
             var rt = document.createElement('rt');
             rt.innerText = '批注';
+
+            // 智能吸色特性：如果被框选的正文已经拥有了高亮荧光背景框，自动把顶标也染成那个颜色的无透明度版
+            var bgCol = null;
+            var ctxNode = ancestor.nodeType === 3 ? ancestor.parentNode : ancestor;
+            var bgElem = ctxNode.closest && ctxNode.closest('[style*="background-color"]');
+            if (bgElem) {
+                bgCol = bgElem.style.backgroundColor;
+            } else if (fragment.querySelector) {
+                var childBg = fragment.querySelector('[style*="background-color"]');
+                if (childBg) bgCol = childBg.style.backgroundColor;
+            }
+            if (!bgCol && fragment.childNodes) {
+                for (var i = 0; i < fragment.childNodes.length; i++) {
+                    var ch = fragment.childNodes[i];
+                    if (ch.nodeType === 1 && ch.style && ch.style.backgroundColor) {
+                        bgCol = ch.style.backgroundColor; break;
+                    }
+                }
+            }
+            if (bgCol) {
+                var match = bgCol.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+                if (match) {
+                    rt.style.color = 'rgb(' + match[1] + ',' + match[2] + ',' + match[3] + ')';
+                }
+            }
+
             ruby.appendChild(fragment);
             ruby.appendChild(rt);
             range.insertNode(ruby);
@@ -1213,8 +1239,12 @@
         /** 初始化调色板 */
         _initPalettes: function () {
             var self = this;
-            var tc = ['#000000', '#2C3E50', '#7F8C8D', '#BDC3C7', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FFFFFF'];
-            var hc = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#fd79a8', '#ffffff', 'transparent'];
+            var tc = ['#000000', '#2C3E50', '#7F8C8D', '#FD79A8', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FFFFFF'];
+            var hc = [
+                'rgba(231, 76, 60, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(46, 204, 113, 0.4)', 
+                'rgba(52, 152, 219, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(253, 121, 168, 0.4)', 'rgba(255, 255, 255, 0.4)', 
+                'transparent'
+            ];
             var tg = document.querySelector('.text-colors');
             var bg = document.querySelector('.bg-colors');
             if (bg) bg.style.gridTemplateColumns = 'repeat(5, 1fr)';

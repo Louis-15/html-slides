@@ -413,6 +413,8 @@ ruby rt {
     padding-bottom: 0.1em; /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
     white-space: nowrap; /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
     word-break: keep-all;
+    position: relative;
+    z-index: 10; /* 当主文字有多行且带高亮背景时，强制让顶标在 Z 轴最顶层，不被背景胶布吞噬 */
 }
 
 /* 编辑防呆：即使全部删空，也保留物理宽度和占位提示，防止误删整个节点 */
