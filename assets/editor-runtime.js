@@ -628,8 +628,8 @@
             editArea.setAttribute('data-edit-id', id);
             var isEditing = window.editorCore && window.editorCore.isActive;
             editArea.setAttribute('contenteditable', isEditing ? 'true' : 'false');
-            editArea.style.cssText = 'padding:8px; min-width:20px; min-height:24px; font-size:var(--body-size,1rem); color:var(--editor-danger,#e74c3c);';
-            editArea.innerHTML = content || '📝批注...';
+            editArea.style.cssText = 'padding:8px; min-width:20px; min-height:24px; font-size:var(--body-size,1rem); line-height:1.45;';
+            editArea.innerHTML = content || '请输入';
 
             wrap.appendChild(editArea);
             container.appendChild(wrap);
