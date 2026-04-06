@@ -340,8 +340,32 @@ Place these elements **at the top of `<body>`**, before any slides:
     <button class="rt-btn" data-cmd="removeFormat" title="清除格式">🆑</button>
     <div class="rt-divider"></div>
 
-    <!-- 顶标 & 文本框 -->
+    <!-- 顶标 & 超链接 & 图片 & 文本框 -->
     <button class="rt-btn wide" id="rubyBtn" title="为选中文字添加顶部批注">📚 顶标</button>
+    <div class="rt-dropdown" title="插入超链接">
+        <button class="rt-btn" id="linkToggle">🔗</button>
+        <div class="rt-dropdown-menu" id="linkDropdown" style="width: 260px;">
+            <div class="rt-input-group">
+                <input type="url" id="linkUrlInput" placeholder="输入链接 (https://...)">
+                <div class="btn-row">
+                    <button class="rt-input-btn" id="applyLinkBtn">确定</button>
+                    <button class="rt-input-btn danger" id="removeLinkBtn">✕ 清除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="rt-dropdown" title="插入图片">
+        <button class="rt-btn" id="imageToggle">🖼️</button>
+        <div class="rt-dropdown-menu" id="imageDropdown" style="width: 260px;">
+            <div class="rt-input-group">
+                <input type="url" id="imageUrlInput" placeholder="输入图片 URL">
+                <button class="rt-input-btn" id="applyImageBtn">插入网络图片</button>
+                <div style="text-align:center;font-size:12px;color:var(--editor-text-muted);margin:4px 0;">或</div>
+                <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+                <button class="rt-input-btn secondary" id="triggerImageFileBtn">📂 浏览本地图片...</button>
+            </div>
+        </div>
+    </div>
     <button class="rt-btn wide" id="addTextBoxBtn" title="在当前页添加新文本框">+ 文本框</button>
 </div>
 ```

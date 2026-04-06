@@ -52,11 +52,25 @@
         return null;
     }
 
-    /** 获取当前幻灯片索引（兼容 scroll-snap 和 .deck 架构） */
+    /** 几何推算当前最居中的幻灯片索引，彻底摆脱对外部框架变量的依赖 */
     function getCurrentSlideIndex() {
-        if (window.presentation && typeof window.presentation.currentSlideIndex === 'number') return window.presentation.currentSlideIndex;
-        if (typeof window.current === 'number') return window.current;
-        return 0;
+        var slides = getAllSlides();
+        if (!slides || slides.length === 0) return 0;
+        
+        var bestIndex = 0;
+        var minDistance = Infinity;
+        var centerY = window.innerHeight / 2;
+        
+        for (var i = 0; i < slides.length; i++) {
+            var rect = slides[i].getBoundingClientRect();
+            var slideCenter = rect.top + rect.height / 2;
+            var dist = Math.abs(slideCenter - centerY);
+            if (dist < minDistance) {
+                minDistance = dist;
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
     }
 
     function getAllSlides() { return document.querySelectorAll('.slide'); }
@@ -111,27 +125,38 @@
             });
         },
 
-        /** 保存所有自定义文本框的位置和内容 */
+        /** 保存所有自定义图元的位置和内容/属性 */
         saveCustomBoxes: function () {
             var slides = getAllSlides();
             var boxes = [];
             document.querySelectorAll('.editable-wrap.custom-box').forEach(function (wrap) {
                 var slide = wrap.closest('.slide');
                 var slideIndex = Array.from(slides).indexOf(slide);
-                var editArea = wrap.querySelector('[data-edit-id]');
-                if (!editArea) return;
-                boxes.push({
-                    si: slideIndex,
-                    id: editArea.getAttribute('data-edit-id'),
-                    l: wrap.style.left,
-                    t: wrap.style.top,
-                    c: editArea.innerHTML
-                });
+                var img = wrap.querySelector('img.slide-image');
+                if (img) {
+                    var id = img.getAttribute('data-edit-id');
+                    if (!id) return;
+                    boxes.push({
+                        si: slideIndex, id: id, type: 'image',
+                        l: wrap.style.left, t: wrap.style.top,
+                        w: wrap.style.width, h: wrap.style.height,
+                        c: img.getAttribute('src')
+                    });
+                } else {
+                    var editArea = wrap.querySelector('[data-edit-id]');
+                    if (!editArea) return;
+                    boxes.push({
+                        si: slideIndex, id: editArea.getAttribute('data-edit-id'), type: 'text',
+                        l: wrap.style.left, t: wrap.style.top,
+                        w: wrap.style.width, h: wrap.style.height,
+                        c: editArea.innerHTML
+                    });
+                }
             });
             try { localStorage.setItem(storageKey('boxes'), JSON.stringify(boxes)); } catch (e) { }
         },
 
-        /** 从 localStorage 加载自定义文本框 */
+        /** 从 localStorage 加载自定义图元 */
         loadCustomBoxes: function () {
             try {
                 var saved = localStorage.getItem(storageKey('boxes'));
@@ -141,7 +166,13 @@
                 boxes.forEach(function (db) {
                     if (document.querySelector('[data-edit-id="' + db.id + '"]')) return;
                     var ts = slides[db.si];
-                    if (ts) BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
+                    if (ts) {
+                        if (db.type === 'image') {
+                            BoxManager.createImageBox(db.id, db.l, db.t, db.w, db.h, db.c, ts);
+                        } else {
+                            BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
+                        }
+                    }
                 });
             } catch (e) { }
         },
@@ -204,8 +235,8 @@
             var bd = clone.querySelector('body');
             if (bd) bd.classList.remove('editor-mode');
 
-            // 移除浮动控件
-            clone.querySelectorAll('.floating-controls, .overlay-ctrl').forEach(function (el) { el.remove(); });
+            // 移除浮动控件及编辑器专有图元挂载节点（核心：确保原版输出的纯净性，绝对不污染最终 HTML 产物）
+            clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
 
             // 触发导出清洗钩子（供涂鸦模块等清理自己的临时 DOM）
             EditorHooks.fire('onExportClean', clone);
@@ -323,32 +354,56 @@
 
         /**
          * 为目标元素注入 📍✖ 控件条（如果尚未注入）
-         * 原生元素：控件作为 el 的子元素
+         * 原生元素：控件作为 el 的父级子元素
          * 自定义文本框：控件作为 .editable-wrap 的子元素
          */
         _injectControls: function (el) {
-            // 如果已经有控件条则跳过
+            var self = this;
             var wrap = el.closest('.editable-wrap');
             var target = wrap || el;
 
-            if (target.querySelector('.box-controls')) return;
+            // 修复原生图片标签：IMG 不能拥有子节点，将控件挂载至其外包壳 `.image-frame` 或是直接父元素上
+            if (el.tagName === 'IMG' && !wrap) {
+                target = el.closest('.image-frame') || el.closest('.image-fullbleed') || el.parentNode;
+            }
+
+            // ====== 生死劫修复：暴力清理从 innerHTML (撤销操作/重水化) 恢复回来的死节点 ======
+            if (target && target.querySelectorAll) {
+                var zombies = target.querySelectorAll('.box-controls, .rs-handle');
+                zombies.forEach(function(node) { node.remove(); });
+            }
 
             // td 元素不注入（表格单元格拖不动）
             if (el.tagName === 'TD' || el.tagName === 'TH') return;
 
             // 让原生元素也具备 position: relative 以便控件绝对定位
-            if (!wrap) {
-                var cs = window.getComputedStyle(el);
-                if (cs.position === 'static') el.style.position = 'relative';
+            if (!wrap && target) {
+                var cs = window.getComputedStyle(target);
+                if (cs.position === 'static') target.style.position = 'relative';
             }
 
             var controls = document.createElement('div');
             controls.className = 'box-controls';
             controls.innerHTML = '<span class="drag-handle" title="按住拖动📍">📍</span><span class="del-btn" title="删除/隐藏">✖</span>';
 
-            target.appendChild(controls);
+            if (target) target.appendChild(controls);
 
-            // 绑定拖拽
+            // 注入八爪鱼缩放点（类似 PowerPoint 的图片四周缩放控制）
+            var isResizable = (wrap && wrap.classList.contains('image-box')) || (el.tagName === 'IMG');
+            if (isResizable && target && !target.querySelector('.rs-se')) {
+                var corners = ['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'];
+                corners.forEach(function(dir) {
+                    var r = document.createElement('div');
+                    r.className = 'rs-handle rs-' + dir;
+                    r.setAttribute('data-dir', dir);
+                    target.appendChild(r);
+                    self._bindResize(r, target);
+                });
+                target.style.resize = 'none';
+            }
+
+            // 如果 target 是 wrap 或原生图片外壳，则 Hover 或 focus-within 其内部结构都需要触发控件展示
+            // 这里绑定拖拽
             this._bindDrag(controls.querySelector('.drag-handle'), el, wrap);
 
             // 绑定删除
@@ -367,17 +422,25 @@
                 handle.setPointerCapture(e.pointerId);
 
                 if (isCustom) {
+                    // 重要修复：拖拽前立即把宽高定死为当前物理像素，防止元素向右拖拽时因触碰边界而被挤压压缩
+                    if (!wrap.style.width || wrap.style.width === 'auto') wrap.style.width = wrap.offsetWidth + 'px';
+                    if (!wrap.style.height || wrap.style.height === 'auto') wrap.style.height = wrap.offsetHeight + 'px';
+
                     dragState = {
                         target: wrap,
                         startX: e.clientX, startY: e.clientY,
-                        initLeft: parseInt(wrap.style.left) || wrap.offsetLeft,
-                        initTop: parseInt(wrap.style.top) || wrap.offsetTop,
+                        initLeft: wrap.offsetLeft, // 使用 offsetLeft 而不能用 parseInt() 以防读取到 50% 等百分比数值导致瞬间闪移
+                        initTop: wrap.offsetTop,
                         type: 'abs'
                     };
                 } else {
-                    var tx = BoxManager._parseTranslate(el);
+                    // 如果拖拽目标是原生的 img，我们需要移动它的 image-frame 容器，而不是 img 自己（容易导致渲染出框）
+                    var dragTarget = el;
+                    if (el.tagName === 'IMG') dragTarget = el.closest('.image-frame') || el.closest('.image-fullbleed') || el.parentNode;
+
+                    var tx = BoxManager._parseTranslate(dragTarget);
                     dragState = {
-                        target: el,
+                        target: dragTarget,
                         startX: e.clientX, startY: e.clientY,
                         initTx: tx.x, initTy: tx.y,
                         type: 'transform'
@@ -407,21 +470,95 @@
             });
         },
 
+        /** 专门绑定 8 点缩放逻辑 */
+        _bindResize: function(handle, target) {
+            var rsState = null;
+            handle.addEventListener('pointerdown', function(e) {
+                if (!window.editorCore || !window.editorCore.isActive) return;
+                e.preventDefault(); e.stopPropagation();
+                handle.setPointerCapture(e.pointerId);
+                
+                // 缩放前定死原有的位置，使其脱离 flex 布局的流式计算（针对原生图片外壳）
+                var cs = window.getComputedStyle(target);
+                if (cs.position === 'static') target.style.position = 'relative';
+
+                // 解除原生版式由于外部框架自带的边界防爆约束
+                target.style.maxWidth = 'none';
+                target.style.maxHeight = 'none';
+                target.style.flexShrink = '0';
+                
+                // 设置内部图片充满框架，防止外壳缩放但图片不跟着走
+                var innerImg = target.querySelector('img.slide-image');
+                if (innerImg) {
+                    innerImg.style.width = '100%';
+                    innerImg.style.height = '100%';
+                    innerImg.style.maxHeight = 'none'; // 解除针对原生图片的最高高度锁定
+                }
+
+                // 解析元素当前的相对偏移，以此作为安全基底起点，而非 offsetLeft（因为 relative 元素的 offsetLeft 包含父级流式居中的位移，强套进 left 会直接闪现数百像素）
+                var currLeft = parseFloat(target.style.left) || 0;
+                var currTop = parseFloat(target.style.top) || 0;
+
+                rsState = {
+                    target: target,
+                    dir: handle.getAttribute('data-dir'),
+                    startX: e.clientX, startY: e.clientY,
+                    w: target.offsetWidth, h: target.offsetHeight,
+                    cLeft: currLeft, cTop: currTop
+                };
+            });
+
+            handle.addEventListener('pointermove', function(e) {
+                if (!rsState) return;
+                var dx = e.clientX - rsState.startX;
+                var dy = e.clientY - rsState.startY;
+                var t = rsState.target;
+                
+                // 右与下，只改宽高
+                if (rsState.dir.indexOf('e') > -1) t.style.width = Math.max(20, rsState.w + dx) + 'px';
+                if (rsState.dir.indexOf('s') > -1) t.style.height = Math.max(20, rsState.h + dy) + 'px';
+                
+                // 左与上，根据原本的相对基座进行抵消反推，防止位置跳跃
+                if (rsState.dir.indexOf('w') > -1) {
+                    var pw = Math.max(20, rsState.w - dx);
+                    if (pw > 20) { t.style.width = pw + 'px'; t.style.left = (rsState.cLeft + (rsState.w - pw)) + 'px'; }
+                }
+                if (rsState.dir.indexOf('n') > -1) {
+                    var ph = Math.max(20, rsState.h - dy);
+                    if (ph > 20) { t.style.height = ph + 'px'; t.style.top = (rsState.cTop + (rsState.h - ph)) + 'px'; }
+                }
+            });
+
+            handle.addEventListener('pointerup', function() {
+                if (!rsState) return;
+                rsState = null;
+                // 更新两种可能受影响的缓存
+                PersistenceLayer.saveCustomBoxes();
+                PersistenceLayer.saveNativeMods();
+                window.historyMgr.recordState(true);
+            });
+        },
+
         /** 绑定删除/隐藏逻辑 */
         _bindDelete: function (btn, el, wrap) {
             btn.addEventListener('click', function () {
                 if (!window.editorCore || !window.editorCore.isActive) return;
                 var isCustom = wrap && wrap.classList.contains('custom-box');
-                var msg = isCustom ? '确定要删除这个文本框吗？' : '确定要隐藏此文本框吗？';
+                var isImage = wrap ? wrap.classList.contains('image-box') : el.tagName === 'IMG';
+                var msg = isCustom ? (isImage ? '确定要删除这张图片吗？' : '确定要删除这个文本框吗？') : (isImage ? '确定要隐藏这张原版图片吗？' : '确定要隐藏此元素吗？');
                 if (!confirm(msg)) return;
 
+                // 原有逻辑处理
                 if (isCustom) {
                     var id = el.getAttribute('data-edit-id');
                     wrap.remove();
                     try { localStorage.removeItem(storageKey('e:' + id)); } catch (e) { }
                     PersistenceLayer.saveCustomBoxes();
                 } else {
-                    el.style.display = 'none';
+                    // 如果删除的是原生图片，隐藏它对应的容器，而不是仅仅隐藏 img 本体以免在原处留下框架
+                    var delTarget = el;
+                    if (el.tagName === 'IMG') delTarget = el.closest('.image-frame') || el.closest('.image-fullbleed') || el.parentNode;
+                    delTarget.style.display = 'none';
                     PersistenceLayer.saveNativeMods();
                 }
                 window.historyMgr.recordState(true);
@@ -468,6 +605,40 @@
             if (window.editorCore) window.editorCore.refreshEditables();
         },
 
+        /** 创建自定义图片图元 */
+        createImageBox: function (id, left, top, width, height, src, targetSlide) {
+            var container = targetSlide.querySelector('.slide-content') || targetSlide;
+
+            var wrap = document.createElement('div');
+            wrap.className = 'editable-wrap custom-box image-box image-frame';
+            if (left === 'center') { left = '50%'; top = '30%'; wrap.style.transform = 'translateX(-50%)'; }
+            wrap.style.left = left;
+            wrap.style.top = top;
+            if (width) wrap.style.width = width;
+            if (height) wrap.style.height = height;
+
+            var img = document.createElement('img');
+            img.setAttribute('data-edit-id', id);
+            img.setAttribute('src', src);
+            img.className = 'slide-image';
+
+            wrap.appendChild(img);
+            container.appendChild(wrap);
+
+            // 注入统一控件
+            this._injectControls(img);
+
+            // Resize 事件极难直接监听，故利用 MutationObserver 或者直接在 moseup 里顺带持久化
+            if (typeof ResizeObserver !== 'undefined') {
+                var ro = new ResizeObserver(function() {
+                    if (window.editorCore && window.editorCore.isActive) {
+                        PersistenceLayer.saveCustomBoxes();
+                    }
+                });
+                ro.observe(wrap);
+            }
+        },
+
         /** DOM 恢复后重新绑定事件 */
         rehydrateSlide: function (slideEl) {
             if (!slideEl) return;
@@ -475,14 +646,25 @@
             slideEl.querySelectorAll('[data-edit-id]').forEach(function (el) {
                 self._injectControls(el);
             });
-            // 自定义文本框的输入事件
-            slideEl.querySelectorAll('.editable-wrap.custom-box [data-edit-id]').forEach(function (editArea) {
-                editArea.addEventListener('input', function () {
-                    if (window.editorCore && window.editorCore.isActive) {
-                        PersistenceLayer.saveElement(editArea);
-                        PersistenceLayer.saveCustomBoxes();
-                    }
-                });
+            // 自定义图元事件监听恢复
+            slideEl.querySelectorAll('.editable-wrap.custom-box').forEach(function (wrap) {
+                var editArea = wrap.querySelector('[data-edit-id]');
+                if (!editArea) return;
+                if (editArea.tagName === 'IMG' && typeof ResizeObserver !== 'undefined') {
+                    var ro = new ResizeObserver(function() {
+                        if (window.editorCore && window.editorCore.isActive) {
+                            PersistenceLayer.saveCustomBoxes();
+                        }
+                    });
+                    ro.observe(wrap);
+                } else if (editArea.tagName !== 'IMG') {
+                    editArea.addEventListener('input', function () {
+                        if (window.editorCore && window.editorCore.isActive) {
+                            PersistenceLayer.saveElement(editArea);
+                            PersistenceLayer.saveCustomBoxes();
+                        }
+                    });
+                }
             });
         }
     };
@@ -793,6 +975,56 @@
             this.closeDropdowns();
         },
 
+        applyHyperlink: function (url) {
+            this.restoreSelection();
+            var sel = window.getSelection();
+            var container = getActiveEditContainer();
+            if (!container) {
+                // 如果没有活动容器（比如光标不在可编辑区内，提示用户）
+                alert('请先将光标放置在文本框内！');
+                return;
+            }
+
+            if (sel.isCollapsed) {
+                // 直接插入文字形态的跳转链接
+                var linkUrl = '<a href="' + url + '" target="_blank" style="text-decoration:underline;">' + url + '</a>';
+                document.execCommand('insertHTML', false, linkUrl);
+            } else {
+                // 包裹选区文字
+                document.execCommand('createLink', false, url);
+                // 给刚刚创建的 A 标签添加 target="_blank"
+                this.restoreSelection();
+                sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    var range = sel.getRangeAt(0);
+                    var el = range.commonAncestorContainer;
+                    var parent = el.nodeType === 3 ? el.parentNode : el;
+                    if (parent && parent.tagName === 'A') {
+                        parent.setAttribute('target', '_blank');
+                    } else if (parent) {
+                        parent.querySelectorAll('a').forEach(function(a) { 
+                            if (a.getAttribute('href') === url) {
+                                a.setAttribute('target', '_blank');
+                            }
+                        });
+                    }
+                }
+            }
+            container.normalize();
+            PersistenceLayer.saveElement(container);
+            window.historyMgr.recordState(true);
+            this.closeDropdowns();
+        },
+
+        removeHyperlink: function () {
+            this.restoreSelection();
+            if (!getActiveEditContainer()) return;
+            document.execCommand('unlink');
+            PersistenceLayer.saveElement(getActiveEditContainer());
+            window.historyMgr.recordState(true);
+            this.closeDropdowns();
+        },
+
         applyForeColor: function (c) {
             this.restoreSelection();
             document.execCommand('foreColor', false, c);
@@ -1021,6 +1253,16 @@
             var toolbar = document.getElementById('richToolbar');
 
             if (this.isActive) {
+                // 1. 获取几何中心最贴近视野的幻灯片
+                var targetIndex = getCurrentSlideIndex();
+                var slides = getAllSlides();
+                if (slides[targetIndex]) {
+                    // 2. 强制瞬间居中当前页面，矫正处于两页之间的尴尬位置
+                    slides[targetIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+                }
+
+                // 3. 锁定全局滚动底盘
+                document.documentElement.classList.add('editor-mode');
                 document.body.classList.add('editor-mode');
                 document.execCommand('styleWithCSS', false, true);
                 if (toggle) toggle.classList.add('active');
@@ -1030,6 +1272,7 @@
                 this._navLocked = true;
                 EditorHooks.fire('onEditModeEnter');
             } else {
+                document.documentElement.classList.remove('editor-mode');
                 document.body.classList.remove('editor-mode');
                 if (toggle) toggle.classList.remove('active');
                 if (toolbar) toolbar.classList.remove('visible');
@@ -1126,10 +1369,7 @@
             var navKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight',
                            ' ', 'PageDown', 'PageUp', 'Home', 'End'];
             if (navKeys.indexOf(e.key) !== -1) {
-                // 无论是否在 contenteditable 内，都阻止冒泡（防止 slides-runtime 接收到事件）
                 e.stopPropagation();
-
-                // 不在 contenteditable 内时，还需要阻止默认行为（如页面滚动）
                 if (!e.target.isContentEditable) {
                     e.preventDefault();
                 }
@@ -1137,10 +1377,20 @@
         }
     }, true); // 捕获阶段
 
-    // 编辑模式下阻止滚轮翻页
+    // 编辑模式下彻底阻止原生滚轮翻页与触控翻页
     document.addEventListener('wheel', function (e) {
-        if (editorCore._navLocked) e.stopPropagation();
-    }, true);
+        if (editorCore._navLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, { capture: true, passive: false });
+    
+    document.addEventListener('touchmove', function (e) {
+        if (editorCore._navLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, { capture: true, passive: false });
 
     // ========================================
     // 工具栏按钮事件绑定
@@ -1182,6 +1432,92 @@
     // 下划线颜色
     var ulColorToggle = document.getElementById('ulColorToggle');
     if (ulColorToggle) ulColorToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('ulColorDropdown'); });
+
+    // 插入图片
+    var imageToggle = document.getElementById('imageToggle');
+    if (imageToggle) imageToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('imageDropdown'); });
+    
+    var applyImageBtn = document.getElementById('applyImageBtn');
+    var imageUrlInput = document.getElementById('imageUrlInput');
+    if (applyImageBtn && imageUrlInput) {
+        applyImageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var url = imageUrlInput.value.trim();
+            if (!url) return;
+            var slides = getAllSlides(); var cs = slides[getCurrentSlideIndex()]; if (!cs) return;
+            BoxManager.createImageBox('img-' + Date.now(), 'center', 'center', null, null, url, cs);
+            PersistenceLayer.saveCustomBoxes();
+            historyMgr.recordState(true);
+            RichTextToolbar.closeDropdowns();
+            imageUrlInput.value = '';
+        });
+    }
+
+    var triggerImageFileBtn = document.getElementById('triggerImageFileBtn');
+    var imageFileInput = document.getElementById('imageFileInput');
+    if (triggerImageFileBtn && imageFileInput) {
+        triggerImageFileBtn.addEventListener('click', function(e) { e.preventDefault(); imageFileInput.click(); });
+        imageFileInput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxW = 1000; var maxH = 1000;
+                    var w = img.width; var h = img.height;
+                    // 压缩算法
+                    if (w > maxW) { h *= maxW / w; w = maxW; }
+                    if (h > maxH) { w *= maxH / h; h = maxH; }
+                    canvas.width = w; canvas.height = h;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    var b64 = canvas.toDataURL((file.type === 'image/jpeg' ? 'image/jpeg' : 'image/webp'), 0.85);
+
+                    var slides = getAllSlides(); var cs = slides[getCurrentSlideIndex()];
+                    if (cs) {
+                        BoxManager.createImageBox('img-' + Date.now(), 'center', 'center', null, null, b64, cs);
+                        PersistenceLayer.saveCustomBoxes();
+                        historyMgr.recordState(true);
+                        RichTextToolbar.closeDropdowns();
+                    }
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+            imageFileInput.value = ''; 
+        });
+    }
+
+    // 插入超链接
+    var linkToggle = document.getElementById('linkToggle');
+    if (linkToggle) linkToggle.addEventListener('pointerdown', function (e) { e.preventDefault(); RichTextToolbar.toggleDropdown('linkDropdown'); });
+    var applyLinkBtn = document.getElementById('applyLinkBtn');
+    var linkUrlInput = document.getElementById('linkUrlInput');
+    var removeLinkBtn = document.getElementById('removeLinkBtn');
+    
+    if (applyLinkBtn && linkUrlInput) {
+        applyLinkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var url = linkUrlInput.value.trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+            RichTextToolbar.applyHyperlink(url);
+            linkUrlInput.value = '';
+        });
+    }
+    if (removeLinkBtn) {
+        removeLinkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            RichTextToolbar.removeHyperlink();
+        });
+    }
+
+    // 防止在工具栏输入框中打字时触发快捷键
+    document.querySelectorAll('.rt-dropdown-menu input').forEach(function(input) {
+        input.addEventListener('keydown', function(e) { e.stopPropagation(); });
+    });
 
     // 导出公共 API
     window.PersistenceLayer = PersistenceLayer;

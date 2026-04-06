@@ -31,20 +31,6 @@
     --editor-outline-focus: rgba(88, 166, 255, 0.8);
 }
 
-/* 自动检测系统暗色偏好 */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]):not(.light-theme) {
-        --editor-bg: rgba(19, 23, 32, 0.92);
-        --editor-border: rgba(255, 255, 255, 0.1);
-        --editor-text: #e6edf3;
-        --editor-text-muted: #8b949e;
-        --editor-shadow: rgba(0, 0, 0, 0.4);
-        --editor-hover-bg: rgba(255, 255, 255, 0.08);
-        --editor-outline-idle: rgba(88, 166, 255, 0.3);
-        --editor-outline-focus: rgba(88, 166, 255, 0.8);
-    }
-}
-
 /* ===========================================
    1. 编辑模式热区 & 开关按钮
    =========================================== */
@@ -261,8 +247,58 @@
     outline-offset: 3px;
 }
 
+/* 彻底锁定底层页面滚动 */
+html.editor-mode, body.editor-mode {
+    overflow: hidden !important;
+}
+
 /* 编辑模式下幻灯片内容区 overflow 可见（防止虚线被裁剪） */
 .editor-mode .slide-content { overflow: visible; }
+
+/* ===========================================
+   ++ 拖拉拽节点与缩放核心逻辑 ++ 
+   =========================================== */
+/* 解除针对图片框自带的 resize overflow 屏蔽 */
+.editable-wrap.image-box { resize: none !important; overflow: visible !important; }
+
+/* 八点缩放原点（类似 PPT 的小圆白点控制柄） */
+.rs-handle {
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border: 2px solid var(--editor-accent);
+    border-radius: 50%;
+    z-index: 502;
+    display: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.editor-mode .editable-wrap:hover .rs-handle,
+.editor-mode .editable-wrap:focus-within .rs-handle,
+.editor-mode .image-frame:hover .rs-handle,
+.editor-mode .image-frame:focus-within .rs-handle {
+    display: block;
+}
+
+.rs-nw { top: -6px; left: -6px; cursor: nwse-resize; }
+.rs-ne { top: -6px; right: -6px; cursor: nesw-resize; }
+.rs-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.rs-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+.rs-n { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+.rs-s { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+.rs-e { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
+.rs-w { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
+
+/* 图片类容器的控件位置调整（移到盒子内部防裁切，且增加遮罩） */
+.editable-wrap.image-box > .box-controls,
+.image-frame > .box-controls,
+.image-fullbleed > .box-controls {
+    top: 6px !important;
+    right: 6px !important;
+    border: 1px solid var(--editor-accent);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--editor-shadow);
+}
 
 /* ===========================================
    5. 浮动控件（📍✖ 统一控件）—— 所有文本框共用
@@ -361,4 +397,51 @@ s, strike { text-decoration-color: var(--editor-danger) !important; }
    =========================================== */
 @media (prefers-reduced-motion: reduce) {
     .rich-toolbar { transition-duration: 0.1s !important; }
+}
+
+/* ===========================================
+   10. 超链接与图片面板
+   =========================================== */
+.rt-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.rt-input-group input[type="text"],
+.rt-input-group input[type="url"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--editor-border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--editor-text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+[data-theme="dark"] .rt-input-group input,
+.dark-theme .rt-input-group input { background: rgba(0, 0, 0, 0.2); color: #fff; }
+.rt-input-group input:focus {
+    background: var(--editor-bg);
+    border-color: var(--editor-accent);
+}
+.rt-input-group .btn-row { display: flex; gap: 6px; }
+.rt-input-btn {
+    flex: 1; padding: 6px; border: none; border-radius: 6px;
+    background: var(--editor-accent); color: #fff;
+    cursor: pointer; font-size: 13px; font-weight: bold;
+    transition: filter 0.2s;
+}
+.rt-input-btn:hover { filter: brightness(1.1); }
+.rt-input-btn.danger { background: var(--editor-danger); }
+.rt-input-btn.secondary { background: var(--editor-border); color: var(--editor-text); }
+
+.editable-wrap.image-box {
+    resize: both;
+    overflow: hidden;
+    min-width: 50px; min-height: 50px;
+}
+.editable-wrap.image-box img {
+    width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block;
 }
