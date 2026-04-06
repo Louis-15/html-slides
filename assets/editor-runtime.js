@@ -620,25 +620,76 @@
 
         /**
          * 清理容器中因 extractContents 残留的空装饰 span
-         * （选区完全在 span 内时，extractContents 只抽文本，留下空壳）
          */
         _cleanEmptyDecoSpans: function (container, decorationType) {
-            var spans = Array.from(container.querySelectorAll('span'));
-            for (var i = spans.length - 1; i >= 0; i--) {
-                var s = spans[i];
+            Array.from(container.querySelectorAll('span')).forEach(function (s) {
                 if (s.style.textDecoration && s.style.textDecoration.indexOf(decorationType) !== -1) {
-                    if (!s.textContent || s.textContent === '') {
-                        s.parentNode.removeChild(s);
-                    }
+                    if (!s.textContent) s.parentNode.removeChild(s);
                 }
-            }
+            });
         },
 
         /**
-         * 切换装饰的通用方法（删除线等）
-         * ① 先在活 DOM 上判断：选区是否全部已有装饰
-         * ② 全部有 → 取消装饰（提取 → 清理 → 插回）
-         * ③ 不全有 → 统一应用（提取 → 清理旧的 → 整体包裹新的 → 插回）
+         * 核心：将包裹选区的装饰 span 在选区边界处劈开
+         * 劈开后选区内容不再被装饰 span 包裹，后续 extractContents 即可正常工作
+         */
+        _splitDecoSpanAtRange: function (range, container, decorationType) {
+            var startEl = range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer;
+            var decoSpan = null;
+            var check = startEl;
+            while (check && check !== container) {
+                if (check.tagName === 'SPAN' && check.style.textDecoration &&
+                    check.style.textDecoration.indexOf(decorationType) !== -1) {
+                    decoSpan = check;
+                    break;
+                }
+                check = check.parentNode;
+            }
+            if (!decoSpan) return; // 选区不在装饰 span 内，无需劈开
+
+            var parent = decoSpan.parentNode;
+
+            // 1. 提取「选区之后」的内容
+            var afterRange = document.createRange();
+            afterRange.setStart(range.endContainer, range.endOffset);
+            if (decoSpan.lastChild) afterRange.setEndAfter(decoSpan.lastChild);
+            else afterRange.setEnd(decoSpan, 0);
+            var afterFrag = afterRange.extractContents();
+
+            // 2. 提取「选中」的内容
+            var selectedFrag = range.extractContents();
+
+            // decoSpan 现在只剩「选区之前」的内容
+            var nextSib = decoSpan.nextSibling;
+
+            // 3. 插入「之后」部分（保留装饰）
+            if (afterFrag.textContent) {
+                var afterSpan = decoSpan.cloneNode(false);
+                afterSpan.appendChild(afterFrag);
+                parent.insertBefore(afterSpan, nextSib);
+            }
+
+            // 4. 插入「选中」部分 — 保留无样式 span 做选区锚点（不影响渲染）
+            //    不解包！解包会导致浏览器丢失选区，这是之前的 bug 根因
+            var bareWrap = document.createElement('span');
+            bareWrap.appendChild(selectedFrag);
+            parent.insertBefore(bareWrap, decoSpan.nextSibling);
+
+            // 5. 清空的前半 span 移除
+            if (!decoSpan.textContent) parent.removeChild(decoSpan);
+
+            // 6. 设置选区指向 bareWrap 内容
+            var sel = window.getSelection();
+            var newRange = document.createRange();
+            newRange.selectNodeContents(bareWrap);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            this.savedRange = newRange;
+        },
+
+        /**
+         * 切换装饰（删除线等）
+         * 先劈开 → 再提取清理 → 全部有则取消，否则统一应用
          */
         _toggleDecoration: function (decorationType, decoColor) {
             this.restoreSelection();
@@ -648,20 +699,22 @@
             if (!container) return;
 
             var range = sel.getRangeAt(0);
-            // 关键：在提取前检查活 DOM
             var allDecorated = this._isRangeFullyDecorated(range, container, decorationType);
 
+            // 先劈开，确保选区不在装饰 span 内部
+            this._splitDecoSpanAtRange(range, container, decorationType);
+            this.restoreSelection();
+            sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            range = sel.getRangeAt(0);
+
             var fragment = range.extractContents();
-            // 清理 fragment 内的同类装饰（防止堆叠）
             this._cleanDecoration(fragment, decorationType);
-            // 清理容器中被 extractContents 留下的空壳 span
             this._cleanEmptyDecoSpans(container, decorationType);
 
             if (allDecorated) {
-                // 全部已有装饰 → 取消：直接插回清理后的内容
                 range.insertNode(fragment);
             } else {
-                // 不全有 → 统一应用
                 var span = document.createElement('span');
                 span.style.textDecoration = decorationType;
                 if (decoColor) span.style.textDecorationColor = decoColor;
@@ -680,7 +733,7 @@
         },
 
         /**
-         * 有色下划线：先清掉旧下划线再加新的，防止堆叠
+         * 有色下划线：劈开旧 span → 清理 → 包裹新下划线
          */
         applyUnderlineColor: function (color) {
             this.restoreSelection();
@@ -690,6 +743,12 @@
             if (!container) return;
 
             var range = sel.getRangeAt(0);
+            this._splitDecoSpanAtRange(range, container, 'underline');
+            this.restoreSelection();
+            sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            range = sel.getRangeAt(0);
+
             var fragment = range.extractContents();
             this._cleanDecoration(fragment, 'underline');
             this._cleanEmptyDecoSpans(container, 'underline');
@@ -709,7 +768,7 @@
             window.historyMgr.recordState(true);
         },
 
-        /** 去除选中文字的下划线 */
+        /** 去掉下划线：劈开 → 清理 → 裸插回 */
         removeUnderline: function () {
             this.restoreSelection();
             var sel = window.getSelection();
@@ -718,6 +777,12 @@
             if (!container) return;
 
             var range = sel.getRangeAt(0);
+            this._splitDecoSpanAtRange(range, container, 'underline');
+            this.restoreSelection();
+            sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            range = sel.getRangeAt(0);
+
             var fragment = range.extractContents();
             this._cleanDecoration(fragment, 'underline');
             this._cleanEmptyDecoSpans(container, 'underline');
