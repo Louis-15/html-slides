@@ -777,6 +777,7 @@
                     self.savedRange = null;
                 }
                 self.syncFontIndicators();
+                if (typeof self.syncFormatButtons === 'function') self.syncFormatButtons();
             });
 
             this._initPalettes();
@@ -1311,6 +1312,46 @@
             var eng = fonts[0] || 'sans-serif';
             var zh = fonts.length > 1 ? fonts[1] : fonts[0];
             return { eng: eng, zh: zh };
+        },
+
+        /**
+         * 光标移动时监测自身及子节点是否处于“拥有富文本格式”的状态，借此调控清除格式按钮的颜色
+         */
+        syncFormatButtons: function () {
+            var removeFormatBtn = document.querySelector('[data-cmd="removeFormat"]');
+            if (!removeFormatBtn) return;
+            var svg = removeFormatBtn.querySelector('svg');
+            if (!svg) return;
+
+            var hasFormat = false;
+            var sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                var range = sel.getRangeAt(0);
+                var node = range.commonAncestorContainer;
+                if (node.nodeType === 3) node = node.parentNode;
+                
+                // 向上追溯到 contenteditable 的边界，查看是否有被富文本样式包裹
+                while (node && node.nodeType === 1 && !node.hasAttribute('contenteditable')) {
+                    var tag = node.tagName.toLowerCase();
+                    if (['b', 'i', 'u', 's', 'em', 'strong', 'span', 'font', 'ruby', 'rt'].indexOf(tag) !== -1 || node.style.length > 0) {
+                        hasFormat = true;
+                        break;
+                    }
+                    node = node.parentNode;
+                }
+
+                // 如果没找到包裹元素，且选区跨越了多个子节点，检查包含的内容
+                if (!hasFormat && !range.collapsed) {
+                    var frag = range.cloneContents();
+                    if (frag.querySelector('b, i, u, s, em, strong, span, font, ruby, rt, [style]')) {
+                        hasFormat = true;
+                    }
+                }
+            }
+            
+            // 拥有格式 = 高亮状态 (深蓝灰色 #2C3E50), 无格式 = 待命状态 (极淡灰 #BDC3C7)
+            svg.style.color = hasFormat ? '#2C3E50' : '#BDC3C7';
+            svg.style.transition = 'color 0.2s ease';
         },
 
         /**
