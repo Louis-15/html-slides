@@ -222,6 +222,12 @@
         exportCleanHTML: function () {
             var clone = document.documentElement.cloneNode(true);
 
+            // 【核心修复】将依赖文件转为绝对地址，防止保存到非同级目录（如下载文件夹）时发生 CSS/JS 路径断裂
+            clone.querySelectorAll('link[rel="stylesheet"], script[src]').forEach(function(el) {
+                if (el.hasAttribute('href')) { el.setAttribute('href', el.href); }
+                if (el.hasAttribute('src')) { el.setAttribute('src', el.src); }
+            });
+
             // 清空导航圆点
             var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
             var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
