@@ -222,11 +222,28 @@
         exportCleanHTML: function () {
             var clone = document.documentElement.cloneNode(true);
 
-            // 【核心修复】将依赖文件转为绝对地址，防止保存到非同级目录（如下载文件夹）时发生 CSS/JS 路径断裂
-            clone.querySelectorAll('link[rel="stylesheet"], script[src]').forEach(function(el) {
-                if (el.hasAttribute('href')) { el.setAttribute('href', el.href); }
-                if (el.hasAttribute('src')) { el.setAttribute('src', el.src); }
+            // 【核心修复：绝对路径绑定】安全提取并固化资源属性
+            clone.querySelectorAll('link[rel="stylesheet"], script[src], img[src]').forEach(function(el) {
+                if (el.hasAttribute('href') && el.href) { el.setAttribute('href', el.href); }
+                if (el.hasAttribute('src') && el.src) { el.setAttribute('src', el.src); }
             });
+
+            // 【终极降级安全网 (Graceful Degradation)】
+            // 当发给外部电脑（如女友电脑）且没有附带 assets 文件夹时，全站 CSS 会丢失（变成阅读模式文档）。
+            // 为了防止富文本工具栏、下拉菜单失去 CSS 约束后变成乱码残骸糊在屏幕上，强制注入底层样式将所有编辑控件静默！
+            var safetyStyle = clone.ownerDocument ? clone.ownerDocument.createElement('style') : document.createElement('style');
+            safetyStyle.textContent = `
+                /* Portable Safety Net */
+                .rich-toolbar, .box-controls, .rt-dropdown-menu, 
+                #editToggle, .edit-toggle, #doodleToolbar, .doodle-layer, 
+                .floating-controls, .rs-handle {
+                    display: none !important;
+                    visibility: hidden !important;
+                    pointer-events: none !important;
+                }
+            `;
+            var head = clone.querySelector('head');
+            if (head) head.appendChild(safetyStyle);
 
             // 清空导航圆点
             var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
