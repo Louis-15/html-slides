@@ -1329,27 +1329,58 @@
                 var range = sel.getRangeAt(0);
                 var node = range.commonAncestorContainer;
                 if (node.nodeType === 3) node = node.parentNode;
+
+                // 核心判定逻辑：不仅要找包裹，而且要排除编辑器注入的无辜 UI 悬浮组件，只认真格的“内联样式”或“排版标签”
+                function isFormattedNode(el) {
+                    if (el.nodeType !== 1) return false;
+                    // 免疫编辑器控件护盾
+                    if (el.getAttribute('contenteditable') === 'false' || 
+                        (el.classList && (el.classList.contains('box-controls') || el.classList.contains('del-btn') || el.classList.contains('drag-handle') || el.classList.contains('rs-handle')))) {
+                        return false;
+                    }
+                    var tag = el.tagName.toLowerCase();
+                    if (['b', 'i', 'u', 's', 'em', 'strong', 'font', 'ruby', 'rt'].indexOf(tag) !== -1) return true;
+                    
+                    // 仅当挂载了特定的“富文本外观”CSS属性时才算格式。必须豁免掉为了布局定位自动加上的 position、left、margin 等非格式属性。
+                    if (el.style) {
+                        if (el.style.color || 
+                            el.style.backgroundColor || 
+                            el.style.fontFamily || 
+                            el.style.fontSize || 
+                            el.style.textDecoration || 
+                            el.style.textDecorationLine ||
+                            el.style.fontWeight || 
+                            el.style.fontStyle) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
                 
-                // 向上追溯到 contenteditable 的边界，查看是否有被富文本样式包裹
-                while (node && node.nodeType === 1 && !node.hasAttribute('contenteditable')) {
-                    var tag = node.tagName.toLowerCase();
-                    if (['b', 'i', 'u', 's', 'em', 'strong', 'span', 'font', 'ruby', 'rt'].indexOf(tag) !== -1 || node.style.length > 0) {
+                // 向上追溯到 contenteditable 的边界
+                var walkNode = node;
+                while (walkNode && walkNode.nodeType === 1 && !walkNode.hasAttribute('contenteditable')) {
+                    if (isFormattedNode(walkNode)) {
                         hasFormat = true;
                         break;
                     }
-                    node = node.parentNode;
+                    walkNode = walkNode.parentNode;
                 }
 
-                // 如果没找到包裹元素，且选区跨越了多个子节点，检查包含的内容
+                // 针对多节点框选：切片扫描包容内容
                 if (!hasFormat && !range.collapsed) {
                     var frag = range.cloneContents();
-                    if (frag.querySelector('b, i, u, s, em, strong, span, font, ruby, rt, [style]')) {
-                        hasFormat = true;
+                    var children = frag.querySelectorAll('*');
+                    for (var i = 0; i < children.length; i++) {
+                        if (isFormattedNode(children[i])) {
+                            hasFormat = true;
+                            break;
+                        }
                     }
                 }
             }
             
-            // 拥有格式 = 高亮状态 (深蓝灰色 #2C3E50), 无格式 = 待命状态 (极淡灰 #BDC3C7)
+            // 拥有可被移除的偏离格式 = 深蓝灰色 (#2C3E50), 出厂初始无格式 = 淡灰待命状态 (#BDC3C7)
             svg.style.color = hasFormat ? '#2C3E50' : '#BDC3C7';
             svg.style.transition = 'color 0.2s ease';
         },
