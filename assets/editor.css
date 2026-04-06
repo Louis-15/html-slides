@@ -473,3 +473,17 @@ s, strike { text-decoration-color: var(--editor-danger) !important; }
 .editable-wrap.image-box img {
     width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block;
 }
+
+/* ===========================================
+   8. 涂鸦模式视觉避让布局 (Doodle Mode)
+   =========================================== */
+.slide {
+    /* 赋予所有幻灯片根容器关于 padding 的形变过渡属性，使偏移丝滑不生硬 */
+    transition: padding 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 涂鸦模式下，推移视觉中心，为左侧工具栏留出充裕的安全空间，同时不至于挤压右侧的小圆点导航 */
+body.doodle-mode .slide {
+    padding-left: 100px !important;
+    padding-right: 40px !important;
+}
