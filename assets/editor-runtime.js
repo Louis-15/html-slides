@@ -422,9 +422,12 @@
                 handle.setPointerCapture(e.pointerId);
 
                 if (isCustom) {
-                    // 重要修复：拖拽前立即把宽高定死为当前物理像素，防止元素向右拖拽时因触碰边界而被挤压压缩
-                    if (!wrap.style.width || wrap.style.width === 'auto') wrap.style.width = wrap.offsetWidth + 'px';
-                    if (!wrap.style.height || wrap.style.height === 'auto') wrap.style.height = wrap.offsetHeight + 'px';
+                    // 对于图片元素或非文本元素，定死宽高以防止挤压
+                    // 对于文本框（包含 text-box），由于启用了 min-width: max-content 弹性盒模型，不必锁死宽度，允许用户后期随意无限打字伸长
+                    if (!wrap.classList.contains('text-box')) {
+                        if (!wrap.style.width || wrap.style.width === 'auto') wrap.style.width = wrap.offsetWidth + 'px';
+                        if (!wrap.style.height || wrap.style.height === 'auto') wrap.style.height = wrap.offsetHeight + 'px';
+                    }
 
                     dragState = {
                         target: wrap,
@@ -577,7 +580,7 @@
             var container = targetSlide.querySelector('.slide-content') || targetSlide;
 
             var wrap = document.createElement('div');
-            wrap.className = 'editable-wrap custom-box';
+            wrap.className = 'editable-wrap custom-box text-box';
             wrap.style.left = left;
             wrap.style.top = top;
 

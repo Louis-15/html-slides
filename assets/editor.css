@@ -247,6 +247,12 @@
     outline-offset: 3px;
 }
 
+/* 如果外部有 .editable-wrap 包装，说明包装器已经接管了边框，这里取消内部的 outline 防止出现双重虚线框！ */
+.editor-mode .editable-wrap [data-edit-id],
+.editor-mode .editable-wrap [contenteditable="true"] {
+    outline: none !important;
+}
+
 /* 彻底锁定底层页面滚动 */
 html.editor-mode, body.editor-mode {
     overflow: hidden !important;
@@ -367,10 +373,17 @@ html.editor-mode, body.editor-mode {
     z-index: 500;
 }
 
+/* 【关键修复】文本框本身具备自适应特性，永不被挤压 */
+.editable-wrap.custom-box.text-box {
+    min-width: max-content;
+}
+
 /* 编辑模式下悬停/聚焦显示虚线边框 */
-.editor-mode .editable-wrap:hover,
+.editor-mode .editable-wrap:hover {
+    border-color: var(--editor-outline-idle);
+}
 .editor-mode .editable-wrap:focus-within {
-    border-color: var(--editor-accent);
+    border-color: var(--editor-outline-focus);
 }
 
 /* ===========================================
