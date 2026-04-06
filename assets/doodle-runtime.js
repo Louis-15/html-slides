@@ -83,7 +83,7 @@
             });
 
             // 颜色块选择器 (小圆点阵列)
-            var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#34495e', '#ffffff'];
+            var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#fd79a8', '#ffffff'];
             var colorGrid = document.createElement('div');
             colorGrid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; margin-bottom: 8px; width: 100%;';
             colors.forEach(function(c) {

@@ -1214,9 +1214,10 @@
         _initPalettes: function () {
             var self = this;
             var tc = ['#000000', '#2C3E50', '#7F8C8D', '#BDC3C7', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FFFFFF'];
-            var hc = ['#F5B7B1', '#FAD7A1', '#F9E79F', '#A9DFBF', '#A3E4D7', '#AED6F1', '#D2B4DE', '#EBDEF0', '#E5E7E9', '#EAEDED', '#D5C4A1', 'transparent'];
+            var hc = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#fd79a8', '#ffffff', 'transparent'];
             var tg = document.querySelector('.text-colors');
             var bg = document.querySelector('.bg-colors');
+            if (bg) bg.style.gridTemplateColumns = 'repeat(5, 1fr)';
 
             if (tg) tc.forEach(function (c) {
                 var s = document.createElement('div'); s.className = 'color-swatch'; s.style.background = c;
