@@ -222,10 +222,19 @@
         exportCleanHTML: function () {
             var clone = document.documentElement.cloneNode(true);
 
-            // 【核心修复：绝对路径绑定】安全提取并固化资源属性
+            // 【架构级升维：便携式捆绑包模式 (Portable Bundle)】
+            // 为了让文件在任意电脑上打开都丝滑完美，不再使用绝对的 file:/// 路径。
+            // 我们强制将 HTML 里所有的 CSS、JS 和图片链接重写为相对当前目录的 './assets/' 引用。
+            // 这样只要把这批资产打包成文件夹，别人解压后就能 100% 同步渲染。
             clone.querySelectorAll('link[rel="stylesheet"], script[src], img[src]').forEach(function(el) {
-                if (el.hasAttribute('href') && el.href) { el.setAttribute('href', el.href); }
-                if (el.hasAttribute('src') && el.src) { el.setAttribute('src', el.src); }
+                if (el.hasAttribute('href') && el.getAttribute('href').indexOf('assets/') !== -1) {
+                    var h = el.getAttribute('href');
+                    el.setAttribute('href', './assets/' + h.split('assets/')[1]);
+                }
+                if (el.hasAttribute('src') && el.getAttribute('src').indexOf('assets/') !== -1) {
+                    var s = el.getAttribute('src');
+                    el.setAttribute('src', './assets/' + s.split('assets/')[1]);
+                }
             });
 
             // 【终极降级安全网 (Graceful Degradation)】
