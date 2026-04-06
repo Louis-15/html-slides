@@ -253,9 +253,19 @@
     outline: none !important;
 }
 
-/* 彻底锁定底层页面滚动 */
-html.editor-mode, body.editor-mode {
+/* 彻底锁定底层页面滚动 (含涂鸦模式) */
+html.editor-mode, body.editor-mode,
+html.doodle-mode, body.doodle-mode {
     overflow: hidden !important;
+}
+
+/* 涂鸦画板状态控制 */
+.doodle-mode .doodle-layer {
+    pointer-events: auto !important;
+}
+.doodle-layer {
+    pointer-events: none; /* 平时允许点击穿透 */
+    z-index: 400; /* 与元素平齐 */
 }
 
 /* 编辑模式下幻灯片内容区 overflow 可见（防止虚线被裁剪） */

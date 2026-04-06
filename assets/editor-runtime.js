@@ -237,6 +237,12 @@
 
             // 移除浮动控件及编辑器专有图元挂载节点（核心：确保原版输出的纯净性，绝对不污染最终 HTML 产物）
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+            
+            // 清理涂鸦引擎产生的 UI，它们将在终端放映文档被打开时由 doodle-runtime.js 原地重新干净注入
+            var dt = clone.querySelector('#doodleToolbar'); if (dt) dt.remove();
+            var db = clone.querySelector('#doodleToggleBtn'); if (db) db.remove();
+            var dp = clone.querySelector('#doodleLaserPointer'); if (dp) dp.remove();
+            if (bd) bd.classList.remove('doodle-mode');
 
             // 触发导出清洗钩子（供涂鸦模块等清理自己的临时 DOM）
             EditorHooks.fire('onExportClean', clone);
