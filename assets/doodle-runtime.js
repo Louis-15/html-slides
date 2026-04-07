@@ -224,6 +224,15 @@
                     window.editorCore.toggleEditMode();
                 }
                 
+                // 居中吸附当前最可能是视口的 slide (借用 editor-utils 几何判断)
+                if (window._editorUtils) {
+                    var targetIndex = window._editorUtils.getCurrentSlideIndex();
+                    var slides = window._editorUtils.getAllSlides();
+                    if (slides[targetIndex]) {
+                        slides[targetIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+                    }
+                }
+                
                 body.classList.add('doodle-mode');
                 this.toggleBtn.classList.add('active');
                 this.toggleBtn.style.opacity = '1';
@@ -303,8 +312,19 @@
 
         getCurrentSvg: function () {
             var slides = document.querySelectorAll('.slide');
-            var currentIdx = window.presentation ? window.presentation.currentSlideIndex : 0;
-            var currSlide = slides[currentIdx];
+            var currSlide = null;
+            var minDiff = Infinity;
+            
+            // 物理测算：寻找其 top 最贴近视口顶部（0）的 slide（无视任何样式标志）
+            for (var i = 0; i < slides.length; i++) {
+                var rect = slides[i].getBoundingClientRect();
+                var diff = Math.abs(rect.top);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    currSlide = slides[i];
+                }
+            }
+            if (!currSlide && slides.length > 0) currSlide = slides[0];
             if (!currSlide) return null;
 
             var existingSvg = currSlide.querySelector('svg.doodle-layer');
