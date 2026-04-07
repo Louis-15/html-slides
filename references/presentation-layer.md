@@ -64,8 +64,8 @@ After generating or modifying ANY presentation, verify all 8 rules:
 2. All slides are `<div class="slide">` with sequential `data-slide="0"` through `data-slide="N"`
 3. First slide has `class="slide active"`, no other slide has `active`
 4. Global `goTo()`, `next()`, `prev()` functions exist
-5. All CSS inline (except font imports)
-6. All JS inline (except CDN libraries: Chart.js, Mermaid, anime.js)
+5. All CSS via external `<link>` references to `./assets/` files (except font CDN imports and small per-presentation `:root` overrides which stay inline)
+6. All JS via external `<script src>` references to `./assets/` files (except CDN libraries: Chart.js, Mermaid, anime.js, and small per-presentation custom scripts which stay inline)
 7. No broken numbering gaps after insertions or deletions
 8. `<meta name="generator" content="html-slides vX.Y.Z">` exists in `<head>`
 

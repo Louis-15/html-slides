@@ -130,8 +130,8 @@ Check the HTML for these patterns to identify the source format.
   - Missing `data-slide` → add sequential numbering
   - Missing `class="active"` on first slide → add it
   - Missing `goTo/next/prev` → inject standard navigation JS
-  - External CSS → inline it
-  - External JS → inline it (except Chart.js)
+  - External CSS → reference via `<link>` to `./assets/`
+  - External JS → reference via `<script src>` to `./assets/` (except Chart.js CDN)
 
 **Do NOT restructure** — minimal fixes only.
 
@@ -188,7 +188,7 @@ When the source has external stylesheets:
    - For utility CSS (normalize.css, reset.css): discard (HTMLSlides has its own reset)
    - For font CSS (Google Fonts, Fontshare): keep the `<link>` element (allowed by spec)
 3. **Inline styles** — Preserve on elements, but ensure they use `clamp()` for font sizes
-4. **Important:** After inlining, verify no `<link rel="stylesheet">` remains except allowed font imports
+4. **Important:** After conversion, verify all CSS is via external `<link>` references to `./assets/` (except allowed font CDN imports and small per-presentation `:root` overrides)
 
 ## JS Replacement Strategy
 
@@ -207,7 +207,7 @@ Framework navigation JS is **completely replaced**, not merged:
 
 3. **Replace with:**
    - Standard HTMLSlides navigation from [html-template.md](html-template.md) (for Vibe presets)
-   - Or [slides-runtime.js](../assets/slides-runtime.js) verbatim (for Pro mode)
+   - Standard HTMLSlides navigation via `<script src="./assets/slides-runtime.js">` (external reference)
 
 ## Image Handling
 

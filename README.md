@@ -16,7 +16,7 @@ It also offers a **Vibe mode** with 12 creative themes for non-technical present
 
 ### Key Features
 
-- **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools, no frameworks.
+- **Zero Dependencies** — HTML files with external CSS/JS references to a shared `assets/` folder. No npm, no build tools, no frameworks.
 - **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
 - **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
@@ -201,10 +201,11 @@ Auto-detects the source format, extracts content, and generates a spec-compliant
 
 ## Output
 
-Every generated presentation produces a single file:
+Every generated presentation produces:
 
 ```
-my-deck.html              ← self-contained: CSS, JS, and speaker notes all inline
+my-deck.html              ← HTML with external CSS/JS references + inline speaker notes
+assets/                   ← shared CSS, JS modules, themes (ships alongside the HTML)
 ```
 
 ### Speaker Notes
@@ -235,10 +236,12 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `references/html-template.md` | HTML structure and JS features | Phase 3 (Vibe) |
 | `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Vibe) |
 | `references/component-templates.md` | Structured component templates | Phase 3 (Pro) |
-| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (Vibe) |
+| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (all modes) |
 | `assets/components.css` | Shared component CSS for all Pro themes | Phase 3 (Pro) |
 | `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
 | `assets/slides-runtime.js` | Navigation JS + Chart.js integration | Phase 3 (Pro) |
+| `assets/editor-*.js` | 6 modular editor JS files | Phase 3 (if editing) |
+| `assets/editor.css` | Editor toolbar and controls CSS | Phase 3 (if editing) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 | `scripts/deploy.sh` | Deploy to Vercel | Phase 7 (sharing) |

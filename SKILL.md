@@ -52,7 +52,7 @@ These invariants apply to EVERY slide in EVERY presentation:
 - Include `prefers-reduced-motion` support
 - Never negate CSS functions directly (`-clamp()`, `-min()`, `-max()` are silently ignored) — use `calc(-1 * clamp(...))` instead
 
-**When generating, read `viewport-base.css` and include its full contents in every presentation.**
+**When generating, reference `viewport-base.css` via `<link>` in every presentation. Do NOT copy its contents inline.**
 
 ### Content Density Limits Per Slide
 
@@ -101,8 +101,8 @@ When modifying existing presentations, make **minimal changes** — only touch w
 2. All slides are `<div class="slide">` with sequential `data-slide="0"` through `data-slide="N"`
 3. First slide has `class="slide active"`, no other slide has `active`
 4. Global `goTo()`, `next()`, `prev()` functions exist
-5. All CSS inline (except font imports)
-6. All JS inline (except CDN libraries: Chart.js, Mermaid, anime.js)
+5. All CSS via external `<link>` references to `./assets/` files (except font CDN imports and small per-presentation `:root` overrides which stay inline)
+6. All JS via external `<script src>` references to `./assets/` files (except CDN libraries: Chart.js, Mermaid, anime.js, and small per-presentation custom scripts which stay inline)
 7. No broken numbering gaps after insertions or deletions
 8. `<meta name="generator" content="html-slides vX.Y.Z">` exists in `<head>`
 
@@ -279,18 +279,18 @@ Before writing any HTML, analyze the content and plan each slide. For each slide
 
 **For creative presets (presets 1-12):**
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
-- [viewport-base.css](assets/viewport-base.css) — Mandatory CSS (include in full)
+- [viewport-base.css](assets/viewport-base.css) — Mandatory CSS (reference via `<link>`, do NOT inline)
 - [animation-patterns.md](references/animation-patterns.md) — Animation reference for the chosen feeling
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and animations (use when content needs them)
 
 **For Pro mode (structured component mode):**
 - [component-templates.md](references/component-templates.md) — Component style reference for charts, code blocks, cards, tables, images. Use as a **styling guide** when your design calls for these elements — not a menu to cycle through.
-- [components.css](assets/components.css) — Shared component CSS (copy verbatim into `<style>`)
-- Theme CSS from `assets/themes/` — copy verbatim into `<style>`, BEFORE components.css
-- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (copy verbatim into `<script>`)
+- [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
+- Theme CSS from `assets/themes/` — reference via `<link>`, BEFORE components.css
+- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - **Excalidraw themes** use CSS-only for the hand-drawn aesthetic. The theme CSS (excalidraw.css / excalidraw-dark.css) handles hachure fills, offset shadows, and rounded corners entirely with CSS — no JavaScript needed.
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams (Mermaid.js), orchestrated animations (anime.js). Use when the content calls for them.
-- If any slides use **Chart** components, add Chart.js CDN in `<head>` before `<style>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
+- If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Available Pro themes** (user specifies in prompt, default: Obsidian):
 
@@ -303,13 +303,17 @@ Before writing any HTML, analyze the content and plan each slide. For each slide
 | Binary Architect | `assets/themes/binary-architect.css` | Hacker-elite, sharp corners, neon on void-black |
 
 **Key requirements:**
-- Single self-contained HTML file, all CSS/JS inline
-- For Vibe mode: include the FULL contents of viewport-base.css in the `<style>` block. **CRITICAL: Do NOT redefine `.slide` positioning or layout after pasting viewport-base.css** — it already defines `.slide` with `position: relative`, `scroll-snap-align`, and flex layout. Adding a second `.slide { position: absolute; opacity: 0; }` will conflict and cause blank or overlapping slides. Only add visual styles (colors, backgrounds, typography, animations) on top.
-- For Pro mode: include the chosen theme CSS + components.css in the `<style>` block, and slides-runtime.js in the `<script>` block
+- HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/` — the `assets/` folder ships alongside the HTML
+- **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor-core.js` at runtime
+- For Vibe mode: reference viewport-base.css via `<link>`. **CRITICAL: Do NOT redefine `.slide` positioning or layout** — viewport-base.css already defines `.slide` with `position: relative`, `scroll-snap-align`, and flex layout. Adding a second `.slide { position: absolute; opacity: 0; }` will conflict and cause blank or overlapping slides. Only add visual styles (colors, backgrounds, typography, animations) on top.
+- For Pro mode: reference the chosen theme CSS + components.css via `<link>`, and slides-runtime.js via `<script>`
+- Custom animations for this presentation → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
+- Per-presentation `:root` variable overrides may stay inline in a small `<style>` block
 - Use fonts from Fontshare or Google Fonts — never system fonts
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
 - **Always generate speaker notes** — see Speaker Notes below
+- **Editor modules** (if editing enabled): reference 6 JS files in strict order: `editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js`
 
 ### Speaker Notes (Mandatory)
 
@@ -459,7 +463,7 @@ Before saving, verify all 8 spec rules pass. Fix any that fail. Save the HTML fi
    - Navigation: Arrow keys, Space, scroll/swipe, click nav dots
    - Speaker notes: Open DevTools (F12), detach to separate window — notes appear in console on each slide change
    - How to customize: `:root` CSS variables for colors, font link for typography, `.reveal` class for animations
-   - If inline editing was enabled: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save
+   - If inline editing was enabled: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to export clean HTML
 
 ---
 
@@ -513,13 +517,16 @@ Captures each slide as a screenshot and combines into a single PDF. Animations a
 | File | Purpose | When to Read |
 |------|---------|-------------|
 | [STYLE_PRESETS.md](references/STYLE_PRESETS.md) | Curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
-| [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — copy into every presentation (presets 1-12) | Phase 3 (generation) |
+| [viewport-base.css](assets/viewport-base.css) | Mandatory responsive CSS — reference via `<link>` | Phase 3 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards (presets 1-12) | Phase 3 (generation) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide (presets 1-12) | Phase 3 (generation) |
 | [component-templates.md](references/component-templates.md) | Component style reference — use when your design calls for these elements | Phase 3 (Pro) |
-| [components.css](assets/components.css) | Shared component CSS for all Pro themes — copy verbatim | Phase 3 (Pro) |
-| [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one | Phase 3 (Pro) |
-| [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — copy verbatim | Phase 3 (Pro) |
+| [components.css](assets/components.css) | Shared component CSS for all Pro themes — reference via `<link>` | Phase 3 (Pro) |
+| [themes/](assets/themes/) | Theme CSS files (dark-interactive, excalidraw, excalidraw-dark, editorial-light, binary-architect) — pick one, reference via `<link>` | Phase 3 (Pro) |
+| [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 3 (Pro) |
+| [editor-*.js](assets/) | 6 modular editor JS files (utils, persistence, history, box-manager, rich-text, core) — reference via `<script src>` in strict dependency order | Phase 3 (if editing enabled) |
+| [editor.css](assets/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 3 (if editing enabled) |
+| [doodle-runtime.js](assets/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 3 (if editing enabled) |
 | [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js (diagrams), anime.js (animations), Chart.js (charts) | Phase 3 (when content needs them) |
 | [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 8 validation rules, navigation | Phase 3 (reference) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (PPT conversion) |
