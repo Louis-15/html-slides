@@ -123,6 +123,11 @@
             var toolbar = document.getElementById('richToolbar');
 
             if (this.isActive) {
+                // 如果涂鸦模式处于开启状态，强制其退出（完全互斥）
+                if (window.DoodleManager && window.DoodleManager.isActive) {
+                    window.DoodleManager.toggleDoodleMode();
+                }
+                
                 var targetIndex = getCurrentSlideIndex();
                 var slides = getAllSlides();
                 if (slides[targetIndex]) {

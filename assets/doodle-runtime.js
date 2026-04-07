@@ -380,8 +380,8 @@
 
         _onPointerDown: function (e) {
             if (!this.isActive || e.button !== 0) return;
-            // 点击的是 UI 或者 导航圆点，不触发绘图
-            if (e.target.closest('.doodle-toolbar') || e.target.closest('.doodle-entry-btn') || e.target.closest('.nav-dots') || e.target.closest('.rich-toolbar')) {
+            // 屏蔽所有的系统级 UI 操作面板点按，防止将其污染为画笔轨迹
+            if (e.target.closest('.doodle-toolbar, .doodle-entry-btn, .nav-dots, .rich-toolbar, .edit-toggle, .edit-hotzone')) {
                 return;
             }
             
