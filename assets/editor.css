@@ -408,7 +408,7 @@ ruby { ruby-align: center; }
 ruby rt {
     color: var(--editor-danger);
     font-weight: bold;
-    font-size: 0.55em;
+    font-size: 0.65em;
     user-select: text; /* 恢复可双击编辑性 */
     padding-bottom: 0.1em; /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
     white-space: nowrap; /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
