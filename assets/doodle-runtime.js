@@ -132,6 +132,33 @@
                 }
             });
             tb.appendChild(clearAllBtn);
+            
+            // ================= 新增：独立数据外置按钮 =================
+            var exportBtn = document.createElement('button');
+            exportBtn.className = 'rt-btn wide';
+            exportBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
+            exportBtn.title = '导出为外置文件 (.doodle)';
+            exportBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                self.exportDoodleToFile();
+            });
+            tb.appendChild(exportBtn);
+
+            var importBtn = document.createElement('button');
+            importBtn.className = 'rt-btn wide';
+            importBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>';
+            importBtn.title = '挂载外部板书 (.doodle) / 支持文件拖入屏幕';
+            importBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.doodle';
+                input.onchange = function(evt) {
+                    if (evt.target.files[0]) self.importDoodleFromFile(evt.target.files[0]);
+                };
+                input.click();
+            });
+            tb.appendChild(importBtn);
 
             document.body.appendChild(tb);
             this.uiContainer = tb;
@@ -210,6 +237,20 @@
                         self.toggleDoodleMode();
                     }
                     lastRbTime = now;
+                }
+            });
+
+            // ================= 极具未来感的全局拖拽挂载 =================
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    var file = e.dataTransfer.files[0];
+                    if (file.name.endsWith('.doodle')) {
+                        self.importDoodleFromFile(file);
+                    }
                 }
             });
         },
@@ -500,6 +541,97 @@
                     slide.appendChild(svg);
                 });
             } catch(e) {}
+        },
+
+        // ================= 外置隔离数据体系 =================
+        exportDoodleToFile: async function () {
+            var map = {};
+            document.querySelectorAll('.slide').forEach(function(slide, idx) {
+                var svg = slide.querySelector('svg.doodle-layer');
+                if (svg && svg.innerHTML.trim() !== '') {
+                    map[idx] = svg.innerHTML;
+                }
+            });
+            if (Object.keys(map).length === 0) {
+                alert('当前画板没有内容，不需要导出。');
+                return;
+            }
+            var jsonStr = JSON.stringify(map);
+            var blob = new Blob([jsonStr], {type: 'application/json'});
+            
+            // 提取当前的 HTML 文件命名的主体作为基础文件名
+            var pathSegment = location.pathname.split('/').pop();
+            var htmlFileName = pathSegment ? decodeURIComponent(pathSegment).replace(/\.[^/.]+$/, "") : "";
+            var baseName = htmlFileName || (document.title ? document.title.replace(/[\\/:*?"<>|]/g, '') : '黑板');
+            var fileName = baseName + '_涂鸦板书.doodle';
+
+            // 尝试使用现代浏览器的 File System Access API 唤起“另存为”对话框
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: '课件涂鸦数据',
+                            accept: { 'application/json': ['.doodle'] }
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return; // 成功后直接返回
+                } catch (err) {
+                    // 如果是用户自己点了取消按钮，直接终止
+                    if (err.name === 'AbortError') return; 
+                    // 否则跌落到下面的传统兜底下载方案
+                }
+            }
+
+            // 传统降级方案：创建一个静默的强制下载指令（会落入浏览器设定的默认 Downloads 文件夹）
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.download = fileName;
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+
+        importDoodleFromFile: function (file) {
+            var self = this;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var map = JSON.parse(e.target.result);
+                    var slides = document.querySelectorAll('.slide');
+                    // 完全清爽当前的层
+                    document.querySelectorAll('svg.doodle-layer').forEach(function(svg) {
+                        svg.innerHTML = '';
+                    });
+                    
+                    Object.keys(map).forEach(function(idx) {
+                        var slide = slides[idx];
+                        if (!slide) return;
+                        var existingSvg = slide.querySelector('svg.doodle-layer');
+                        if (!existingSvg) {
+                            existingSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                            existingSvg.setAttribute('class', 'doodle-layer');
+                            existingSvg.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 400;';
+                            slide.appendChild(existingSvg);
+                        }
+                        existingSvg.innerHTML = map[idx];
+                    });
+                    
+                    // 强行写入缓存使其拥有重载驻留权
+                    self.saveDoodles();
+                    
+                    // 强制拉起画板
+                    if (!self.isActive) {
+                        self.toggleDoodleMode();
+                    }
+                } catch(err) {
+                    alert('无法解析外部黑板数据：文件可能已损坏。');
+                }
+            };
+            reader.readAsText(file);
         }
     };
 
