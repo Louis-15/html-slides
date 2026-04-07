@@ -113,9 +113,22 @@
                 var s = spans[i];
                 if (s.style.textDecoration && s.style.textDecoration.indexOf(decorationType) !== -1) {
                     found = true;
-                    s.style.removeProperty('text-decoration');
-                    s.style.removeProperty('text-decoration-color');
-                    s.style.removeProperty('text-underline-offset');
+                    // 精确移除特定装饰类型
+                    var parts = s.style.textDecoration.split(/\s+/).filter(function(p) { return p && p !== decorationType; });
+                    if (parts.length > 0) {
+                        s.style.textDecoration = parts.join(' ');
+                    } else {
+                        s.style.removeProperty('text-decoration');
+                    }
+
+                    if (decorationType === 'underline') {
+                        s.style.removeProperty('text-decoration-color');
+                        s.style.removeProperty('text-underline-offset');
+                    } else if (decorationType === 'line-through') {
+                        // 如果有独立的删除线颜色（目前系统共用 text-decoration-color，所以也需择机移除，但稳妥起见只有当完全无样式时才移除）
+                        if (parts.length === 0) s.style.removeProperty('text-decoration-color');
+                    }
+                    
                     if (!s.getAttribute('style') || s.getAttribute('style').trim() === '') {
                         var parent = s.parentNode;
                         while (s.firstChild) parent.insertBefore(s.firstChild, s);
@@ -237,7 +250,10 @@
             var range = sel.getRangeAt(0);
             var allDecorated = this._isRangeFullyDecorated(range, container, decorationType);
 
-            this._splitDecoSpanAtRange(range, container, decorationType);
+            // 修复混合样式 Bug：如果不是要“取消”全部样式，就不应该切断跨界的选中域，让原生的 extractContents 去处理父级包裹，避免将 C 拉入外层 span
+            if (allDecorated) {
+                this._splitDecoSpanAtRange(range, container, decorationType);
+            }
             this.restoreSelection();
             sel = window.getSelection();
             if (!sel.rangeCount) return;
@@ -304,6 +320,26 @@
         /** 去掉下划线 */
         removeUnderline: function () {
             this.restoreSelection();
+            var sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) return;
+            var container = getActiveEditContainer();
+            if (!container) return;
+
+            var range = sel.getRangeAt(0);
+            this._splitDecoSpanAtRange(range, container, 'underline');
+            this.restoreSelection();
+            sel = window.getSelection();
+            if (!sel.rangeCount) return;
+
+            var fragment = sel.getRangeAt(0).extractContents();
+            this._cleanDecoration(fragment, 'underline');
+            this._cleanEmptyDecoSpans(container, 'underline');
+
+            // 直接插回被剥离了下划线格式的片段
+            sel.getRangeAt(0).insertNode(fragment);
+            container.normalize();
+
+            window.PersistenceLayer.saveElement(container);
             window.historyMgr.recordState(true);
             this.closeDropdowns();
         },
