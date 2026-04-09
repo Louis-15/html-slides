@@ -87,16 +87,17 @@ Four interactive cards in a 2x2 grid. Each card flips on click to reveal a detai
 <p class="subtitle" style="font-size:15px;">Click cards to flip &amp; reveal details</p>
 <div class="flip-grid anim-3">
   <div class="flip-bounce-wrap bounce-1">
-    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+    <div class="flip-card">
       <div class="flip-front border-[COLOR]">
         <div class="flip-icon">[EMOJI]</div>
         <div class="flip-title">[CARD_TITLE]</div>
         <div class="flip-subtitle highlight-[COLOR]">[CARD_SUBTITLE]</div>
-        <div class="flip-hint">click to flip</div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
       <div class="flip-back">
         <div class="flip-icon-big">[EMOJI]</div>
         <div class="flip-detail">[BACK_TEXT with <strong>bold keywords</strong>]</div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
     </div>
   </div>
@@ -201,35 +202,37 @@ Two large flippable cards with a "vs" label. Good vs bad / before vs after.
 <p class="subtitle" style="font-size:14px;">Click to flip and compare</p>
 <div class="auth-compare anim-3">
   <div class="auth-flip-wrap slide-l">
-    <div class="auth-flip" onclick="this.classList.toggle('flipped')">
+    <div class="auth-flip">
       <div class="auth-front bad">
         <div class="auth-icon">[BAD_EMOJI]</div>
         <div class="auth-name">[BAD_NAME]</div>
         <div class="auth-status">&#10060;</div>
         <div class="auth-desc">[BAD_SHORT_DESC]</div>
-        <div class="flip-hint">click to flip</div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
       <div class="auth-back">
         <div class="auth-icon">[BAD_EMOJI]</div>
         <div class="auth-name">[BAD_DETAIL_NAME]</div>
         <div class="flip-detail" style="font-size:13px;color:var(--text-muted);margin-top:8px;">[BAD_DETAIL_TEXT]<br><strong style="color:var(--accent-red);">[BAD_CONCLUSION]</strong></div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
     </div>
   </div>
   <div class="auth-vs">vs</div>
   <div class="auth-flip-wrap slide-r">
-    <div class="auth-flip" onclick="this.classList.toggle('flipped')">
+    <div class="auth-flip">
       <div class="auth-front good">
         <div class="auth-icon">[GOOD_EMOJI]</div>
         <div class="auth-name">[GOOD_NAME]</div>
         <div class="auth-status">&#10004;&#65039;</div>
         <div class="auth-desc">[GOOD_SHORT_DESC]</div>
-        <div class="flip-hint">click to flip</div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
       <div class="auth-back">
         <div class="auth-icon">[GOOD_EMOJI]</div>
         <div class="auth-name">[GOOD_DETAIL_NAME]</div>
         <div class="flip-detail" style="font-size:13px;color:var(--text-muted);margin-top:8px;">[GOOD_DETAIL_TEXT]<br><strong style="color:var(--accent-green);">[GOOD_CONCLUSION]</strong></div>
+        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
       </div>
     </div>
   </div>
@@ -272,20 +275,20 @@ Four cards that expand on click to reveal hidden content.
 ```html
 <p class="subtitle" style="font-size:15px;">Click any card to expand details</p>
 <div class="use-case-grid anim-3">
-  <div class="card-v2 glow-orange bounce-1" onclick="this.classList.toggle('expanded')">
+  <div class="card-v2 glow-orange bounce-1">
     <div class="card-icon">[EMOJI]</div>
     <div class="card-title">[CARD_1_TITLE]</div>
     <div class="card-desc">[CARD_1_DESC]</div>
     <div class="card-expand"><div class="card-expand-inner">[CARD_1_EXPANDED with <code>code_terms</code>]</div></div>
-    <div class="expand-hint">&#9660;</div>
+    <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.card-v2').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
   </div>
-  <div class="card-v2 glow-blue bounce-2" onclick="this.classList.toggle('expanded')">
+  <div class="card-v2 glow-blue bounce-2">
     <!-- same structure -->
   </div>
-  <div class="card-v2 glow-purple bounce-3" onclick="this.classList.toggle('expanded')">
+  <div class="card-v2 glow-purple bounce-3">
     <!-- same structure -->
   </div>
-  <div class="card-v2 glow-green bounce-4" onclick="this.classList.toggle('expanded')">
+  <div class="card-v2 glow-green bounce-4">
     <!-- same structure -->
   </div>
 </div>
@@ -534,13 +537,13 @@ A floating panel triggered by a bottom button. Shows key takeaways for the curre
 ```html
 <!-- 底部触发按钮 -->
 <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">
-  📋 本页总结
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
 </button>
 
 <!-- 总结浮层面板 -->
 <div class="summary-panel">
   <div class="summary-content">
-    <h3>📌 本页要点</h3>
+    <h3>本页要点</h3>
     <ul>
       <li>[KEY_POINT_1]</li>
       <li>[KEY_POINT_2]</li>
