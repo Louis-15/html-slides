@@ -112,31 +112,77 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
 
 /* -- Zone 1: Header Bar -- */
 .slide-header {
-  width: 100%;
   box-sizing: border-box;
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto; /* 与下方画布保持同轴居中 */
   margin-top: clamp(8px, 1.5vh, 16px); /* 顶边距减半，极致紧凑 */
   margin-bottom: 24px;
-  padding: 0 clamp(24px, 4vw, 48px); /* 同步内边距，实现文字垂直基准线对齐 */
+  
+  /* 竖向加点内折厚度，横向必须跟下方的 canvas 完全一致 */
+  padding: 16px clamp(24px, 4vw, 48px); 
+  
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: flex-start;
   flex-shrink: 0;
+  position: relative; /* 为伪元素全屏色带做基准 */
+  z-index: 1; /* 建立层叠上下文，拦截 z-index: -1 的伪元素，防止其遁入 slide 背景之下 */
+}
+
+/* --- 最新调和方案：高级悬浮渐变色块 --- 
+   带回你需要的横向视觉强行分割（区分 Zone1 和 Zone2），
+   但我们用现代 SaaS 的 "Tinted Wash"（微光洗色）和 "Soft Shadow"（柔和阴影）
+   来避免纯色带来的低端感。
+*/
+.slide-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  z-index: -1;
+  /* 稳健洗色：左侧 30% 浓度起步，右侧 15% 浓度收尾，加重色块存在感 */
+  background: linear-gradient(135deg, rgba(0, 163, 85, 0.3) 0%, rgba(0, 163, 85, 0.15) 100%);
+  /* 一条清脆的边界线 */
+  border-bottom: 1px solid rgba(0, 163, 85, 0.15);
+  /* 现代 UI 最爱的弥散悬浮阴影，把它从下方的 Zone2 轻轻抬起 */
+  box-shadow: 0 8px 32px -8px rgba(0, 163, 85, 0.12);
+  backdrop-filter: blur(12px); /* 隐性毛玻璃态，极大提升玄学质感 */
+}
+/* 顶级学术/企业文档中最风靡的“贯穿竖线 (Vertical Accent Bar)” 
+   把它挂载在 slide-header 上，让它与文字等高，存在于左侧内边距的留白中
+*/
+.slide-header::after {
+  content: "";
+  position: absolute;
+  left: 20px; /* 稍微往左挪动两像素，给加粗后的线条让出空间，保证和文字的完美间距不变 */
+  top: 10px; 
+  bottom: 10px; 
+  width: 8px; /* ★ 加粗！带来极强的视觉稳定感 */
+  background: #008744; 
+  border-radius: 0; /* 切出刀锋直角，拒绝圆润，打造铁血极简排版 */
 }
 .header-module {
-  font-size: clamp(14px, 1.5vw, 16px);
-  font-weight: 600;
-  color: var(--accent-blue);
+  font-size: clamp(13px, 1.3vw, 15px);
+  font-weight: 800;
+  color: #007A40; /* 采用比底色更深的暗绿，保证足够的阅读对比度 */
+  background: transparent; /* 彻底移除底色 */
+  border: none; /* 彻底移除边框 */
+  padding: 0; /* 回归原始对齐 */
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px; /* 给大标题留出呼吸空间 */
 }
 .header-title {
-  font-size: clamp(28px, 3.5vw, 40px);
-  font-weight: 800;
-  color: var(--text);
+  font-size: clamp(32px, 4vw, 44px); /* 字号微微放大，增强气场 */
+  font-weight: 850;
+  color: #1e293b;
   line-height: 1.25;
+  letter-spacing: -0.5px; /* 负字间距是现代高端字体的灵魂 */
 }
 
 /* -- Zone 2: Content Area (Layout Modes) -- */
