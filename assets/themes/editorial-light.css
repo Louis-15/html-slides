@@ -34,6 +34,15 @@
   --border: rgba(192, 199, 212, 0.15);
   --border-hover: rgba(192, 199, 212, 0.35);
   --outline-variant: #c0c7d4;
+
+  /* Zone 1 标题栏专属变量 — editorial-light 默认使用蓝紫色调 */
+  --header-wash-start: rgba(0, 96, 170, 0.12);
+  --header-wash-end: rgba(115, 63, 196, 0.06);
+  --header-border: rgba(0, 96, 170, 0.1);
+  --header-shadow: rgba(0, 96, 170, 0.08);
+  --header-accent-bar: #0060aa;
+  --header-module-color: #0060aa;
+  --header-title-color: #191c22;
 }
 
 /* ====== EDITORIAL LIGHT OVERRIDES ====== */

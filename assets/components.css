@@ -42,9 +42,18 @@ html, body {
 
 /* -- Chrome -- */
 .branding {
-  position: fixed; top: 24px; right: 32px; z-index: 100;
+  position: fixed; top: 12px; right: 32px; z-index: 100;
   font-size: 13px; font-weight: 600; color: var(--text-dim);
   display: flex; align-items: center; gap: 8px;
+}
+.brand-logo {
+  height: var(--brand-logo-height, 32px);
+  width: var(--brand-logo-width, 100px);
+  background-image: var(--brand-logo-url, none);
+  background-size: contain;
+  background-position: right center;
+  background-repeat: no-repeat;
+  display: block;
 }
 .branding-icon {
   width: 20px; height: 20px; border: 2px solid var(--text-dim);
@@ -146,11 +155,11 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
   width: 100vw;
   z-index: -1;
   /* 稳健洗色：左侧 30% 浓度起步，右侧 15% 浓度收尾，加重色块存在感 */
-  background: linear-gradient(135deg, rgba(0, 163, 85, 0.3) 0%, rgba(0, 163, 85, 0.15) 100%);
+  background: linear-gradient(135deg, var(--header-wash-start) 0%, var(--header-wash-end) 100%);
   /* 一条清脆的边界线 */
-  border-bottom: 1px solid rgba(0, 163, 85, 0.15);
+  border-bottom: 1px solid var(--header-border);
   /* 现代 UI 最爱的弥散悬浮阴影，把它从下方的 Zone2 轻轻抬起 */
-  box-shadow: 0 8px 32px -8px rgba(0, 163, 85, 0.12);
+  box-shadow: 0 8px 32px -8px var(--header-shadow);
   backdrop-filter: blur(12px); /* 隐性毛玻璃态，极大提升玄学质感 */
 }
 /* 顶级学术/企业文档中最风靡的“贯穿竖线 (Vertical Accent Bar)” 
@@ -163,13 +172,13 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
   top: 10px; 
   bottom: 10px; 
   width: 8px; /* ★ 加粗！带来极强的视觉稳定感 */
-  background: #008744; 
+  background: var(--header-accent-bar); /* 竖线颜色，跟随主题切换 */
   border-radius: 0; /* 切出刀锋直角，拒绝圆润，打造铁血极简排版 */
 }
 .header-module {
   font-size: clamp(13px, 1.3vw, 15px);
   font-weight: 800;
-  color: #007A40; /* 采用比底色更深的暗绿，保证足够的阅读对比度 */
+  color: var(--header-module-color); /* 副标题颜色，跟随主题切换 */
   background: transparent; /* 彻底移除底色 */
   border: none; /* 彻底移除边框 */
   padding: 0; /* 回归原始对齐 */
@@ -180,7 +189,7 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
 .header-title {
   font-size: clamp(32px, 4vw, 44px); /* 字号微微放大，增强气场 */
   font-weight: 850;
-  color: #1e293b;
+  color: var(--header-title-color, var(--text)); /* 主标题颜色，默认继承 --text */
   line-height: 1.25;
   letter-spacing: -0.5px; /* 负字间距是现代高端字体的灵魂 */
 }

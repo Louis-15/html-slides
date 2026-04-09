@@ -197,11 +197,11 @@
                 self.laserCursor.style.left = e.clientX + 'px';
                 self.laserCursor.style.top = e.clientY + 'px';
 
-                if (e.target.closest && e.target.closest('.doodle-toolbar, .doodle-entry-btn, .nav-dots, .rich-toolbar')) {
+                if (e.target.closest && e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .rich-toolbar')) {
                     self.laserCursor.style.opacity = '0';
                     document.documentElement.style.cursor = 'auto'; // 在 UI 上恢复系统光标
                 } else {
-                    self.laserCursor.style.opacity = '1';
+                    self.laserCursor.style.opacity = (self.currentTool === 'highlighter') ? '0.4' : '1';
                     document.documentElement.style.cursor = 'none'; // 在画板上隐藏系统光标
                 }
 
@@ -213,7 +213,7 @@
             document.addEventListener('pointerup', self._onPointerUp.bind(self));
             document.addEventListener('pointercancel', self._onPointerUp.bind(self));
 
-            // 全局拦截所有的默认滑动/翻页物理触发，保留 .nav-dots
+            // 全局拦截所有的默认滑动/翻页物理触发，保留 .slide-nav
             document.addEventListener('wheel', function(e) {
                 if (self.isActive) {
                     e.preventDefault();
@@ -222,7 +222,7 @@
             }, { capture: true, passive: false });
 
             document.addEventListener('touchmove', function(e) {
-                if (self.isActive && !e.target.closest('.nav-dots') && !e.target.closest('.doodle-toolbar')) {
+                if (self.isActive && !e.target.closest('.slide-nav') && !e.target.closest('.doodle-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -326,6 +326,7 @@
             this.laserCursor.style.border = 'none';
             this.laserCursor.style.borderRadius = '50%';
             this.laserCursor.style.transform = 'translate(-50%, -50%)';
+            this.laserCursor.style.mixBlendMode = 'normal';
 
             if (tool === 'magic' || tool === 'pen') {
                 // 笔类：精致的小发光点
@@ -340,6 +341,7 @@
                 this.laserCursor.style.height = size;
                 this.laserCursor.style.backgroundColor = c;
                 this.laserCursor.style.boxShadow = '0 0 0 1px rgba(0,0,0,0.1)';
+                this.laserCursor.style.mixBlendMode = 'multiply';
             } else if (tool === 'eraser') {
                 // 橡皮擦：返璞归真，直接使用 UI 层面的原生极简线框 SVG 图标，大小精确匹配
                 this.laserCursor.style.width = '24px';
@@ -353,19 +355,22 @@
 
         getCurrentSvg: function () {
             var slides = document.querySelectorAll('.slide');
-            var currSlide = null;
-            var minDiff = Infinity;
+            var currSlide = document.querySelector('.slide.active');
             
-            // 物理测算：寻找其 top 最贴近视口顶部（0）的 slide（无视任何样式标志）
-            for (var i = 0; i < slides.length; i++) {
-                var rect = slides[i].getBoundingClientRect();
-                var diff = Math.abs(rect.top);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    currSlide = slides[i];
+            // 如果没有明确带有 active 类的幻灯片，再退化使用物理几何测算
+            if (!currSlide) {
+                var minDiff = Infinity;
+                for (var i = 0; i < slides.length; i++) {
+                    var rect = slides[i].getBoundingClientRect();
+                    // 取决于排版模式，如果是层叠排版 rect.top 全是相同的，此逻辑会失效
+                    var diff = Math.abs(rect.top);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        currSlide = slides[i];
+                    }
                 }
+                if (!currSlide && slides.length > 0) currSlide = slides[0];
             }
-            if (!currSlide && slides.length > 0) currSlide = slides[0];
             if (!currSlide) return null;
 
             var existingSvg = currSlide.querySelector('svg.doodle-layer');
@@ -381,7 +386,7 @@
         _onPointerDown: function (e) {
             if (!this.isActive || e.button !== 0) return;
             // 屏蔽所有的系统级 UI 操作面板点按，防止将其污染为画笔轨迹
-            if (e.target.closest('.doodle-toolbar, .doodle-entry-btn, .nav-dots, .rich-toolbar, .edit-toggle, .edit-hotzone')) {
+            if (e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .rich-toolbar, .edit-toggle, .edit-hotzone')) {
                 return;
             }
             

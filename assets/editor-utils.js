@@ -52,6 +52,14 @@
         var slides = getAllSlides();
         if (!slides || slides.length === 0) return 0;
 
+        // 优先根据现代排版引擎的 .active 标识来判定
+        for (var idx = 0; idx < slides.length; idx++) {
+            if (slides[idx].classList.contains('active')) {
+                return idx;
+            }
+        }
+
+        // 回退逻辑：几何推算当前最居中的幻灯片索引（适用于传统瀑布流长图排版）
         var bestIndex = 0;
         var minDistance = Infinity;
         var centerY = window.innerHeight / 2;
