@@ -1,6 +1,8 @@
-# HTML Presentation Template
+# HTML Teaching Courseware Template
 
-Reference architecture for generating slide presentations. **All presets must follow this structure.** This ensures every generated presentation passes the spec validator.
+Reference architecture for generating teaching courseware slides. **All generated courseware must follow this structure.** This ensures every generated file passes the spec validator.
+
+For slide canvas structure (header bar + content area + summary component) and layout modes, see [layout-system.md](layout-system.md).
 
 ## Output Format Spec (Mandatory)
 
@@ -13,7 +15,7 @@ Every generated HTML file **must** comply with these rules:
 5. Global `function goTo()`, `function next()`, `function prev()` via external `slides-runtime.js`
 6. All CSS via external `<link>` references to `./assets/` files (except font CDN imports and small per-presentation `:root` overrides inline)
 7. All JS via external `<script src>` references to `./assets/` files (except CDN libraries and small per-presentation custom scripts inline)
-8. Has `<meta name="generator" content="html-slides vX.Y.Z">` in `<head>`
+8. Has `<meta name="generator" content="html-slides v1.0.0">` in `<head>`
 
 ## Base HTML Structure
 
@@ -23,8 +25,8 @@ Every generated HTML file **must** comply with these rules:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="html-slides v0.9.4">
-    <title>Presentation Title</title>
+    <meta name="generator" content="html-slides v1.0.0">
+    <title>Courseware Title</title>
 
     <!-- Fonts: use Fontshare or Google Fonts — never system fonts -->
     <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=...">
@@ -34,9 +36,9 @@ Every generated HTML file **must** comply with these rules:
 
     <!-- CSS: All via external <link> references -->
     <link rel="stylesheet" href="./assets/viewport-base.css">
-    <link rel="stylesheet" href="./assets/themes/dark-interactive.css"> <!-- or other theme -->
-    <link rel="stylesheet" href="./assets/components.css"> <!-- Pro mode -->
-    <link rel="stylesheet" href="./assets/editor.css"> <!-- if editing enabled -->
+    <link rel="stylesheet" href="./assets/themes/[teaching-theme].css"> <!-- teaching theme -->
+    <link rel="stylesheet" href="./assets/components.css">
+    <link rel="stylesheet" href="./assets/editor.css"> <!-- always included -->
     <link rel="stylesheet" href="./assets/slide-animations.css"> <!-- custom animations -->
 
     <style>
@@ -56,14 +58,54 @@ Every generated HTML file **must** comply with these rules:
 
     <!-- Slide container (REQUIRED) -->
     <div class="deck" id="deck">
+
+        <!-- === SLIDE 0: Title Slide === -->
         <div class="slide active" data-slide="0">
-            <h1 class="reveal">Presentation Title</h1>
-            <p class="reveal">Subtitle or author</p>
+            <!-- Title slide uses layout-single, no header bar -->
+            <div class="slide-content layout-single">
+                <h1 class="anim-2">Courseware Title</h1>
+                <p class="subtitle anim-3">Author / Date</p>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"Title","script":"...","notes":["..."]}
+            </script>
         </div>
 
+        <!-- === SLIDE 1: Content Slide (Three-Zone Canvas) === -->
         <div class="slide" data-slide="1">
-            <h2 class="reveal">Slide Title</h2>
-            <p class="reveal">Content...</p>
+            <!-- ZONE 1: Header Bar (fixed two lines) -->
+            <div class="slide-header">
+                <div class="header-module">[教学模块名称]</div>
+                <div class="header-title">[当前知识点名称]</div>
+            </div>
+
+            <!-- ZONE 2: Content Area (AI chooses layout mode) -->
+            <div class="slide-content layout-2col">
+                <div class="col">
+                    <p data-edit-id="s1-body">Left column content...</p>
+                </div>
+                <div class="col">
+                    <img src="assets/diagram.png" alt="说明图" style="width:100%;height:100%;object-fit:contain;">
+                </div>
+            </div>
+
+            <!-- ZONE 3: Summary Component (optional, AI decides) -->
+            <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">
+                📋 本页总结
+            </button>
+            <div class="summary-panel">
+                <div class="summary-content">
+                    <h3>📌 本页要点</h3>
+                    <ul>
+                        <li>要点 1</li>
+                        <li>要点 2</li>
+                    </ul>
+                </div>
+            </div>
+
+            <script type="application/json" class="slide-notes">
+            {"title":"Knowledge Point","script":"...","notes":["..."]}
+            </script>
         </div>
 
         <!-- More slides... -->
@@ -72,7 +114,7 @@ Every generated HTML file **must** comply with these rules:
     <!-- JS: All via external <script src> references -->
     <script src="./assets/slides-runtime.js"></script>
 
-    <!-- Editor modules (if editing enabled): strict dependency order -->
+    <!-- Editor modules (always included): strict dependency order -->
     <script src="./assets/editor-utils.js"></script>
     <script src="./assets/editor-persistence.js"></script>
     <script src="./assets/editor-history.js"></script>
@@ -112,9 +154,9 @@ Optional enhancements (match to chosen style):
 - Magnetic buttons
 - Counter animations
 
-## Inline Editing Implementation (Default ON for Teaching)
+## Inline Editing Implementation (Always ON)
 
-**For teaching courseware, inline editing is enabled by default.** For other use cases, it can be opted out in Phase 1.
+**Inline editing is always enabled for teaching courseware.** No opt-out.
 
 The editing system is powered by external asset files — **all via `<link>` and `<script src>` references, never inline:**
 
@@ -267,27 +309,27 @@ Save processed images with `_processed` suffix. Never overwrite originals.
 
 ## File Structure
 
-Single presentations:
+Single courseware:
 ```
-presentation.html              # HTML with external CSS/JS references + inline speaker notes
+courseware.html                # HTML with external CSS/JS references + inline speaker notes
 assets/                        # CSS, JS modules, themes, images
 ├── viewport-base.css          # Mandatory responsive CSS
 ├── themes/                    # Theme CSS files
-├── components.css             # Pro mode component CSS
-├── editor.css                 # Editor UI CSS (if editing enabled)
+├── components.css             # Component CSS
+├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
-├── editor-utils.js            # Editor base utilities (if editing enabled)
+├── editor-utils.js            # Editor base utilities
 ├── editor-persistence.js      # localStorage + export
 ├── editor-history.js          # Undo/redo
 ├── editor-box-manager.js      # Text/image box management
 ├── editor-rich-text.js        # Rich text toolbar logic
 ├── editor-core.js             # Editor orchestrator + dynamic toolbar injection
-├── doodle-runtime.js          # Doodle overlay (if editing enabled)
-├── slide-animations.css       # Custom animations for this presentation
-└── [images]                   # Any presentation images
+├── doodle-runtime.js          # Doodle overlay
+├── slide-animations.css       # Custom animations for this courseware
+└── [images]                   # Any courseware images
 ```
 
-Multiple presentations in one project:
+Multiple courseware files sharing one project:
 ```
 [name].html
 assets/                        # Shared assets folder
