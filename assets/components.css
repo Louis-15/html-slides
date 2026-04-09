@@ -137,9 +137,28 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
 /* -- Zone 2: Content Area (Layout Modes) -- */
 .slide-content {
   width: 100%;
-  /* flex: 1 allows it to take remaining space, min-height 0 prevents overflow issues in flex child */
-  flex: 1;
+  box-sizing: border-box;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px);
+  /* 空间限制保留，视觉呈现透明无感 (去除嵌套卡片厚重感) */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  /* 高度适应内容，不再强制拉伸铺满剩余空间 */
+  flex: none;
   min-height: 0;
+  transition: padding 0.3s ease;
+}
+
+/* 0. layout-title (封面页) */
+.slide-content.layout-title {
+  margin: auto; /* 覆盖 0 auto，实现垂直防呆居中 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 /* 1. layout-single */
