@@ -113,7 +113,12 @@ h2 { font-size: clamp(28px,3.5vw,48px); font-weight: 800; line-height: 1.15; let
 /* -- Zone 1: Header Bar -- */
 .slide-header {
   width: 100%;
+  box-sizing: border-box;
+  max-width: 1100px;
+  margin: 0 auto; /* 与下方画布保持同轴居中 */
+  margin-top: clamp(8px, 1.5vh, 16px); /* 顶边距减半，极致紧凑 */
   margin-bottom: 24px;
+  padding: 0 clamp(24px, 4vw, 48px); /* 同步内边距，实现文字垂直基准线对齐 */
   display: flex;
   flex-direction: column;
   gap: 6px;
