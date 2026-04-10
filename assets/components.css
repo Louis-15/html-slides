@@ -316,6 +316,9 @@ h2 {
   /* 为伪元素全屏色带做基准 */
   z-index: 1;
   /* 建立层叠上下文，拦截 z-index: -1 的伪元素，防止其遁入 slide 背景之下 */
+
+  /* 从 ::after 伪元素解放出来的纯物理级绿点标识，随父容器绝对居中完美定位 */
+  background: linear-gradient(var(--header-accent-bar), var(--header-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 20px) 10px / 8px calc(100% - 20px);
 }
 
 /* --- 最新调和方案：高级悬浮渐变色块 --- 
@@ -364,14 +367,15 @@ h2 {
 
 /* --- 顶部流动箭头装饰系统 --- */
 @keyframes flowArrowsEntrance {
-  /* 滑入动画终点更改为 100%（紧贴屏幕最右侧），起点为其偏左 15vw 处 */
+  /* 发廊灯神化版：在纯相对定位的宽高比物理窗口内，百分比游动完美跨越 3 颗阵列。
+     因为容器宽是两倍的本身高度定死，0% -> 100% 正好在数学上等效于无感连续滑动，零跳帧！ */
   0% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, calc(100% - 15vw) center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, calc(100% - 15vw) center; 
+    -webkit-mask-position: 0% center; 
+    mask-position: 0% center; 
   }
   100% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center; 
+    -webkit-mask-position: 100% center; 
+    mask-position: 100% center; 
   }
 }
 
@@ -389,38 +393,27 @@ h2 {
   top: 0;
   bottom: 0;
   
-  /* [核心维度升维]：不再使用漂移的 100vw，而是严格锚定当前文字所属的包裹块 (.slide-header)！
-     起点定死在本地坐标轴 0，彻底消除一切跨容器的屏幕滚动条带来的运算公差！*/
-  left: 0;
-  /* 右侧直接爆展至屏幕的极限物理边界 */
+  /* [无敌神明视角]：现在它不需要承载左侧的绿条了！它只负责发廊灯头！
+     我们把它钉紧在屏幕最右侧，并赐予它 aspect-ratio: 2 / 1 的魔法。
+     不管内部容器多高，它向左反向膨胀出绝对刚好装下 4 个原生比例箭头的发廊窗！不差一丝一毫！ */
   right: calc(50% - 50vw);
+  width: auto;
+  aspect-ratio: 2 / 1;
   z-index: 0;
 
-  /* 双重图层合并！
-     层 1：死死固定在内部容器起点的绿条，与文字绝对距离永远保持在极其舒适的 12px
-     层 2：将褪色背景重新放宽至 35vw，确保底层光晕足够长，给前台遮罩留足深变白的过渡缓冲
-  */
-  background: 
-    linear-gradient(var(--header-accent-bar), var(--header-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 20px) 10px / 8px calc(100% - 20px),
-    linear-gradient(to right, var(--header-accent-bar) 0%, rgba(255, 255, 255, 1) 100%) no-repeat right top / 35vw 100%;
+  /* 单纯的背光滤镜：因为这个窗户物理意义上只有 4 箭头宽，左侧依靠 15% 的透明渐变软吃掉滑动时切面造成的闪烁 */
+  background: linear-gradient(to right, transparent 0%, var(--header-accent-bar) 15%, rgba(255, 255, 255, 1) 100%);
 
-  /* 双重遮罩保护套：
-     层 1：为绿条区域绘制一块完全不透光的黑盒子天窗以防被裁剪
-     层 2：【核心暴力魔法】不再使用1个箭头引发 repeat-x 导致宽度不可控。直接从 SVG 物理层载入一个严格且仅仅包含 4 颗一体化箭头的联合骨架图！彻底废除 repeat，永远 100% 免疫几何切断！
-  */
-  -webkit-mask-image: 
-    linear-gradient(#000, #000),
-    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHptMjAgMGg4bDEyIDIwTDI4IDQwSDIwbDEyLTIwem0yMCAwaDhsMTIgMjBMNDggNDBINDBsMTItMjB6bTIwIDBoOGwxMiAyMEw2OCA0MEg2MGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
-  -webkit-mask-size: 8px calc(100% - 20px), auto 100%;
-  -webkit-mask-repeat: no-repeat, no-repeat;
-  -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center;
+  /* 彻底释放 SVG 原有等比例傲骨，让它凭 100% 高度自由计算出自己的单体宽度 */
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+  -webkit-mask-size: auto 100%;
+  -webkit-mask-repeat: repeat-x;
+  -webkit-mask-position: 100% center;
 
-  mask-image: 
-    linear-gradient(#000, #000),
-    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHptMjAgMGg4bDEyIDIwTDI4IDQwSDIwbDEyLTIwem0yMCAwaDhsMTIgMjBMNDggNDBINDBsMTItMjB6bTIwIDBoOGwxMiAyMEw2OCA0MEg2MGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
-  mask-size: 8px calc(100% - 20px), auto 100%;
-  mask-repeat: no-repeat, no-repeat;
-  mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center;
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+  mask-size: auto 100%;
+  mask-repeat: repeat-x;
+  mask-position: 100% center;
 
   opacity: 0.9;
   pointer-events: none;
