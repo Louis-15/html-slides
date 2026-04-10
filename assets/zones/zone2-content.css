@@ -269,8 +269,16 @@
   transform: rotateY(180deg);
 }
 
-.flip-card:hover .flip-front {
+.flip-card:not(.flipped):hover {
   transform: translateY(-2px) scale(1.02);
+}
+
+.flip-card.flipped:hover {
+  transform: rotateY(180deg) translateY(-2px) scale(1.02);
+}
+
+.flip-card:hover .flip-front,
+.flip-card:hover .flip-back {
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
@@ -284,7 +292,7 @@
   display: flex;
   flex-direction: column;
   border: 1.5px solid var(--border);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
   width: 100%;
   box-sizing: border-box;
 }
