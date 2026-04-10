@@ -584,12 +584,15 @@
   font-weight: 900;
   line-height: 1;
   margin-bottom: 8px;
+  background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue, var(--accent-purple))));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.stat-number.blue { color: var(--accent-blue); }
-.stat-number.green { color: var(--accent-green); }
-.stat-number.orange { color: var(--accent-orange); }
-.stat-number.purple { color: var(--accent-purple); }
+.stat-number.blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.green { background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.orange { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.purple { background: linear-gradient(90deg, var(--accent-purple), var(--brand-primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
 
 .stat-label {
   font-size: clamp(18px, 1.8vw, 24px);
@@ -638,7 +641,7 @@
 .highlight-box .highlight-title {
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 900;
-  background: linear-gradient(90deg, var(--accent-blue), var(--brand-primary, var(--accent-purple)));
+  background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue, var(--accent-purple))));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 12px 0;
