@@ -94,10 +94,16 @@ body {
 /* -- Chrome 装饰 -- */
 .branding {
   color: var(--text-dim) !important;
+  /* 解决 fixed 定位产生层叠上下文导致内部元素 mix-blend-mode 失效的问题，
+     直接让整个 branding 容器产生正片叠底效果 */
+  mix-blend-mode: multiply;
 }
 
 .branding-icon {
   border-color: var(--text-dim) !important;
+}
+
+.brand-logo {
 }
 
 .progress-bar {
@@ -181,6 +187,19 @@ body {
 .title-hero-divider {
   /* 与标题渐变方向一致 */
   background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+}
+
+/* -- 封面页专属高级背景 (.slide:has(.layout-title)) -- 
+   纯白太素了，利用现代 CSS 为封面页注入品牌色光晕与细微的学术网格 */
+.slide:has(.layout-title) {
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(0, 163, 85, 0.4) 0%, transparent 70%),
+    radial-gradient(circle at 100% 100%, rgba(0, 96, 170, 0.35) 0%, transparent 75%),
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  background-position: 0 0, 0 0, center center, center center;
 }
 
 /* -- Tags: 技术标签 -- */
