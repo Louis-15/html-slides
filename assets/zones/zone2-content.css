@@ -616,6 +616,8 @@
   transition: all 0.3s ease;
   width: 100%;
   box-sizing: border-box;
+  font-size: clamp(15px, 1.5vw, 20px);
+  line-height: 1.6;
 }
 
 .highlight-box:hover {
