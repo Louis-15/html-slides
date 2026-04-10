@@ -204,16 +204,16 @@
 
 .card .card-title,
 .collapse-card .card-title {
-  font-size: clamp(16px, 1.4vw, 19px);
+  font-size: clamp(18px, 1.8vw, 24px);
   font-weight: 700;
   margin-bottom: 3px;
 }
 
 .card .card-desc,
 .collapse-card .card-desc {
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.6;
 }
 
 /* 问题/方案卡片变体 — 具体颜色由主题文件定义 */
@@ -221,7 +221,7 @@
 /* 卡片标签（问题/方案标记） */
 .card .card-label {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: clamp(10px, 0.9vw, 12px);
+  font-size: clamp(12px, 1.1vw, 14px);
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -240,8 +240,8 @@
 }
 
 .card .card-text {
-  font-size: clamp(13px, 1.2vw, 16px);
-  line-height: 1.55;
+  font-size: clamp(15px, 1.5vw, 20px);
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
@@ -327,7 +327,7 @@
 }
 
 .flip-back .flip-detail {
-  font-size: clamp(14px, 1.3vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
   color: var(--text-muted);
   line-height: 1.6;
 }
@@ -344,13 +344,13 @@
 /* 翻转卡片 - 色彩边框变体由主题文件定义 */
 
 .flip-title {
-  font-size: clamp(17px, 1.5vw, 20px);
+  font-size: clamp(18px, 1.8vw, 24px);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .flip-subtitle {
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
   font-weight: 400;
   color: var(--text-muted);
 }
@@ -414,9 +414,9 @@
 .card-expand-inner {
   padding-top: 12px;
   border-top: 1px solid var(--border);
-  font-size: clamp(12px, 1.1vw, 14px);
-  color: var(--text-dim);
-  line-height: 1.5;
+  font-size: clamp(15px, 1.5vw, 20px);
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 
 .card-expand-inner code {
