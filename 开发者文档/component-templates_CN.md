@@ -1,5 +1,24 @@
 # 组件造型与排版准则手册 (Component Style Reference)
 
+> **架构更新 (2026-04)**：组件系统已完成三区模块化拆分。
+
+## 三区模块化架构
+
+所有组件按照画布位置归类为三个区域，CSS 分别存放在独立文件中：
+
+| Zone | 名称 | CSS 文件 | 内容 |
+|------|------|---------|------|
+| **Zone 1** | 标题栏 | `assets/zones/zone1-header.css` | `.slide-header` 及其变体（当前：`banner` 横幅式） |
+| **Zone 2** | 内容区 | `assets/zones/zone2-content.css` | 8 种布局模式 + 16 个交互/展示组件 |
+| **Zone 3** | 总结面板 | `assets/zones/zone3-summary.css` | `.summary-trigger` 弹出式总结面板 |
+| **共享** | 基础 | `assets/components.css` | Reset、粒子、Chrome 装饰、排版原子类、glow blobs、动画关键帧 |
+
+**变体切换**：Zone 1 组件通过显式 CSS class 选择变体（如 `<div class="slide-header banner">`）。`slides-runtime.js` 会自动检测未指定变体的元素并补上默认 class。
+
+**配色机制**：主题文件（`assets/themes/*.css`）提供种子变量（`--brand-primary` 等），组件内部自动衍生全部色彩。主题可选择性覆盖特定变量进行精细调教。
+
+---
+
 这里收录了那些能够做到预装拼搭、即刻拷贝、随时运转的 HTML/CSS 标准部件。这些模式的作用在于保证**排版的惊艳与制式的绝对一致性**——它们不是简单的选择清单，而是构建世界观的基石砖块。
 
 ## 如何拿这一本手册去实战

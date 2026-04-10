@@ -3,18 +3,32 @@
    所有 Zone 2 布局模式 + 交互组件的完整集合。
    
    包含：
-   - 7 种布局模式 (layout-*)
-   - 封面布局 (layout-title)
-   - 15+ 种交互/展示组件
+   - 8 种布局模式 (layout-*)
+   - 16 个交互/展示组件
    
    配色机制：
    - 直接使用全局主题变量（--bg-card, --border, --text 等）
    - 无需变体切换（Zone 2 组件按功能区分而非样式变体）
+
+   组件总览：
+   ┌─────────────────────────────────────────────┐
+   │ 布局系统 (8种)                                │
+   │  0.封面页  1.单列  2.等宽双栏  3.左宽右窄     │
+   │  4.左窄右宽  5.三栏  6.双行  7.四宫格          │
+   ├─────────────────────────────────────────────┤
+   │ 交互组件 (16个)                                │
+   │  1.翻转卡片  2.展开卡片  3.操作按钮  4.代码窗口 │
+   │  5.架构流程图  6.数据统计  7.VS对比  8.认证对比  │
+   │  9.用例网格  10.状态时间线  11.全栈色条          │
+   │  12.行动号召  13.图表容器  14.数据表格           │
+   │  15.图片帧  16.内容块(4变体)                    │
+   └─────────────────────────────────────────────┘
    =========================================== */
 
 
 /* ===========================================
    布局系统 (Layout Modes)
+   定义 .slide-content 容器的空间分区方式，本身不包含视觉样式。
    =========================================== */
 
 /* -- 内容区基础容器 -- */
@@ -34,7 +48,8 @@
   transition: padding 0.3s ease;
 }
 
-/* 0. layout-title (封面页) */
+/* 0. layout-title (封面页)
+   全页居中布局，用于总封面和章节封面。使用此布局时不渲染 Zone 1 和 Zone 3。 */
 .slide-content.layout-title {
   margin: auto;
   /* 覆盖 0 auto，实现垂直防呆居中 */
@@ -45,7 +60,8 @@
   text-align: center;
 }
 
-/* 1. layout-single */
+/* 1. layout-single (单列)
+   纵向堆叠，适合长文本教学内容 */
 .slide-content.layout-single {
   display: flex;
   flex-direction: column;
@@ -54,7 +70,8 @@
   gap: 24px;
 }
 
-/* 2. layout-2col */
+/* 2. layout-2col (等宽双栏)
+   50/50 双列并排 */
 .slide-content.layout-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -62,7 +79,8 @@
   align-items: stretch;
 }
 
-/* 3. layout-2col-wide-left */
+/* 3. layout-2col-wide-left (左宽右窄)
+   约 65/35 双列 */
 .slide-content.layout-2col-wide-left {
   display: grid;
   grid-template-columns: 1.85fr 1fr;
@@ -70,7 +88,8 @@
   align-items: stretch;
 }
 
-/* 4. layout-2col-wide-right */
+/* 4. layout-2col-wide-right (左窄右宽)
+   约 35/65 双列 */
 .slide-content.layout-2col-wide-right {
   display: grid;
   grid-template-columns: 1fr 1.85fr;
@@ -78,7 +97,8 @@
   align-items: stretch;
 }
 
-/* 5. layout-3col */
+/* 5. layout-3col (三栏)
+   33/33/33 三列等宽 */
 .slide-content.layout-3col {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -86,7 +106,8 @@
   align-items: stretch;
 }
 
-/* 6. layout-2row */
+/* 6. layout-2row (双行)
+   上下两行纵向分区 */
 .slide-content.layout-2row {
   display: flex;
   flex-direction: column;
@@ -94,7 +115,8 @@
   justify-content: flex-start;
 }
 
-/* 7. layout-grid-2x2 */
+/* 7. layout-grid-2x2 (四宫格)
+   2×2 网格布局 */
 .slide-content.layout-grid-2x2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -103,7 +125,8 @@
   align-items: stretch;
 }
 
-/* Slot Containers within Layouts */
+/* 插槽容器 (.col / .cell / .row)
+   布局内部的通用子容器，所有布局模式共用 */
 .slide-content.layout-2col>.col,
 .slide-content.layout-2col-wide-left>.col,
 .slide-content.layout-2col-wide-right>.col,
@@ -118,10 +141,14 @@
 
 
 /* ===========================================
-   交互组件
+   交互/展示组件 (共 16 个)
    =========================================== */
 
-/* ====== FLIP CARDS ====== */
+/* ====== 组件 1: 翻转卡片 (Flip Cards) ======
+   选择器: .flip-grid / .flip-card / .flip-front / .flip-back
+   功能: 正反两面信息展示，2×2 网格排列
+   交互: 点击翻转 180° + hover 边框发光
+   ====== */
 .flip-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -246,7 +273,11 @@
   margin-bottom: 10px;
 }
 
-/* ====== EXPANDABLE CARDS ====== */
+/* ====== 组件 2: 展开卡片 (Expandable Cards) ======
+   选择器: .card-v2 / .card-expand / .card-expand-inner
+   功能: 可收起/展开的信息卡片，支持 4 种色彩发光变体
+   交互: 点击展开/收起 + hover 悬浮放大 + 色彩边框发光
+   ====== */
 .card-v2 {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -364,7 +395,11 @@
   transform: rotate(180deg);
 }
 
-/* ====== COMPONENT INTERACTION BUTTON ====== */
+/* ====== 组件 3: 操作按钮 (Action Button) ======
+   选择器: .card-action-btn
+   功能: 通用圆形图标按钮，挂载在翻转卡片和展开卡片的右下角
+   交互: hover 变蓝 + 展开态旋转 180°
+   ====== */
 .card-action-btn {
   all: unset;
   box-sizing: border-box;
@@ -406,7 +441,11 @@
   transform: rotate(180deg) scale(1.1);
 }
 
-/* ====== CODE BLOCKS ====== */
+/* ====== 组件 4: 代码窗口 (Code Blocks) ======
+   选择器: .code-window / .code-titlebar / .code-body
+   功能: 仿 IDE 代码展示窗口，红黄绿三点标题栏 + 语法高亮
+   交互: hover 阴影加深 + 微上移
+   ====== */
 .code-window {
   width: 100%;
   max-width: 780px;
@@ -512,7 +551,11 @@
   font-style: italic;
 }
 
-/* ====== ARCHITECTURE FLOW ====== */
+/* ====== 组件 5: 架构流程图 (Architecture Flow) ======
+   选择器: .arch-flow / .arch-box / .arch-arrow
+   功能: 横向流程节点 + 箭头连接，展示系统架构
+   交互: hover 悬浮上移 + 图标浮动动画
+   ====== */
 .arch-flow {
   display: flex;
   align-items: center;
@@ -644,7 +687,11 @@
   border-left: 6px solid var(--text-dim);
 }
 
-/* ====== STATS ====== */
+/* ====== 组件 6: 数据统计 (Stats) ======
+   选择器: .stats-row / .stat-card / .stat-number
+   功能: 大数字 + 标签 + 描述，横排展示关键指标
+   交互: hover 悬浮放大
+   ====== */
 .stats-row {
   display: flex;
   gap: 24px;
@@ -699,7 +746,11 @@
   color: var(--text-muted);
 }
 
-/* ====== VS / COMPARISON ====== */
+/* ====== 组件 7: VS 对比 (Comparison) ======
+   选择器: .vs-container / .vs-card / .vs-plus
+   功能: 左右两栏对比 + 中间 VS 圆圈，适合技术方案对比
+   交互: hover 色彩边框发光 + VS 圆圈脉冲动画
+   ====== */
 .vs-container {
   display: flex;
   align-items: center;
@@ -787,7 +838,11 @@
   animation: pulseGlow 3s ease infinite;
 }
 
-/* ====== AUTH COMPARE (flip) ====== */
+/* ====== 组件 8: 认证对比 (Auth Compare) ======
+   选择器: .auth-compare / .auth-flip / .auth-front / .auth-back
+   功能: 双卡片翻转对比（✗ vs ✓），展示新旧方案差异
+   交互: 点击翻转 + 红/绿边框高亮
+   ====== */
 .auth-compare {
   display: flex;
   align-items: center;
@@ -896,7 +951,10 @@
   text-transform: uppercase;
 }
 
-/* ====== USE CASES (expand grid) ====== */
+/* ====== 组件 9: 用例网格 (Use Case Grid) ======
+   选择器: .use-case-grid
+   功能: 2×N 网格容器，通常配合 .card-v2 展开卡片使用
+   ====== */
 .use-case-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -906,7 +964,11 @@
   margin-top: 28px;
 }
 
-/* ====== STATUS TIMELINE ====== */
+/* ====== 组件 10: 状态时间线 (Status Timeline) ======
+   选择器: .status-timeline / .status-item / .status-dot
+   功能: 纵向状态列表 + 彩色圆点（绿/黄/橙/红）
+   交互: hover 右移 + 背景变深
+   ====== */
 .status-timeline {
   width: 100%;
   max-width: 800px;
@@ -971,7 +1033,11 @@
   color: var(--text);
 }
 
-/* ====== FULLSTACK BAR ====== */
+/* ====== 组件 11: 全栈色条 (Fullstack Bar) ======
+   选择器: .fullstack-bar / .fullstack-half
+   功能: 前后端双色条形图，紫色后端 + 蓝色前端
+   交互: hover 亮度提升
+   ====== */
 .fullstack-bar {
   display: flex;
   width: 100%;
@@ -1006,7 +1072,11 @@
   filter: brightness(1.3);
 }
 
-/* ====== CTA BOX ====== */
+/* ====== 组件 12: 行动号召 (CTA Box) ======
+   选择器: .cta-box
+   功能: 渐变边框的强调框，用于页面底部关键信息
+   交互: hover 边框发光
+   ====== */
 .cta-box {
   margin-top: 32px;
   padding: 28px 40px;
@@ -1023,7 +1093,11 @@
   box-shadow: 0 8px 40px rgba(88, 166, 255, 0.06);
 }
 
-/* ====== CHART ====== */
+/* ====== 组件 13: 图表容器 (Chart) ======
+   选择器: .chart-container / .chart-square
+   功能: Chart.js 画布容器，支持宽幅和方形两种比例
+   交互: hover 边框 + 阴影加深
+   ====== */
 .chart-container {
   width: 100%;
   max-width: 920px;
@@ -1052,7 +1126,11 @@
   height: 100% !important;
 }
 
-/* ====== TABLE ====== */
+/* ====== 组件 14: 数据表格 (Table) ======
+   选择器: .table-wrap / thead / tbody
+   功能: 圆角表格 + 行悬浮高亮 + 表头大写
+   交互: hover 行背景变深
+   ====== */
 .table-wrap {
   width: 100%;
   max-width: 920px;
@@ -1113,7 +1191,11 @@
   color: var(--text-muted);
 }
 
-/* ====== IMAGE SLIDE ====== */
+/* ====== 组件 15: 图片帧 (Image Slide) ======
+   选择器: .image-frame / .image-fullbleed / .image-overlay
+   功能: 图片展示，支持截图、logo、全出血三种模式
+   交互: hover 微放大 + 阴影加深
+   ====== */
 .image-frame {
   margin-top: 24px;
   display: flex;
@@ -1182,10 +1264,12 @@
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
 }
 
-/* ====== CONTENT BLOCK ====== */
-/* The default content slide component: title + text.
-   4 variants: Statement (default), Numbered, Problem/Fix, Key Point.
-   Uses theme variables for automatic theming. */
+/* ====== 组件 16: 内容块 (Content Block) ======
+   选择器: .cb-wrap / .cb-heading / .cb-body / .cb-pair / .cb-keyquote
+   功能: 标题 + 段落的基础文本组件
+   变体: ① 陈述(默认) ② 编号(.cb-number) ③ 问题修复(.cb-pair) ④ 重点引用(.cb-keyquote)
+   配色: 使用主题变量自动适配
+   ====== */
 
 .cb-wrap {
   width: 100%;
