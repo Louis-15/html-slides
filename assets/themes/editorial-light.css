@@ -351,18 +351,7 @@ html, body {
   z-index: 0;
 }
 
-/* Geometric accent — thin vertical line at golden ratio */
-.deck::after {
-  content: '';
-  position: fixed;
-  top: 10%;
-  bottom: 10%;
-  left: 61.8%;
-  width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(192, 199, 212, 0.12), transparent);
-  pointer-events: none;
-  z-index: 0;
-}
+
 
 /* ====== GLOW BLOBS: SLOW DRIFT ====== */
 

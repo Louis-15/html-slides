@@ -603,18 +603,7 @@ body {
   z-index: 0;
 }
 
-/* 黄金比例装饰竖线 */
-.deck::after {
-  content: '';
-  position: fixed;
-  top: 10%;
-  bottom: 10%;
-  left: 61.8%;
-  width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(0, 163, 85, 0.08), transparent);
-  pointer-events: none;
-  z-index: 0;
-}
+
 
 /* ====== 光晕球：缓慢漂移 ====== */
 
