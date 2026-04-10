@@ -75,6 +75,10 @@
   transform: translateX(-50%) translateY(20px) scale(0.95);
   width: min(90vw, 600px);
   background: var(--bg);
+  /* 旧版浏览器兼容 */
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px;
@@ -95,8 +99,12 @@
   width: 16px;
   height: 16px;
   background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+  clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
 }
 
 .summary-panel.visible {

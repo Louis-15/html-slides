@@ -228,7 +228,8 @@ body {
 .status-item,
 .chart-container,
 .table-wrap,
-.cta-box {
+.cta-box,
+.summary-panel {
   background-image: none !important; /* 清除可能残留的组件内置光晕 */
   background-color: rgba(255, 255, 255, 0.25) !important; 
   backdrop-filter: blur(24px) saturate(120%);
@@ -236,6 +237,11 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 32px rgba(0, 163, 85, 0.05) !important;
+}
+
+/* 总结面板的箭头也必须同步为主卡的玻璃材质颜色，但需摘除圆角与阴影阻碍 */
+.summary-panel::after {
+  background-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Hover: 品牌色调环境光抬升 */

@@ -5,7 +5,7 @@
 
 /* === 编辑主题变量：浅色 === */
 :root {
-    --editor-bg: rgba(255, 255, 255, 0.95);
+    --editor-bg: rgba(255, 255, 255, 0.75);
     --editor-border: rgba(0, 0, 0, 0.1);
     --editor-text: #2c3e50;
     --editor-text-muted: #7f8c8d;
@@ -21,7 +21,7 @@
 /* 通过 data-theme="dark" 或 body 上 --bg 变量值来判定暗色主题 */
 [data-theme="dark"],
 .dark-theme {
-    --editor-bg: rgba(19, 23, 32, 0.92);
+    --editor-bg: rgba(19, 23, 32, 0.75);
     --editor-border: rgba(255, 255, 255, 0.1);
     --editor-text: #e6edf3;
     --editor-text-muted: #8b949e;
