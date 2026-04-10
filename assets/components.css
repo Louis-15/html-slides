@@ -364,14 +364,14 @@ h2 {
 
 /* --- 顶部流动箭头装饰系统 --- */
 @keyframes flowArrowsEntrance {
-  /* 初始时遮罩在极左侧，随着动画结束向右滑回原点 */
+  /* 滑入动画终点更改为 100%（紧贴屏幕最右侧），起点为其偏左 15vw 处 */
   0% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, -25vw center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, -25vw center; 
+    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, calc(100% - 15vw) center; 
+    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, calc(100% - 15vw) center; 
   }
   100% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center; 
+    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center; 
+    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center; 
   }
 }
 
@@ -398,29 +398,29 @@ h2 {
 
   /* 双重图层合并！
      层 1：死死固定在内部容器起点的绿条，与文字绝对距离永远保持在极其舒适的 12px
-     层 2：将流动渐晕光环限制在这个外延超大容器的最右侧 25vw 之内
+     层 2：将褪色背景重新放宽至 35vw，确保底层光晕足够长，给前台遮罩留足深变白的过渡缓冲
   */
   background: 
     linear-gradient(var(--header-accent-bar), var(--header-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 20px) 10px / 8px calc(100% - 20px),
-    linear-gradient(to right, rgba(0, 163, 85, 0) 0%, var(--header-accent-bar) 50%, rgba(255, 255, 255, 1) 100%) no-repeat right top / 25vw 100%;
+    linear-gradient(to right, var(--header-accent-bar) 0%, rgba(255, 255, 255, 1) 100%) no-repeat right top / 35vw 100%;
 
   /* 双重遮罩保护套：
      层 1：为绿条区域绘制一块完全不透光的黑盒子天窗以防被裁剪
-     层 2：将右侧 25vw 光晕限制在箭头重复阵列中
+     层 2：【核心暴力魔法】不再使用1个箭头引发 repeat-x 导致宽度不可控。直接从 SVG 物理层载入一个严格且仅仅包含 4 颗一体化箭头的联合骨架图！彻底废除 repeat，永远 100% 免疫几何切断！
   */
   -webkit-mask-image: 
     linear-gradient(#000, #000),
-    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHptMjAgMGg4bDEyIDIwTDI4IDQwSDIwbDEyLTIwem0yMCAwaDhsMTIgMjBMNDggNDBINDBsMTItMjB6bTIwIDBoOGwxMiAyMEw2OCA0MEg2MGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
   -webkit-mask-size: 8px calc(100% - 20px), auto 100%;
-  -webkit-mask-repeat: no-repeat, repeat-x;
-  -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center;
+  -webkit-mask-repeat: no-repeat, no-repeat;
+  -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center;
 
   mask-image: 
     linear-gradient(#000, #000),
-    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHptMjAgMGg4bDEyIDIwTDI4IDQwSDIwbDEyLTIwem0yMCAwaDhsMTIgMjBMNDggNDBINDBsMTItMjB6bTIwIDBoOGwxMiAyMEw2OCA0MEg2MGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
   mask-size: 8px calc(100% - 20px), auto 100%;
-  mask-repeat: no-repeat, repeat-x;
-  mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center;
+  mask-repeat: no-repeat, no-repeat;
+  mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 100% center;
 
   opacity: 0.9;
   pointer-events: none;
