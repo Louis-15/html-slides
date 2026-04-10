@@ -672,42 +672,42 @@ body {
    ========================================================= */
 
 /* 1. 第一栏 / 单栏 / 宫格第1列 (主色: 新东方绿) */
-.slide-content [class*="layout-"] > .col:nth-child(3n+1),
+.slide-content[class*="layout-"] > .col:nth-child(3n+1),
 .slide-content.layout-grid-2x2 > .cell:nth-child(odd) {
     --context-color: var(--brand-primary);
     --context-gradient: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
 }
 
 /* 2. 第二栏 / 宫格第2列 (辅助色1: 教学橙) */
-.slide-content [class*="layout-"] > .col:nth-child(3n+2),
+.slide-content[class*="layout-"] > .col:nth-child(3n+2),
 .slide-content.layout-grid-2x2 > .cell:nth-child(even) {
     --context-color: var(--accent-orange);
     --context-gradient: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
 }
 
 /* 3. 第三栏 (辅助色2: 稳重蓝) */
-.slide-content [class*="layout-"] > .col:nth-child(3n) {
+.slide-content[class*="layout-"] > .col:nth-child(3n) {
     --context-color: var(--accent-blue);
     --context-gradient: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
 }
 
 /* 强制 Highlight Box 接收所处栏位的色彩上下文 */
-.slide-content [class*="layout-"] .highlight-box .highlight-label {
+.slide-content[class*="layout-"] .highlight-box .highlight-label {
     color: var(--context-color, var(--brand-primary)) !important;
 }
-.slide-content [class*="layout-"] .highlight-box .highlight-title {
+.slide-content[class*="layout-"] .highlight-box .highlight-title {
     background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary), var(--accent-blue))) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
 
 /* 强制数字强调卡片 (Stat Card) 吸收结构环境色彩 */
-.slide-content [class*="layout-"] .stat-card .stat-number {
+.slide-content[class*="layout-"] .stat-card .stat-number {
     color: var(--context-color, var(--brand-primary)) !important;
 }
 
 /* 重构卡片图标 (Card Icons) 与时间线节点以适应不同列 */
-.slide-content [class*="layout-"] .card-icon,
-.slide-content [class*="layout-"] .flip-icon {
+.slide-content[class*="layout-"] .card-icon,
+.slide-content[class*="layout-"] .flip-icon {
     color: var(--context-color, var(--brand-primary)) !important;
 }
