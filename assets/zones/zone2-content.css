@@ -170,8 +170,7 @@
 
 /* ====== 组件 1: 普通卡片 (.card) ======
    基础卡片容器，适用于任何需要卡片外观的场景。
-   支持色彩发光变体：.glow-orange / .glow-blue / .glow-green / .glow-purple
-   变体：.card.problem（问题卡片）/ .card.fix（方案卡片）
+   所有装饰性颜色（发光、边框色彩等）由主题文件定义。
    ====== */
 .card,
 .collapse-card {
@@ -186,54 +185,12 @@
   box-sizing: border-box;
 }
 
-.card::before,
-.collapse-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, transparent, transparent);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  z-index: -1;
-}
-
 .card:hover,
 .collapse-card:hover {
   transform: translateY(-4px) scale(1.02);
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-.card:hover::before,
-.collapse-card:hover::before {
-  opacity: 1;
-}
-
-/* 色彩发光变体 */
-.card.glow-orange:hover,
-.collapse-card.glow-orange:hover {
-  box-shadow: 0 12px 40px rgba(240, 136, 62, 0.12), 0 0 30px rgba(240, 136, 62, 0.08);
-  border-color: rgba(240, 136, 62, 0.5);
-}
-
-.card.glow-blue:hover,
-.collapse-card.glow-blue:hover {
-  box-shadow: 0 12px 40px rgba(88, 166, 255, 0.12), 0 0 30px rgba(88, 166, 255, 0.08);
-  border-color: rgba(88, 166, 255, 0.5);
-}
-
-.card.glow-green:hover,
-.collapse-card.glow-green:hover {
-  box-shadow: 0 12px 40px rgba(63, 185, 80, 0.12), 0 0 30px rgba(63, 185, 80, 0.08);
-  border-color: rgba(63, 185, 80, 0.5);
-}
-
-.card.glow-purple:hover,
-.collapse-card.glow-purple:hover {
-  box-shadow: 0 12px 40px rgba(163, 113, 247, 0.12), 0 0 30px rgba(163, 113, 247, 0.08);
-  border-color: rgba(163, 113, 247, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
 /* 卡片内部元素 */
@@ -263,28 +220,7 @@
   line-height: 1.4;
 }
 
-/* 问题卡片变体 */
-.card.problem {
-  background: rgba(248, 81, 73, 0.04);
-  border-color: rgba(248, 81, 73, 0.2);
-}
-
-/* 方案卡片变体 */
-.card.fix {
-  border-color: rgba(88, 166, 255, 0.25);
-}
-
-.card.fix.accent-green {
-  border-color: rgba(63, 185, 80, 0.25);
-}
-
-.card.fix.accent-orange {
-  border-color: rgba(240, 136, 62, 0.25);
-}
-
-.card.fix.accent-purple {
-  border-color: rgba(163, 113, 247, 0.25);
-}
+/* 问题/方案卡片变体 — 具体颜色由主题文件定义 */
 
 /* 卡片标签（问题/方案标记） */
 .card .card-label {
@@ -330,7 +266,7 @@
   transition: transform 0.6s cubic-bezier(.4, 0, .2, 1);
   perspective: 1200px;
   width: 100%;
-  cursor: pointer;
+  /* 不设 cursor:pointer，翻转仅通过按钮触发（兼容编辑模式） */
 }
 
 .flip-card.flipped {
@@ -366,7 +302,7 @@
 .flip-back {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-card-hover));
+  background: var(--bg-card);
   transform: rotateY(180deg);
   justify-content: center;
   align-items: center;
@@ -399,42 +335,7 @@
   margin-bottom: 12px;
 }
 
-/* 翻转卡片 - 色彩边框变体 */
-.flip-front.border-orange {
-  border-color: rgba(240, 136, 62, 0.35);
-}
-
-.flip-front.border-yellow {
-  border-color: rgba(210, 153, 34, 0.35);
-}
-
-.flip-front.border-green {
-  border-color: rgba(63, 185, 80, 0.35);
-}
-
-.flip-front.border-red {
-  border-color: rgba(248, 81, 73, 0.35);
-}
-
-.flip-card:hover .flip-front.border-orange {
-  border-color: rgba(240, 136, 62, 0.7);
-  box-shadow: 0 0 24px rgba(240, 136, 62, 0.1);
-}
-
-.flip-card:hover .flip-front.border-yellow {
-  border-color: rgba(210, 153, 34, 0.7);
-  box-shadow: 0 0 24px rgba(210, 153, 34, 0.1);
-}
-
-.flip-card:hover .flip-front.border-green {
-  border-color: rgba(63, 185, 80, 0.7);
-  box-shadow: 0 0 24px rgba(63, 185, 80, 0.1);
-}
-
-.flip-card:hover .flip-front.border-red {
-  border-color: rgba(248, 81, 73, 0.7);
-  box-shadow: 0 0 24px rgba(248, 81, 73, 0.1);
-}
+/* 翻转卡片 - 色彩边框变体由主题文件定义 */
 
 .flip-title {
   font-size: clamp(17px, 1.5vw, 20px);
@@ -452,14 +353,14 @@
   margin-bottom: 10px;
 }
 
-/* 翻转卡片 - 内置操作按钮（返回按钮） */
-.flip-back .flip-action-btn {
+/* 翻转卡片 - 内置操作按钮（正面和背面都有，仅通过按钮触发翻转） */
+.flip-action-btn {
   all: unset;
   box-sizing: border-box;
   position: absolute;
   bottom: 12px;
   right: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(128, 128, 128, 0.1);
   border: 1px solid var(--border);
   color: var(--text-muted);
   width: 32px;
@@ -474,7 +375,7 @@
   z-index: 10;
 }
 
-.flip-back .flip-action-btn:hover {
+.flip-action-btn:hover {
   background: var(--accent-blue);
   color: #fff;
   border-color: var(--accent-blue);
@@ -693,8 +594,8 @@
 .highlight-box {
   padding: 28px 40px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(88, 166, 255, 0.06), rgba(163, 113, 247, 0.06));
-  border: 1px solid rgba(88, 166, 255, 0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   text-align: center;
   max-width: min(100%, 700px);
   transition: all 0.3s ease;
@@ -703,8 +604,8 @@
 }
 
 .highlight-box:hover {
-  border-color: rgba(88, 166, 255, 0.3);
-  box-shadow: 0 8px 40px rgba(88, 166, 255, 0.06);
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -730,13 +631,13 @@
 }
 
 .dual-bar-half.left {
-  background: rgba(163, 113, 247, 0.1);
+  background: rgba(163, 113, 247, 0.25);
   color: var(--accent-purple);
   border-right: 1px solid var(--border);
 }
 
 .dual-bar-half.right {
-  background: rgba(88, 166, 255, 0.1);
+  background: rgba(88, 166, 255, 0.25);
   color: var(--accent-blue);
 }
 
