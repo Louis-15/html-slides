@@ -103,8 +103,6 @@ body {
   border-color: var(--text-dim) !important;
 }
 
-.brand-logo {}
-
 .progress-bar {
   background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue), var(--accent-purple)) !important;
 }

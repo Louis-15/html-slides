@@ -581,13 +581,14 @@
   margin-bottom: 8px;
   background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue, var(--accent-purple))));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.stat-number.blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.green { background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.orange { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.purple { background: linear-gradient(90deg, var(--accent-purple), var(--brand-primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.green { background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.orange { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.purple { background: linear-gradient(90deg, var(--accent-purple), var(--brand-primary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
 
 .stat-label {
   font-size: clamp(18px, 1.8vw, 24px);
@@ -633,6 +634,7 @@
   font-weight: 900;
   background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue, var(--accent-purple))));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 12px 0;
   line-height: 1.2;
