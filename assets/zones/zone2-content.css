@@ -222,7 +222,7 @@
 .card .card-desc,
 .collapse-card .card-desc {
   font-size: clamp(15px, 1.5vw, 20px);
-  color: var(--text-muted);
+  color: var(--text);
   line-height: 1.6;
 }
 
@@ -252,7 +252,7 @@
 .card .card-text {
   font-size: clamp(15px, 1.5vw, 20px);
   line-height: 1.6;
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .card .card-text .card-cmd {
@@ -272,6 +272,8 @@
   transition: transform 0.6s cubic-bezier(.4, 0, .2, 1);
   perspective: 1200px;
   width: 100%;
+  /* Grid 叠层：正面和背面同占一格，高度自动取两者中较大值 */
+  display: grid;
   /* 不设 cursor:pointer，翻转仅通过按钮触发（兼容编辑模式） */
 }
 
@@ -306,17 +308,18 @@
   box-sizing: border-box;
 }
 
-/* 正面：相对定位，由内容撑高 */
+/* 正面：Grid 叠层定位，由内容撑高 */
 .flip-front {
+  grid-area: 1 / 1;
   position: relative;
   background-color: var(--bg-card);
   justify-content: center;
 }
 
-/* 背面：绝对定位，跟随正面高度 */
+/* 背面：Grid 叠层定位，与正面共享同一格子，高度取两者较大值 */
 .flip-back {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
+  position: relative;
   background-color: var(--bg-card);
   transform: rotateY(180deg);
   justify-content: center;
@@ -337,12 +340,8 @@
 
 .flip-back .flip-detail {
   font-size: clamp(15px, 1.5vw, 20px);
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-.flip-back .flip-detail strong {
   color: var(--text);
+  line-height: 1.6;
 }
 
 .flip-back .flip-icon-big {
@@ -361,7 +360,7 @@
 .flip-subtitle {
   font-size: clamp(15px, 1.5vw, 20px);
   font-weight: 400;
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .flip-icon {
@@ -424,16 +423,17 @@
   padding-top: 12px;
   border-top: 1px solid var(--border);
   font-size: clamp(15px, 1.5vw, 20px);
-  color: var(--text-muted);
+  color: var(--text);
   line-height: 1.6;
 }
 
+/* 展开区域引用代码块：字号改为相对值，避免比周围正文小太多 */
 .card-expand-inner code {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   background: rgba(255, 255, 255, 0.04);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: clamp(11px, 1vw, 13px);
+  font-size: 0.95em;
 }
 
 /* 折叠卡片 - 内置操作按钮（展开/收起箭头） */
@@ -597,7 +597,7 @@
 
 .stat-desc {
   font-size: clamp(15px, 1.5vw, 20px);
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 
@@ -639,7 +639,7 @@
 }
 
 .highlight-card .highlight-text {
-  color: var(--text-muted);
+  color: var(--text);
   line-height: 1.6;
   text-align: left;
 }

@@ -234,10 +234,10 @@
     max-width: 100%;
 }
 
-/* 编辑模式下：悬停出现虚线框 */
+/* 编辑模式下：悬停出现虚线框（使用负 offset 向内绘制，避免被 overflow:hidden 截断） */
 .editor-mode [data-edit-id]:hover {
     outline: 2px dashed var(--editor-outline-idle);
-    outline-offset: 3px;
+    outline-offset: -2px;
 }
 
 /* 编辑模式下：可编辑态默认无框（只有悬停或聚焦才显示） */
@@ -245,11 +245,11 @@
     outline: none;
 }
 
-/* 悬停或聚焦态：虚线框 */
+/* 悬停或聚焦态：虚线框（同样向内绘制） */
 [contenteditable="true"]:hover,
 [contenteditable="true"]:focus {
     outline: 2px dashed var(--editor-outline-focus);
-    outline-offset: 3px;
+    outline-offset: -2px;
 }
 
 /* 如果外部有 .editable-wrap 包装，说明包装器已经接管了边框，这里取消内部的 outline 防止出现双重虚线框！ */
@@ -510,4 +510,12 @@ body.doodle-mode .slide {
 /* 富文本编辑模式下，整体下沉，为顶部工具栏让出空间 */
 body.editor-mode .slide {
     padding-top: 80px !important;
+}
+
+/* 编辑模式下强制展开所有折叠卡片并取消裁剪，确保虚线框可见且内容可直接编辑 */
+.editor-mode .collapse-card .card-expand {
+    max-height: none !important;
+    opacity: 1 !important;
+    margin-top: 12px !important;
+    overflow: visible !important;
 }

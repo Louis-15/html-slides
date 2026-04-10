@@ -107,19 +107,25 @@
 
             <div class="slide-content layout-2col">
                 <div class="col">
-                    <div class="highlight-card">
-                        <div class="highlight-label">RULE 1</div>
-                        <div class="highlight-title">单数代词</div>
-                        <div class="highlight-text" data-edit-id="s2-r1">看到选项里有 <strong>It, This, That</strong>，<br>立刻去空前一句找<strong>单数名词</strong>或<strong>一个观点</strong>。</div>
-
+                    <div class="collapse-card">
+                        <div class="card-icon">🔍</div>
+                        <div class="card-title">RULE 1 — 单数代词</div>
+                        <div class="card-desc">看到选项里有 <strong>It, This, That</strong>，立刻去空前一句找<strong>单数名词</strong>或<strong>一个观点</strong>。</div>
+                        <div class="card-expand">
+                            <div class="card-expand-inner">例：选项含 <code>It helps...</code>，前句提到 <code>a new method</code>（单数名词）→ 匹配成功！如果找不到单数名词，该选项可直接排除。</div>
+                        </div>
+                        <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
                     </div>
                 </div>
                 <div class="col">
-                    <div class="highlight-card">
-                        <div class="highlight-label">RULE 2</div>
-                        <div class="highlight-title">复数代词</div>
-                        <div class="highlight-text" data-edit-id="s2-r2">看到选项里有 <strong>They, These, Those</strong>，<br>立刻去空前一句找<strong>复数名词</strong>。<br>找不到复数名词的选项，<strong>直接划掉</strong>。</div>
-
+                    <div class="collapse-card">
+                        <div class="card-icon">🔍</div>
+                        <div class="card-title">RULE 2 — 复数代词</div>
+                        <div class="card-desc">看到选项里有 <strong>They, These, Those</strong>，立刻去空前一句找<strong>复数名词</strong>。找不到复数名词的选项，<strong>直接划掉</strong>。</div>
+                        <div class="card-expand">
+                            <div class="card-expand-inner">例：选项含 <code>These changes...</code>，前句提到 <code>several adjustments</code>（复数名词）→ 匹配！若前句只有 <code>the result</code>（单数），则排除。</div>
+                        </div>
+                        <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
                     </div>
                 </div>
             </div>
@@ -227,16 +233,36 @@
                 <div class="header-title">替代与省略 — "找双胞胎"</div>
             </div>
 
-            <div class="slide-content layout-single">
-                <div class="content-block">
-                    <p class="text" data-edit-id="s5-t1">替代是用替代词（如 <strong>one, do, so</strong>）取代前文成分；省略则是省去上下文已知的成分。这两种手段在形式上要求高度的<span class="accent">结构一致性</span>。</p>
-                    <p class="text" data-edit-id="s5-t2">高考中常见于<strong>排比句</strong>或<strong>列举段落</strong>。</p>
+            <div class="slide-content layout-2col">
+                <div class="col">
+                    <div class="flip-card">
+                        <div class="flip-front">
+                            <div class="flip-icon">🔄</div>
+                            <div class="flip-title">替代 (Substitution)</div>
+                            <div class="flip-subtitle">用替代词取代前文成分</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+                        </div>
+                        <div class="flip-back">
+                            <div class="flip-icon-big">🔄</div>
+                            <div class="flip-detail">替代词：<strong>one, do, so</strong><br><br>如果空前一句是祈使句（动词原形开头），空后一句也是祈使句，那么选项<strong>必须是祈使句</strong>。</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="highlight-card" style="margin: 0 auto;">
-                    <div class="highlight-label">操作口令</div>
-                    <div class="highlight-title">找双胞胎</div>
-                    <div class="highlight-text" data-edit-id="s5-rule">如果空前一句是祈使句（动词原形开头），空后一句也是祈使句，<br>那么选项<strong>必须是祈使句</strong>。<br><br>如果前句是 <em>You can...</em>，选项大概率也是 <em>You can...</em>。</div>
+                <div class="col">
+                    <div class="flip-card">
+                        <div class="flip-front">
+                            <div class="flip-icon">✂️</div>
+                            <div class="flip-title">省略 (Ellipsis)</div>
+                            <div class="flip-subtitle">省去上下文已知的成分</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+                        </div>
+                        <div class="flip-back">
+                            <div class="flip-icon-big">✂️</div>
+                            <div class="flip-detail">高考中常见于<strong>排比句</strong>或<strong>列举段落</strong>。<br><br>如果前句是 <em>You can...</em>，选项大概率也是 <em>You can...</em>。<br>核心原则：<strong>结构一致性</strong>。</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

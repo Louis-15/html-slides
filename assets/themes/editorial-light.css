@@ -156,7 +156,7 @@ html, body {
 .flip-back {
   background: var(--bg-card-hover) !important;
 }
-.flip-back .flip-detail { color: var(--text-muted) !important; }
+.flip-back .flip-detail { color: var(--text) !important; }
 .flip-back .flip-detail strong { color: var(--text) !important; }
 .flip-front .flip-hint { color: var(--text-dim) !important; }
 
@@ -180,11 +180,11 @@ html, body {
 
 .card-expand-inner {
   border-top: 1px solid var(--border) !important;
-  color: var(--text-dim) !important;
+  color: var(--text) !important;
 }
 .card-expand-inner code {
   background: var(--bg-card-hover) !important;
-  color: var(--accent-blue) !important;
+  color: var(--text) !important;
 }
 .card-v2 .expand-hint { color: var(--text-dim) !important; }
 

@@ -115,7 +115,7 @@
         /* 卡片系 */
         '.card-icon', '.card-title', '.card-desc', '.card-label', '.card-text',
         /* 翻转卡片 */
-        '.flip-icon', '.flip-title', '.flip-subtitle', '.flip-detail',
+        '.flip-icon', '.flip-icon-big', '.flip-title', '.flip-subtitle', '.flip-detail',
         /* 数字强调卡片 */
         '.stat-number', '.stat-label', '.stat-desc',
         /* 高亮卡片 */
