@@ -10,7 +10,7 @@
    ├─────────────────────────────────────────────┤
    │ 纯组件 (12个) — 不含任何布局职责               │
    │  1.普通卡片  2.翻转卡片  3.折叠卡片            │
-   │  4.代码窗口  5.数字强调卡片  6.内容强调框       │
+   │  4.代码窗口  5.数字强调卡片  6.内容强调卡片      │
    │  7.双色条形图  8.时间线卡片  9.图表             │
    │  10.表格  11.图片块  12.内容块                 │
    └─────────────────────────────────────────────┘
@@ -558,7 +558,7 @@
 .code-body .comment { color: #5c6370; font-style: italic; }
 
 
-/* ====== 组件 5: 数字强调卡片 (.stat-card) ======
+/* ====== 组件 5: 数字强调卡片 (.stat-card / Stat Card) ======
    大数字 + 标签 + 描述，独立使用。
    多卡横排由布局系统（layout-2col / layout-3col）实现。
    ====== */
@@ -606,10 +606,10 @@
 }
 
 
-/* ====== 组件 6: 内容强调框 (.highlight-box) ======
-   渐变边框的强调框，适用于页面底部的关键信息、资源列表等。
+/* ====== 组件 6: 内容强调卡片 (.highlight-card / Highlight Card) ======
+   渐变边框的强调卡片，适用于页面底部的关键信息、资源列表等。
    ====== */
-.highlight-box {
+.highlight-card {
   padding: 28px 40px;
   border-radius: 16px;
   background: var(--bg-card);
@@ -623,12 +623,12 @@
   line-height: 1.6;
 }
 
-.highlight-box:hover {
+.highlight-card:hover {
   border-color: var(--border-hover);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
-.highlight-box .highlight-label {
+.highlight-card .highlight-label {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   color: var(--brand-primary, var(--accent-blue));
   letter-spacing: 0.2rem;
@@ -638,7 +638,7 @@
   margin-bottom: 8px;
 }
 
-.highlight-box .highlight-title {
+.highlight-card .highlight-title {
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 900;
   background: var(--context-gradient, linear-gradient(90deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue, var(--accent-purple))));
@@ -648,12 +648,12 @@
   line-height: 1.2;
 }
 
-.highlight-box .highlight-text {
+.highlight-card .highlight-text {
   color: var(--text-muted);
   line-height: 1.6;
 }
 
-.highlight-box .highlight-badge {
+.highlight-card .highlight-badge {
   display: inline-block;
   margin-top: 24px;
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
