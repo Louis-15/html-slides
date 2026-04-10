@@ -188,8 +188,8 @@ body {
   background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
 }
 
-/* -- 封面页专属高级光晕背景 (.slide:has(.layout-title)) -- */
-.slide:has(.layout-title) {
+/* -- 全局页面光晕背景 (.slide) -- */
+.slide {
   background-color: var(--bg);
   background-image:
     radial-gradient(circle at 0% 0%, rgba(0, 163, 85, 0.4) 0%, transparent 70%),
@@ -197,27 +197,7 @@ body {
   background-size: 100% 100%, 100% 100%;
 }
 
-/* -- 全局所有卡片统一注入：学术光晕背景 -- 
-   包含 hover 状态，确保交互时光晕不丢失 */
-.card,
-.collapse-card,
-.flip-card-front,
-.flip-card-back,
-.stat-card,
-.highlight-card,
-.timeline-card,
-.card:hover,
-.collapse-card:hover,
-.flip-card-front:hover,
-.flip-card-back:hover,
-.stat-card:hover,
-.highlight-card:hover,
-.timeline-card:hover {
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(0, 163, 85, 0.4) 0%, transparent 70%),
-    radial-gradient(circle at 100% 100%, rgba(0, 96, 170, 0.35) 0%, transparent 75%) !important;
-  background-size: 100% 100%, 100% 100% !important;
-}
+/* -- 光晕效果已由大背景 .slide 全权接管，此处无需再为卡片内置冗余光晕 -- */
 
 /* -- Tags: 技术标签 -- */
 .slide-tag {
@@ -230,9 +210,13 @@ body {
   color: var(--text-muted) !important;
 }
 
-/* ====== 卡片表面 ====== */
-/* Ghost border + 品牌色环境阴影 */
-
+/* ====== 顶级亚克力毛玻璃材质 (Glassmorphism) ====== */
+/* 卡片改为半透明模糊材质，让底层环境光自然透出并在表面散射 */
+.card,
+.collapse-card,
+.highlight-card,
+.timeline-card,
+.cb-card,
 .flip-front,
 .flip-back,
 .card-v2,
@@ -245,10 +229,13 @@ body {
 .chart-container,
 .table-wrap,
 .cta-box {
-  background-color: var(--bg-card) !important;
+  background-image: none !important; /* 清除可能残留的组件内置光晕 */
+  background-color: rgba(255, 255, 255, 0.25) !important; 
+  backdrop-filter: blur(24px) saturate(120%);
+  -webkit-backdrop-filter: blur(24px) saturate(120%);
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  box-shadow: 0 2px 32px rgba(0, 163, 85, 0.03) !important;
+  box-shadow: 0 4px 32px rgba(0, 163, 85, 0.05) !important;
 }
 
 /* Hover: 品牌色调环境光抬升 */
@@ -266,9 +253,6 @@ body {
 }
 
 /* ====== 翻转卡片 ====== */
-.flip-back {
-  background-color: var(--bg-card-hover) !important;
-}
 
 .flip-back .flip-detail {
   color: var(--text-muted) !important;
