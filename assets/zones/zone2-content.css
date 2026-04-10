@@ -522,7 +522,7 @@
 }
 
 .code-filename {
-  font-size: clamp(12px, 1.1vw, 14px);
+  font-size: clamp(14px, 1.4vw, 18px);
   color: var(--text-dim);
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   margin-left: 8px;
@@ -531,7 +531,7 @@
 .code-body {
   padding: 18px 24px;
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: clamp(13px, 1.2vw, 15px);
+  font-size: clamp(15px, 1.5vw, 20px);
   line-height: 1.7;
   overflow-x: auto;
   white-space: pre;
@@ -592,13 +592,13 @@
 .stat-number.purple { color: var(--accent-purple); }
 
 .stat-label {
-  font-size: clamp(16px, 1.5vw, 20px);
+  font-size: clamp(18px, 1.8vw, 24px);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .stat-desc {
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
   color: var(--text-muted);
 }
 
@@ -641,7 +641,7 @@
   padding: 16px 24px;
   text-align: center;
   font-weight: 700;
-  font-size: clamp(14px, 1.3vw, 17px);
+  font-size: clamp(15px, 1.5vw, 20px);
   transition: all 0.3s ease;
 }
 
@@ -713,7 +713,7 @@
 }
 
 .timeline-text {
-  font-size: clamp(15px, 1.3vw, 18px);
+  font-size: clamp(15px, 1.5vw, 20px);
   font-weight: 500;
 }
 
@@ -778,14 +778,14 @@
 .table-wrap table {
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(13px, 1.3vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
 }
 
 .table-wrap thead th {
   padding: 14px 20px;
   text-align: left;
   font-weight: 600;
-  font-size: clamp(12px, 1.1vw, 14px);
+  font-size: clamp(14px, 1.4vw, 18px);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
