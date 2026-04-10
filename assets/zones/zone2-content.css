@@ -345,7 +345,8 @@
 
 .flip-subtitle {
   font-size: clamp(14px, 1.2vw, 16px);
-  font-weight: 600;
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 .flip-icon {
