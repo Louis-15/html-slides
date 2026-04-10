@@ -52,7 +52,7 @@ All 12 content components are defined in `zones/zone2-content.css`. They are **s
 
 ### 1. Card / 普通卡片 (`.card`)
 
-Basic card container. Hover lifts with subtle shadow. Supports icon + title + description, or problem/fix label variants.
+Basic card container. All card-type components share a unified hover interaction: `translateY(-2px) scale(1.02)` with subtle shadow lift — no background color change on hover. Card surfaces use Glassmorphism (frosted glass): semi-transparent white + `backdrop-filter: blur(24px)`, allowing the slide's ambient glow to show through. Supports icon + title + description, or problem/fix label variants.
 
 ```html
 <div class="card">
@@ -447,5 +447,13 @@ Manual override classes on `.stat-number`: `.blue`, `.green`, `.orange`, `.purpl
 ### Glow blobs (background, defined in `components.css`)
 `glow-blue`, `glow-purple`, `glow-green`
 
+### Ambient page glow (defined in theme CSS)
+The XDF Green theme applies a dual-color diagonal radial gradient glow to every `.slide` page: brand green (top-left) + academic blue (bottom-right). Card surfaces use **Glassmorphism** (`backdrop-filter: blur`) to let this ambient glow naturally diffuse through them.
+
+> **IMPORTANT**: When writing card CSS, always use `background-color` (not the `background` shorthand) to avoid accidentally resetting `background-image` and breaking the ambient glow or glassmorphism effect.
+
 ### Color cycling rule
 Rotate through blue → purple → green → orange → yellow → red across slides. Don't use the same accent on consecutive slides.
+
+### CSS `background` shorthand gotcha
+> **CAUTION**: Never use `background: var(--bg-card)` on card components. The `background` shorthand resets `background-image` to `none`, which destroys any theme-injected glow or glassmorphism effect. Always use `background-color: var(--bg-card)` instead.

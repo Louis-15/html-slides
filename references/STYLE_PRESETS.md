@@ -300,23 +300,24 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 ## Font Pairing Quick Reference
 
-| Preset | Display Font | Body Font | Source |
-|--------|--------------|-----------|--------|
-| Bold Signal | Archivo Black | Space Grotesk | Google |
-| Electric Studio | Manrope | Manrope | Google |
-| Creative Voltage | Syne | Space Mono | Google |
-| Dark Botanical | Cormorant | IBM Plex Sans | Google |
-| Notebook Tabs | Bodoni Moda | DM Sans | Google |
-| Pastel Geometry | Plus Jakarta Sans | Plus Jakarta Sans | Google |
-| Split Pastel | Outfit | Outfit | Google |
-| Vintage Editorial | Fraunces | Work Sans | Google |
-| Neon Cyber | Clash Display | Satoshi | Fontshare |
-| Terminal Green | JetBrains Mono | JetBrains Mono | JetBrains |
-| Obsidian | Inter | JetBrains Mono | Google / JetBrains |
-| Excalidraw Light | Excalifont | Cascadia Code | Local / Google fallback |
-| Excalidraw Dark | Excalifont | Cascadia Code | Local / Google fallback |
-| Editorial Light | Inter | Space Grotesk | Google |
-| Binary Architect | Space Grotesk | JetBrains Mono | Google / JetBrains |
+| Preset | Display Font | CN Display Font | Body Font | CN Body Font | Source |
+|--------|--------------|-----------------|-----------|--------------|--------|
+| Bold Signal | Archivo Black | 微软雅黑 | Space Grotesk | 微软雅黑 | Google |
+| Electric Studio | Manrope | 微软雅黑 | Manrope | 微软雅黑 | Google |
+| Creative Voltage | Syne | 微软雅黑 | Space Mono | 微软雅黑 | Google |
+| Dark Botanical | Cormorant | 微软雅黑 | IBM Plex Sans | 微软雅黑 | Google |
+| Notebook Tabs | Bodoni Moda | 微软雅黑 | DM Sans | 微软雅黑 | Google |
+| Pastel Geometry | Plus Jakarta Sans | 微软雅黑 | Plus Jakarta Sans | 微软雅黑 | Google |
+| Split Pastel | Outfit | 微软雅黑 | Outfit | 微软雅黑 | Google |
+| Vintage Editorial | Fraunces | 微软雅黑 | Work Sans | 微软雅黑 | Google |
+| Neon Cyber | Clash Display | 微软雅黑 | Satoshi | 微软雅黑 | Fontshare |
+| Terminal Green | JetBrains Mono | 微软雅黑 | JetBrains Mono | 微软雅黑 | JetBrains |
+| Obsidian | Inter | 微软雅黑 | JetBrains Mono | 微软雅黑 | Google / JetBrains |
+| Excalidraw Light | Excalifont | 微软雅黑 | Cascadia Code | 微软雅黑 | Local / Google fallback |
+| Excalidraw Dark | Excalifont | 微软雅黑 | Cascadia Code | 微软雅黑 | Local / Google fallback |
+| Editorial Light | Inter | 微软雅黑 | Space Grotesk | 微软雅黑 | Google |
+| Binary Architect | Space Grotesk | 微软雅黑 | JetBrains Mono | 微软雅黑 | Google / JetBrains |
+| XDF Green | DM Sans | 微软雅黑 | DM Sans | 微软雅黑 | Google |
 
 ---
 
@@ -523,6 +524,45 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 ---
 
+### 18. XDF Green (新东方绿)
+
+**Vibe:** Academic, professional, brand-rich, educational — "The Scholar's Garden"
+
+**Layout:** Centered content on warm white. Dual-color diagonal ambient glow on every slide. Glassmorphism card surfaces.
+
+**Typography:**
+- Display/Body: `Inter` (300–900)
+- Labels/Mono: `Space Grotesk` (400–700)
+
+**Colors:**
+```css
+:root {
+    --bg: #f7faf8;
+    --bg-card: rgba(255, 255, 255, 0.25); /* Glassmorphism */
+    --brand-primary: #00A355;
+    --accent-blue: #0060aa;
+    --accent-orange: #f39800;
+    --accent-red: #ba1a1a;
+    --accent-purple: #5a3d8a;
+    --accent-yellow: #fad355;
+    --border: rgba(0, 163, 85, 0.08);
+}
+```
+
+**Signature Elements:**
+- **Dual-axis radial glow** on every `.slide` page — brand green (top-left, 40% opacity) + academic blue (bottom-right, 35% opacity). Not a flat gradient but two overlapping radial circles creating a diagonal light corridor
+- **Glassmorphism card surfaces** — all card-type components use `background-color: rgba(255, 255, 255, 0.25)` + `backdrop-filter: blur(24px) saturate(120%)`, letting the ambient glow naturally diffuse through them. No opaque card backgrounds
+- **Zero-Line Rule** — boundaries defined by tonal shifts and ghost borders (8% opacity brand green), not solid lines
+- **Logo compositing** — brand logo uses `mix-blend-mode: multiply` on the branding container for seamless integration with any background
+- **Unified hover interaction** — all card types share identical `translateY(-2px) scale(1.02)` + shadow lift. No background color change on hover
+- **Header wash** — Zone 1 header bar uses a left-to-right brand green gradient (70% → 20% opacity)
+
+> **CSS GOTCHA**: Always use `background-color` (not `background` shorthand) when styling cards. The shorthand resets `background-image` and destroys glassmorphism/glow effects.
+
+**Best for:** Educational courseware, university/training institution presentations, branded teaching materials.
+
+---
+
 ## DO NOT USE (Generic AI Patterns)
 
 **Fonts:** Inter, Roboto, Arial, system fonts as display
@@ -531,7 +571,7 @@ Curated visual styles for Frontend Slides. Each preset is inspired by real desig
 
 **Layouts:** Everything centered, generic hero sections, identical card grids
 
-**Decorations:** Realistic illustrations, gratuitous glassmorphism, drop shadows without purpose
+**Decorations:** Realistic illustrations, unmotivated glassmorphism (use glassmorphism only when the design has a clear ambient background that benefits from light diffusion, as in XDF Green), drop shadows without purpose
 
 ---
 

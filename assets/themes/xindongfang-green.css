@@ -4,11 +4,11 @@
    Zero-line rule: 边界通过色调变化来界定，而非硬线条。
    切换机构只需修改 :root 中的变量即可。 */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 
 :root {
-  --font-body: 'Inter', -apple-system, sans-serif;
-  --font-mono: 'Space Grotesk', 'JetBrains Mono', monospace;
+  --font-body: 'DM Sans', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --font-mono: 'DM Sans', 'Microsoft YaHei', 'PingFang SC', monospace;
 
   /* ====== 品牌核心色（换机构时只改这里） ====== */
   --brand-primary: #00A355;
@@ -201,7 +201,7 @@ body {
 
 /* -- Tags: 技术标签 -- */
 .slide-tag {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: 'DM Sans', 'Microsoft YaHei', sans-serif !important;
   color: var(--brand-primary) !important;
 }
 
@@ -584,7 +584,7 @@ body {
 }
 
 .cb-card-label {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: 'DM Sans', 'Microsoft YaHei', sans-serif !important;
 }
 
 .cb-card-label.problem-label {
@@ -608,7 +608,7 @@ body {
 }
 
 .cb-number {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: 'DM Sans', 'Microsoft YaHei', sans-serif !important;
 }
 
 /* ====== @keyframes 覆写 — 品牌绿脉冲光晕 ====== */

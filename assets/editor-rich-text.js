@@ -17,11 +17,11 @@
 
         /** 可选字体列表（英文框） */
         FONTS_ENG: [
+            { name: '默认 (DM Sans)', family: "'DM Sans'" },
             { name: 'Space Grotesk', family: "'Space Grotesk'" },
             { name: 'Manrope', family: "'Manrope'" },
             { name: 'Plus Jakarta Sans', family: "'Plus Jakarta Sans'" },
             { name: 'Outfit', family: "'Outfit'" },
-            { name: 'DM Sans', family: "'DM Sans'" },
             { name: 'Work Sans', family: "'Work Sans'" },
             { name: 'IBM Plex Sans', family: "'IBM Plex Sans'" },
             { name: 'Syne', family: "'Syne'" },
@@ -44,7 +44,7 @@
 
         /** 可选字体列表（中文框） */
         FONTS_ZH: [
-            { name: '微软雅黑', family: "'Microsoft YaHei', 'PingFang SC', sans-serif" },
+            { name: '默认 (微软雅黑)', family: "'Microsoft YaHei', 'PingFang SC', sans-serif" },
             { name: '等线', family: "DengXian, 'PingFang SC', sans-serif" },
             { name: '宋体', family: "SimSun, 'Songti SC', serif" },
             { name: '楷体', family: "KaiTi, 'Kaiti SC', serif" },

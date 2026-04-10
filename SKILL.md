@@ -28,6 +28,10 @@ Focus on:
 - Typography: Choose fonts that are beautiful and readable. Prioritize readability for educational content — students and teachers need to read comfortably from a distance.
 - Color & Theme: Use the teaching theme's CSS variables for consistency.
 - Motion: Use animations sparingly and purposefully. Educational content needs clarity, not distraction.
+- Surface Material: The XDF Green theme uses **Glassmorphism** (frosted glass) for all card surfaces — semi-transparent white (`rgba(255,255,255,0.25)`) combined with `backdrop-filter: blur(24px)`. This allows the slide's dual-color ambient glow (brand green top-left + academic blue bottom-right) to naturally diffuse through card surfaces. Never use opaque card backgrounds in this theme.
+- Hover Interaction: All card-type components share a unified hover effect: `translateY(-2px) scale(1.02)` with shadow lift. No background color changes on hover.
+
+> **CSS GOTCHA**: Always use `background-color` (not the `background` shorthand) when defining card backgrounds. The `background` shorthand resets `background-image` to `none`, which destroys theme-injected glow and glassmorphism effects.
 
 ---
 
