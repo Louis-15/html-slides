@@ -627,7 +627,7 @@
 
 .highlight-box .highlight-label {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  color: var(--accent-blue);
+  color: var(--brand-primary, var(--accent-blue));
   letter-spacing: 0.2rem;
   font-weight: 700;
   font-size: 14px;
@@ -638,7 +638,7 @@
 .highlight-box .highlight-title {
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 900;
-  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  background: linear-gradient(90deg, var(--accent-blue), var(--brand-primary, var(--accent-purple)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 12px 0;
