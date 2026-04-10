@@ -625,6 +625,44 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
+.highlight-box .highlight-label {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  color: var(--accent-blue);
+  letter-spacing: 0.2rem;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.highlight-box .highlight-title {
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 900;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 12px 0;
+  line-height: 1.2;
+}
+
+.highlight-box .highlight-text {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.highlight-box .highlight-badge {
+  display: inline-block;
+  margin-top: 24px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 14px;
+  color: var(--text-dim);
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border);
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+
 
 /* ====== 组件 7: 双色条形图 (.dual-bar) ======
    双色分段条形图，可用于前后端占比、进度对比等。
