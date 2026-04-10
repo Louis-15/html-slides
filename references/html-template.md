@@ -61,10 +61,14 @@ Every generated HTML file **must** comply with these rules:
 
         <!-- === SLIDE 0: Title Slide === -->
         <div class="slide active" data-slide="0">
-            <!-- Title slide uses layout-single, no header bar -->
-            <div class="slide-content layout-single">
-                <h1 class="anim-2">Courseware Title</h1>
-                <p class="subtitle anim-3">Author / Date</p>
+            <!-- 封面页使用 layout-title，无 header bar -->
+            <div class="slide-content layout-title">
+                <div class="title-hero">
+                    <p class="title-hero-subject anim-1">[SUBJECT_NAME]</p>
+                    <h1 class="title-hero-heading anim-2">[COURSEWARE_TITLE]</h1>
+                    <div class="title-hero-divider anim-3"></div>
+                    <p class="title-hero-author anim-4">讲师：[TEACHER_NAME]</p>
+                </div>
             </div>
             <script type="application/json" class="slide-notes">
             {"title":"Title","script":"...","notes":["..."]}

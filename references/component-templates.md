@@ -166,11 +166,11 @@ Centered emphasis card with label + large gradient title + description + badge.
   <div class="highlight-label">[SMALL_UPPERCASE_LABEL]</div>
   <div class="highlight-title">[LARGE_GRADIENT_TITLE]</div>
   <div class="highlight-text">[DESCRIPTION_TEXT]</div>
-  <div class="highlight-badge">[BADGE_TEXT]</div>
 </div>
 ```
 
-> **NOTE**: Title text uses the same `--context-gradient` auto-theming as stat cards. In multi-column layouts, each column gets a different gradient automatically.
+> **NOTE**: Title text uses the same `--context-gradient` auto-theming as stat cards. In multi-column layouts, each column gets a different gradient automatically. Body text (`.highlight-text`) is **left-aligned** regardless of the card's center alignment.
+
 
 **When to use**: Key announcements, core concepts, resource highlights. Works in `layout-single` (centered) or `layout-3col` (three cards with different gradient colors).
 
@@ -348,9 +348,27 @@ A floating panel triggered by a bottom button. **NOT placed inside a layout slot
 
 ---
 
+### 13. Title Hero (封面标题组 `.title-hero`)
+
+封面页的核心内容组件，放入 `layout-title` 布局中使用。所有颜色交给主题层控制，组件本身只管结构与字号。
+
+```html
+<div class="title-hero">
+  <p class="title-hero-subject">[SUBJECT_NAME]</p>
+  <h1 class="title-hero-heading">[COURSEWARE_TITLE]</h1>
+  <div class="title-hero-divider"></div>
+  <p class="title-hero-author">讲师：[TEACHER_NAME]</p>
+</div>
+```
+
+> **NOTE**: `.title-hero-heading` 的渐变色和 `.title-hero-divider` 的渐变色均在主题文件中定义。换主题时封面颜色自动跟着变。未来新增封面风格（如极简风、图片背景风）时，只需定义 `.title-hero-minimal` 等变体类，布局层 `layout-title` 不需要改动。
+
+**When to use**: 总封面和结束页（使用 `layout-title` 布局时）。
+
 ---
 
 ## Chrome Elements
+
 
 These go directly inside `<body>`, BEFORE the `<div class="deck">`. They provide ambient particles, branding, navigation dots, progress bar, and keyboard hints.
 

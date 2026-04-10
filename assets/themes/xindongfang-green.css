@@ -169,6 +169,20 @@ body {
   background-clip: text !important;
 }
 
+/* -- 封面标题组 (.title-hero) 主题覆写 -- */
+.title-hero-heading {
+  /* 新东方品牌双色渐变：品牌绿 → 学术蓝 */
+  background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.title-hero-divider {
+  /* 与标题渐变方向一致 */
+  background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+}
+
 /* -- Tags: 技术标签 -- */
 .slide-tag {
   font-family: 'Space Grotesk', sans-serif !important;

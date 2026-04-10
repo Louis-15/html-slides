@@ -78,17 +78,23 @@ Each layout template below shows the HTML structure with **slot markers** (`[SLO
 
 ### 0. `layout-title` — 封面页
 
-全页居中布局，用于总封面和章节封面。
+全页居中布局，用于总封面和章节封面。搭配 `.title-hero` 组件使用。
 
 ```html
 <div class="slide-content layout-title">
-  [SLOT-CENTER: 封面标题、副标题、作者信息等，垂直居中]
+  <div class="title-hero">
+    <p class="title-hero-subject anim-1">[SUBJECT_NAME]</p>
+    <h1 class="title-hero-heading anim-2">[COURSEWARE_TITLE]</h1>
+    <div class="title-hero-divider anim-3"></div>
+    <p class="title-hero-author anim-4">讲师：[TEACHER_NAME]</p>
+  </div>
 </div>
 ```
 
-**When to use**: 总封面、章节分隔页、结束页。
+**When to use**: 总封面、章节分隔页、结束页。布局只管居中，封面样式全部由 `.title-hero` 组件 + 主题层控制。
 
 ---
+
 
 ### 1. `layout-single` — 单列全宽
 

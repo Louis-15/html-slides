@@ -8,11 +8,11 @@
    │  3.左宽右窄  4.左窄右宽  5.三栏               │
    │  6.双行  7.四宫格(动态行高)                    │
    ├─────────────────────────────────────────────┤
-   │ 纯组件 (12个) — 不含任何布局职责               │
+   │ 纯组件 (13个) — 不含任何布局职责               │
    │  1.普通卡片  2.翻转卡片  3.折叠卡片            │
    │  4.代码窗口  5.数字强调卡片  6.内容强调卡片      │
    │  7.双色条形图  8.时间线卡片  9.图表             │
-   │  10.表格  11.图片块  12.内容块                 │
+   │  10.表格  11.图片块  12.内容块  13.封面标题组   │
    └─────────────────────────────────────────────┘
 
    架构原则：
@@ -651,18 +651,7 @@
 .highlight-card .highlight-text {
   color: var(--text-muted);
   line-height: 1.6;
-}
-
-.highlight-card .highlight-badge {
-  display: inline-block;
-  margin-top: 24px;
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 14px;
-  color: var(--text-dim);
-  background: var(--bg-card-hover);
-  border: 1px solid var(--border);
-  padding: 6px 16px;
-  border-radius: 20px;
+  text-align: left;
 }
 
 
@@ -979,4 +968,57 @@
   line-height: 1.6;
   color: var(--text-muted);
   margin-top: clamp(6px, 1vh, 12px);
+}
+
+
+/* ====== 组件 13: 封面标题组 (.title-hero) ======
+   封面页的核心内容组件，放入 layout-title 布局中使用。
+   由四个语义子元素构成：学科名、课件标题、分割线、讲师信息。
+   所有颜色交给主题层控制，组件本身只管结构与字号。
+   未来新增封面风格时，可定义 .title-hero-minimal 等变体。
+   ====== */
+.title-hero {
+  text-align: center;
+  width: 100%;
+  max-width: min(100%, 900px);
+}
+
+/* 第一行：学科名 — 黑色大字，略小于标题 */
+.title-hero-subject {
+  font-size: clamp(28px, 3.8vw, 52px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+/* 第二行：课件标题 — 字号最大，颜色由主题控制 */
+.title-hero-heading {
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  /* 默认颜色为正文色，主题层会覆写为渐变 */
+  color: var(--text);
+}
+
+/* 分割线 — 宽度和颜色由主题控制 */
+.title-hero-divider {
+  width: 600px;
+  max-width: 80%;
+  height: 2px;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+  /* 默认为品牌色纯色，主题层可覆写为渐变 */
+  background: var(--brand-primary, var(--accent-blue));
+}
+
+/* 第四行：讲师信息 */
+.title-hero-author {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 16px;
 }
