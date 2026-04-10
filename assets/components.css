@@ -366,12 +366,12 @@ h2 {
 @keyframes flowArrowsEntrance {
   /* 初始时遮罩在极左侧，随着动画结束向右滑回原点 */
   0% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, -25vw center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, -25vw center; 
+    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, -25vw center; 
+    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, -25vw center; 
   }
   100% { 
-    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, 0 center; 
-    mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, 0 center; 
+    -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center; 
+    mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center; 
   }
 }
 
@@ -397,11 +397,11 @@ h2 {
   z-index: 0;
 
   /* 双重图层合并！
-     层 1：死死固定在内部容器起点的绿条，与文字绝对距离永远保持在 8px（由 clamp 算出）
+     层 1：死死固定在内部容器起点的绿条，与文字绝对距离永远保持在极其舒适的 12px
      层 2：将流动渐晕光环限制在这个外延超大容器的最右侧 25vw 之内
   */
   background: 
-    linear-gradient(var(--header-accent-bar), var(--header-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 16px) 10px / 8px calc(100% - 20px),
+    linear-gradient(var(--header-accent-bar), var(--header-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 20px) 10px / 8px calc(100% - 20px),
     linear-gradient(to right, rgba(0, 163, 85, 0) 0%, var(--header-accent-bar) 50%, rgba(255, 255, 255, 1) 100%) no-repeat right top / 25vw 100%;
 
   /* 双重遮罩保护套：
@@ -413,14 +413,14 @@ h2 {
     url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
   -webkit-mask-size: 8px calc(100% - 20px), auto 100%;
   -webkit-mask-repeat: no-repeat, repeat-x;
-  -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, 0 center;
+  -webkit-mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center;
 
   mask-image: 
     linear-gradient(#000, #000),
     url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
   mask-size: 8px calc(100% - 20px), auto 100%;
   mask-repeat: no-repeat, repeat-x;
-  mask-position: calc(clamp(24px, 4vw, 48px) - 16px) 10px, 0 center;
+  mask-position: calc(clamp(24px, 4vw, 48px) - 20px) 10px, 0 center;
 
   opacity: 0.9;
   pointer-events: none;
