@@ -244,7 +244,7 @@
 }
 
 .card .card-label.fix-label {
-  color: var(--accent-blue);
+  color: var(--context-color, var(--brand-primary, var(--accent-blue)));
 }
 
 .card .card-text {
@@ -256,7 +256,7 @@
 .card .card-text .card-cmd {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-weight: 600;
-  color: var(--accent-blue);
+  color: var(--context-color, var(--brand-primary, var(--accent-blue)));
 }
 
 
@@ -391,9 +391,9 @@
 }
 
 .flip-action-btn:hover {
-  background: var(--accent-blue);
+  background: var(--context-color, var(--brand-primary, var(--accent-blue)));
   color: #fff;
-  border-color: var(--accent-blue);
+  border-color: var(--context-color, var(--brand-primary, var(--accent-blue)));
   box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
   transform: scale(1.1);
 }
@@ -458,9 +458,9 @@
 }
 
 .collapse-card .collapse-action-btn:hover {
-  background: var(--accent-blue);
+  background: var(--context-color, var(--brand-primary, var(--accent-blue)));
   color: #fff;
-  border-color: var(--accent-blue);
+  border-color: var(--context-color, var(--brand-primary, var(--accent-blue)));
   box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
   transform: scale(1.1);
 }
@@ -961,12 +961,12 @@
 }
 
 /* 重点引用（左侧竖线大字） */
-.cb-keyquote {
-  font-size: clamp(24px, 3vw, 40px);
+.content-block h1 {
+  font-size: clamp(24px, 2.5vw, 36px);
   font-weight: 700;
   line-height: 1.25;
   color: var(--text);
-  border-left: 3px solid var(--accent-blue);
+  border-left: 3px solid var(--brand-primary, var(--accent-blue));
   padding-left: clamp(12px, 2vw, 24px);
 }
 
