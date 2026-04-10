@@ -187,6 +187,7 @@
 
 .card:hover,
 .collapse-card:hover {
+  transform: translateY(-2px) scale(1.02);
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
@@ -269,6 +270,7 @@
 }
 
 .flip-card:hover .flip-front {
+  transform: translateY(-2px) scale(1.02);
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
