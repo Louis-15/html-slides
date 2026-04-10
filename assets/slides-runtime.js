@@ -6,6 +6,23 @@
    speaker notes console logging.
    =========================================== */
 
+/* --- Zone 变体自动检测 ---
+   扫描所有 zone 容器元素。如果未显式指定变体 class，自动补上默认变体。
+   这样即使 HTML 中忘了写变体名，页面也不会因为缺少样式而空白。 */
+const ZONE_VARIANT_DEFAULTS = {
+  'slide-header': 'banner'       // Zone 1 默认变体
+  // 'summary-trigger': 'popup'  // Zone 3 未来扩展
+};
+
+Object.entries(ZONE_VARIANT_DEFAULTS).forEach(([baseClass, defaultVariant]) => {
+  document.querySelectorAll('.' + baseClass).forEach(el => {
+    // 检查：如果元素除了基础 class 之外没有任何已知变体 class，则自动补上默认变体
+    if (!el.classList.contains(defaultVariant)) {
+      el.classList.add(defaultVariant);
+    }
+  });
+});
+
 // Particles
 const pc = document.getElementById('particles');
 for (let i = 0; i < 35; i++) {

@@ -1,0 +1,170 @@
+/* ===========================================
+   ZONE 1: 标题栏组件 (Header Bar)
+   所有 Zone 1 变体的完整集合。
+   
+   变体切换机制：
+   - 每种变体通过显式 CSS class 选择（如 .slide-header.banner）
+   - slides-runtime.js 在初始化时自动检测：
+     若 .slide-header 未指定变体 class，则自动添加默认变体
+   
+   配色机制（种子变量 + 自动衍生）：
+   - 主题文件只需提供种子变量（--brand-primary 等）
+   - 每个变体自动从种子衍生出全部内部色彩
+   - 主题文件可选择性覆盖具体变量进行精细调教
+   =========================================== */
+
+
+/* ===========================================
+   共享基础（所有 Zone 1 变体通用的结构属性）
+   =========================================== */
+.slide-header {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  /* 与下方画布保持同轴居中 */
+  margin-top: clamp(8px, 1.5vh, 16px);
+  /* 顶边距减半，极致紧凑 */
+  margin-bottom: 24px;
+
+  /* 竖向加点内折厚度，横向必须跟下方的 canvas 完全一致 */
+  padding: 16px clamp(24px, 4vw, 48px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  flex-shrink: 0;
+  position: relative;
+  /* 为伪元素全屏色带做基准 */
+  z-index: 1;
+  /* 建立层叠上下文，拦截 z-index 的伪元素，防止其遁入 slide 背景之下 */
+}
+
+
+/* ===========================================
+   变体: banner (横幅式)
+   当前唯一的 Zone 1 标题栏样式。
+   特征：全宽洗色渐变底 + 左侧品牌竖条 + 右侧发廊灯箭头
+   =========================================== */
+
+/* --- Banner 变体：种子变量衍生系统 --- 
+   主题文件只需提供 --brand-primary / --brand-primary-dark / --text 等种子，
+   下方的所有 --_banner-* 内部变量会自动从种子中计算衍生。
+   主题文件也可以选择性覆盖 --header-wash-start 等变量来做精细调教。 */
+.slide-header.banner {
+  /* 内部衍生变量（从种子 → 具体色值） */
+  --_banner-wash-start: var(--header-wash-start, color-mix(in srgb, var(--brand-primary, #0070f3) 70%, transparent));
+  --_banner-wash-end: var(--header-wash-end, color-mix(in srgb, var(--brand-primary, #0070f3) 20%, transparent));
+  --_banner-shadow: var(--header-shadow, color-mix(in srgb, var(--brand-primary, #0070f3) 12%, transparent));
+  --_banner-accent-bar: var(--header-accent-bar, var(--brand-primary-dark, var(--brand-primary, #0070f3)));
+  --_banner-module-color: var(--header-module-color, var(--brand-primary-text, var(--brand-primary, #0070f3)));
+  --_banner-title-color: var(--header-title-color, var(--text, #333));
+
+  /* 品牌竖条背景（锚定在本体坐标系上，与文字保持 12px 间距） */
+  background: linear-gradient(var(--_banner-accent-bar), var(--_banner-accent-bar)) no-repeat calc(clamp(24px, 4vw, 48px) - 20px) 10px / 8px calc(100% - 20px);
+}
+
+
+/* --- Banner: 全宽洗色渐变底层 --- */
+.slide-header.banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  z-index: -1;
+  
+  /* 稳健洗色：左侧浓度起步，右侧浓度收尾 */
+  background: linear-gradient(to top right, var(--_banner-wash-start) 0%, var(--_banner-wash-end) 100%);
+    
+  /* 现代 UI 最爱的弥散悬浮阴影，把它从下方的 Zone2 轻轻抬起 */
+  box-shadow: 0 8px 32px -8px var(--_banner-shadow);
+}
+
+/* --- Banner: 子标题 (module 行) --- */
+.slide-header.banner .header-module {
+  font-size: clamp(15px, 1.6vw, 18px);
+  /* 字号微调放大，增强层级但依然克于主标题之内 */
+  font-weight: 800;
+  color: var(--_banner-module-color);
+  /* 副标题颜色，跟随主题切换 */
+  background: transparent;
+  /* 彻底移除底色 */
+  border: none;
+  /* 彻底移除边框 */
+  padding: 0;
+  /* 回归原始对齐 */
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+  /* 给大标题留出呼吸空间 */
+  position: relative;
+  /* 防御性设定，确保如果在某些情况下挂载，不发生逃逸 */
+}
+
+/* --- Banner: 主标题 --- */
+.slide-header.banner .header-title {
+  font-size: clamp(32px, 4vw, 44px);
+  /* 字号微微放大，增强气场 */
+  font-weight: 850;
+  color: var(--_banner-title-color);
+  /* 主标题颜色，默认继承 --text */
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  /* 负字间距是现代高端字体的灵魂 */
+}
+
+/* --- Banner: 发廊灯流动箭头装饰系统 --- */
+@keyframes flowArrowsEntrance {
+  /* 发廊灯神化版：在纯相对定位的宽高比物理窗口内，百分比游动完美跨越阵列。
+     因为容器宽是两倍的本身高度定死，0% -> 100% 正好在数学上等效于无感连续滑动，零跳帧！ */
+  0% { 
+    -webkit-mask-position: 0% center; 
+    mask-position: 0% center; 
+  }
+  100% { 
+    -webkit-mask-position: 100% center; 
+    mask-position: 100% center; 
+  }
+}
+
+/* 顶天立地满级特效！右侧的流动扩展箭头 */
+.slide-header.banner::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  
+  /* 钉紧在屏幕最右侧，并赐予它 aspect-ratio: 2 / 1 的魔法。
+     不管内部容器多高，它向左反向膨胀出绝对刚好装下 4 个原生比例箭头的发廊窗 */
+  right: calc(50% - 50vw);
+  width: auto;
+  aspect-ratio: 2 / 1;
+  z-index: 0;
+
+  /* 背光滤镜：左侧依靠 15% 的透明渐变软吃掉滑动时切面造成的闪烁 */
+  background: linear-gradient(to right, transparent 0%, var(--_banner-accent-bar) 15%, rgba(255, 255, 255, 1) 100%);
+
+  /* 彻底释放 SVG 原有等比例傲骨，让它凭 100% 高度自由计算出自己的单体宽度 */
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+  -webkit-mask-size: auto 100%;
+  -webkit-mask-repeat: repeat-x;
+  -webkit-mask-position: 100% center;
+
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
+  mask-size: auto 100%;
+  mask-repeat: repeat-x;
+  mask-position: 100% center;
+
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* 仅在幻灯片切入成为 active 的瞬间，爆发一次高级的流光闪入动画 */
+.slide.active .slide-header.banner::after {
+  /* 1.5秒极缓减速，仅播放1次并在动画外停留在最后一刻 (backwards 保证起步状态渲染无闪烁) */
+  animation: flowArrowsEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s 1 backwards;
+}

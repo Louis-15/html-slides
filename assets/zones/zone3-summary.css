@@ -1,0 +1,132 @@
+/* ===========================================
+   ZONE 3: 总结面板组件 (Summary Panel)
+   所有 Zone 3 变体的完整集合。
+   
+   变体切换机制：
+   - 每种变体通过显式 CSS class 选择
+   - slides-runtime.js 自动检测并应用默认变体
+   
+   配色机制（种子变量 + 自动衍生）：
+   - 继承全局主题变量（--bg, --text, --border, --accent-blue 等）
+   =========================================== */
+
+
+/* ===========================================
+   变体: popup (弹出面板式，当前默认)
+   特征：底部圆形触发按钮 + 上浮弹出面板 + 尖角指示器
+   =========================================== */
+
+/* --- Popup: 触发按钮 --- */
+.summary-trigger {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.summary-trigger:hover {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.summary-trigger:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Popup: 弹出面板 --- */
+.summary-panel {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px) scale(0.95);
+  width: min(90vw, 600px);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  z-index: 49;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 尖角指示器伪元素 */
+.summary-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 16px;
+  height: 16px;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-panel.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* --- Popup: 面板内容排版 --- */
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-content ul {
+  list-style: none;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 0;
+}
+
+.summary-content ul li {
+  position: relative;
+  padding-left: 24px;
+}
+
+.summary-content ul li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent-blue);
+  font-weight: bold;
+  font-size: 1.2em;
+  line-height: 1.3;
+}
