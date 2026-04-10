@@ -46,136 +46,85 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 ---
 
-## Components
+## Components (12 Core + 1 Summary)
 
-### 1. Title Slide
+All 12 content components are defined in `zones/zone2-content.css`. They are **standalone units** — no wrapper containers needed. Place them directly inside layout slots (`.col`, `.cell`, `.row`, or directly in `.slide-content`).
 
-The opening slide with large hero text, rainbow gradient title, glow blobs, and a rainbow divider line. **This component is an exception** — it uses `layout-single` and fills the entire content area.
+### 1. Card / 普通卡片 (`.card`)
 
-```html
-<div class="glow-blob glow-blue" style="top:-100px;left:-100px;"></div>
-<div class="glow-blob glow-purple" style="bottom:-120px;right:-80px;"></div>
-<p class="slide-tag anim-1">[TAG_LINE]</p>
-<h1 class="anim-2">[TITLE_LINE_1]<br>[TITLE_LINE_2]<br><span class="rainbow-text">[HIGHLIGHT_WORD]</span> [TITLE_LINE_3]</h1>
-<p class="subtitle anim-3">[SUBTITLE_TEXT]</p>
-<div class="rainbow-line anim-4"></div>
-<p class="subtitle anim-5" style="font-size:14px;margin-top:8px;">by <strong>[AUTHOR]</strong></p>
-```
-
-**When to use**: Always the first slide. Sets the topic and tone. Place in `layout-single`.
-
-### 2. Statement
-
-A bold statement with large text, optional glow blob background, and a subtitle below.
+Basic card container. Hover lifts with subtle shadow. Supports icon + title + description, or problem/fix label variants.
 
 ```html
-<div class="glow-blob glow-purple" style="top:50%;left:50%;transform:translate(-50%,-50%);"></div>
-<h1 class="anim-2" style="font-size:clamp(32px,4.5vw,56px);">[STATEMENT_TEXT]<br><span class="highlight-[COLOR]">[HIGHLIGHTED_PHRASE]</span></h1>
-<div class="rainbow-line anim-3"></div>
-<p class="subtitle anim-4">[SUPPORTING_TEXT]</p>
-```
-
-**When to use**: Hook slides, problem statements, key takeaways, dramatic reveals. Place in `layout-single`.
-
-### 3. Flip Cards (2x2 Grid)
-
-Four interactive cards in a 2x2 grid. Each card flips on click to reveal a detail on the back.
-
-**CRITICAL**: The `bounce-N` animation class goes on the `.flip-bounce-wrap` wrapper, NOT on the `.flip-card` itself.
-
-```html
-<p class="subtitle" style="font-size:15px;">Click cards to flip &amp; reveal details</p>
-<div class="flip-grid anim-3">
-  <div class="flip-bounce-wrap bounce-1">
-    <div class="flip-card">
-      <div class="flip-front border-[COLOR]">
-        <div class="flip-icon">[EMOJI]</div>
-        <div class="flip-title">[CARD_TITLE]</div>
-        <div class="flip-subtitle highlight-[COLOR]">[CARD_SUBTITLE]</div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-      <div class="flip-back">
-        <div class="flip-icon-big">[EMOJI]</div>
-        <div class="flip-detail">[BACK_TEXT with <strong>bold keywords</strong>]</div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-    </div>
-  </div>
-  <!-- Repeat for bounce-2, bounce-3, bounce-4 -->
+<div class="card">
+  <div class="card-icon">[EMOJI]</div>
+  <div class="card-title">[TITLE]</div>
+  <div class="card-desc">[DESCRIPTION]</div>
 </div>
 ```
 
-**Border color options**: `border-orange`, `border-yellow`, `border-red`
-**When to use**: 4 related concepts, problems, features, or comparisons. Can fill `layout-single` or one slot of a multi-column layout.
+**Problem/Fix variant:**
+```html
+<div class="card">
+  <div class="card-label problem-label">⚠ PROBLEM</div>
+  <div class="card-text">[PROBLEM_TEXT]</div>
+</div>
+<div class="card">
+  <div class="card-label fix-label">✓ FIX</div>
+  <div class="card-text">[FIX_TEXT with <span class="card-cmd">/command</span> highlights]</div>
+</div>
+```
 
-### 4. VS / Comparison Cards
+**When to use**: General purpose content cards, problem/solution pairs. Works in any layout slot.
 
-Two side-by-side cards with a pulsing "+" connector between them.
+### 2. Flip Card / 翻转卡片 (`.flip-card`)
+
+Front/back card that flips 180° on button click. **No wrapper needed** — each `.flip-card` is used independently.
 
 ```html
-<div class="vs-container anim-3">
-  <div class="vs-card card-left slide-l">
-    <div class="vs-label-top highlight-purple">[LEFT_LABEL]</div>
-    <div class="vs-name highlight-purple">[LEFT_NAME]</div>
-    <div class="vs-desc">[LEFT_DESC]</div>
-    <div class="vs-badge">[LEFT_BADGE]</div>
+<div class="flip-card">
+  <div class="flip-front">
+    <div class="flip-icon">[EMOJI]</div>
+    <div class="flip-title">[FRONT_TITLE]</div>
+    <div class="flip-subtitle">[FRONT_SUBTITLE]</div>
+    <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
   </div>
-  <div class="vs-plus anim-3">+</div>
-  <div class="vs-card card-right slide-r">
-    <div class="vs-label-top highlight-blue">[RIGHT_LABEL]</div>
-    <div class="vs-name gradient-text">[RIGHT_NAME]</div>
-    <div class="vs-desc">[RIGHT_DESC]</div>
-    <div class="vs-badge">[RIGHT_BADGE]</div>
+  <div class="flip-back">
+    <div class="flip-icon-big">[EMOJI]</div>
+    <div class="flip-detail">[BACK_TEXT with <strong>bold keywords</strong>]</div>
+    <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
   </div>
 </div>
 ```
 
-**When to use**: Comparing two technologies, approaches, or before/after states. Best in `layout-single`.
+> **IMPORTANT**: The old `.flip-grid`, `.flip-bounce-wrap`, and `.card-action-btn` are **deleted**. Use `.flip-action-btn` on a `<button>` element. Each flip card stands alone — place multiple in a `layout-grid-2x2` or `layout-3col` using `.cell` / `.col` slots.
 
-### 5. Architecture Flow
+**When to use**: Concept reveals, vocabulary, problem → solution reveals. Place in `layout-grid-2x2` for 4 cards or `layout-3col` for 3 cards.
 
-Three boxes connected by arrows in a horizontal flow.
+### 3. Collapse Card / 折叠卡片 (`.collapse-card`)
+
+Card that expands on button click to reveal hidden content. Shares base styles with `.card`.
 
 ```html
-<div class="arch-flow anim-3">
-  <div class="arch-box box-blue bounce-1">
-    <div class="arch-icon">[EMOJI]</div>
-    <div class="arch-label text-blue">[BOX_1_NAME]</div>
-    <div class="arch-role">[BOX_1_ROLE]</div>
-    <div class="arch-detail">[BOX_1_DETAIL]</div>
+<div class="collapse-card">
+  <div class="card-title">[TITLE]</div>
+  <div class="card-desc">[SHORT_DESC]</div>
+  <div class="card-expand">
+    <div class="card-expand-inner">[EXPANDED_DETAIL with <code>code_terms</code>]</div>
   </div>
-  <div class="arch-arrow anim-3">
-    <span>[ARROW_1_LABEL]</span>
-    <div class="arrow-line"></div>
-  </div>
-  <div class="arch-box box-yellow bounce-2">
-    <div class="arch-icon">[EMOJI]</div>
-    <div class="arch-label text-yellow">[BOX_2_NAME]</div>
-    <div class="arch-role">[BOX_2_ROLE]</div>
-    <div class="arch-detail">[BOX_2_DETAIL]</div>
-  </div>
-  <div class="arch-arrow anim-3">
-    <span>[ARROW_2_LABEL]</span>
-    <div class="arrow-line"></div>
-  </div>
-  <div class="arch-box box-green bounce-3">
-    <div class="arch-icon">[EMOJI]</div>
-    <div class="arch-label text-green">[BOX_3_NAME]</div>
-    <div class="arch-role">[BOX_3_ROLE]</div>
-    <div class="arch-detail">[BOX_3_DETAIL]</div>
-  </div>
+  <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
 </div>
 ```
 
-**Box color options**: `box-blue`/`text-blue`, `box-yellow`/`text-yellow`, `box-green`/`text-green`
-**When to use**: System architecture, data pipelines, any 3-step process. Best in `layout-single`.
+> **IMPORTANT**: The old `.use-case-grid`, `.card-v2`, `.glow-orange` wrappers are **deleted**. Use `.collapse-action-btn` (not `.card-action-btn`). Arrow auto-rotates on expand.
 
-### 6. Code Block
+**When to use**: Knowledge points with expandable details, tips, FAQ. Place in `layout-grid-2x2` or `layout-2col`.
 
-macOS-style terminal window with syntax highlighting (One Dark Pro).
+### 4. Code Window / 代码窗口 (`.code-window`)
+
+macOS-style terminal window with red/yellow/green dots and syntax highlighting (One Dark Pro).
 
 ```html
-<div class="code-window anim-3">
+<div class="code-window">
   <div class="code-titlebar">
     <div class="code-dot red"></div>
     <div class="code-dot yellow"></div>
@@ -192,151 +141,81 @@ macOS-style terminal window with syntax highlighting (One Dark Pro).
 **When to use**: Code examples, config files, API usage, CLI commands.
 **See**: [Syntax Highlighting Guide](#syntax-highlighting-guide) below.
 
-### 7. Auth Flip Compare
+### 5. Stat Card / 数字强调卡片 (`.stat-card`)
 
-Two large flippable cards with a "vs" label. Good vs bad / before vs after.
-
-**CRITICAL**: The `slide-l`/`slide-r` animation class goes on the `.auth-flip-wrap` wrapper, NOT on the `.auth-flip` itself.
+Large gradient number + label + description. Numbers automatically use `background-clip: text` gradient.
 
 ```html
-<p class="subtitle" style="font-size:14px;">Click to flip and compare</p>
-<div class="auth-compare anim-3">
-  <div class="auth-flip-wrap slide-l">
-    <div class="auth-flip">
-      <div class="auth-front bad">
-        <div class="auth-icon">[BAD_EMOJI]</div>
-        <div class="auth-name">[BAD_NAME]</div>
-        <div class="auth-status">&#10060;</div>
-        <div class="auth-desc">[BAD_SHORT_DESC]</div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-      <div class="auth-back">
-        <div class="auth-icon">[BAD_EMOJI]</div>
-        <div class="auth-name">[BAD_DETAIL_NAME]</div>
-        <div class="flip-detail" style="font-size:13px;color:var(--text-muted);margin-top:8px;">[BAD_DETAIL_TEXT]<br><strong style="color:var(--accent-red);">[BAD_CONCLUSION]</strong></div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-    </div>
+<div class="stat-card">
+  <div class="stat-number">[NUMBER]<span style="font-size:0.45em;">[UNIT]</span></div>
+  <div class="stat-label">[LABEL]</div>
+  <div class="stat-desc">[DESC]</div>
+</div>
+```
+
+> **IMPORTANT**: The old `.stats-row` wrapper is **deleted**. Place stat cards directly in layout slots. In multi-column layouts, the gradient color is auto-assigned by column position via `--context-gradient` (col 1 = green-blue, col 2 = yellow-orange, col 3 = blue-purple). You can manually override with `.blue`, `.green`, `.orange`, `.purple` classes on `.stat-number`.
+
+**When to use**: Performance metrics, survey results, key statistics. Place in `layout-3col` or `layout-2col`.
+
+### 6. Highlight Card / 内容强调卡片 (`.highlight-card`)
+
+Centered emphasis card with label + large gradient title + description + badge.
+
+```html
+<div class="highlight-card">
+  <div class="highlight-label">[SMALL_UPPERCASE_LABEL]</div>
+  <div class="highlight-title">[LARGE_GRADIENT_TITLE]</div>
+  <div class="highlight-text">[DESCRIPTION_TEXT]</div>
+  <div class="highlight-badge">[BADGE_TEXT]</div>
+</div>
+```
+
+> **NOTE**: Title text uses the same `--context-gradient` auto-theming as stat cards. In multi-column layouts, each column gets a different gradient automatically.
+
+**When to use**: Key announcements, core concepts, resource highlights. Works in `layout-single` (centered) or `layout-3col` (three cards with different gradient colors).
+
+### 7. Dual Bar / 双色条形图 (`.dual-bar`)
+
+Two-tone horizontal bar for ratio comparisons.
+
+```html
+<div class="dual-bar">
+  <div class="dual-bar-half left">
+    <span>[LEFT_LABEL] ([PERCENTAGE]%)</span>
   </div>
-  <div class="auth-vs">vs</div>
-  <div class="auth-flip-wrap slide-r">
-    <div class="auth-flip">
-      <div class="auth-front good">
-        <div class="auth-icon">[GOOD_EMOJI]</div>
-        <div class="auth-name">[GOOD_NAME]</div>
-        <div class="auth-status">&#10004;&#65039;</div>
-        <div class="auth-desc">[GOOD_SHORT_DESC]</div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-      <div class="auth-back">
-        <div class="auth-icon">[GOOD_EMOJI]</div>
-        <div class="auth-name">[GOOD_DETAIL_NAME]</div>
-        <div class="flip-detail" style="font-size:13px;color:var(--text-muted);margin-top:8px;">[GOOD_DETAIL_TEXT]<br><strong style="color:var(--accent-green);">[GOOD_CONCLUSION]</strong></div>
-        <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.auth-flip').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
-      </div>
-    </div>
+  <div class="dual-bar-half right">
+    <span>[RIGHT_LABEL] ([PERCENTAGE]%)</span>
   </div>
 </div>
 ```
 
-**When to use**: Before/after comparisons, good vs bad practices, old vs new approaches. Best in `layout-single`.
+**When to use**: Frontend/backend ratios, progress comparisons, distribution breakdowns. Best in `layout-single`.
 
-### 8. Stats Cards
+### 8. Timeline Card / 时间线卡片 (`.timeline-card`)
 
-Three large number displays in a row with bounce animation.
+Single timeline node: colored dot + text. Stack multiple vertically using layout gap.
 
 ```html
-<div class="stats-row">
-  <div class="stat-card pop-1">
-    <div class="stat-number blue">[NUMBER_1]<span style="font-size:0.45em;">[UNIT]</span></div>
-    <div class="stat-label">[LABEL_1]</div>
-    <div class="stat-desc">[DESC_1]</div>
-  </div>
-  <div class="stat-card pop-2">
-    <div class="stat-number green">[NUMBER_2]<span style="font-size:0.45em;">[UNIT]</span></div>
-    <div class="stat-label">[LABEL_2]</div>
-    <div class="stat-desc">[DESC_2]</div>
-  </div>
-  <div class="stat-card pop-3">
-    <div class="stat-number orange">[NUMBER_3]<span style="font-size:0.45em;">[UNIT]</span></div>
-    <div class="stat-label">[LABEL_3]</div>
-    <div class="stat-desc">[DESC_3]</div>
-  </div>
+<div class="timeline-card">
+  <div class="timeline-dot green"></div>
+  <div class="timeline-text"><strong>[ITEM]</strong> &mdash; [TEXT]</div>
+</div>
+<div class="timeline-card">
+  <div class="timeline-dot yellow"></div>
+  <div class="timeline-text"><strong>[ITEM]</strong> &mdash; [TEXT]</div>
+</div>
+<div class="timeline-card">
+  <div class="timeline-dot orange"></div>
+  <div class="timeline-text"><strong>[ITEM]</strong> &mdash; [TEXT]</div>
 </div>
 ```
 
-**Number color options**: `blue`, `green`, `orange`
-**When to use**: Performance metrics, survey results, key statistics.
-
-### 9. Expandable Cards (2x2 Grid)
-
-Four cards that expand on click to reveal hidden content.
-
-```html
-<p class="subtitle" style="font-size:15px;">Click any card to expand details</p>
-<div class="use-case-grid anim-3">
-  <div class="card-v2 glow-orange bounce-1">
-    <div class="card-icon">[EMOJI]</div>
-    <div class="card-title">[CARD_1_TITLE]</div>
-    <div class="card-desc">[CARD_1_DESC]</div>
-    <div class="card-expand"><div class="card-expand-inner">[CARD_1_EXPANDED with <code>code_terms</code>]</div></div>
-    <button class="card-action-btn" onclick="event.stopPropagation(); this.closest('.card-v2').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
-  </div>
-  <div class="card-v2 glow-blue bounce-2">
-    <!-- same structure -->
-  </div>
-  <div class="card-v2 glow-purple bounce-3">
-    <!-- same structure -->
-  </div>
-  <div class="card-v2 glow-green bounce-4">
-    <!-- same structure -->
-  </div>
-</div>
-```
-
-**Glow color options**: `glow-orange`, `glow-blue`, `glow-purple`, `glow-green`
-**When to use**: Use cases, features, benefits — anything where 4 items each need short + detailed views.
-
-### 10. Status Timeline
-
-Vertical list of items with colored status dots that stagger-animate in.
-
-```html
-<div class="status-timeline">
-  <div class="status-item stag-1"><div class="status-dot green"></div><div class="status-text"><strong>[ITEM_1]</strong> &mdash; [TEXT_1]</div></div>
-  <div class="status-item stag-2"><div class="status-dot yellow"></div><div class="status-text"><strong>[ITEM_2]</strong> &mdash; [TEXT_2]</div></div>
-  <div class="status-item stag-3"><div class="status-dot orange"></div><div class="status-text"><strong>[ITEM_3]</strong> &mdash; [TEXT_3]</div></div>
-  <div class="status-item stag-4"><div class="status-dot red"></div><div class="status-text"><strong>[ITEM_4]</strong> &mdash; [TEXT_4]</div></div>
-</div>
-```
+> **NOTE**: The old `.status-timeline`, `.status-item`, `.status-dot`, `.status-text` are **renamed** to `.timeline-card`, `.timeline-dot`, `.timeline-text`.
 
 **Dot colors**: `green` (done), `yellow` (in progress), `orange` (warning), `red` (blocked)
-**Can have 3-6 items** using `stag-1` through `stag-5`.
-**When to use**: Timelines, status reports, checklists, roadmaps.
+**When to use**: Timelines, status reports, checklists, roadmaps. Place in `layout-single`.
 
-### 11. CTA Box
-
-A call-to-action with resources list in a gradient-bordered box.
-
-```html
-<h2 class="anim-1" style="font-size:clamp(28px,3.5vw,44px);">[CTA_HEADLINE with <span class="gradient-text">gradient highlight</span>]</h2>
-<p class="subtitle anim-2 mt-16">[CTA_SUBTITLE]</p>
-<div class="cta-box anim-3">
-  <p style="font-size:16px;font-weight:600;color:var(--text-muted);">[BOX_TITLE]</p>
-  <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;font-size:14px;text-align:left;">
-    <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--accent-blue);">&#9679;</span><span>[RESOURCE_1]</span></div>
-    <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--accent-green);">&#9679;</span><span>[RESOURCE_2]</span></div>
-    <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--accent-purple);">&#9679;</span><span>[RESOURCE_3]</span></div>
-    <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--accent-orange);">&#9679;</span><span>[RESOURCE_4]</span></div>
-  </div>
-</div>
-<div class="rainbow-line anim-4 mt-24"></div>
-<p class="subtitle anim-5" style="font-size:13px;margin-top:8px;">[ATTRIBUTION]</p>
-```
-
-**When to use**: Always the last slide. Resources, links, next steps. Place in `layout-single`.
-
-### 12. Chart
+### 9. Chart / 图表 (`.chart-container`)
 
 Interactive Chart.js visualization that auto-themes from CSS custom properties.
 
@@ -346,7 +225,7 @@ Interactive Chart.js visualization that auto-themes from CSS custom properties.
 ```
 
 ```html
-<div class="chart-container anim-3">
+<div class="chart-container">
   <canvas id="chart-[N]"></canvas>
   <script type="application/json" data-chart-config="chart-[N]">
   {
@@ -365,37 +244,32 @@ Interactive Chart.js visualization that auto-themes from CSS custom properties.
 
 For circular charts (pie, doughnut, radar, polarArea), add `chart-square` class:
 ```html
-<div class="chart-container chart-square anim-3">
+<div class="chart-container chart-square">
 ```
-
-**Chart type reference:**
 
 | Type | Use for | Container class |
 |---|---|---|
 | `bar` | Comparisons, rankings | `.chart-container` |
 | `line` | Trends over time | `.chart-container` |
-| `pie` | Parts of a whole (few slices) | `.chart-container chart-square` |
+| `pie` | Parts of a whole | `.chart-container chart-square` |
 | `doughnut` | Parts of a whole (with center stat) | `.chart-container chart-square` |
 | `radar` | Multi-dimensional comparison | `.chart-container chart-square` |
 | `polarArea` | Circular comparison with magnitude | `.chart-container chart-square` |
-| `scatter` | Correlation between two variables | `.chart-container` |
-| `bubble` | Three-variable correlation | `.chart-container` |
 
-**When to use**: Performance metrics over time, distribution breakdowns, survey results, benchmark comparisons, growth trends.
+**When to use**: Performance metrics, distribution breakdowns, survey results, growth trends.
 
-### 13. Table
+### 10. Table / 表格 (`.table-wrap`)
 
-A styled data table with header row and hover highlights.
+Styled data table with header row and hover highlights.
 
 ```html
-<div class="table-wrap anim-3">
+<div class="table-wrap">
   <table>
     <thead>
       <tr>
         <th>[COL_1]</th>
         <th>[COL_2]</th>
         <th>[COL_3]</th>
-        <th>[COL_4]</th>
       </tr>
     </thead>
     <tbody>
@@ -403,157 +277,76 @@ A styled data table with header row and hover highlights.
         <td class="cell-highlight">[ROW_1_COL_1]</td>
         <td>[ROW_1_COL_2]</td>
         <td>[ROW_1_COL_3]</td>
-        <td>[ROW_1_COL_4]</td>
-      </tr>
-      <tr>
-        <td class="cell-highlight">[ROW_2_COL_1]</td>
-        <td>[ROW_2_COL_2]</td>
-        <td>[ROW_2_COL_3]</td>
-        <td>[ROW_2_COL_4]</td>
-      </tr>
-      <tr>
-        <td class="cell-highlight">[ROW_3_COL_1]</td>
-        <td>[ROW_3_COL_2]</td>
-        <td>[ROW_3_COL_3]</td>
-        <td>[ROW_3_COL_4]</td>
       </tr>
     </tbody>
   </table>
 </div>
 ```
 
-Use `cell-highlight` on the first column (or key cells) for emphasis. Use `cell-muted` for secondary values.
-**When to use**: Feature comparisons, pricing tables, spec sheets, benchmark results, structured data with multiple attributes.
+Use `cell-highlight` for emphasis, `cell-muted` for secondary values.
+**When to use**: Feature comparisons, pricing tables, spec sheets.
 
-### 14. Image Slide
+### 11. Image Block / 图片块 (`.image-block`)
 
-A single image with optional caption.
+Image display component. No padding, fills the slot naturally.
 
 ```html
-<div class="image-frame anim-3">
-  <img src="assets/[IMAGE_FILE]" alt="[ALT_TEXT]" class="slide-image">
-</div>
-<p class="subtitle anim-4" style="font-size:clamp(12px,1.1vw,14px);color:var(--text-dim);">[CAPTION_OR_CREDIT]</p>
-```
-
-**Variants:**
-
-Screenshot with border:
-```html
-<div class="image-frame anim-3 image-screenshot">
+<div class="image-block">
   <img src="assets/[IMAGE_FILE]" alt="[ALT_TEXT]" class="slide-image">
 </div>
 ```
 
-Logo (smaller, centered):
+**Variants:** `image-screenshot` (border + shadow), `image-logo` (smaller), `image-fullbleed` (absolute positioned background).
+
+> **NOTE**: The old `.image-frame` class is **renamed** to `.image-block`.
+
+**When to use**: Product screenshots, architecture diagrams, photos, logos.
+
+### 12. Content Block / 内容块 (`.content-block`)
+
+Plain text container. Title is handled by Zone 1 header.
+
 ```html
-<div class="image-frame anim-3 image-logo">
-  <img src="assets/[LOGO_FILE]" alt="[ALT_TEXT]" class="slide-image">
+<div class="content-block">
+  <p class="text">[PARAGRAPH_TEXT with <span class="accent">emphasized phrases</span>]</p>
 </div>
 ```
 
-**Image sources:**
-- User-provided files → copy to `assets/` folder, use relative path `src="assets/filename.png"`
-- Never use base64 for images larger than 50KB — always use file paths
-
-**When to use**: Product screenshots, architecture diagrams, photos, logos. When placed in a layout slot, image can fill the slot naturally.
-
-### 15. Content Block
-
-The default content slide: title + text. Four variants cover the most common content patterns.
-
-#### 15a. Statement (Default)
-
-Title + one or two paragraphs. The simplest, most common type.
-
+**Key Quote variant** (left border emphasis):
 ```html
-<div class="cb-wrap anim-3">
-  <h2 class="cb-heading anim-2">[HEADING] <span class="highlight-[COLOR]">[HIGHLIGHT]</span></h2>
-  <p class="cb-body anim-3">[PARAGRAPH_TEXT with <span class="cb-accent">emphasized phrases</span> for key points.]</p>
-  <p class="cb-body anim-4">[OPTIONAL_SECOND_PARAGRAPH]</p>
+<div class="content-block">
+  <h1>[KEY_POINT_TEXT]</h1>
+  <div class="cb-detail">[SUPPORTING_DETAIL]</div>
 </div>
 ```
 
-**When to use**: General title + paragraph content. The fallback when no other component fits.
+> **NOTE**: The old `.cb-wrap`, `.cb-heading`, `.cb-body`, `.cb-accent`, `.cb-number`, `.cb-pair`, `.cb-card`, `.cb-keyquote` are **replaced** by `.content-block`, `.text`, `.accent`, `.cb-detail`.
 
-#### 15b. Numbered Content
-
-Number badge + title + text. For listicle-style slides.
-
-```html
-<div class="cb-wrap anim-3">
-  <span class="cb-number anim-1">[01]</span>
-  <h2 class="cb-heading anim-2">[HEADING] <span class="highlight-[COLOR]">[HIGHLIGHT]</span></h2>
-  <p class="cb-body anim-3">[PARAGRAPH_TEXT]</p>
-</div>
-```
-
-**When to use**: Numbered items in a series — tips, steps, rules, features.
-
-#### 15c. Problem / Fix
-
-Two side-by-side cards: a problem card and a fix card.
-
-```html
-<div class="cb-wrap">
-  <span class="cb-number anim-1">[01]</span>
-  <h2 class="cb-heading anim-2">[HEADING] <span class="highlight-[COLOR]">[HIGHLIGHT]</span></h2>
-  <div class="cb-pair">
-    <div class="cb-card problem bounce-1">
-      <div class="cb-card-label problem-label">&#x26A0; The Problem</div>
-      <p class="cb-card-text">[PROBLEM_TEXT]</p>
-    </div>
-    <div class="cb-card fix bounce-2">
-      <div class="cb-card-label fix-label">&#x2713; The Fix</div>
-      <p class="cb-card-text">[FIX_TEXT with <span class="cb-cmd">/command</span> inline highlights]</p>
-    </div>
-  </div>
-</div>
-```
-
-**When to use**: Problem + solution pairs, before/after, challenge + approach, myth vs reality.
-
-#### 15d. Key Point
-
-Large emphasis text with a left accent border, plus supporting detail below.
-
-```html
-<div class="cb-wrap anim-3">
-  <blockquote class="cb-keyquote anim-2">[KEY_POINT_TEXT — a bold, memorable claim or insight]</blockquote>
-  <p class="cb-detail anim-3">[SUPPORTING_DETAIL — evidence, context, or explanation]</p>
-</div>
-```
-
-**When to use**: A single impactful statement, key takeaway, memorable quote, or bold claim.
+**When to use**: General text content, key quotes, reading passages. The fallback when no other component fits.
 
 ---
 
-### 16. Summary Panel (总结浮层)
+### Summary Panel / 总结浮层 (Zone 3)
 
-A floating panel triggered by a bottom button. Shows key takeaways for the current slide. This component is **optional** — AI decides whether to include it per-slide.
-
-**This component is NOT placed inside a layout slot.** It sits directly inside `<div class="slide">`, after the content area. See [layout-system.md](layout-system.md) for placement.
+A floating panel triggered by a bottom button. **NOT placed inside a layout slot** — sits directly inside `<div class="slide">`, after the content area.
 
 ```html
-<!-- 底部触发按钮 -->
 <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')"></button>
-
-<!-- 总结浮层面板 -->
 <div class="summary-panel">
   <div class="summary-content">
     <h3>本页要点</h3>
     <ul>
       <li>[KEY_POINT_1]</li>
       <li>[KEY_POINT_2]</li>
-      <li>[KEY_POINT_3]</li>
     </ul>
   </div>
 </div>
 ```
 
-**When to use**: At the end of a knowledge point page when there are key takeaways worth summarizing. NOT needed for: title slides, exercise pages, transition slides.
+**When to use**: At the end of a knowledge point page when there are key takeaways worth summarizing.
 
-**Visual implementation**: CSS styling and animation effects are pending design (will be implemented by Gemini).
+
+---
 
 ---
 
@@ -612,7 +405,7 @@ For code blocks, use `<span>` classes following the One Dark Pro theme:
 
 ## Color Accent Classes Reference
 
-### Text highlights
+### Text highlights (defined in `components.css`)
 - `highlight-blue` — primary accent, tech, features
 - `highlight-green` — success, positive, solutions
 - `highlight-orange` — warning, attention, problems
@@ -622,22 +415,18 @@ For code blocks, use `<span>` classes following the One Dark Pro theme:
 - `gradient-text` — blue-to-purple gradient (hero words)
 - `rainbow-text` — full rainbow gradient (title keywords)
 
-### Card borders (flip cards)
-`border-orange`, `border-yellow`, `border-red`
+### Gradient text (stat-number / highlight-title)
+Auto-assigned by column position in multi-column layouts via `--context-gradient`:
+- Column 1: green → blue gradient (`--brand-primary` → `--accent-blue`)
+- Column 2: yellow → orange gradient (`--accent-yellow` → `--accent-orange`)
+- Column 3: blue → purple gradient (`--accent-blue` → `--accent-purple`)
 
-### Card glows (expandable cards)
-`glow-orange`, `glow-blue`, `glow-green`, `glow-purple`
+Manual override classes on `.stat-number`: `.blue`, `.green`, `.orange`, `.purple`
 
-### Architecture box colors
-`box-blue`/`text-blue`, `box-yellow`/`text-yellow`, `box-green`/`text-green`
-
-### Stat number colors
-`blue`, `green`, `orange`
-
-### Status dot colors
+### Timeline dot colors
 `green` (done), `yellow` (in progress), `orange` (warning), `red` (blocked)
 
-### Glow blobs (background)
+### Glow blobs (background, defined in `components.css`)
 `glow-blue`, `glow-purple`, `glow-green`
 
 ### Color cycling rule

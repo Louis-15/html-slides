@@ -126,7 +126,7 @@ For each slide, determine:
 1. **Module name** — Which teaching module does this slide belong to? (goes into `.header-module`)
 2. **Knowledge point** — What specific topic is this slide covering? (goes into `.header-title`)
 3. **Content elements** — What text, images, or interactive elements go on this slide?
-4. **Layout mode** — Which of the 7 layout modes best fits this content? (see Phase 3)
+4. **Layout mode** — Which of the 8+1 layout modes best fits this content? (see Phase 3)
 5. **Components** — Does the content call for any interactive components? (flip cards, tables, charts, etc.)
 6. **Summary** — Does this slide need a summary panel? (AI decides per-slide)
 
@@ -169,12 +169,14 @@ Every teaching courseware slide uses the three-zone canvas model:
 
 ### Step 3.2: Choose Layout Mode
 
-For each slide, select from the 7 layout modes based on content:
+For each slide, select from the 8 layout modes (+1 variant) based on content:
 
 | Layout | When to use |
 |--------|-------------|
+| `layout-title` | Cover slides, chapter dividers — centered vertically and horizontally |
 | `layout-single` | Large text blocks, single component, full-width image, reading passages |
 | `layout-2col` | Image + text side-by-side, two parallel concepts, bilingual comparison |
+| `layout-2col.compare` | Same as 2col but with an automatic "VS" circle between columns (variant, add `.compare` class) |
 | `layout-2col-wide-left` | Main text/passage + auxiliary notes |
 | `layout-2col-wide-right` | Labels/icons + main visual/text |
 | `layout-3col` | Three parallel concepts, three-step process |
@@ -203,7 +205,7 @@ Do NOT include summary for:
 
 **Before generating, read these supporting files:**
 
-- [layout-system.md](references/layout-system.md) — Canvas structure and 7 layout modes
+- [layout-system.md](references/layout-system.md) — Canvas structure and 8+1 layout modes
 - [component-templates.md](references/component-templates.md) — Component style reference for interactive elements
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
@@ -341,7 +343,7 @@ If the user declines, stop here.
 
 | File | Purpose | When to Read |
 |------|---------|-------------|
-| [layout-system.md](references/layout-system.md) | Canvas structure: header bar + content area (7 layout modes) + summary component | Phase 3 (layout planning) |
+| [layout-system.md](references/layout-system.md) | Canvas structure: header bar + content area (8+1 layout modes) + summary component | Phase 3 (layout planning) |
 | [component-templates.md](references/component-templates.md) | Component style reference — interactive elements for layout slots | Phase 4 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards | Phase 4 (generation) |
 | [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |

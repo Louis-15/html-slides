@@ -61,7 +61,7 @@ Every teaching courseware slide is divided into **three physically separated zon
 
 ---
 
-## Layout Modes (7 种布局模式)
+## Layout Modes (8 种布局模式 + 1 变体)
 
 The content area uses a `layout-*` CSS class to control how space is divided. Layout is **pure spatial partitioning** — it only determines how columns/rows are arranged, not what goes inside them.
 
@@ -73,6 +73,20 @@ Each layout template below shows the HTML structure with **slot markers** (`[SLO
 - **Image in a slot** → image can fill the entire slot naturally (`width: 100%; height: 100%; object-fit: cover/contain`)
 - **Component in a slot** → component's own padding/margin parameters control breathing room
 - **Text in a slot** → wrap in appropriate semantic elements (`<p>`, `<ul>`, etc.)
+
+---
+
+### 0. `layout-title` — 封面页
+
+全页居中布局，用于总封面和章节封面。
+
+```html
+<div class="slide-content layout-title">
+  [SLOT-CENTER: 封面标题、副标题、作者信息等，垂直居中]
+</div>
+```
+
+**When to use**: 总封面、章节分隔页、结束页。
 
 ---
 
@@ -106,6 +120,25 @@ Two equal-width columns side by side.
 ```
 
 **When to use**: Image + text side-by-side, two parallel concepts, bilingual text comparison.
+
+---
+
+### 2v. `layout-2col.compare` — 等宽双栏对比变体
+
+在等宽双栏基础上，自动在两栏中间插入一个“VS”圆圈标记。
+
+```html
+<div class="slide-content layout-2col compare">
+  <div class="col">
+    [SLOT-LEFT: left column content]
+  </div>
+  <div class="col">
+    [SLOT-RIGHT: right column content]
+  </div>
+</div>
+```
+
+**When to use**: 两种方案对比、前后对比、正反方观对比。只需在 `layout-2col` 上追加 `.compare` 类即可。
 
 ---
 
@@ -255,47 +288,59 @@ These rules **replace** the old fixed content limits from `presentation-layer.md
 
 ## Integration with Components
 
-Components from `component-templates.md` are placed **inside layout slots**. The layout system decides spatial arrangement; the component decides interaction and internal structure.
+组件来自 `component-templates.md`，放置在布局插槽内。布局系统决定空间分配，组件决定交互和内部结构。
 
-**Example — Flip Cards in a two-column layout:**
+**示例 — 翻转卡片在双栏布局中：**
 
 ```html
 <div class="slide-content layout-2col">
   <div class="col">
     <!-- 左栏：课文内容 -->
-    <p data-edit-id="s3-body">The ancient ruins held secrets...</p>
+    <p>古老的废墟藏着秘密…</p>
   </div>
   <div class="col">
-    <!-- 右栏：翻转卡片组件 -->
-    <div class="flip-grid">
-      <div class="flip-bounce-wrap bounce-1">
-        <div class="flip-card" onclick="this.classList.toggle('flipped')">
-          <!-- flip card internals from component-templates.md -->
-        </div>
+    <!-- 右栏：翻转卡片组件（独立使用，无需包装器） -->
+    <div class="flip-card">
+      <div class="flip-front">
+        <div class="flip-icon">💡</div>
+        <div class="flip-title">卡片标题</div>
+        <div class="flip-subtitle">点击翻转查看</div>
+        <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')">↻</button>
+      </div>
+      <div class="flip-back">
+        <div class="flip-detail">卡片背面内容</div>
+        <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')">↻</button>
       </div>
     </div>
   </div>
 </div>
 ```
 
-**Example — Full-width image filling a single-column layout:**
+**示例 — 全宽图片填充单列布局：**
 
 ```html
 <div class="slide-content layout-single">
-  <img src="assets/diagram.png" alt="语法结构图" style="width:100%; height:100%; object-fit:contain;">
+  <div class="image-block">
+    <img src="assets/diagram.png" alt="语法结构图" class="slide-image">
+  </div>
 </div>
 ```
 
-**Example — Image filling one slot of a two-column layout (顶天立地):**
+**示例 — 图片填充双栏布局的一个插槽：**
 
 ```html
 <div class="slide-content layout-2col">
   <div class="col">
-    <p data-edit-id="s5-body">课文分析要点...</p>
+    <div class="content-block">
+      <p class="text">课文分析要点…</p>
+    </div>
   </div>
   <div class="col">
     <!-- 图片自然充满栏位 -->
-    <img src="assets/scene.jpg" alt="课文插图" style="width:100%; height:100%; object-fit:cover;">
+    <div class="image-block">
+      <img src="assets/scene.jpg" alt="课文插图" class="slide-image">
+    </div>
   </div>
 </div>
 ```
+
