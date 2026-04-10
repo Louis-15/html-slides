@@ -36,8 +36,10 @@
    =========================================== */
 .edit-hotzone {
     position: fixed;
-    top: 0; left: 0;
-    width: 80px; height: 80px;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
     z-index: 10000;
     cursor: pointer;
 }
@@ -48,16 +50,20 @@
     transition: opacity 0.3s ease;
     z-index: 10001;
     position: fixed;
-    top: 20px; left: 20px;
+    top: 20px;
+    left: 20px;
     background: var(--editor-bg);
     backdrop-filter: blur(10px);
     border: 1px solid var(--editor-border);
     border-radius: 50%;
-    width: 45px; height: 45px;
+    width: 45px;
+    height: 45px;
     font-size: 20px;
     box-shadow: 0 4px 12px var(--editor-shadow);
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--editor-text);
 }
 
@@ -100,7 +106,7 @@
 }
 
 .rich-toolbar.visible {
-    top: 20px;
+    top: 8px;
 }
 
 /* 工具栏按钮 */
@@ -108,11 +114,14 @@
     background: transparent;
     border: none;
     border-radius: 8px;
-    width: 34px; height: 34px;
+    width: 34px;
+    height: 34px;
     font-size: 15px;
     font-family: inherit;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--editor-text);
     transition: background 0.15s ease;
     flex-shrink: 0;
@@ -123,8 +132,10 @@
 }
 
 .rt-btn.active {
-    background: rgba(52, 152, 219, 0.15); /* 蓝色半透明高光垫背 */
-    color: #3498db; /* SVG 图标本体转为激活蓝 */
+    background: rgba(52, 152, 219, 0.15);
+    /* 蓝色半透明高光垫背 */
+    color: #3498db;
+    /* SVG 图标本体转为激活蓝 */
 }
 
 .rt-btn.wide {
@@ -136,7 +147,8 @@
 }
 
 .rt-btn svg {
-    width: 18px; height: 18px;
+    width: 18px;
+    height: 18px;
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
@@ -146,7 +158,8 @@
 
 /* 分隔线 */
 .rt-divider {
-    width: 1px; height: 20px;
+    width: 1px;
+    height: 20px;
     background: var(--editor-border);
     margin: 0 4px;
     flex-shrink: 0;
@@ -155,7 +168,9 @@
 /* ===========================================
    3. 下拉面板（调色板 / 字体选择器）
    =========================================== */
-.rt-dropdown { position: relative; }
+.rt-dropdown {
+    position: relative;
+}
 
 .rt-dropdown-menu {
     display: none;
@@ -173,15 +188,19 @@
     width: 220px;
 }
 
-.rt-dropdown-menu.show { display: block; }
+.rt-dropdown-menu.show {
+    display: block;
+}
 
 /* 倒三角箭头 */
 .rt-dropdown-menu::before {
     content: '';
     position: absolute;
-    top: -6px; left: 50%;
+    top: -6px;
+    left: 50%;
     transform: translateX(-50%) rotate(45deg);
-    width: 10px; height: 10px;
+    width: 10px;
+    height: 10px;
     background: var(--editor-bg);
     border-left: 1px solid var(--editor-border);
     border-top: 1px solid var(--editor-border);
@@ -194,7 +213,8 @@
 }
 
 .color-swatch {
-    width: 100%; aspect-ratio: 1;
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: 5px;
     border: 1px solid rgba(128, 128, 128, 0.2);
     cursor: pointer;
@@ -207,7 +227,13 @@
 }
 
 /* 字体选择器 */
-.rt-dropdown-menu.font-menu { width: 200px; max-height: 280px; overflow-y: auto; padding: 8px; }
+.rt-dropdown-menu.font-menu {
+    width: 200px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
 .font-option {
     padding: 8px 12px;
     border-radius: 6px;
@@ -217,8 +243,15 @@
     transition: background 0.15s ease;
     white-space: nowrap;
 }
-.font-option:hover { background: var(--editor-hover-bg); }
-.font-option.active { background: var(--editor-accent); color: #fff; }
+
+.font-option:hover {
+    background: var(--editor-hover-bg);
+}
+
+.font-option.active {
+    background: var(--editor-accent);
+    color: #fff;
+}
 
 /* ===========================================
    4. 可编辑元素（虚线框 / 聚焦框）
@@ -259,8 +292,10 @@
 }
 
 /* 彻底锁定底层页面滚动 (含涂鸦模式) */
-html.editor-mode, body.editor-mode,
-html.doodle-mode, body.doodle-mode {
+html.editor-mode,
+body.editor-mode,
+html.doodle-mode,
+body.doodle-mode {
     overflow: hidden !important;
 }
 
@@ -268,30 +303,39 @@ html.doodle-mode, body.doodle-mode {
 .doodle-mode .doodle-layer {
     pointer-events: auto !important;
 }
+
 .doodle-layer {
-    pointer-events: none; /* 平时允许点击穿透 */
-    z-index: 400; /* 与元素平齐 */
+    pointer-events: none;
+    /* 平时允许点击穿透 */
+    z-index: 400;
+    /* 与元素平齐 */
 }
 
 /* 编辑模式下幻灯片内容区 overflow 可见（防止虚线被裁剪） */
-.editor-mode .slide-content { overflow: visible; }
+.editor-mode .slide-content {
+    overflow: visible;
+}
 
 /* ===========================================
    ++ 拖拉拽节点与缩放核心逻辑 ++ 
    =========================================== */
 /* 解除针对图片框自带的 resize overflow 屏蔽 */
-.editable-wrap.image-box { resize: none !important; overflow: visible !important; }
+.editable-wrap.image-box {
+    resize: none !important;
+    overflow: visible !important;
+}
 
 /* 八点缩放原点（类似 PPT 的小圆白点控制柄） */
 .rs-handle {
     position: absolute;
-    width: 12px; height: 12px;
+    width: 12px;
+    height: 12px;
     background: #fff;
     border: 2px solid var(--editor-accent);
     border-radius: 50%;
     z-index: 502;
     display: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .editor-mode .editable-wrap:hover .rs-handle,
@@ -301,19 +345,58 @@ html.doodle-mode, body.doodle-mode {
     display: block;
 }
 
-.rs-nw { top: -6px; left: -6px; cursor: nwse-resize; }
-.rs-ne { top: -6px; right: -6px; cursor: nesw-resize; }
-.rs-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-.rs-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-.rs-n { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
-.rs-s { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
-.rs-e { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
-.rs-w { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
+.rs-nw {
+    top: -6px;
+    left: -6px;
+    cursor: nwse-resize;
+}
+
+.rs-ne {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+}
+
+.rs-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+}
+
+.rs-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+}
+
+.rs-n {
+    top: -6px;
+    left: calc(50% - 6px);
+    cursor: ns-resize;
+}
+
+.rs-s {
+    bottom: -6px;
+    left: calc(50% - 6px);
+    cursor: ns-resize;
+}
+
+.rs-e {
+    top: calc(50% - 6px);
+    right: -6px;
+    cursor: ew-resize;
+}
+
+.rs-w {
+    top: calc(50% - 6px);
+    left: -6px;
+    cursor: ew-resize;
+}
 
 /* 图片类容器的控件位置调整（移到盒子内部防裁切，且增加遮罩） */
-.editable-wrap.image-box > .box-controls,
-.image-frame > .box-controls,
-.image-fullbleed > .box-controls {
+.editable-wrap.image-box>.box-controls,
+.image-frame>.box-controls,
+.image-fullbleed>.box-controls {
     top: 6px !important;
     right: 6px !important;
     border: 1px solid var(--editor-accent);
@@ -326,7 +409,8 @@ html.doodle-mode, body.doodle-mode {
    =========================================== */
 .box-controls {
     position: absolute;
-    top: -32px; right: -2px;
+    top: -32px;
+    right: -2px;
     display: none;
     background: var(--editor-bg);
     backdrop-filter: blur(8px);
@@ -342,10 +426,10 @@ html.doodle-mode, body.doodle-mode {
 }
 
 /* 编辑模式下悬停或聚焦时显示控件 */
-.editor-mode [data-edit-id]:hover > .box-controls,
-.editor-mode [data-edit-id]:focus-within > .box-controls,
-.editor-mode .editable-wrap:hover > .box-controls,
-.editor-mode .editable-wrap:focus-within > .box-controls {
+.editor-mode [data-edit-id]:hover>.box-controls,
+.editor-mode [data-edit-id]:focus-within>.box-controls,
+.editor-mode .editable-wrap:hover>.box-controls,
+.editor-mode .editable-wrap:focus-within>.box-controls {
     display: flex;
 }
 
@@ -357,6 +441,7 @@ html.doodle-mode, body.doodle-mode {
     font-weight: bold;
     transition: background 0.15s ease;
 }
+
 .drag-handle:active {
     cursor: grabbing;
     background: rgba(52, 152, 219, 0.15);
@@ -370,7 +455,10 @@ html.doodle-mode, body.doodle-mode {
     border-radius: 4px;
     transition: background 0.15s ease;
 }
-.del-btn:hover { background: rgba(231, 76, 60, 0.1); }
+
+.del-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
 
 /* ===========================================
    6. 可编辑包装器（统一的文本框容器）
@@ -397,6 +485,7 @@ html.doodle-mode, body.doodle-mode {
 .editor-mode .editable-wrap:hover {
     border-color: var(--editor-outline-idle);
 }
+
 .editor-mode .editable-wrap:focus-within {
     border-color: var(--editor-outline-focus);
 }
@@ -404,17 +493,24 @@ html.doodle-mode, body.doodle-mode {
 /* ===========================================
    7. Ruby 顶标批注
    =========================================== */
-ruby { ruby-align: center; }
+ruby {
+    ruby-align: center;
+}
+
 ruby rt {
     color: var(--editor-danger);
     font-weight: bold;
     font-size: 0.65em;
-    user-select: text; /* 恢复可双击编辑性 */
-    padding-bottom: 0.1em; /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
-    white-space: nowrap; /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
+    user-select: text;
+    /* 恢复可双击编辑性 */
+    padding-bottom: 0.1em;
+    /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
+    white-space: nowrap;
+    /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
     word-break: keep-all;
     position: relative;
-    z-index: 10; /* 当主文字有多行且带高亮背景时，强制让顶标在 Z 轴最顶层，不被背景胶布吞噬 */
+    z-index: 10;
+    /* 当主文字有多行且带高亮背景时，强制让顶标在 Z 轴最顶层，不被背景胶布吞噬 */
 }
 
 /* 编辑防呆：即使全部删空，也保留物理宽度和占位提示，防止误删整个节点 */
@@ -422,6 +518,7 @@ ruby rt:empty {
     min-width: 2em;
     display: inline-block;
 }
+
 ruby rt:empty::after {
     content: "输入";
     opacity: 0.4;
@@ -436,14 +533,22 @@ ruby rt::selection {
 /* ===========================================
    8. 红色删除线
    =========================================== */
-s, strike { text-decoration-color: var(--editor-danger) !important; }
-[style*="line-through"] { text-decoration-color: var(--editor-danger) !important; }
+s,
+strike {
+    text-decoration-color: var(--editor-danger) !important;
+}
+
+[style*="line-through"] {
+    text-decoration-color: var(--editor-danger) !important;
+}
 
 /* ===========================================
    9. 无障碍：减弱动效
    =========================================== */
 @media (prefers-reduced-motion: reduce) {
-    .rich-toolbar { transition-duration: 0.1s !important; }
+    .rich-toolbar {
+        transition-duration: 0.1s !important;
+    }
 }
 
 /* ===========================================
@@ -454,6 +559,7 @@ s, strike { text-decoration-color: var(--editor-danger) !important; }
     flex-direction: column;
     gap: 8px;
 }
+
 .rt-input-group input[type="text"],
 .rt-input-group input[type="url"] {
     width: 100%;
@@ -467,49 +573,80 @@ s, strike { text-decoration-color: var(--editor-danger) !important; }
     outline: none;
     transition: background 0.2s, border-color 0.2s;
 }
+
 [data-theme="dark"] .rt-input-group input,
-.dark-theme .rt-input-group input { background: rgba(0, 0, 0, 0.2); color: #fff; }
+.dark-theme .rt-input-group input {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
 .rt-input-group input:focus {
     background: var(--editor-bg);
     border-color: var(--editor-accent);
 }
-.rt-input-group .btn-row { display: flex; gap: 6px; }
+
+.rt-input-group .btn-row {
+    display: flex;
+    gap: 6px;
+}
+
 .rt-input-btn {
-    flex: 1; padding: 6px; border: none; border-radius: 6px;
-    background: var(--editor-accent); color: #fff;
-    cursor: pointer; font-size: 13px; font-weight: bold;
+    flex: 1;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+    background: var(--editor-accent);
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
     transition: filter 0.2s;
 }
-.rt-input-btn:hover { filter: brightness(1.1); }
-.rt-input-btn.danger { background: var(--editor-danger); }
-.rt-input-btn.secondary { background: var(--editor-border); color: var(--editor-text); }
+
+.rt-input-btn:hover {
+    filter: brightness(1.1);
+}
+
+.rt-input-btn.danger {
+    background: var(--editor-danger);
+}
+
+.rt-input-btn.secondary {
+    background: var(--editor-border);
+    color: var(--editor-text);
+}
 
 .editable-wrap.image-box {
     resize: both;
     overflow: hidden;
-    min-width: 50px; min-height: 50px;
+    min-width: 50px;
+    min-height: 50px;
 }
+
 .editable-wrap.image-box img {
-    width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    display: block;
 }
 
 /* ===========================================
    8. 涂鸦模式视觉避让布局 (Doodle Mode)
    =========================================== */
-.slide {
-    /* 赋予所有幻灯片根容器关于 transform 的形变过渡属性，使偏移丝滑且不压缩画幅 */
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* 赋予内容层和涂鸦层形变过渡属性，使偏移丝滑且不压缩画幅，同时不影响背景 */
+.slide-content,
+svg.doodle-layer {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 涂鸦模式下，整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸 */
-body.doodle-mode .slide {
+/* 涂鸦模式下，内容区与画布整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸，且背景不穿帮 */
+body.doodle-mode .slide-content,
+body.doodle-mode .slide svg.doodle-layer {
     transform: translateX(60px) !important;
 }
 
-/* 富文本编辑模式下，整体下沉，为顶部工具栏让出空间 */
-body.editor-mode .slide {
-    transform: translateY(80px) !important;
-}
+
 
 /* 编辑模式下强制展开所有折叠卡片并取消裁剪，确保虚线框可见且内容可直接编辑 */
 .editor-mode .collapse-card .card-expand {
