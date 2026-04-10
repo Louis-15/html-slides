@@ -44,6 +44,7 @@
   /* tertiary — 直接复用品牌色 */
   --accent-orange: #f39800;
   /* 辅助色1 (黄橙渐变用) */
+  /* 警告 / 错误标注 */
   --accent-red: #ba1a1a;
   --accent-purple: #5a3d8a;
   /* secondary — 沉稳紫 */
