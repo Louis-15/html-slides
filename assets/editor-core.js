@@ -106,9 +106,60 @@
         this._bindInputListener();
     }
 
+    /* 全量可编辑选择器：覆盖幻灯片内所有承载文本的叶子容器 */
+    var EDITABLE_SELECTOR = [
+        /* 带有显式编辑标记的元素（向后兼容） */
+        '[data-edit-id]',
+        /* Zone 1 标题栏 */
+        '.header-module', '.header-title',
+        /* 卡片系 */
+        '.card-icon', '.card-title', '.card-desc', '.card-label', '.card-text',
+        /* 翻转卡片 */
+        '.flip-icon', '.flip-title', '.flip-subtitle', '.flip-detail',
+        /* 数字强调卡片 */
+        '.stat-number', '.stat-label', '.stat-desc',
+        /* 高亮卡片 */
+        '.highlight-label', '.highlight-title', '.highlight-text',
+        /* 时间线 */
+        '.timeline-text',
+        /* 表格单元格 */
+        '.table-wrap td', '.table-wrap th',
+        /* 内容块与排版元素 */
+        '.content-block', '.text',
+        /* 封面标题组 */
+        '.title-hero-subject', '.title-hero-heading', '.title-hero-author',
+        /* 通用排版 */
+        '.slide-tag', '.subtitle',
+        'h1', 'h2', 'h3',
+        /* 总结面板 */
+        '.summary-content h3', '.summary-content li',
+        /* 代码窗口文件名 */
+        '.code-filename',
+        /* 折叠卡片展开区 */
+        '.card-expand-inner'
+    ].join(', ');
+
+    /* 不允许被编辑的元素黑名单（防止误伤控件） */
+    var EDITABLE_BLACKLIST = [
+        '.rich-toolbar', '.edit-toggle', '.edit-hotzone',
+        '.slide-nav', '.slide-counter', '.progress-bar',
+        '.branding', '.summary-trigger', '.nav-hints',
+        '.flip-action-btn', '.collapse-action-btn',
+        '#doodleToolbar', '#doodleToggleBtn',
+        'script', 'style', 'button'
+    ].join(', ');
+
     EditorCore.prototype = {
         refreshEditables: function () {
-            this.editableSet = new Set(document.querySelectorAll('[data-edit-id]'));
+            var allCandidates = document.querySelectorAll('.slide ' + EDITABLE_SELECTOR.split(', ').join(', .slide '));
+            /* 过滤掉黑名单元素和它们的子元素 */
+            var filtered = [];
+            allCandidates.forEach(function (el) {
+                if (!el.closest(EDITABLE_BLACKLIST) && !el.matches(EDITABLE_BLACKLIST)) {
+                    filtered.push(el);
+                }
+            });
+            this.editableSet = new Set(filtered);
             if (this.isActive) {
                 this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'true'); });
             }
@@ -139,6 +190,7 @@
                 document.execCommand('styleWithCSS', false, true);
                 if (toggle) toggle.classList.add('active');
                 if (toolbar) toolbar.classList.add('visible');
+                this.refreshEditables();
                 this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'true'); });
                 window.historyMgr.captureBaseline();
                 this._navLocked = true;
@@ -148,7 +200,7 @@
                 document.body.classList.remove('editor-mode');
                 if (toggle) toggle.classList.remove('active');
                 if (toolbar) toolbar.classList.remove('visible');
-                this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'false'); });
+                this.editableSet.forEach(function (el) { el.removeAttribute('contenteditable'); });
                 this._navLocked = false;
                 EditorHooks.fire('onEditModeExit');
             }
@@ -158,6 +210,7 @@
             document.body.addEventListener('input', function (e) {
                 if (window.historyMgr.isRestoring) return;
                 if (e.target.isContentEditable) {
+                    /* 优先查找带有 data-edit-id 的祖先进行精准持久化 */
                     var editEl = e.target.closest ? e.target.closest('[data-edit-id]') : null;
                     if (editEl) PersistenceLayer.saveElement(editEl);
                     window.historyMgr.recordState(false);

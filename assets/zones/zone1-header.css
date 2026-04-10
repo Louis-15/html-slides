@@ -145,8 +145,8 @@
   aspect-ratio: 2 / 1;
   z-index: 0;
 
-  /* 浅色暗纹滤镜：保持均一的淡雅深色透明度 (0.12)，仅在左侧 15% 边缘作渐隐防闪烁处理 */
-  background: linear-gradient(to right, rgba(139, 64, 0, 0) 0%, rgba(139, 64, 0, 0.12) 15%, rgba(139, 64, 0, 0.12) 100%);
+  /* 渐变暗纹滤镜：从左下角（较深）延伸至右上角（逐渐变淡消失），并保留左边缘 15% 的防缝隙切割过渡 */
+  background: linear-gradient(to top right, rgba(139, 64, 0, 0) 0%, rgba(139, 64, 0, 0.16) 15%, rgba(139, 64, 0, 0.01) 100%);
 
   /* 彻底释放 SVG 原有等比例傲骨，让它凭 100% 高度自由计算出自己的单体宽度 */
   -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCA0MCI+PHBhdGggZD0iTTAgMGg4bDEyIDIwTDggNDBIMGwxMi0yMHoiIGZpbGw9ImJsYWNrIi8+PC9zdmc+');
