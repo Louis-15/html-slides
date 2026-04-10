@@ -408,7 +408,11 @@
                 return;
             }
 
-            this.points = [{ x: e.clientX, y: e.clientY }];
+            var rect = this.currentSvg.getBoundingClientRect();
+            var startX = e.clientX - rect.left;
+            var startY = e.clientY - rect.top;
+
+            this.points = [{ x: startX, y: startY }];
 
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("fill", "none");
@@ -428,7 +432,7 @@
                 path.style.transition = "opacity 0.8s ease-in"; // 渐隐过程 0.8秒
             }
 
-            path.setAttribute("d", "M" + e.clientX + " " + e.clientY + " L" + e.clientX + " " + (e.clientY+0.1)); // 戳一个点
+            path.setAttribute("d", "M" + startX + " " + startY + " L" + startX + " " + (startY+0.1)); // 戳一个点
 
             this.currentSvg.appendChild(path);
             this.currentPath = path;
@@ -452,8 +456,9 @@
 
             if (!this.currentPath) return;
 
-            var x = e.clientX;
-            var y = e.clientY;
+            var rect = this.currentSvg.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
 
             // Shift键触发硬直线绘制
             if (e.shiftKey && this.points.length > 0) {
