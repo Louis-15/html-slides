@@ -1006,3 +1006,31 @@
   color: var(--text);
   margin-top: 16px;
 }
+
+/* ===========================================
+   全局自动阶梯进场动画 (Auto-staggering Animations)
+   赋予内容区各分栏或独立卡片自动按顺序滑入的能力
+   =========================================== */
+@keyframes slotFadeInUp {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 当幻灯片被激活时，内部的各项布局插槽（包括它装载的卡片）集体触发动画 */
+.slide.active .layout-single > *,
+.slide.active .layout-2col > .col,
+.slide.active .layout-2col-wide-left > .col,
+.slide.active .layout-2col-wide-right > .col,
+.slide.active .layout-3col > .col,
+.slide.active .layout-grid-2x2 > .cell,
+.slide.active .layout-2row > .row {
+  animation: slotFadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 根据它们在父级内的排序分配不同的延迟，达成流水线阶梯效果 */
+.slide.active [class*="layout-"] > *:nth-child(1) { animation-delay: 0.1s; }
+.slide.active [class*="layout-"] > *:nth-child(2) { animation-delay: 0.2s; }
+.slide.active [class*="layout-"] > *:nth-child(3) { animation-delay: 0.3s; }
+.slide.active [class*="layout-"] > *:nth-child(4) { animation-delay: 0.4s; }
+.slide.active [class*="layout-"] > *:nth-child(5) { animation-delay: 0.5s; }
+.slide.active [class*="layout-"] > *:nth-child(6) { animation-delay: 0.6s; }

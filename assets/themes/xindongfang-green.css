@@ -58,16 +58,16 @@
   --outline-variant: #a3c4b0;
 
   /* ====== Zone 1 标题栏专属变量 ====== */
-  --header-wash-start: rgba(0, 163, 85, 0.7);
-  /* 背景色带左 70% 浓度 */
-  --header-wash-end: rgba(0, 163, 85, 0.2);
-  /* 背景色带右侧 20% 浓度 */
-  --header-shadow: rgba(0, 163, 85, 0.12);
-  /* 弥散悬浮阴影 */
-  --header-accent-bar: #008744;
-  /* 贯穿竖线的颜色 */
-  --header-module-color: #006334;
-  /* 副标题文字色（冷杉树绿，沉稳学术范，与主灰字完美融于绿色大背景） */
+  --header-wash-start: rgba(243, 152, 0, 0.75);
+  /* 背景色带左 75% 浓度 (主题橙) */
+  --header-wash-end: rgba(250, 211, 85, 0.2);
+  /* 背景色带右侧 20% 浓度 (主题黄) */
+  --header-shadow: rgba(243, 152, 0, 0.12);
+  /* 橙系弥散悬浮阴影 */
+  --header-accent-bar: #d86600;
+  /* 贯穿竖线的颜色 (深橙色) */
+  --header-module-color: #8b4000;
+  /* 副标题文字色（暖深棕色，与橙黄渐变完美呼应混合） */
   --header-title-color: #333333;
   /* 主标题文字色（中性深灰，缓解纯黑压迫感） */
 
