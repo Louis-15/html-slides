@@ -1027,10 +1027,10 @@
   animation: slotFadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* 根据它们在父级内的排序分配不同的延迟，达成流水线阶梯效果 */
-.slide.active [class*="layout-"] > *:nth-child(1) { animation-delay: 0.1s; }
-.slide.active [class*="layout-"] > *:nth-child(2) { animation-delay: 0.2s; }
-.slide.active [class*="layout-"] > *:nth-child(3) { animation-delay: 0.3s; }
-.slide.active [class*="layout-"] > *:nth-child(4) { animation-delay: 0.4s; }
-.slide.active [class*="layout-"] > *:nth-child(5) { animation-delay: 0.5s; }
-.slide.active [class*="layout-"] > *:nth-child(6) { animation-delay: 0.6s; }
+/* 跟随横幅出入的物理规律：整体从 0.35s 起步浮出，凸显从属跟进感 */
+.slide.active [class*="layout-"] > *:nth-child(1) { animation-delay: 0.35s; }
+.slide.active [class*="layout-"] > *:nth-child(2) { animation-delay: 0.45s; }
+.slide.active [class*="layout-"] > *:nth-child(3) { animation-delay: 0.55s; }
+.slide.active [class*="layout-"] > *:nth-child(4) { animation-delay: 0.65s; }
+.slide.active [class*="layout-"] > *:nth-child(5) { animation-delay: 0.75s; }
+.slide.active [class*="layout-"] > *:nth-child(6) { animation-delay: 0.85s; }

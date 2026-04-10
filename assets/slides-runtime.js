@@ -60,7 +60,18 @@ function goTo(index) {
   if (index<0 || index>=total || index===current) return;
   const prev = current;
   current = index;
-  slides.forEach((s,i) => s.classList.toggle('active', i===current));
+
+  // 为旧幻灯片注入 leaving 生命周期，预留退出动画时间
+  const prevSlide = slides[prev];
+  prevSlide.classList.remove('active');
+  prevSlide.classList.add('leaving');
+  setTimeout(() => {
+    prevSlide.classList.remove('leaving');
+  }, 450); // 与 CSS 统一退出计时相匹配
+
+  // 激活新幻灯片
+  slides[current].classList.add('active');
+
   updateUI();
   showSpeakerNotes(current);
 

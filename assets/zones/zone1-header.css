@@ -163,8 +163,43 @@
   pointer-events: none;
 }
 
-/* 仅在幻灯片切入成为 active 的瞬间，爆发一次高级的流光闪入动画 */
-.slide.active .slide-header.banner::after {
-  /* 1.5秒极缓减速，仅播放1次并在动画外停留在最后一刻 (backwards 保证起步状态渲染无闪烁) */
-  animation: flowArrowsEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s 1 backwards;
+/* --- Banner: 触发动机 (The Catalyst) --- */
+/* 仅在幻灯片切入成为 active 的瞬间，作为引发翻页的动力源，爆发一次高速流动动画 */
+.slide.active .slide-header.banner::after,
+.slide.leaving .slide-header.banner::after {
+  /* 0秒延迟，起步瞬时提供向右挤压的推力 */
+  animation: flowArrowsEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) 0s 1 backwards;
+}
+
+/* ===========================================
+   Banner 动效层级 (Asymmetric Choreography)
+   利用同轴动量共享，完成退场/入场的不对称牵引感
+   =========================================== */
+@keyframes headerSlideInLeft {
+  0% { opacity: 0; transform: translateX(-150px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes headerSlideOutRight {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(150px); }
+}
+
+/* --- 入场 (Active Stage) - 受到新页面吸力 --- */
+.slide.active .slide-header.banner .header-module {
+  animation: headerSlideInLeft 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0s both;
+}
+.slide.active .slide-header.banner .header-title {
+  /* 主标题稍微迟滞，形成柔和的受力错层 */
+  animation: headerSlideInLeft 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both;
+}
+
+/* --- 退场 (Leaving Stage) - 受到箭头向右的拉力 --- */
+.slide.leaving .slide-header.banner .header-module {
+  /* 退场曲线使用加速脱离的 easing */
+  animation: headerSlideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0s both;
+}
+.slide.leaving .slide-header.banner .header-title {
+  /* 主标题较重，略晚 0.05s 被抽离 */
+  animation: headerSlideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.05s both;
 }
