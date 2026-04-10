@@ -70,7 +70,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 2v. layout-2col.compare (对比变体)
@@ -106,7 +106,7 @@
   display: grid;
   grid-template-columns: 1.85fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 4. layout-2col-wide-right (左窄右宽)
@@ -115,7 +115,7 @@
   display: grid;
   grid-template-columns: 1fr 1.85fr;
   gap: 32px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 5. layout-3col (三栏)
@@ -124,7 +124,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 6. layout-2row (双行)
@@ -143,7 +143,7 @@
   grid-template-columns: 1fr 1fr;
   /* 不设 grid-template-rows，行高由内容自动决定 */
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 插槽容器 (.col / .cell / .row)
@@ -158,6 +158,14 @@
   flex-direction: column;
   gap: 16px;
   position: relative;
+}
+
+/* 确保内部组件（如卡片）自动撑满可用高度 */
+.slide-content > [class*="layout-"] > .col > *,
+.slide-content > [class*="layout-"] > .cell > *,
+.slide-content [class*="col"] > *,
+.slide-content [class*="cell"] > * {
+  flex: 1;
 }
 
 
