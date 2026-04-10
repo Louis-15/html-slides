@@ -182,7 +182,7 @@
    ====== */
 .card,
 .collapse-card {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 24px;
@@ -194,10 +194,12 @@
 }
 
 .card:hover,
-.collapse-card:hover {
+.collapse-card:hover,
+.highlight-card:hover,
+.stat-card:hover,
+.timeline-card:hover {
   transform: translateY(-2px) scale(1.02);
   border-color: var(--border-hover);
-  background: var(--bg-card-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
@@ -288,7 +290,6 @@
 .flip-card:hover .flip-front,
 .flip-card:hover .flip-back {
   border-color: var(--border-hover);
-  background: var(--bg-card-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
@@ -308,7 +309,7 @@
 /* 正面：相对定位，由内容撑高 */
 .flip-front {
   position: relative;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   justify-content: center;
 }
 
@@ -316,7 +317,7 @@
 .flip-back {
   position: absolute;
   inset: 0;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   transform: rotateY(180deg);
   justify-content: center;
   align-items: center;
@@ -563,7 +564,7 @@
    多卡横排由布局系统（layout-2col / layout-3col）实现。
    ====== */
 .stat-card {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 32px 24px;
@@ -571,12 +572,6 @@
   text-align: left;
   width: 100%;
   box-sizing: border-box;
-}
-
-.stat-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  border-color: var(--border-hover);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
 }
 
 .stat-number {
@@ -612,7 +607,7 @@
 .highlight-card {
   padding: 28px 40px;
   border-radius: 16px;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   text-align: center;
   max-width: min(100%, 700px);
@@ -621,11 +616,6 @@
   box-sizing: border-box;
   font-size: clamp(15px, 1.5vw, 20px);
   line-height: 1.6;
-}
-
-.highlight-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
 .highlight-card .highlight-label {
@@ -702,19 +692,13 @@
   align-items: center;
   gap: 16px;
   padding: 14px 20px;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: all 0.3s ease;
   cursor: default;
   width: 100%;
   box-sizing: border-box;
-}
-
-.timeline-card:hover {
-  transform: translateX(8px);
-  border-color: var(--border-hover);
-  background: var(--bg-card-hover);
 }
 
 .timeline-dot {
@@ -764,7 +748,7 @@
   max-width: min(100%, 920px);
   height: min(50vh, 400px);
   position: relative;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 20px 24px;
@@ -794,7 +778,7 @@
 .table-wrap {
   width: 100%;
   max-width: min(100%, 920px);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;

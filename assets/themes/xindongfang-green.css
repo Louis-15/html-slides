@@ -103,8 +103,7 @@ body {
   border-color: var(--text-dim) !important;
 }
 
-.brand-logo {
-}
+.brand-logo {}
 
 .progress-bar {
   background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue), var(--accent-purple)) !important;
@@ -189,17 +188,35 @@ body {
   background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
 }
 
-/* -- 封面页专属高级背景 (.slide:has(.layout-title)) -- 
-   纯白太素了，利用现代 CSS 为封面页注入品牌色光晕与细微的学术网格 */
+/* -- 封面页专属高级光晕背景 (.slide:has(.layout-title)) -- */
 .slide:has(.layout-title) {
   background-color: var(--bg);
-  background-image: 
+  background-image:
     radial-gradient(circle at 0% 0%, rgba(0, 163, 85, 0.4) 0%, transparent 70%),
-    radial-gradient(circle at 100% 100%, rgba(0, 96, 170, 0.35) 0%, transparent 75%),
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
-  background-position: 0 0, 0 0, center center, center center;
+    radial-gradient(circle at 100% 100%, rgba(0, 96, 170, 0.35) 0%, transparent 75%);
+  background-size: 100% 100%, 100% 100%;
+}
+
+/* -- 全局所有卡片统一注入：学术光晕背景 -- 
+   包含 hover 状态，确保交互时光晕不丢失 */
+.card,
+.collapse-card,
+.flip-card-front,
+.flip-card-back,
+.stat-card,
+.highlight-card,
+.timeline-card,
+.card:hover,
+.collapse-card:hover,
+.flip-card-front:hover,
+.flip-card-back:hover,
+.stat-card:hover,
+.highlight-card:hover,
+.timeline-card:hover {
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(0, 163, 85, 0.4) 0%, transparent 70%),
+    radial-gradient(circle at 100% 100%, rgba(0, 96, 170, 0.35) 0%, transparent 75%) !important;
+  background-size: 100% 100%, 100% 100% !important;
 }
 
 /* -- Tags: 技术标签 -- */
@@ -228,7 +245,7 @@ body {
 .chart-container,
 .table-wrap,
 .cta-box {
-  background: var(--bg-card) !important;
+  background-color: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
   box-shadow: 0 2px 32px rgba(0, 163, 85, 0.03) !important;
@@ -250,7 +267,7 @@ body {
 
 /* ====== 翻转卡片 ====== */
 .flip-back {
-  background: var(--bg-card-hover) !important;
+  background-color: var(--bg-card-hover) !important;
 }
 
 .flip-back .flip-detail {
@@ -551,7 +568,7 @@ body {
 
 /* ====== 内容块 ====== */
 .cb-card {
-  background: var(--bg-card) !important;
+  background-color: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
   box-shadow: 0 2px 32px rgba(0, 163, 85, 0.03) !important;
@@ -705,23 +722,23 @@ body {
    ========================================================= */
 
 /* 1. 第一栏 / 单栏 / 宫格第1列 (主色: 新东方绿) */
-.slide-content[class*="layout-"] > .col:nth-child(3n+1),
-.slide-content.layout-grid-2x2 > .cell:nth-child(odd) {
-    --context-color: var(--brand-primary);
-    --context-gradient: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+.slide-content[class*="layout-"]>.col:nth-child(3n+1),
+.slide-content.layout-grid-2x2>.cell:nth-child(odd) {
+  --context-color: var(--brand-primary);
+  --context-gradient: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
 }
 
 /* 2. 第二栏 / 宫格第2列 (辅助色1: 教学橙) */
-.slide-content[class*="layout-"] > .col:nth-child(3n+2),
-.slide-content.layout-grid-2x2 > .cell:nth-child(even) {
-    --context-color: var(--accent-orange);
-    --context-gradient: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+.slide-content[class*="layout-"]>.col:nth-child(3n+2),
+.slide-content.layout-grid-2x2>.cell:nth-child(even) {
+  --context-color: var(--accent-orange);
+  --context-gradient: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
 }
 
 /* 3. 第三栏 (辅助色2: 稳重蓝) */
-.slide-content[class*="layout-"] > .col:nth-child(3n) {
-    --context-color: var(--accent-blue);
-    --context-gradient: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+.slide-content[class*="layout-"]>.col:nth-child(3n) {
+  --context-color: var(--accent-blue);
+  --context-gradient: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
 }
 
 /* 变量上下文到此结束，具体渲染由底层组件库接管 */
