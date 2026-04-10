@@ -221,7 +221,7 @@
 /* 卡片标签（问题/方案标记） */
 .card .card-label {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: clamp(12px, 1.1vw, 14px);
+  font-size: clamp(15px, 1.5vw, 20px);
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
