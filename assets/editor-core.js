@@ -192,6 +192,20 @@
                 if (toolbar) toolbar.classList.add('visible');
                 this.refreshEditables();
                 this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'true'); });
+                
+                // 为所有没有 data-edit-id 的可编辑元素也注入隔离壳和控件，
+                // 统一视觉：让它们拥有和 [data-edit-id] 元素完全一致的浅虚线框和删除按钮
+                var autoIdCounter = 0;
+                this.editableSet.forEach(function (el) {
+                    if (el.getAttribute('data-edit-id')) return; // 已有的跳过
+                    if (el.tagName === 'TD' || el.tagName === 'TH' || el.tagName === 'IMG') return;
+                    if (el.closest('.editable-wrap')) return; // 已被包裹的跳过
+                    // 动态分配临时编辑 ID
+                    var tempId = '_auto_' + Date.now() + '_' + (autoIdCounter++);
+                    el.setAttribute('data-edit-id', tempId);
+                    BoxManager._injectControls(el);
+                });
+                
                 window.historyMgr.captureBaseline();
                 this._navLocked = true;
                 EditorHooks.fire('onEditModeEnter');
@@ -201,6 +215,21 @@
                 if (toggle) toggle.classList.remove('active');
                 if (toolbar) toolbar.classList.remove('visible');
                 this.editableSet.forEach(function (el) { el.removeAttribute('contenteditable'); });
+                
+                // 清理临时分配的编辑 ID，还原 DOM 纯净状态
+                document.querySelectorAll('[data-edit-id^="_auto_"]').forEach(function (el) {
+                    el.removeAttribute('data-edit-id');
+                });
+                // 剥离全部临时隔离壳，把子节点平铺回原位
+                document.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
+                    // 移除控件
+                    var ctrl = wrap.querySelector('.box-controls');
+                    if (ctrl) ctrl.remove();
+                    // 平铺子节点
+                    while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
+                    wrap.remove();
+                });
+                
                 this._navLocked = false;
                 EditorHooks.fire('onEditModeExit');
             }

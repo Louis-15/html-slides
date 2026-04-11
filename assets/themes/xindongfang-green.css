@@ -84,13 +84,13 @@
 /* -- Surface 底色调 -- */
 html,
 body {
-  background: var(--bg) !important;
+  background-color: var(--bg) !important;
   color: var(--text) !important;
 }
 
 /* -- 粒子效果: 绿色微粒 -- */
 .particle {
-  background: rgba(0, 163, 85, 0.06) !important;
+  background-color: rgba(0, 163, 85, 0.06) !important;
 }
 
 /* -- Chrome 装饰 -- */
@@ -118,7 +118,7 @@ body {
 }
 
 .nav-hints kbd {
-  background: rgba(0, 163, 85, 0.04) !important;
+  background-color: rgba(0, 163, 85, 0.04) !important;
   border: 1px solid rgba(0, 163, 85, 0.15) !important;
   border-radius: 6px !important;
   color: var(--text-dim) !important;
@@ -126,16 +126,16 @@ body {
 
 /* Nav 导航点 — 品牌绿高亮 */
 .slide-nav-dot {
-  background: rgba(0, 163, 85, 0.15) !important;
+  background-color: rgba(0, 163, 85, 0.15) !important;
 }
 
 .slide-nav-dot.active {
-  background: var(--brand-primary) !important;
+  background-color: var(--brand-primary) !important;
   box-shadow: 0 0 12px rgba(0, 163, 85, 0.3) !important;
 }
 
 .slide-nav-dot:hover {
-  background: rgba(0, 163, 85, 0.35) !important;
+  background-color: rgba(0, 163, 85, 0.35) !important;
 }
 
 /* -- 光晕球: 品牌绿色调 -- */
@@ -144,15 +144,15 @@ body {
 }
 
 .glow-blue {
-  background: var(--brand-primary) !important;
+  background-color: var(--brand-primary) !important;
 }
 
 .glow-purple {
-  background: var(--accent-purple-container) !important;
+  background-color: var(--accent-purple-container) !important;
 }
 
 .glow-green {
-  background: var(--brand-primary) !important;
+  background-color: var(--brand-primary) !important;
 }
 
 /* -- 渐变文字 — 以品牌绿为主色调 -- */
@@ -398,7 +398,7 @@ body {
 /* ====== 代码块 ====== */
 /* 保留深色代码窗口 — 与品牌绿形成高级反差 */
 .code-window {
-  background: #1e2e23 !important;
+  background-color: #1e2e23 !important;
   /* 深色偏绿调 */
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-radius: 12px !important;
@@ -411,7 +411,7 @@ body {
 }
 
 .code-titlebar {
-  background: rgba(0, 163, 85, 0.06) !important;
+  background-color: rgba(0, 163, 85, 0.06) !important;
   border-bottom: 1px solid rgba(0, 163, 85, 0.08) !important;
 }
 
@@ -433,28 +433,25 @@ body {
 
 
 /* ====== 状态时间线 ====== */
-.timeline-card:hover {
-  background: var(--bg-card-hover) !important;
-  border-color: var(--border-hover) !important;
-}
+
 
 .timeline-dot.green {
-  background: var(--brand-primary) !important;
+  background-color: var(--brand-primary) !important;
   box-shadow: 0 0 8px rgba(0, 163, 85, 0.3) !important;
 }
 
 .timeline-dot.yellow {
-  background: var(--accent-yellow) !important;
+  background-color: var(--accent-yellow) !important;
   box-shadow: 0 0 8px rgba(184, 134, 11, 0.3) !important;
 }
 
 .timeline-dot.orange {
-  background: var(--accent-orange) !important;
+  background-color: var(--accent-orange) !important;
   box-shadow: 0 0 8px rgba(232, 89, 12, 0.3) !important;
 }
 
 .timeline-dot.red {
-  background: var(--accent-red) !important;
+  background-color: var(--accent-red) !important;
   box-shadow: 0 0 8px rgba(186, 26, 26, 0.3) !important;
 }
 
@@ -462,7 +459,7 @@ body {
 
 /* ====== 表格 ====== */
 .table-wrap thead th {
-  background: var(--bg-card-hover) !important;
+  background-color: var(--bg-card-hover) !important;
   color: var(--text-muted) !important;
   border-bottom: 1px solid var(--border) !important;
 }
@@ -473,19 +470,19 @@ body {
 }
 
 .table-wrap tbody tr:hover {
-  background: var(--bg-card-hover) !important;
+  background-color: var(--bg-card-hover) !important;
 }
 
 
 
 /* ====== 进度条/双色柱 ====== */
 .dual-bar-half.left {
-  background: rgba(90, 61, 138, 0.06) !important;
+  background-color: rgba(90, 61, 138, 0.06) !important;
   color: var(--accent-purple) !important;
 }
 
 .dual-bar-half.right {
-  background: rgba(0, 163, 85, 0.06) !important;
+  background-color: rgba(0, 163, 85, 0.06) !important;
   color: var(--brand-primary) !important;
 }
 

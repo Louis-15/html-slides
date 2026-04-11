@@ -174,6 +174,12 @@
             // 移除浮动控件及编辑器专有图元挂载节点
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
 
+            // 剥离原生的安全隔离壳 (.native-edit-wrap)
+            clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
+                while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
+                wrap.remove();
+            });
+
             // 清理涂鸦引擎产生的 UI
             var dt = clone.querySelector('#doodleToolbar'); if (dt) dt.remove();
             var db = clone.querySelector('#doodleToggleBtn'); if (db) db.remove();

@@ -31,6 +31,15 @@
         _injectControls: function (el) {
             var self = this;
             var wrap = el.closest('.editable-wrap');
+            
+            // 为原生的文本编辑块安全隔离一层 wrapper，使悬浮控制条不被内部 contenteditable 吃掉和误删
+            if (!wrap && el.tagName !== 'IMG' && el.tagName !== 'TD' && el.tagName !== 'TH' && !el.closest('.native-edit-wrap')) {
+                wrap = document.createElement('div');
+                wrap.className = 'editable-wrap native-edit-wrap';
+                el.parentNode.insertBefore(wrap, el);
+                wrap.appendChild(el);
+            }
+            
             var target = wrap || el;
 
             // 修复原生图片标签：IMG 不能拥有子节点

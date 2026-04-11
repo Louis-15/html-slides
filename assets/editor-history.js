@@ -39,6 +39,11 @@
         _pushState: function () {
             var idx = getCurrentSlideIndex();
             var stack = this.getStack(idx);
+            // 安全网：如果当前页尚未拍过基线快照，则先补拍一张"操作前原貌"
+            // 这样 undo 栈至少有 2 条记录（基线 + 本次），第一次操作也能撤销
+            if (stack.undo.length === 0) {
+                this.captureBaseline();
+            }
             var snap = this.snapshot();
             if (!snap) return;
             if (stack.undo.length > 0 && stack.undo[stack.undo.length - 1] === snap) return;

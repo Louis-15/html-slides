@@ -1,9 +1,9 @@
 /* ===========================================
-   EDITOR.CSS — HTML-Slides 编辑功能专用样式
-   适用于所有主题，通过 CSS 变量 + body class 切换深/浅色
+   EDITOR.CSS 鈥?HTML-Slides 缂栬緫鍔熻兘涓撶敤鏍峰紡
+   閫傜敤浜庢墍鏈変富棰橈紝閫氳繃 CSS 鍙橀噺 + body class 鍒囨崲娣?娴呰壊
    =========================================== */
 
-/* === 编辑主题变量：浅色 === */
+/* === 缂栬緫涓婚鍙橀噺锛氭祬鑹?=== */
 :root {
     --editor-bg: rgba(255, 255, 255, 0.75);
     --editor-border: rgba(0, 0, 0, 0.1);
@@ -17,8 +17,8 @@
     --editor-outline-focus: rgba(44, 62, 80, 0.9);
 }
 
-/* === 编辑主题变量：暗色覆盖 === */
-/* 通过 data-theme="dark" 或 body 上 --bg 变量值来判定暗色主题 */
+/* === 缂栬緫涓婚鍙橀噺锛氭殫鑹茶鐩?=== */
+/* 閫氳繃 data-theme="dark" 鎴?body 涓?--bg 鍙橀噺鍊兼潵鍒ゅ畾鏆楄壊涓婚 */
 [data-theme="dark"],
 .dark-theme {
     --editor-bg: rgba(19, 23, 32, 0.75);
@@ -32,7 +32,7 @@
 }
 
 /* ===========================================
-   1. 编辑模式热区 & 开关按钮
+   1. 缂栬緫妯″紡鐑尯 & 寮€鍏虫寜閽?
    =========================================== */
 .edit-hotzone {
     position: fixed;
@@ -80,7 +80,7 @@
 }
 
 /* ===========================================
-   2. 富文本工具栏（毛玻璃悬浮）
+   2. 瀵屾枃鏈伐鍏锋爮锛堟瘺鐜荤拑鎮诞锛?
    =========================================== */
 .rich-toolbar {
     position: fixed;
@@ -109,7 +109,7 @@
     top: 8px;
 }
 
-/* 工具栏按钮 */
+/* 宸ュ叿鏍忔寜閽?*/
 .rt-btn {
     background: transparent;
     border: none;
@@ -133,9 +133,9 @@
 
 .rt-btn.active {
     background: rgba(52, 152, 219, 0.15);
-    /* 蓝色半透明高光垫背 */
+    /* 钃濊壊鍗婇€忔槑楂樺厜鍨儗 */
     color: #3498db;
-    /* SVG 图标本体转为激活蓝 */
+    /* SVG 鍥炬爣鏈綋杞负婵€娲昏摑 */
 }
 
 .rt-btn.wide {
@@ -156,7 +156,7 @@
     stroke-linejoin: round;
 }
 
-/* 分隔线 */
+/* 鍒嗛殧绾?*/
 .rt-divider {
     width: 1px;
     height: 20px;
@@ -166,7 +166,7 @@
 }
 
 /* ===========================================
-   3. 下拉面板（调色板 / 字体选择器）
+   3. 涓嬫媺闈㈡澘锛堣皟鑹叉澘 / 瀛椾綋閫夋嫨鍣級
    =========================================== */
 .rt-dropdown {
     position: relative;
@@ -192,7 +192,7 @@
     display: block;
 }
 
-/* 倒三角箭头 */
+/* 鍊掍笁瑙掔澶?*/
 .rt-dropdown-menu::before {
     content: '';
     position: absolute;
@@ -226,7 +226,7 @@
     box-shadow: 0 2px 8px var(--editor-shadow);
 }
 
-/* 字体选择器 */
+/* 瀛椾綋閫夋嫨鍣?*/
 .rt-dropdown-menu.font-menu {
     width: 200px;
     max-height: 280px;
@@ -254,12 +254,12 @@
 }
 
 /* ===========================================
-   4. 可编辑元素（虚线框 / 聚焦框）
+   4. 鍙紪杈戝厓绱狅紙铏氱嚎妗?/ 鑱氱劍妗嗭級
    =========================================== */
 [data-edit-id] {
     border-radius: 4px;
     padding: 2px;
-    transition: outline 0.2s ease;
+    outline: none !important;
 }
 
 *:not(td)[data-edit-id] {
@@ -267,31 +267,19 @@
     max-width: 100%;
 }
 
-/* 编辑模式下：悬停出现虚线框（使用负 offset 向内绘制，避免被 overflow:hidden 截断） */
-.editor-mode [data-edit-id]:hover {
-    outline: 2px dashed var(--editor-outline-idle);
-    outline-offset: -2px;
-}
-
-/* 编辑模式下：可编辑态默认无框（只有悬停或聚焦才显示） */
+/* 缂栬緫妯″紡涓嬶細鎮仠鍑虹幇铏氱嚎妗嗭紙浣跨敤璐?offset 鍚戝唴缁樺埗锛岄伩鍏嶈 overflow:hidden 鎴柇锛?*/
+/* 所有 contenteditable 元素自身完全禁用 outline，
+   视觉反馈统一由外层 .editable-wrap 的 border 虚线接管 */
 [contenteditable="true"] {
-    outline: none;
+    outline: none !important;
 }
 
-/* 悬停或聚焦态：虚线框（同样向内绘制） */
-[contenteditable="true"]:hover,
-[contenteditable="true"]:focus {
-    outline: 2px dashed var(--editor-outline-focus);
-    outline-offset: -2px;
-}
-
-/* 如果外部有 .editable-wrap 包装，说明包装器已经接管了边框，这里取消内部的 outline 防止出现双重虚线框！ */
 .editor-mode .editable-wrap [data-edit-id],
 .editor-mode .editable-wrap [contenteditable="true"] {
     outline: none !important;
 }
 
-/* 彻底锁定底层页面滚动 (含涂鸦模式) */
+/* 褰诲簳閿佸畾搴曞眰椤甸潰婊氬姩 (鍚秱楦︽ā寮? */
 html.editor-mode,
 body.editor-mode,
 html.doodle-mode,
@@ -299,33 +287,33 @@ body.doodle-mode {
     overflow: hidden !important;
 }
 
-/* 涂鸦画板状态控制 */
+/* 娑傞甫鐢绘澘鐘舵€佹帶鍒?*/
 .doodle-mode .doodle-layer {
     pointer-events: auto !important;
 }
 
 .doodle-layer {
     pointer-events: none;
-    /* 平时允许点击穿透 */
+    /* 骞虫椂鍏佽鐐瑰嚮绌块€?*/
     z-index: 400;
-    /* 与元素平齐 */
+    /* 涓庡厓绱犲钩榻?*/
 }
 
-/* 编辑模式下幻灯片内容区 overflow 可见（防止虚线被裁剪） */
+/* 缂栬緫妯″紡涓嬪够鐏墖鍐呭鍖?overflow 鍙锛堥槻姝㈣櫄绾胯瑁佸壀锛?*/
 .editor-mode .slide-content {
     overflow: visible;
 }
 
 /* ===========================================
-   ++ 拖拉拽节点与缩放核心逻辑 ++ 
+   ++ 鎷栨媺鎷借妭鐐逛笌缂╂斁鏍稿績閫昏緫 ++ 
    =========================================== */
-/* 解除针对图片框自带的 resize overflow 屏蔽 */
+/* 瑙ｉ櫎閽堝鍥剧墖妗嗚嚜甯︾殑 resize overflow 灞忚斀 */
 .editable-wrap.image-box {
     resize: none !important;
     overflow: visible !important;
 }
 
-/* 八点缩放原点（类似 PPT 的小圆白点控制柄） */
+/* 鍏偣缂╂斁鍘熺偣锛堢被浼?PPT 鐨勫皬鍦嗙櫧鐐规帶鍒舵焺锛?*/
 .rs-handle {
     position: absolute;
     width: 12px;
@@ -393,7 +381,7 @@ body.doodle-mode {
     cursor: ew-resize;
 }
 
-/* 图片类容器的控件位置调整（移到盒子内部防裁切，且增加遮罩） */
+/* 鍥剧墖绫诲鍣ㄧ殑鎺т欢浣嶇疆璋冩暣锛堢Щ鍒扮洅瀛愬唴閮ㄩ槻瑁佸垏锛屼笖澧炲姞閬僵锛?*/
 .editable-wrap.image-box>.box-controls,
 .image-frame>.box-controls,
 .image-fullbleed>.box-controls {
@@ -405,7 +393,7 @@ body.doodle-mode {
 }
 
 /* ===========================================
-   5. 浮动控件（📍✖ 统一控件）—— 所有文本框共用
+   5. 娴姩鎺т欢锛堭煋嶁湒 缁熶竴鎺т欢锛夆€斺€?鎵€鏈夋枃鏈鍏辩敤
    =========================================== */
 .box-controls {
     position: absolute;
@@ -425,7 +413,7 @@ body.doodle-mode {
     z-index: 501;
 }
 
-/* 编辑模式下悬停或聚焦时显示控件 */
+/* 缂栬緫妯″紡涓嬫偓鍋滄垨鑱氱劍鏃舵樉绀烘帶浠?*/
 .editor-mode [data-edit-id]:hover>.box-controls,
 .editor-mode [data-edit-id]:focus-within>.box-controls,
 .editor-mode .editable-wrap:hover>.box-controls,
@@ -461,7 +449,7 @@ body.doodle-mode {
 }
 
 /* ===========================================
-   6. 可编辑包装器（统一的文本框容器）
+   6. 鍙紪杈戝寘瑁呭櫒锛堢粺涓€鐨勬枃鏈瀹瑰櫒锛?
    =========================================== */
 .editable-wrap {
     position: relative;
@@ -470,18 +458,18 @@ body.doodle-mode {
     border-radius: 8px;
 }
 
-/* 自定义新增的文本框：绝对定位 */
+/* 鑷畾涔夋柊澧炵殑鏂囨湰妗嗭細缁濆瀹氫綅 */
 .editable-wrap.custom-box {
     position: absolute;
     z-index: 500;
 }
 
-/* 【关键修复】文本框本身具备自适应特性，永不被挤压 */
+/* 銆愬叧閿慨澶嶃€戞枃鏈鏈韩鍏峰鑷€傚簲鐗规€э紝姘镐笉琚尋鍘?*/
 .editable-wrap.custom-box.text-box {
     min-width: max-content;
 }
 
-/* 编辑模式下悬停/聚焦显示虚线边框 */
+/* 缂栬緫妯″紡涓嬫偓鍋?鑱氱劍鏄剧ず铏氱嚎杈规 */
 .editor-mode .editable-wrap:hover {
     border-color: var(--editor-outline-idle);
 }
@@ -491,7 +479,7 @@ body.doodle-mode {
 }
 
 /* ===========================================
-   7. Ruby 顶标批注
+   7. Ruby 椤舵爣鎵规敞
    =========================================== */
 ruby {
     ruby-align: center;
@@ -502,36 +490,36 @@ ruby rt {
     font-weight: bold;
     font-size: 0.65em;
     user-select: text;
-    /* 恢复可双击编辑性 */
+    /* 鎭㈠鍙弻鍑荤紪杈戞€?*/
     padding-bottom: 0.1em;
-    /* 在不产生碰撞的前提下适当抬高一点视觉间距 */
+    /* 鍦ㄤ笉浜х敓纰版挒鐨勫墠鎻愪笅閫傚綋鎶珮涓€鐐硅瑙夐棿璺?*/
     white-space: nowrap;
-    /* 核心防碎裂：绝对不允许顶标内的文字被换行算法切开 */
+    /* 鏍稿績闃茬瑁傦細缁濆涓嶅厑璁搁《鏍囧唴鐨勬枃瀛楄鎹㈣绠楁硶鍒囧紑 */
     word-break: keep-all;
     position: relative;
     z-index: 10;
-    /* 当主文字有多行且带高亮背景时，强制让顶标在 Z 轴最顶层，不被背景胶布吞噬 */
+    /* 褰撲富鏂囧瓧鏈夊琛屼笖甯﹂珮浜儗鏅椂锛屽己鍒惰椤舵爣鍦?Z 杞存渶椤跺眰锛屼笉琚儗鏅兌甯冨悶鍣?*/
 }
 
-/* 编辑防呆：即使全部删空，也保留物理宽度和占位提示，防止误删整个节点 */
+/* 缂栬緫闃插憜锛氬嵆浣垮叏閮ㄥ垹绌猴紝涔熶繚鐣欑墿鐞嗗搴﹀拰鍗犱綅鎻愮ず锛岄槻姝㈣鍒犳暣涓妭鐐?*/
 ruby rt:empty {
     min-width: 2em;
     display: inline-block;
 }
 
 ruby rt:empty::after {
-    content: "输入";
+    content: "杈撳叆";
     opacity: 0.4;
 }
 
-/* 视觉反馈：不再用完全透明，而是用淡红色表示它被选中，区别于主文字的深蓝色，达到解耦感的同时保留选中可见性 */
+/* 瑙嗚鍙嶉锛氫笉鍐嶇敤瀹屽叏閫忔槑锛岃€屾槸鐢ㄦ贰绾㈣壊琛ㄧず瀹冭閫変腑锛屽尯鍒簬涓绘枃瀛楃殑娣辫摑鑹诧紝杈惧埌瑙ｈ€︽劅鐨勫悓鏃朵繚鐣欓€変腑鍙鎬?*/
 ruby rt::selection {
     background: rgba(231, 76, 60, 0.2);
     color: var(--editor-danger);
 }
 
 /* ===========================================
-   8. 红色删除线
+   8. 绾㈣壊鍒犻櫎绾?
    =========================================== */
 s,
 strike {
@@ -543,7 +531,7 @@ strike {
 }
 
 /* ===========================================
-   9. 无障碍：减弱动效
+   9. 鏃犻殰纰嶏細鍑忓急鍔ㄦ晥
    =========================================== */
 @media (prefers-reduced-motion: reduce) {
     .rich-toolbar {
@@ -552,7 +540,7 @@ strike {
 }
 
 /* ===========================================
-   10. 超链接与图片面板
+   10. 瓒呴摼鎺ヤ笌鍥剧墖闈㈡澘
    =========================================== */
 .rt-input-group {
     display: flex;
@@ -632,15 +620,15 @@ strike {
 }
 
 /* ===========================================
-   8. 涂鸦模式视觉避让布局 (Doodle Mode)
+   8. 娑傞甫妯″紡瑙嗚閬胯甯冨眬 (Doodle Mode)
    =========================================== */
-/* 赋予内容层和涂鸦层形变过渡属性，使偏移丝滑且不压缩画幅，同时不影响背景 */
+/* 璧嬩簣鍐呭灞傚拰娑傞甫灞傚舰鍙樿繃娓″睘鎬э紝浣垮亸绉讳笣婊戜笖涓嶅帇缂╃敾骞咃紝鍚屾椂涓嶅奖鍝嶈儗鏅?*/
 .slide-content,
 svg.doodle-layer {
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 涂鸦模式下，内容区与画布整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸，且背景不穿帮 */
+/* 娑傞甫妯″紡涓嬶紝鍐呭鍖轰笌鐢诲竷鏁翠綋鍚戝彸浣嶇Щ锛屼负宸︿晶宸ュ叿鏍忕暀鍑哄厖瑁曠殑瀹夊叏绌洪棿锛屼笉鍘嬬缉鍐呴儴灏哄锛屼笖鑳屾櫙涓嶇┛甯?*/
 body.doodle-mode .slide-content,
 body.doodle-mode .slide svg.doodle-layer {
     transform: translateX(60px) !important;
@@ -648,10 +636,47 @@ body.doodle-mode .slide svg.doodle-layer {
 
 
 
-/* 编辑模式下强制展开所有折叠卡片并取消裁剪，确保虚线框可见且内容可直接编辑 */
+/* 缂栬緫妯″紡涓嬪己鍒跺睍寮€鎵€鏈夋姌鍙犲崱鐗囧苟鍙栨秷瑁佸壀锛岀‘淇濊櫄绾挎鍙涓斿唴瀹瑰彲鐩存帴缂栬緫 */
 .editor-mode .collapse-card .card-expand {
     max-height: none !important;
     opacity: 1 !important;
     margin-top: 12px !important;
     overflow: visible !important;
 }
+/* 灞忚斀缂栬緫妯″紡涓嬪洜涓?DOM 閲嶇粯锛堝鎾ら攢/閲嶅仛锛夊鑷寸殑閲嶅鍏ュ満 CSS 鍔ㄧ敾 */
+.editor-mode .slide * {
+    animation: none !important;
+}
+
+
+/* 寮哄埗涓哄唴缃師鐢熺殑甯︾紪杈戞€佺殑鍙紪杈戠洅瀛愯拷鍔犵浉瀵瑰畾浣嶏紝闃叉宸ュ叿鏉″畾浣嶈秺鐣岃€岃瑁佸垏闅愯棌 */
+[data-edit-id] {
+    position: relative;
+}
+
+
+/* 鍐呯疆鐨勫師鐢熺紪杈戝潡鍥哄畾鍦ㄦ枃妗ｆ祦涓紝鏃犻渶鎷栨嫿锛岄殣钘忔嫋鎷芥妸鎵嬪彧淇濈暀鍒犻櫎鎸夐挳 */
+[data-edit-id] > .box-controls .drag-handle {
+    display: none !important;
+}
+
+/* 鑰屽悗鏈熺敤鎴疯嚜琛屾彃鍏ョ殑娴眰妯″潡闇€瑕佷繚鐣欐嫋鎷?*/
+.editable-wrap > .box-controls .drag-handle {
+    display: inline-block !important;
+}
+
+
+/* 缂栬緫妯″紡涓嬪己鍒跺厑璁稿崱鐗囨孩鍑猴紝闃叉浣嶄簬杈圭紭鐨勫師鐢熸枃鏈鍙充笂瑙掔殑鍒犻櫎鎸夐挳琚崱鐗囨湰韬殑 overflow: hidden 缁欐椿鐢熺敓瑁佸垏鎺?*/
+.editor-mode .card,
+.editor-mode .collapse-card {
+    overflow: visible !important;
+}
+
+
+.editor-mode .code-window,
+.editor-mode .dual-bar,
+.editor-mode .image-block,
+.editor-mode .content-block {
+    overflow: visible !important;
+}
+
