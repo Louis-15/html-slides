@@ -194,13 +194,16 @@
 }
 
 .card:hover,
+.card.step-active,
 .collapse-card:hover,
+.collapse-card.step-active,
 .highlight-card:hover,
 .stat-card:hover,
 .timeline-card:hover {
   transform: translateY(-2px) scale(1.02);
   border-color: var(--border-hover);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12),
+              0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
 }
 
 /* 卡片内部元素 */
@@ -281,18 +284,23 @@
   transform: rotateY(180deg);
 }
 
-.flip-card:not(.flipped):hover {
+.flip-card:not(.flipped):hover,
+.flip-card.step-active:not(.flipped) {
   transform: translateY(-2px) scale(1.02);
 }
 
-.flip-card.flipped:hover {
+.flip-card.flipped:hover,
+.flip-card.step-active.flipped {
   transform: rotateY(180deg) translateY(-2px) scale(1.02);
 }
 
 .flip-card:hover .flip-front,
-.flip-card:hover .flip-back {
+.flip-card:hover .flip-back,
+.flip-card.step-active .flip-front,
+.flip-card.step-active .flip-back {
   border-color: var(--border-hover);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12),
+              0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
 }
 
 .flip-front,

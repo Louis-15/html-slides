@@ -13,6 +13,8 @@
   /* ====== 品牌核心色（换机构时只改这里） ====== */
   --brand-primary: #00A355;
   /* 标准品牌绿 */
+  --brand-primary-rgb: 0, 163, 85;
+  /* 用于 rgba() 光晕计算的 RGB 分量 */
   --brand-primary-dark: #008744;
   /* 深色变体（用于竖线等强调元素） */
   --brand-primary-text: #007A40;
@@ -256,6 +258,50 @@ body {
   transform: translateY(-3px);
 }
 
+/* ====== 步进焦点光晕 (step-active) 主题覆写 ======
+   纯放射状光晕，模拟 AI 高亮效果：
+   三层 box-shadow 从内向外 blur 递增、透明度递减，
+   让光自然向外渐弱散射，无硬边、无实线框感。 */
+.card.step-active,
+.collapse-card.step-active {
+  transform: translateY(-2px) scale(1.02) !important;
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
+}
+
+.flip-card.step-active .flip-front,
+.flip-card.step-active .flip-back {
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
+}
+
+/* hover 同样改为放射光晕（比焦点稍淡） */
+.card:hover,
+.collapse-card:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
+}
+
+.flip-card:not(.flipped):hover .flip-front,
+.flip-card.flipped:hover .flip-back {
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
+}
+
+
 /* ====== 翻转卡片 ====== */
 
 .flip-back .flip-detail {
@@ -264,6 +310,16 @@ body {
 
 .flip-front .flip-hint {
   color: var(--text-dim) !important;
+}
+
+/* ====== 总结面板弹出光晕 ======
+   面板弹出（.visible 状态）时获得与卡片焦点相同的放射光晕，
+   仅作用于弹出面板，不影响触发按钮。 */
+.summary-panel.visible {
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
 }
 
 /* 彩色边框 — 柔化色调 */

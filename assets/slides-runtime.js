@@ -187,6 +187,7 @@ function buildInteractionQueue(slideIndex) {
     slides[slideIndex].querySelectorAll('[data-steppable]')
   );
   stepIndex = (slideIndex in slideStepState) ? slideStepState[slideIndex] : -1;
+  updateStepActiveClass();
 }
 
 /* 保存当前页的步进位置 */
@@ -201,11 +202,8 @@ function stepForward() {
   const el = interactionQueue[stepIndex];
   const type = el.getAttribute('data-steppable');
   const strategy = StepStrategies[type];
-  if (strategy) {
-    strategy.forward(el);
-    // 总结面板弹出本身就是最大的视觉反馈，不需要脉冲
-    if (type !== 'summary') pulseHighlight(el);
-  }
+  if (strategy) strategy.forward(el);
+  updateStepActiveClass();
   saveStepState();
   return true;
 }
@@ -218,16 +216,20 @@ function stepBackward() {
   const strategy = StepStrategies[type];
   if (strategy) strategy.backward(el);
   stepIndex--;
+  updateStepActiveClass();
   saveStepState();
   return true;
 }
 
-/* 步进脉冲高亮：交互触发瞬间的视觉反馈（品牌色光环向外扩散后消失） */
-function pulseHighlight(el) {
-  el.classList.remove('step-pulse');
-  void el.offsetWidth;  // 强制重排以重新触发动画
-  el.classList.add('step-pulse');
-  setTimeout(() => el.classList.remove('step-pulse'), 600);
+/* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
+   焦点始终跟着“最后一个已触发的组件”，全部撤销后无焦点。 */
+function updateStepActiveClass() {
+  // 清除当前页所有 step-active
+  slides[current].querySelectorAll('.step-active').forEach(e => e.classList.remove('step-active'));
+  // 给当前焦点组件加上 step-active
+  if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
+    interactionQueue[stepIndex].classList.add('step-active');
+  }
 }
 
 /* 空格键处理：预留给未来长文批注组件的页内滚动 */
