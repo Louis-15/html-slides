@@ -24,6 +24,7 @@
 
         init: function () {
             var self = this;
+            this._injectStyles();
             this._injectUI();
             this._injectLaserCursor();
             this._bindEvents();
@@ -32,6 +33,39 @@
             window.addEventListener('load', function() {
                 self._restoreDoodles();
             });
+        },
+
+        _injectStyles: function () {
+            if (document.getElementById('doodle-runtime-styles')) return;
+            var style = document.createElement('style');
+            style.id = 'doodle-runtime-styles';
+            style.textContent = `
+                /* 彻底锁定底层页面滚动 */
+                html.doodle-mode, body.doodle-mode { overflow: hidden !important; }
+                
+                /* 涂鸦画板状态控制 */
+                .doodle-mode .doodle-layer { pointer-events: auto !important; }
+                .doodle-layer { pointer-events: none; display: block; z-index: 400; }
+                
+                /* 涂鸦模式视觉避让布局 */
+                /* 赋予内容层和涂鸦层形变过渡属性，使偏移丝滑且不压缩画幅，同时不影响背景 */
+                .slide-content, svg.doodle-layer {
+                    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                }
+                
+                /* 涂鸦模式下，内容区与画布整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸，且背景不穿帮 */
+                body.doodle-mode .slide-content,
+                body.doodle-mode .slide svg.doodle-layer {
+                    transform: translateX(60px) !important;
+                }
+
+                /* 确保涂鸦模式下，右侧页面导航、底部分页器等系统交互组件漂浮在画板之上 (画板的 z-index 为 400) */
+                .doodle-mode .slide-nav,
+                .doodle-mode .slide-counter {
+                    z-index: 500 !important;
+                }
+            `;
+            document.head.appendChild(style);
         },
 
         _injectUI: function () {
@@ -162,7 +196,7 @@
 
             document.body.appendChild(tb);
             this.uiContainer = tb;
-            this.setTool('magic'); // 默认使用排名第一的临时笔，因为脱机演讲用得最多
+            this.setTool('pen'); // 默认使用普通钢笔
         },
 
         _injectLaserCursor: function () {

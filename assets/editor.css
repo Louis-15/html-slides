@@ -282,24 +282,10 @@
     outline: none !important;
 }
 
-/* 彻底锁定底层页面滚动（含涂鸦模式） */
+/* 彻底锁定底层页面滚动 */
 html.editor-mode,
-body.editor-mode,
-html.doodle-mode,
-body.doodle-mode {
+body.editor-mode {
     overflow: hidden !important;
-}
-
-/* 涂鸦画板状态控制 */
-.doodle-mode .doodle-layer {
-    pointer-events: auto !important;
-}
-
-.doodle-layer {
-    pointer-events: none;
-    /* 平时允许点击穿透 */
-    z-index: 400;
-    /* 与元素平齐 */
 }
 
 /* 编辑模式下幻灯片内容区 overflow 可见（防止虚线被裁剪） */
@@ -631,20 +617,7 @@ strike {
     display: block;
 }
 
-/* ===========================================
-   11. 涂鸦模式视觉避让布局 (Doodle Mode)
-   =========================================== */
-/* 赋予内容层和涂鸦层形变过渡属性，使偏移丝滑且不压缩画幅，同时不影响背景 */
-.slide-content,
-svg.doodle-layer {
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
 
-/* 涂鸦模式下，内容区与画布整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸，且背景不穿帮 */
-body.doodle-mode .slide-content,
-body.doodle-mode .slide svg.doodle-layer {
-    transform: translateX(60px) !important;
-}
 
 /* ===========================================
    12. 编辑模式专用覆盖
