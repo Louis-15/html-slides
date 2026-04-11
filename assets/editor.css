@@ -259,15 +259,15 @@
 /* 所有可编辑元素的 outline 统一由外层 .editable-wrap 的 border 接管，
    元素自身不再产生任何 outline，消除"两种视觉风格"的分裂 */
 [data-edit-id] {
-    border-radius: 4px;
-    padding: 2px;
     outline: none !important;
 }
 
-/* 自定义浮层文本框需要收缩到文字宽度，但原生的块级元素需要保留全宽 */
-*:not(td)[data-edit-id]:not(.title-hero-heading):not(.title-hero-subject):not(.title-hero-author):not(h1):not(h2):not(h3):not(.content-block):not(.timeline-text):not(.header-title):not(.header-module) {
+/* 只有自定义浮层文本框需要收缩到文字宽度，原生排版元素保持原始布局 */
+.editable-wrap.custom-box[data-edit-id] {
     width: fit-content;
     max-width: 100%;
+    border-radius: 4px;
+    padding: 2px;
 }
 
 /* contenteditable 元素自身完全禁用 outline，
@@ -456,8 +456,9 @@ body.doodle-mode {
    =========================================== */
 .editable-wrap {
     position: relative;
-    border: 2px dashed transparent;
-    transition: border-color 0.2s ease;
+    outline: 2px dashed transparent;
+    outline-offset: -2px;
+    transition: outline-color 0.2s ease;
     border-radius: 8px;
 }
 
@@ -482,11 +483,11 @@ body.doodle-mode {
 
 /* 编辑模式下悬停/聚焦显示虚线边框 */
 .editor-mode .editable-wrap:hover {
-    border-color: var(--editor-outline-idle);
+    outline-color: var(--editor-outline-idle);
 }
 
 .editor-mode .editable-wrap:focus-within {
-    border-color: var(--editor-outline-focus);
+    outline-color: var(--editor-outline-focus);
 }
 
 /* ===========================================
@@ -657,9 +658,14 @@ body.doodle-mode .slide svg.doodle-layer {
     overflow: visible !important;
 }
 
-/* 屏蔽编辑模式下因为 DOM 重绘（如撤销/重做）导致的重复入场 CSS 动画 */
-.editor-mode .slide * {
-    animation: none !important;
+/* 编辑模式下暂停所有幻灯片入场动画，让元素保持当前最终状态不变。
+   ★ 使用 animation-play-state: paused 而非 animation: none，
+   这样退出编辑模式时动画只是从"已完成"位置恢复，不会被当作新动画重播。
+   选择器特异性 (0,3,1) 覆盖主题的 .slide.active .anim-* (0,3,0) */
+html.editor-mode .slide.active *,
+html.editor-mode .slide.active *::before,
+html.editor-mode .slide.active *::after {
+    animation-play-state: paused !important;
 }
 
 /* 强制为内置原生的带编辑态的可编辑盒子追加相对定位，防止工具条定位越界而被裁切隐藏 */

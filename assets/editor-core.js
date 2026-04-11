@@ -182,7 +182,7 @@
                 var targetIndex = getCurrentSlideIndex();
                 var slides = getAllSlides();
                 if (slides[targetIndex]) {
-                    slides[targetIndex].scrollIntoView({ behavior: 'auto', block: 'center' });
+                    slides[targetIndex].scrollIntoView({ behavior: 'instant', block: 'center' });
                 }
 
                 document.documentElement.classList.add('editor-mode');
@@ -193,46 +193,52 @@
                 this.refreshEditables();
                 this.editableSet.forEach(function (el) { el.setAttribute('contenteditable', 'true'); });
                 
-                // 为所有没有 data-edit-id 的可编辑元素也注入隔离壳和控件，
-                // 统一视觉：让它们拥有和 [data-edit-id] 元素完全一致的浅虚线框和删除按钮
-                var autoIdCounter = 0;
-                this.editableSet.forEach(function (el) {
-                    if (el.getAttribute('data-edit-id')) return; // 已有的跳过
-                    if (el.tagName === 'TD' || el.tagName === 'TH' || el.tagName === 'IMG') return;
-                    if (el.closest('.editable-wrap')) return; // 已被包裹的跳过
-                    // 动态分配临时编辑 ID
-                    var tempId = '_auto_' + Date.now() + '_' + (autoIdCounter++);
-                    el.setAttribute('data-edit-id', tempId);
-                    BoxManager._injectControls(el);
-                });
+                // 首次进入编辑模式时，一次性为所有可编辑元素注入 wrapper 和控件
+                // 后续再次进入时跳过（wrapper 永久存在，不再移除）
+                this._ensureWrappersReady();
+                
+                // 首次注入 wrapper 可能导致浏览器重新触发入场动画，
+                // 用 Web Animations API 瞬间完成它们，消除视觉闪烁
+                var currentSlideEl = slides[targetIndex];
+                if (currentSlideEl && currentSlideEl.getAnimations) {
+                    try {
+                        currentSlideEl.getAnimations({ subtree: true }).forEach(function (a) { a.finish(); });
+                    } catch (e) { /* 忽略不支持 subtree 的旧浏览器 */ }
+                }
                 
                 window.historyMgr.captureBaseline();
                 this._navLocked = true;
                 EditorHooks.fire('onEditModeEnter');
             } else {
+                // ★ 零 DOM 变化退出：只做 class/attribute 切换，不剥离任何 wrapper
                 document.documentElement.classList.remove('editor-mode');
                 document.body.classList.remove('editor-mode');
                 if (toggle) toggle.classList.remove('active');
                 if (toolbar) toolbar.classList.remove('visible');
                 this.editableSet.forEach(function (el) { el.removeAttribute('contenteditable'); });
-                
-                // 清理临时分配的编辑 ID，还原 DOM 纯净状态
-                document.querySelectorAll('[data-edit-id^="_auto_"]').forEach(function (el) {
-                    el.removeAttribute('data-edit-id');
-                });
-                // 剥离全部临时隔离壳，把子节点平铺回原位
-                document.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
-                    // 移除控件
-                    var ctrl = wrap.querySelector('.box-controls');
-                    if (ctrl) ctrl.remove();
-                    // 平铺子节点
-                    while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
-                    wrap.remove();
-                });
-                
                 this._navLocked = false;
                 EditorHooks.fire('onEditModeExit');
             }
+        },
+
+        /**
+         * 一次性初始化所有编辑 wrapper（幂等操作）
+         * 只在首次进入编辑模式时执行，后续调用自动跳过
+         * wrapper 一旦注入就永久存在，避免 DOM 变动触发入场动画重播
+         */
+        _ensureWrappersReady: function () {
+            if (this._wrappersReady) return;
+            this._wrappersReady = true;
+            
+            var autoIdCounter = 0;
+            this.editableSet.forEach(function (el) {
+                if (el.getAttribute('data-edit-id')) return;
+                if (el.tagName === 'TD' || el.tagName === 'TH' || el.tagName === 'IMG') return;
+                if (el.closest('.editable-wrap')) return;
+                var tempId = '_auto_' + Date.now() + '_' + (autoIdCounter++);
+                el.setAttribute('data-edit-id', tempId);
+                BoxManager._injectControls(el);
+            });
         },
 
         _bindInputListener: function () {

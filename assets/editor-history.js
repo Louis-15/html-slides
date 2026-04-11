@@ -74,6 +74,12 @@
                 if (window.editorCore) window.editorCore.refreshEditables();
                 window.BoxManager.rehydrateSlide(slide);
                 window.PersistenceLayer.syncFromDOM(slide);
+                // innerHTML 替换导致浏览器重新触发入场动画，瞬间完成它们
+                if (slide.getAnimations) {
+                    try {
+                        slide.getAnimations({ subtree: true }).forEach(function (a) { a.finish(); });
+                    } catch (e) {}
+                }
             }
             this.isRestoring = false;
             this.updateUI();
