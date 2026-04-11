@@ -1088,23 +1088,16 @@
   }
 
   // 监听页面切换，重置步进索引
-  const originalGoTo = window.goTo;
-  if (typeof originalGoTo === 'function') {
-    // goTo 已由 slides-runtime 定义，我们在翻页后重置
-    // 使用 MutationObserver 监听 .slide.active 变化
-    const observer = new MutationObserver(() => {
+  // 使用 slides-runtime.js 提供的钩子接口，替代在 body 上挂 MutationObserver 的做法
+  // （MutationObserver + subtree:true 会在翻页时反复触发回调，与 class 切换冲突导致翻页失效）
+  if (typeof window.addSlideChangeListener === 'function') {
+    window.addSlideChangeListener(function() {
       annotationStepIndex = -1;
       const qa = getActiveQA();
       if (qa) {
         clearAllActive(qa);
         updateProgressCounter(qa);
       }
-    });
-    const slidesContainer = document.querySelector('.slides-container') || document.body;
-    observer.observe(slidesContainer, {
-      attributes: true,
-      attributeFilter: ['class'],
-      subtree: true
     });
   }
 

@@ -6,6 +6,14 @@
    speaker notes console logging.
    =========================================== */
 
+/* --- 页面切换钩子 ---
+   外部模块通过 window.addSlideChangeListener(fn) 注册回调，
+   在 goTo() 完成翻页后统一触发，替代在 body 上挂 MutationObserver 的做法。 */
+const _slideChangeListeners = [];
+window.addSlideChangeListener = function(fn) {
+  if (typeof fn === 'function') _slideChangeListeners.push(fn);
+};
+
 /* --- Zone 变体自动检测 ---
    扫描所有 zone 容器元素。如果未显式指定变体 class，自动补上默认变体。
    这样即使 HTML 中忘了写变体名，页面也不会因为缺少样式而空白。 */
@@ -85,6 +93,9 @@ function goTo(index) {
 
   // 步进队列管理：构建新页的交互队列（自动恢复记忆状态）
   buildInteractionQueue(current);
+
+  // 触发页面切换钩子（供外部模块监听）
+  _slideChangeListeners.forEach(fn => fn(current, prev));
 }
 
 function next() { goTo(current+1); }
