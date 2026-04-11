@@ -195,8 +195,23 @@ function saveStepState() {
   slideStepState[current] = stepIndex;
 }
 
-/* 正向步进：触发当前页下一个组件的交互（→ 右键） */
+/* 正向步进：触发当前页下一个组件的交互（→ 右键）
+   支持"一个组件多步"：批注组件每个批注是一步，
+   在当前组件内部步骤耗尽前不会切到下一个组件。 */
 function stepForward() {
+  // 先检查当前组件是否还有内部步骤（多步组件支持）
+  if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
+    const el = interactionQueue[stepIndex];
+    const type = el.getAttribute('data-steppable');
+    const strategy = StepStrategies[type];
+    if (strategy && strategy.hasNextStep && strategy.hasNextStep(el)) {
+      strategy.forward(el);
+      updateStepActiveClass();
+      saveStepState();
+      return true;
+    }
+  }
+  // 当前组件步骤耗尽，切到下一个组件
   if (interactionQueue.length === 0 || stepIndex >= interactionQueue.length - 1) return false;
   stepIndex++;
   const el = interactionQueue[stepIndex];
@@ -208,18 +223,28 @@ function stepForward() {
   return true;
 }
 
-/* 反向步进：撤销当前页上一个组件的交互（← 左键） */
+/* 反向步进：撤销当前页上一个组件的交互（← 左键）
+   多步组件在所有内部步骤回退完毕后才切回上一个组件。 */
 function stepBackward() {
   if (stepIndex < 0) return false;
   const el = interactionQueue[stepIndex];
   const type = el.getAttribute('data-steppable');
   const strategy = StepStrategies[type];
   if (strategy) strategy.backward(el);
+  // 检查当前组件是否已经完全回退（无更多内部步骤可回退）
+  // 对于多步组件，backward 会逐步回退，只有全部回退完才减 stepIndex
+  if (strategy && strategy.hasNextStep && strategy.hasNextStep(el)) {
+    // 还有内部步骤（backward 后仍有状态），保持在当前组件
+    updateStepActiveClass();
+    saveStepState();
+    return true;
+  }
   stepIndex--;
   updateStepActiveClass();
   saveStepState();
   return true;
 }
+
 
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
    焦点始终跟着“最后一个已触发的组件”，全部撤销后无焦点。 */

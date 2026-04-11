@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>答题与批注组件 — Demo</title>
+<!-- 本 Demo 仅用于组件测试，直接内联最小化的主题变量和布局 -->
+<style>
+  /* 最小化主题变量 */
+  :root {
+    --bg: #0d1117;
+    --bg-card: rgba(22, 27, 34, 0.85);
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim: #6e7681;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-hover: rgba(88, 166, 255, 0.35);
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-red: #f85149;
+    --accent-purple: #a371f7;
+    --accent-yellow: #d29922;
+    --accent-orange: #db6d28;
+    --brand-primary: #4caf50;
+    --brand-primary-rgb: 76, 175, 80;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  .slides-container { width: 100%; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    padding: 20px;
+  }
+  .slide.active { display: flex; }
+  .slide-header {
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .header-module {
+    font-size: 12px; font-weight: 700; color: var(--brand-primary);
+    text-transform: uppercase; letter-spacing: 0.15em;
+  }
+  .header-title {
+    font-size: 20px; font-weight: 700; color: var(--text);
+  }
+  .slide-content { flex: 1; overflow: hidden; }
+  .slide-content.layout-single {
+    display: flex; flex-direction: column;
+  }
+  /* 进度条和导航（简化） */
+  #progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent-blue); z-index: 999; transition: width 0.3s; }
+  #counter { position: fixed; bottom: 16px; right: 24px; font-size: 13px; color: var(--text-dim); z-index: 999; }
+  #slideNav { display: none; }
+  #particles { display: none; }
+</style>
+<link rel="stylesheet" href="zones/zone2-content.css">
+</head>
+<body>
+<div id="progress" style="width: 100%"></div>
+<div id="counter">1 / 1</div>
+<div id="slideNav"></div>
+<div id="particles"></div>
+
+<div class="slides-container">
+
+  <!-- ===== 第 1 页：阅读理解 Demo ===== -->
+  <div class="slide active" data-slide="1">
+    <div class="slide-header">
+      <div class="header-module">阅读理解</div>
+      <div class="header-title">2024 全国甲卷 · Passage A</div>
+    </div>
+
+    <div class="slide-content layout-single">
+      <div class="quiz-annotation" data-steppable="annotation">
+
+        <!-- SVG 连线画布 -->
+        <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+
+        <!-- 主体容器 -->
+        <div class="qa-body">
+
+          <!-- 左侧：正文 + 选项 -->
+          <div class="qa-main">
+
+            <!-- 正文区域 -->
+            <div class="qa-passage" data-scrollable>
+              <p style="margin-bottom: 16px; font-weight: 700; font-size: 1.1em; color: var(--accent-blue);">Reading Comprehension</p>
+
+              <p style="margin-bottom: 14px; text-indent: 2em;">
+                The Amazon rainforest, often referred to as the "lungs of the Earth," plays a crucial role in regulating the global climate.
+                <span class="text-anchor" data-link="note-01" data-step="1"
+                      style="text-decoration: underline; text-decoration-color: var(--accent-blue);">
+                  It absorbs vast amounts of carbon dioxide and releases oxygen, making it essential for maintaining atmospheric balance.<sup class="note-badge">1</sup>
+                </span>
+                However, deforestation has been accelerating at an alarming rate, threatening to transform this vital ecosystem into a carbon source rather than a carbon sink.
+              </p>
+
+              <p style="margin-bottom: 14px; text-indent: 2em;">
+                Scientists have warned that
+                <span class="text-anchor" data-link="note-02" data-step="2"
+                      style="background-color: rgba(88, 166, 255, 0.15);">
+                  the tipping point<sup class="note-badge">2</sup>
+                </span>
+                — the point beyond which the rainforest cannot recover — may be closer than previously thought. Recent studies indicate that approximately 17% of the Amazon has already been
+                <span class="text-anchor" data-link="note-03" data-step="3"
+                      style="text-decoration: underline; text-decoration-color: var(--accent-purple);">
+                  cleared for agriculture and cattle ranching<sup class="note-badge">3</sup></span>,
+                with another 17% degraded by logging, fire, and drought.
+              </p>
+
+              <p style="margin-bottom: 14px; text-indent: 2em;">
+                The consequences extend far beyond South America. The Amazon's destruction would release billions of tons of stored carbon into the atmosphere, dramatically accelerating
+                <span class="text-anchor" data-link="note-04" data-step="4"
+                      style="color: var(--accent-blue);">
+                  global warming<sup class="note-badge">4</sup></span>.
+                Moreover, the loss of biodiversity would be catastrophic, as the rainforest is home to an estimated 10% of all species on Earth.
+              </p>
+
+              <p style="margin-bottom: 14px; text-indent: 2em;">
+                International cooperation is urgently needed to address this crisis. While Brazil has implemented programs to slow deforestation, the economic pressures facing local communities often undermine conservation efforts. Sustainable development strategies that balance environmental protection with economic needs remain the key to saving the Amazon.
+              </p>
+            </div>
+
+            <!-- 可拖动分隔条 -->
+            <div class="qa-resize-bar"></div>
+
+            <!-- 选项/作答区域 -->
+            <div class="qa-answer-panel">
+              <div class="qa-answer-header">
+                <div class="qa-answer-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                  选择题
+                </div>
+                <button class="qa-fullscreen-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  全屏
+                </button>
+              </div>
+              <div class="qa-answer-content" data-scrollable>
+                <div class="qa-question" data-type="single">
+                  <p style="margin-bottom: 12px; font-weight: 600;">1. What is the main purpose of this passage?</p>
+                  <div class="qa-option" data-option="A" data-correct="false">
+                    <span class="qa-option-label">A</span>
+                    <span>To describe the beauty of the Amazon rainforest</span>
+                  </div>
+                  <div class="qa-option" data-option="B" data-correct="true">
+                    <span class="qa-option-label">B</span>
+                    <span>To warn about the threats facing the Amazon rainforest</span>
+                  </div>
+                  <div class="qa-option" data-option="C" data-correct="false">
+                    <span class="qa-option-label">C</span>
+                    <span>To explain the history of deforestation in Brazil</span>
+                  </div>
+                  <div class="qa-option" data-option="D" data-correct="false">
+                    <span class="qa-option-label">D</span>
+                    <span>To compare the Amazon with other rainforests</span>
+                  </div>
+                </div>
+
+                <div class="qa-question" data-type="single" style="margin-top: 20px;">
+                  <p style="margin-bottom: 12px; font-weight: 600;">2. What does the phrase "tipping point" refer to in Paragraph 2?</p>
+                  <div class="qa-option" data-option="A" data-correct="false">
+                    <span class="qa-option-label">A</span>
+                    <span>The point at which all trees have been cut down</span>
+                  </div>
+                  <div class="qa-option" data-option="B" data-correct="false">
+                    <span class="qa-option-label">B</span>
+                    <span>The moment when economic benefits outweigh environmental costs</span>
+                  </div>
+                  <div class="qa-option" data-option="C" data-correct="true">
+                    <span class="qa-option-label">C</span>
+                    <span>The threshold beyond which the rainforest cannot recover</span>
+                  </div>
+                  <div class="qa-option" data-option="D" data-correct="false">
+                    <span class="qa-option-label">D</span>
+                    <span>The peak of carbon dioxide absorption by the forest</span>
+                  </div>
+                </div>
+
+                <button class="qa-submit-btn">提交答案</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：批注面板 -->
+          <div class="qa-notes-panel">
+            <!-- 上半：正文批注 -->
+            <div class="qa-notes-passage" data-scrollable>
+              <div class="qa-note-drop-indicator"></div>
+              <div class="qa-note-bubble" data-link="note-01" data-step="1" draggable="true">
+                <div class="qa-note-handle">⋮⋮</div>
+                <span class="qa-note-step">1</span>
+                <div class="qa-note-content" data-edit-id="s1-note-01">
+                  <strong>长难句分析：</strong>这是一个由 making 引导的现在分词作结果状语的复合句。主干为 "It absorbs... and releases..."，making 后接宾语 it 和宾补 essential。essential for 后接动名词短语作介词宾语。
+                </div>
+                <button class="qa-note-expand-btn">展开</button>
+                <div class="qa-note-actions">
+                  <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                  <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                </div>
+              </div>
+
+              <div class="qa-note-drop-indicator"></div>
+              <div class="qa-note-bubble" data-link="note-02" data-step="2" draggable="true">
+                <div class="qa-note-handle">⋮⋮</div>
+                <span class="qa-note-step">2</span>
+                <div class="qa-note-content" data-edit-id="s1-note-02">
+                  <strong>词汇：tipping point</strong> = 临界点、转折点。在环境科学中指生态系统发生不可逆变化的阈值。此处用破折号补充解释其含义。
+                </div>
+                <button class="qa-note-expand-btn">展开</button>
+                <div class="qa-note-actions">
+                  <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                  <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                </div>
+              </div>
+
+              <div class="qa-note-drop-indicator"></div>
+              <div class="qa-note-bubble" data-link="note-03" data-step="3" draggable="true">
+                <div class="qa-note-handle">⋮⋮</div>
+                <span class="qa-note-step">3</span>
+                <div class="qa-note-content" data-edit-id="s1-note-03">
+                  <strong>背景知识：</strong>亚马逊雨林被砍伐的主要原因是为了开辟农田和牧场。巴西是世界最大的牛肉出口国之一，畜牧业是导致森林砍伐的首要原因。
+                </div>
+                <button class="qa-note-expand-btn">展开</button>
+                <div class="qa-note-actions">
+                  <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                  <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                </div>
+              </div>
+
+              <div class="qa-note-drop-indicator"></div>
+              <div class="qa-note-bubble" data-link="note-04" data-step="4" draggable="true">
+                <div class="qa-note-handle">⋮⋮</div>
+                <span class="qa-note-step">4</span>
+                <div class="qa-note-content" data-edit-id="s1-note-04">
+                  <strong>逻辑线索：</strong>global warming 是上文 carbon dioxide 和 carbon sink 的逻辑延伸。注意 dramatically 这个程度副词在高考中频繁考查。
+                </div>
+                <button class="qa-note-expand-btn">展开</button>
+                <div class="qa-note-actions">
+                  <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                  <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 下半：答案解析批注（同时展开时才可见，CSS 控制） -->
+            <div class="qa-notes-answers" data-scrollable>
+              <!-- 预留 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 控制按钮区 -->
+        <div class="qa-controls">
+          <button class="qa-toggle-btn" data-panel="notes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            批注
+            <span class="qa-step-counter">0/4</span>
+          </button>
+          <button class="qa-toggle-btn" data-panel="answers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            作答
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <script type="application/json" class="slide-notes">
+    {"title":"阅读理解 Demo","script":"这是一个答题与批注组件的完整演示页面。","notes":["包含4个批注和2道选择题"]}
+    </script>
+  </div>
+
+</div>
+
+<!-- 运行时脚本（注意加载顺序） -->
+<script src="slides-runtime.js"></script>
+<script src="quiz-annotation-runtime.js"></script>
+
+</body>
+</html>
