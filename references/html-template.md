@@ -147,7 +147,6 @@ These must be plain functions on `window`, not inside an IIFE, class, or module.
 
 Input bindings required:
 - Keyboard: Arrow keys, Space, PageUp/PageDown, Home, End
-- Touch: Swipe left/right (50px threshold)
 - Mouse wheel: With 600ms cooldown
 
 Optional enhancements (match to chosen style):

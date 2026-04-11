@@ -104,7 +104,6 @@ These rules govern how much content can go on a single slide:
 
 The courseware must support:
 - Keyboard: Arrow keys, Space, PageUp/PageDown, Home/End
-- Touch: Swipe left/right (50px threshold)
 - Scroll: Mouse wheel with ~600ms cooldown
 - Click: Navigation dots
 
