@@ -46,9 +46,9 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 ---
 
-## Components (12 Core + 1 Summary)
+## Components (13 Core + 1 Summary + 1 Quiz/Annotation)
 
-All 12 content components are defined in `zones/zone2-content.css`. They are **standalone units** — no wrapper containers needed. Place them directly inside layout slots (`.col`, `.cell`, `.row`, or directly in `.slide-content`).
+All content components are defined in `zones/zone2-content.css`. They are **standalone units** — no wrapper containers needed. Place them directly inside layout slots (`.col`, `.cell`, `.row`, or directly in `.slide-content`). The Quiz & Annotation component (#14) is special: it uses `layout-single` exclusively and requires `quiz-annotation-runtime.js`.
 
 ### 1. Card / 普通卡片 (`.card`)
 
@@ -461,3 +461,97 @@ Rotate through blue → purple → green → orange → yellow → red across sl
 
 ### CSS `background` shorthand gotcha
 > **CAUTION**: Never use `background: var(--bg-card)` on card components. The `background` shorthand resets `background-image` to `none`, which destroys any theme-injected glow or glassmorphism effect. Always use `background-color: var(--bg-card)` instead.
+
+---
+
+### 14. 答题与批注 / Quiz & Annotation (`.quiz-annotation`)
+
+Full-page composite component for reading comprehension, cloze tests, and annotated reading. Uses `layout-single` exclusively. **Must load `quiz-annotation-runtime.js`**.
+
+**Grid Layout**: A single CSS Grid (`qa-body`) manages all regions: passage (col1,row1), notes-top (col2,row1), resize-bar (row2), answer-panel (col1,row3), notes-btm (col2,row3). State classes control grid-template-rows/columns transitions.
+
+```html
+<div class="quiz-annotation">
+  <div class="qa-body">
+    <!-- SVG 连线画布 -->
+    <svg class="qa-connector-canvas"></svg>
+
+    <!-- ① 正文/题干区域 (col1, row1) -->
+    <div class="qa-passage" data-scrollable>
+      <p style="margin-bottom:14px;text-indent:2em;">
+        正文内容。被批注的文字用
+        <span class="text-anchor" data-link="note-01" data-step="1"
+              style="text-decoration: underline; text-decoration-color: var(--accent-blue);">
+          text-anchor 包裹<sup class="note-badge">1</sup>
+        </span>
+        。
+      </p>
+    </div>
+
+    <!-- 可拖动分隔条 (横跨所有列) -->
+    <div class="qa-resize-bar"></div>
+
+    <!-- ② 选项/作答区域 (col1, row3) -->
+    <div class="qa-answer-panel">
+      <div class="qa-answer-header">
+        <div class="qa-answer-title">📋 选择题</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="qa-submit-btn" id="submitBtn">提交答案</button>
+          <button class="qa-fullscreen-btn" id="fsBtn">⬆ 全屏</button>
+        </div>
+      </div>
+      <div class="qa-answer-content" data-scrollable>
+        <div class="qa-question" data-type="single">
+          <div class="qa-option" data-option="A" data-correct="true">
+            <span class="qa-status-dot"></span>
+            <span class="qa-option-label">A</span>
+            <span class="qa-option-text">选项内容</span>
+          </div>
+          <!-- 更多选项... -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 批注上半 (col2, row1) -->
+    <div class="qa-notes-top" data-scrollable>
+      <div class="qa-note-bubble" data-link="note-01" data-step="1" draggable="true">
+        <div class="qa-note-handle">
+          <span class="qa-note-step">1</span>
+        </div>
+        <div class="qa-note-content">批注内容...</div>
+        <div class="qa-note-actions">
+          <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+          <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+        </div>
+      </div>
+      <!-- 更多气泡... -->
+    </div>
+
+    <!-- ③' 批注下半 (col2, row3) — 作答+批注同时展开时出现 -->
+    <div class="qa-notes-btm" data-scrollable></div>
+  </div><!-- /qa-body -->
+
+  <!-- 控制按钮区 -->
+  <div class="qa-controls">
+    <button class="qa-toggle-btn" data-panel="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      批注
+      <span class="qa-step-counter">0/N</span>
+    </button>
+    <button class="qa-toggle-btn" data-panel="answers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      作答
+    </button>
+  </div>
+</div><!-- /quiz-annotation -->
+```
+
+**Key rules:**
+- `data-link` is the immutable note ID (never changes, never re-used after deletion)
+- `data-step` is the visual sequence number (auto-recalculated on drag-sort)
+- `qa-note-handle` contains `qa-note-step` — the number circle doubles as drag handle
+- Clicking any bubble area (except action buttons) toggles activation using dynamic `indexOf`
+- SVG connectors anchor precisely to `.note-badge` → `.qa-note-step` circles
+- Scroll listeners + `requestAnimationFrame` keep connectors aligned during scrolling
+- Submit button uses `.qa-status-dot` for ✓/✗ marks with spring animation
+- Quiz isolation: when `.has-quiz` and not `.submitted`, all annotations are hidden

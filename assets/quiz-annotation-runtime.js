@@ -84,22 +84,24 @@
     }
   }
 
-  /** 全屏覆盖/还原 */
+  /** 全屏覆盖/还原 — 不关闭批注面板 */
   function toggleFullscreen(qa) {
     if (!qa) return;
-    const isFull = qa.classList.toggle('answers-full');
-    // 全屏时自动关闭批注面板
-    if (isFull) {
-      qa.classList.remove('notes-active');
-      const notesBtn = qa.querySelector('.qa-toggle-btn[data-panel="notes"]');
-      if (notesBtn) notesBtn.classList.remove('active');
+    // 全屏必须先确保答题面板已展开
+    if (!qa.classList.contains('answers-active')) {
+      qa.classList.add('answers-active');
+      const answersBtn = qa.querySelector('.qa-toggle-btn[data-panel="answers"]');
+      if (answersBtn) answersBtn.classList.add('active');
     }
+    const isFull = qa.classList.toggle('answers-full');
+    // ★ 全屏时不关闭批注面板！只隐藏左侧正文行
+    // 清除拖动留下的 inline style，让 CSS class 生效
+    const body = qa.querySelector('.qa-body');
+    if (body) body.style.gridTemplateRows = '';
     // 更新全屏按钮文字
     const fsBtn = qa.querySelector('.qa-fullscreen-btn');
     if (fsBtn) {
-      fsBtn.innerHTML = isFull
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg> 还原'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg> 全屏';
+      fsBtn.textContent = isFull ? '⬇ 还原' : '⬆ 全屏';
     }
   }
 
@@ -209,7 +211,7 @@
   function scrollIntoViewSmooth(el) {
     if (!el) return;
     // 找到最近的可滚动父容器
-    const scrollParent = el.closest('.qa-passage, .qa-notes-passage, .qa-notes-answers, .qa-answer-content');
+    const scrollParent = el.closest('.qa-passage, .qa-notes-top, .qa-notes-btm, .qa-answer-content');
     if (scrollParent) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -258,23 +260,27 @@
     }
   }
 
-  /** 创建一条 SVG 贝塞尔曲线连线 */
+  /** 创建一条 SVG 贝塞尔曲线连线（精确锚定到角标和序号球） */
   function createConnectorLine(qa, linkId, className) {
     const anchor = getAnchorByLink(qa, linkId);
     const bubble = getBubbleByLink(qa, linkId);
     if (!anchor || !bubble) return null;
 
+    // 精确获取角标和批注序号的位置
+    const badge = anchor.querySelector('.note-badge') || anchor;
+    const step = bubble.querySelector('.qa-note-step') || bubble;
+
     const qaRect = qa.getBoundingClientRect();
-    const anchorRect = anchor.getBoundingClientRect();
-    const bubbleRect = bubble.getBoundingClientRect();
+    const badgeRect = badge.getBoundingClientRect();
+    const stepRect = step.getBoundingClientRect();
 
-    // 起点：锚点右侧中点
-    const x1 = anchorRect.right - qaRect.left;
-    const y1 = anchorRect.top + anchorRect.height / 2 - qaRect.top;
+    // 起点：角标右侧中点
+    const x1 = badgeRect.right - qaRect.left;
+    const y1 = badgeRect.top + badgeRect.height / 2 - qaRect.top;
 
-    // 终点：气泡左侧中点
-    const x2 = bubbleRect.left - qaRect.left;
-    const y2 = bubbleRect.top + bubbleRect.height / 2 - qaRect.top;
+    // 终点：序号球左侧中点
+    const x2 = stepRect.left - qaRect.left;
+    const y2 = stepRect.top + stepRect.height / 2 - qaRect.top;
 
     // 贝塞尔控制点
     const dx = Math.abs(x2 - x1) * 0.4;
@@ -295,66 +301,69 @@
   let draggedBubble = null;
 
   function initDragAndDrop(qa) {
-    const notesContainers = qa.querySelectorAll('.qa-notes-passage, .qa-notes-answers');
+    const notesContainers = qa.querySelectorAll('.qa-notes-top, .qa-notes-btm');
+    const placeholder = document.createElement('div');
+    placeholder.className = 'qa-note-placeholder';
 
+    // 为每个气泡绑定拖拽事件
+    qa.querySelectorAll('.qa-note-bubble').forEach(b => bindDragEvents(qa, b, placeholder));
+
+    // 容器级委托 dragover（避免死循环闪烁）
     notesContainers.forEach(container => {
-      container.addEventListener('dragstart', (e) => {
-        const bubble = e.target.closest('.qa-note-bubble');
-        if (!bubble) return;
-        draggedBubble = bubble;
-        bubble.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', bubble.dataset.link);
-      });
-
-      container.addEventListener('dragend', (e) => {
-        if (draggedBubble) {
-          draggedBubble.classList.remove('dragging');
-          draggedBubble = null;
-        }
-        // 清除所有占位指示器
-        container.querySelectorAll('.qa-note-drop-indicator').forEach(ind => {
-          ind.classList.remove('visible');
-        });
-      });
-
       container.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        // 显示占位线
-        const afterBubble = getDragAfterElement(container, e.clientY);
-        const indicators = container.querySelectorAll('.qa-note-drop-indicator');
-        indicators.forEach(ind => ind.classList.remove('visible'));
-
-        if (afterBubble) {
-          const prevInd = afterBubble.previousElementSibling;
-          if (prevInd && prevInd.classList.contains('qa-note-drop-indicator')) {
-            prevInd.classList.add('visible');
-          }
-        }
-      });
-
-      container.addEventListener('drop', (e) => {
-        e.preventDefault();
         if (!draggedBubble) return;
-
-        const afterBubble = getDragAfterElement(container, e.clientY);
-        if (afterBubble) {
-          container.insertBefore(draggedBubble, afterBubble);
+        const afterElement = getDragAfterElement(container, e.clientY);
+        if (afterElement == null) {
+          container.appendChild(placeholder);
         } else {
-          container.appendChild(draggedBubble);
+          container.insertBefore(placeholder, afterElement);
         }
-
-        // 重算 data-step 序号
-        recalcStepNumbers(qa);
       });
     });
   }
 
-  /** 获取拖拽位置下方最近的气泡 */
+  /** 绑定单个气泡的拖拽事件 */
+  function bindDragEvents(qa, b, placeholder) {
+    b.addEventListener('dragstart', (e) => {
+      draggedBubble = b;
+      b.classList.add('dragging-source');
+      e.dataTransfer.effectAllowed = 'move';
+      placeholder.style.minHeight = b.offsetHeight + 'px';
+      // 必须 setTimeout，否则还没抓起连 ghost 都隐藏了
+      setTimeout(() => b.style.display = 'none', 0);
+    });
+
+    b.addEventListener('dragend', () => {
+      if (draggedBubble) {
+        draggedBubble.classList.remove('dragging-source');
+        draggedBubble.style.display = '';
+      }
+      if (placeholder.parentNode && draggedBubble) {
+        placeholder.parentNode.replaceChild(draggedBubble, placeholder);
+      }
+      draggedBubble = null;
+
+      // 重算 data-step 序号
+      recalcStepNumbers(qa);
+
+      // 恢复激活状态和更新连线
+      const activeBubble = qa.querySelector('.qa-note-bubble.note-active');
+      if (activeBubble) {
+        const bubbles = getSortedBubbles(qa);
+        annotationStepIndex = bubbles.indexOf(activeBubble);
+        updateProgressCounter(qa);
+        window.requestAnimationFrame(() => drawStepConnector(qa, activeBubble.dataset.link));
+      } else {
+        updateProgressCounter(qa);
+      }
+    });
+  }
+
+  /** 获取拖拽位置下方最近的气泡（容器级算法，避免闪烁） */
   function getDragAfterElement(container, y) {
-    const bubbles = Array.from(container.querySelectorAll('.qa-note-bubble:not(.dragging)'));
-    return bubbles.reduce((closest, child) => {
+    const draggableElements = [...container.querySelectorAll('.qa-note-bubble:not(.dragging-source)')];
+    return draggableElements.reduce((closest, child) => {
       const box = child.getBoundingClientRect();
       const offset = y - box.top - box.height / 2;
       if (offset < 0 && offset > closest.offset) {
@@ -394,11 +403,9 @@
     const resizeBar = qa.querySelector('.qa-resize-bar');
     if (!resizeBar) return;
 
-    const qaMain = qa.querySelector('.qa-main');
+    const body = qa.querySelector('.qa-body');
     let isResizing = false;
     let startY = 0;
-    let startPassageFlex = 3;
-    let startAnswerFlex = 2;
 
     resizeBar.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -406,45 +413,32 @@
       startY = e.clientY;
       resizeBar.classList.add('dragging');
 
+      // 记录当前实际像素高度
       const passage = qa.querySelector('.qa-passage');
-      const answerPanel = qa.querySelector('.qa-answer-panel');
-      startPassageFlex = parseFloat(getComputedStyle(passage).flexGrow) || 3;
-      startAnswerFlex = parseFloat(getComputedStyle(answerPanel).flexGrow) || 2;
+      const ansPanel = qa.querySelector('.qa-answer-panel');
+      const startPassH = passage.offsetHeight;
+      const startAnsH = ansPanel.offsetHeight;
 
-      document.addEventListener('mousemove', onResizeMove);
-      document.addEventListener('mouseup', onResizeEnd);
+      const onMove = (ev) => {
+        if (!isResizing) return;
+        const delta = ev.clientY - startY;
+        const totalH = startPassH + startAnsH;
+        const newPass = Math.max(80, startPassH + delta);
+        const newAns = Math.max(80, totalH - newPass + 8); // 8 = resize-bar
+        // 用 fr 换算
+        const passFr = newPass / totalH;
+        const ansFr = newAns / totalH;
+        body.style.gridTemplateRows = `${passFr}fr 8px ${ansFr}fr`;
+      };
+      const onUp = () => {
+        isResizing = false;
+        resizeBar.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     });
-
-    function onResizeMove(e) {
-      if (!isResizing) return;
-      const delta = e.clientY - startY;
-      const mainHeight = qaMain.offsetHeight;
-      const ratio = delta / mainHeight;
-
-      const passage = qa.querySelector('.qa-passage');
-      const answerPanel = qa.querySelector('.qa-answer-panel');
-
-      const newPassageFlex = Math.max(0.5, startPassageFlex + ratio * (startPassageFlex + startAnswerFlex));
-      const newAnswerFlex = Math.max(0.5, startAnswerFlex - ratio * (startPassageFlex + startAnswerFlex));
-
-      passage.style.flex = `${newPassageFlex}`;
-      answerPanel.style.flex = `${newAnswerFlex}`;
-
-      // 联动右侧批注面板的上下分隔（同一条线）
-      const notesPassage = qa.querySelector('.qa-notes-passage');
-      const notesAnswers = qa.querySelector('.qa-notes-answers');
-      if (notesPassage && notesAnswers && qa.classList.contains('notes-active') && qa.classList.contains('answers-active')) {
-        notesPassage.style.flex = `${newPassageFlex}`;
-        notesAnswers.style.flex = `${newAnswerFlex}`;
-      }
-    }
-
-    function onResizeEnd() {
-      isResizing = false;
-      resizeBar.classList.remove('dragging');
-      document.removeEventListener('mousemove', onResizeMove);
-      document.removeEventListener('mouseup', onResizeEnd);
-    }
   }
 
 
@@ -688,25 +682,47 @@
       });
     });
 
-    // Hover 连线 — 批注气泡
+    // 气泡：点击切换激活 + Hover 连线
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
+      // 点击气泡 → 切换激活（所有模式均可）
+      bubble.addEventListener('click', (e) => {
+        // 如果点击的是悬浮操作按钮，则不触发选中
+        if (e.target.closest('.qa-note-action-btn')) return;
+        if (!qa.classList.contains('notes-active')) return;
+
+        // 使用动态 indexOf 替代静态闭包 idx，避免拖拽后索引错乱
+        const bubbles = getSortedBubbles(qa);
+        annotationStepIndex = bubbles.indexOf(bubble);
+        activateNote(qa, bubble);
+
+        // 编辑模式下同时切换操作按钮可见性
+        if (document.body.classList.contains('edit-mode')) {
+          qa.querySelectorAll('.qa-note-bubble.note-selected').forEach(b => {
+            if (b !== bubble) b.classList.remove('note-selected');
+          });
+          bubble.classList.toggle('note-selected');
+        }
+      });
+
+      // Hover 连线
       bubble.addEventListener('mouseenter', () => {
+        if (!qa.classList.contains('notes-active')) return;
         drawHoverConnector(qa, bubble.dataset.link);
       });
       bubble.addEventListener('mouseleave', () => {
         clearHoverConnector(qa);
       });
+    });
 
-      // 气泡点击 → 在编辑模式下显示操作按钮
-      bubble.addEventListener('click', (e) => {
-        if (!document.body.classList.contains('edit-mode')) return;
-        e.stopPropagation();
-
-        // 取消其他气泡的选中
-        qa.querySelectorAll('.qa-note-bubble.note-selected').forEach(b => {
-          if (b !== bubble) b.classList.remove('note-selected');
+    // 监听滚动实时更新连线
+    qa.querySelectorAll('[data-scrollable]').forEach(el => {
+      el.addEventListener('scroll', () => {
+        window.requestAnimationFrame(() => {
+          const activeBubble = qa.querySelector('.qa-note-bubble.note-active');
+          if (activeBubble && qa.classList.contains('notes-active')) {
+            drawStepConnector(qa, activeBubble.dataset.link);
+          }
         });
-        bubble.classList.toggle('note-selected');
       });
     });
 
@@ -788,16 +804,9 @@
   // 10. 气泡内容折叠
   // =========================================
 
+  /** 气泡内容折叠 — 点击气泡即可自动展开，无需独立按钮 */
   function initBubbleFolding(qa) {
-    qa.querySelectorAll('.qa-note-expand-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const bubble = btn.closest('.qa-note-bubble');
-        if (!bubble) return;
-        const isExpanded = bubble.classList.toggle('note-expanded');
-        btn.textContent = isExpanded ? '收起' : '展开';
-      });
-    });
+    // 点击气泡由 initNoteInteractions 统一处理，此处无需额外绑定
   }
 
 
@@ -924,13 +933,8 @@
     anchor.appendChild(badge);
 
     // 在批注面板创建空气泡
-    const notesPanel = qa.querySelector('.qa-notes-passage');
+    const notesPanel = qa.querySelector('.qa-notes-top');
     if (!notesPanel) return;
-
-    // 插入占位线（用于拖拽）
-    const indicator = document.createElement('div');
-    indicator.className = 'qa-note-drop-indicator';
-    notesPanel.appendChild(indicator);
 
     const bubble = document.createElement('div');
     bubble.className = 'qa-note-bubble';
@@ -938,10 +942,10 @@
     bubble.dataset.step = newStep;
     bubble.setAttribute('draggable', 'true');
     bubble.innerHTML = `
-      <div class="qa-note-handle">⋮⋮</div>
-      <span class="qa-note-step">${newStep}</span>
+      <div class="qa-note-handle">
+        <span class="qa-note-step">${newStep}</span>
+      </div>
       <div class="qa-note-content" contenteditable="true" data-edit-id="new-${newLinkId}"></div>
-      <button class="qa-note-expand-btn">展开</button>
       <div class="qa-note-actions">
         <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
         <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
@@ -1031,7 +1035,7 @@
     qa.dataset.qaInitialized = 'true';
 
     // 标记可滚动区域
-    qa.querySelectorAll('.qa-passage, .qa-answer-content, .qa-notes-passage, .qa-notes-answers').forEach(el => {
+    qa.querySelectorAll('.qa-passage, .qa-answer-content, .qa-notes-top, .qa-notes-btm').forEach(el => {
       el.setAttribute('data-scrollable', '');
     });
 
