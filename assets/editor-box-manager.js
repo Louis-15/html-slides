@@ -34,8 +34,13 @@
             
             // 为原生的文本编辑块安全隔离一层 wrapper，使悬浮控制条不被内部 contenteditable 吃掉和误删
             if (!wrap && el.tagName !== 'IMG' && el.tagName !== 'TD' && el.tagName !== 'TH' && !el.closest('.native-edit-wrap')) {
+                // 先读取被包裹元素的计算 display，让壳子镜像原有排版类型
+                var elDisplay = window.getComputedStyle(el).display;
                 wrap = document.createElement('div');
                 wrap.className = 'editable-wrap native-edit-wrap';
+                // 块级元素用 block，行内/行内块用 inline-block（否则 border 不会显示）
+                wrap.style.display = (elDisplay === 'inline' || elDisplay === 'inline-flex' || elDisplay === 'inline-grid')
+                    ? 'inline-block' : 'block';
                 el.parentNode.insertBefore(wrap, el);
                 wrap.appendChild(el);
             }
