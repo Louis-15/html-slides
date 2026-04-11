@@ -98,6 +98,8 @@ Front/back card that flips 180° on button click. **No wrapper needed** — each
 
 > **IMPORTANT**: The old `.flip-grid`, `.flip-bounce-wrap`, and `.card-action-btn` are **deleted**. Use `.flip-action-btn` on a `<button>` element. Each flip card stands alone — place multiple in a `layout-grid-2x2` or `layout-3col` using `.cell` / `.col` slots.
 
+> **KEYBOARD STEP-THROUGH**: Flip cards are automatically registered for the keyboard step-through system. Pressing `→` (ArrowRight) flips cards one by one in DOM order; pressing `←` (ArrowLeft) reverses the flip. No `data-steppable` attribute needed in HTML — the runtime auto-detects `.flip-card` elements.
+
 **When to use**: Concept reveals, vocabulary, problem → solution reveals. Place in `layout-grid-2x2` for 4 cards or `layout-3col` for 3 cards.
 
 ### 3. Collapse Card / 折叠卡片 (`.collapse-card`)
@@ -116,6 +118,8 @@ Card that expands on button click to reveal hidden content. Shares base styles w
 ```
 
 > **IMPORTANT**: The old `.use-case-grid`, `.card-v2`, `.glow-orange` wrappers are **deleted**. Use `.collapse-action-btn` (not `.card-action-btn`). Arrow auto-rotates on expand.
+
+> **KEYBOARD STEP-THROUGH**: Collapse cards are automatically registered for the keyboard step-through system. Pressing `→` expands cards one by one; pressing `←` collapses them in reverse. No `data-steppable` attribute needed — auto-detected.
 
 **When to use**: Knowledge points with expandable details, tips, FAQ. Place in `layout-grid-2x2` or `layout-2col`.
 
@@ -379,7 +383,7 @@ These go directly inside `<body>`, BEFORE the `<div class="deck">`. They provide
 <div class="slide-nav" id="slideNav"></div>
 <div class="progress-bar" id="progress"></div>
 <div class="slide-counter" id="counter"></div>
-<div class="nav-hints"><span><kbd>&larr;</kbd><kbd>&rarr;</kbd> navigate</span></div>
+<div class="nav-hints"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> 翻页 <kbd>&larr;</kbd><kbd>&rarr;</kbd> 步进</span></div>
 ```
 
 ---

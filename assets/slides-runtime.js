@@ -82,33 +82,166 @@ function goTo(index) {
       slides[current].querySelectorAll('.chart-container canvas').forEach(c => createChart(c.id));
     }, 350);
   }
+
+  // 步进队列管理：构建新页的交互队列（自动恢复记忆状态）
+  buildInteractionQueue(current);
 }
 
 function next() { goTo(current+1); }
 function prev() { goTo(current-1); }
 
 document.addEventListener('keydown', (e) => {
-  if (e.key==='ArrowRight'||e.key===' '||e.key==='PageDown') { e.preventDefault(); next(); }
-  if (e.key==='ArrowLeft'||e.key==='PageUp') { e.preventDefault(); prev(); }
-  if (e.key==='Home') { e.preventDefault(); goTo(0); }
-  if (e.key==='End') { e.preventDefault(); goTo(total-1); }
+  // 上下键 / PageDown/Up = 翻页
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+  // 左右键 = 页内组件步进（不翻页）
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepForward(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepBackward(); }
+  // 空格键 = 预留给长文组件页内滚动（无长文组件时不做操作）
+  if (e.key === ' ') { e.preventDefault(); handleSpaceKey(); }
+  // Home / End = 跳页
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
 });
 
-let touchStart = 0;
-document.addEventListener('touchstart', (e) => { touchStart=e.touches[0].clientX; });
-document.addEventListener('touchend', (e) => {
-  const diff = touchStart - e.changedTouches[0].clientX;
-  if (Math.abs(diff)>50) { diff>0 ? next() : prev(); }
-});
+/* 触摸事件已移除 — 目标用户场景为电脑 + 蓝牙翻页器 */
 
 let wheelCD = false;
 document.addEventListener('wheel', (e) => {
+  // 智能滚轮：鼠标在可滚动容器内时不翻页，让容器自然滚动
+  if (e.target.closest && e.target.closest('[data-scrollable]')) return;
   if (wheelCD) return; wheelCD = true;
   setTimeout(() => wheelCD=false, 600);
   if (e.deltaY>0||e.deltaX>0) next(); else prev();
 }, {passive:true});
 
+// =========================================
+// 页内交互步进系统 (Interaction Step-through)
+// 上下键翻页，左右键控制当前页组件的正向/反向交互
+// 适配蓝牙翻页器（上下翻页 + 左右步进）
+// =========================================
+
+/* --- 运行时自动标记可步进组件 ---
+   内置组件（.flip-card, .collapse-card, .summary-trigger）自动检测标记，
+   无需手动在 HTML 中添加 data-steppable 属性。
+   未来自定义组件通过手动声明 data-steppable="xxx" 接入。 */
+function autoTagSteppables() {
+  document.querySelectorAll('.flip-card').forEach(el => {
+    if (!el.hasAttribute('data-steppable')) el.setAttribute('data-steppable', 'flip');
+  });
+  document.querySelectorAll('.collapse-card').forEach(el => {
+    if (!el.hasAttribute('data-steppable')) el.setAttribute('data-steppable', 'collapse');
+  });
+  document.querySelectorAll('.summary-trigger').forEach(el => {
+    if (!el.hasAttribute('data-steppable')) el.setAttribute('data-steppable', 'summary');
+  });
+}
+
+/* --- 交互策略表 ---
+   每种可步进组件注册三个方法：
+     forward()     — 正向触发一步交互
+     backward()    — 反向撤销一步交互
+     hasNextStep() — 该组件是否还有下一步（预留给"一个组件多步"场景，如长文批注） */
+const StepStrategies = {
+  flip: {
+    forward(el) { el.classList.add('flipped'); },
+    backward(el) { el.classList.remove('flipped'); },
+    hasNextStep(el) { return !el.classList.contains('flipped'); }
+  },
+  collapse: {
+    forward(el) { el.classList.add('expanded'); },
+    backward(el) { el.classList.remove('expanded'); },
+    hasNextStep(el) { return !el.classList.contains('expanded'); }
+  },
+  summary: {
+    forward(el) {
+      const panel = el.closest('.slide').querySelector('.summary-panel');
+      if (panel) panel.classList.add('visible');
+    },
+    backward(el) {
+      const panel = el.closest('.slide').querySelector('.summary-panel');
+      if (panel) panel.classList.remove('visible');
+    },
+    hasNextStep(el) {
+      const panel = el.closest('.slide').querySelector('.summary-panel');
+      return panel && !panel.classList.contains('visible');
+    }
+  }
+};
+
+/* 外部模块注册新策略的接口（未来扩展用）
+   用法：window.registerStepStrategy('annotation', { forward(el){...}, backward(el){...}, hasNextStep(el){...} }); */
+window.registerStepStrategy = function(name, strategy) {
+  StepStrategies[name] = strategy;
+};
+
+/* --- 每页交互队列与状态记忆 ---
+   slideStepState 缓存每页的 stepIndex，翻页后再回来时恢复原状。 */
+const slideStepState = {};
+let interactionQueue = [];
+let stepIndex = -1;
+
+/* 构建指定页的交互队列，并恢复记忆的步进位置 */
+function buildInteractionQueue(slideIndex) {
+  interactionQueue = Array.from(
+    slides[slideIndex].querySelectorAll('[data-steppable]')
+  );
+  stepIndex = (slideIndex in slideStepState) ? slideStepState[slideIndex] : -1;
+}
+
+/* 保存当前页的步进位置 */
+function saveStepState() {
+  slideStepState[current] = stepIndex;
+}
+
+/* 正向步进：触发当前页下一个组件的交互（→ 右键） */
+function stepForward() {
+  if (interactionQueue.length === 0 || stepIndex >= interactionQueue.length - 1) return false;
+  stepIndex++;
+  const el = interactionQueue[stepIndex];
+  const type = el.getAttribute('data-steppable');
+  const strategy = StepStrategies[type];
+  if (strategy) {
+    strategy.forward(el);
+    // 总结面板弹出本身就是最大的视觉反馈，不需要脉冲
+    if (type !== 'summary') pulseHighlight(el);
+  }
+  saveStepState();
+  return true;
+}
+
+/* 反向步进：撤销当前页上一个组件的交互（← 左键） */
+function stepBackward() {
+  if (stepIndex < 0) return false;
+  const el = interactionQueue[stepIndex];
+  const type = el.getAttribute('data-steppable');
+  const strategy = StepStrategies[type];
+  if (strategy) strategy.backward(el);
+  stepIndex--;
+  saveStepState();
+  return true;
+}
+
+/* 步进脉冲高亮：交互触发瞬间的视觉反馈（品牌色光环向外扩散后消失） */
+function pulseHighlight(el) {
+  el.classList.remove('step-pulse');
+  void el.offsetWidth;  // 强制重排以重新触发动画
+  el.classList.add('step-pulse');
+  setTimeout(() => el.classList.remove('step-pulse'), 600);
+}
+
+/* 空格键处理：预留给未来长文批注组件的页内滚动 */
+function handleSpaceKey() {
+  const scrollable = slides[current].querySelector('[data-scrollable]');
+  if (scrollable) {
+    scrollable.scrollBy({ top: scrollable.clientHeight * 0.85, behavior: 'smooth' });
+  }
+}
+
+// --- 初始化 ---
+autoTagSteppables();
 updateUI();
+buildInteractionQueue(0);
 
 // =========================================
 // Chart.js Integration
