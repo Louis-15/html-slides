@@ -216,19 +216,11 @@ body {
 .collapse-card,
 .highlight-card,
 .timeline-card,
-.cb-card,
 .flip-front,
 .flip-back,
-.card-v2,
 .stat-card,
-.arch-box,
-.vs-card,
-.auth-front,
-.auth-back,
-.status-item,
 .chart-container,
 .table-wrap,
-.cta-box,
 .summary-panel {
   background-image: none !important; /* 清除可能残留的组件内置光晕 */
   background-color: rgba(255, 255, 255, 0.25) !important; 
@@ -244,17 +236,17 @@ body {
   background-color: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Hover: 品牌色调环境光抬升 */
-.flip-card:hover .flip-front,
-.card-v2:hover,
+/* Hover: 所有配套卡片及容器统一发光放射效果 */
 .stat-card:hover,
-.arch-box:hover,
-.vs-card:hover,
-.auth-flip:hover .auth-front,
 .chart-container:hover,
-.table-wrap:hover {
-  border-color: var(--border-hover) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
+.table-wrap:hover,
+.highlight-card:hover,
+.timeline-card:hover {
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
   transform: translateY(-3px);
 }
 
@@ -351,32 +343,42 @@ body {
 }
 
 /* ====== 可展开卡片 ====== */
-.card-v2::before {
+.collapse-card::before {
   display: none !important;
 }
 
-.card-v2:hover {
-  background: var(--bg-card-hover) !important;
-}
 
-.card-v2.glow-orange:hover {
+
+.collapse-card.glow-orange:hover {
   border-color: rgba(232, 89, 12, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(232, 89, 12, 0.06) !important;
+  box-shadow:
+    0 0 16px  6px rgba(232, 89, 12, 0.28),
+    0 0 44px 16px rgba(232, 89, 12, 0.16),
+    0 0 96px 32px rgba(232, 89, 12, 0.08) !important;
 }
 
-.card-v2.glow-blue:hover {
+.collapse-card.glow-blue:hover {
   border-color: rgba(0, 96, 170, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(0, 96, 170, 0.06) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 96, 170, 0.28),
+    0 0 44px 16px rgba(0, 96, 170, 0.16),
+    0 0 96px 32px rgba(0, 96, 170, 0.08) !important;
 }
 
-.card-v2.glow-green:hover {
+.collapse-card.glow-green:hover {
   border-color: rgba(0, 163, 85, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
 }
 
-.card-v2.glow-purple:hover {
+.collapse-card.glow-purple:hover {
   border-color: rgba(90, 61, 138, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(90, 61, 138, 0.06) !important;
+  box-shadow:
+    0 0 16px  6px rgba(90, 61, 138, 0.28),
+    0 0 44px 16px rgba(90, 61, 138, 0.16),
+    0 0 96px 32px rgba(90, 61, 138, 0.08) !important;
 }
 
 .card-expand-inner {
@@ -385,11 +387,11 @@ body {
 }
 
 .card-expand-inner code {
-  background: var(--bg-card-hover) !important;
+  background-color: var(--bg-card-hover) !important;
   color: var(--text) !important;
 }
 
-.card-v2 .expand-hint {
+.collapse-card .expand-hint {
   color: var(--text-dim) !important;
 }
 
@@ -413,50 +415,7 @@ body {
   border-bottom: 1px solid rgba(0, 163, 85, 0.08) !important;
 }
 
-/* ====== 架构流程图 ====== */
-.arch-box.box-blue {
-  border-color: rgba(0, 96, 170, 0.2) !important;
-}
 
-.arch-box.box-yellow {
-  border-color: rgba(184, 134, 11, 0.2) !important;
-}
-
-.arch-box.box-green {
-  border-color: rgba(0, 163, 85, 0.2) !important;
-}
-
-.arch-box:hover.box-blue {
-  border-color: rgba(0, 96, 170, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(0, 96, 170, 0.06) !important;
-}
-
-.arch-box:hover.box-yellow {
-  border-color: rgba(184, 134, 11, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(184, 134, 11, 0.06) !important;
-}
-
-.arch-box:hover.box-green {
-  border-color: rgba(0, 163, 85, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
-
-.arch-detail {
-  background: var(--bg-card-hover) !important;
-  color: var(--text-dim) !important;
-}
-
-.arch-arrow {
-  color: var(--text-dim) !important;
-}
-
-.arrow-line {
-  background: var(--text-dim) !important;
-}
-
-.arrow-line::after {
-  border-left-color: var(--text-dim) !important;
-}
 
 /* ====== 统计数字 ====== */
 .stat-number.blue {
@@ -471,108 +430,35 @@ body {
   color: var(--accent-orange) !important;
 }
 
-/* ====== VS / 对比卡片 ====== */
-.vs-card.card-left {
-  border-color: rgba(90, 61, 138, 0.2) !important;
-}
 
-.vs-card.card-right {
-  border-color: rgba(0, 163, 85, 0.2) !important;
-}
-
-.vs-card.card-left:hover {
-  border-color: rgba(90, 61, 138, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(90, 61, 138, 0.06) !important;
-}
-
-.vs-card.card-right:hover {
-  border-color: rgba(0, 163, 85, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
-
-.vs-badge {
-  background: var(--bg-card-hover) !important;
-  color: var(--text-dim) !important;
-}
-
-.vs-plus {
-  background: linear-gradient(135deg, rgba(90, 61, 138, 0.1), rgba(0, 163, 85, 0.1)) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-dim) !important;
-  animation: pulseGlow 3s ease infinite !important;
-}
-
-/* ====== 认证对比 ====== */
-.auth-front.bad {
-  border-color: rgba(186, 26, 26, 0.2) !important;
-}
-
-.auth-front.good {
-  border-color: rgba(0, 163, 85, 0.2) !important;
-}
-
-.auth-flip:hover .auth-front.bad {
-  border-color: rgba(186, 26, 26, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(186, 26, 26, 0.06) !important;
-}
-
-.auth-flip:hover .auth-front.good {
-  border-color: rgba(0, 163, 85, 0.4) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
-
-.auth-back {
-  background: var(--bg-card-hover) !important;
-}
-
-.auth-desc {
-  color: var(--text-dim) !important;
-}
-
-.auth-vs {
-  color: var(--text-dim) !important;
-}
-
-.auth-front .flip-hint {
-  color: var(--text-dim) !important;
-}
 
 /* ====== 状态时间线 ====== */
-.status-item:hover {
+.timeline-card:hover {
   background: var(--bg-card-hover) !important;
   border-color: var(--border-hover) !important;
 }
 
-.status-dot.green {
+.timeline-dot.green {
   background: var(--brand-primary) !important;
   box-shadow: 0 0 8px rgba(0, 163, 85, 0.3) !important;
 }
 
-.status-dot.yellow {
+.timeline-dot.yellow {
   background: var(--accent-yellow) !important;
   box-shadow: 0 0 8px rgba(184, 134, 11, 0.3) !important;
 }
 
-.status-dot.orange {
+.timeline-dot.orange {
   background: var(--accent-orange) !important;
   box-shadow: 0 0 8px rgba(232, 89, 12, 0.3) !important;
 }
 
-.status-dot.red {
+.timeline-dot.red {
   background: var(--accent-red) !important;
   box-shadow: 0 0 8px rgba(186, 26, 26, 0.3) !important;
 }
 
-/* ====== CTA 号召方块 ====== */
-.cta-box {
-  background: linear-gradient(135deg, rgba(0, 163, 85, 0.04), rgba(0, 96, 170, 0.04)) !important;
-  border: 1px solid rgba(0, 163, 85, 0.12) !important;
-}
 
-.cta-box:hover {
-  border-color: rgba(0, 163, 85, 0.25) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
 
 /* ====== 表格 ====== */
 .table-wrap thead th {
@@ -590,82 +476,20 @@ body {
   background: var(--bg-card-hover) !important;
 }
 
-/* ====== 图表 ====== */
-.chart-container:hover {
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
 
-/* ====== 全栈进度条 ====== */
-.fullstack-half.backend {
+
+/* ====== 进度条/双色柱 ====== */
+.dual-bar-half.left {
   background: rgba(90, 61, 138, 0.06) !important;
   color: var(--accent-purple) !important;
 }
 
-.fullstack-half.frontend {
+.dual-bar-half.right {
   background: rgba(0, 163, 85, 0.06) !important;
   color: var(--brand-primary) !important;
 }
 
-/* ====== 内容块 ====== */
-.cb-card {
-  background-color: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 32px rgba(0, 163, 85, 0.03) !important;
-}
 
-.cb-card:hover {
-  border-color: var(--border-hover) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-  transform: translateY(-3px);
-}
-
-.cb-card.problem {
-  border-color: rgba(186, 26, 26, 0.15) !important;
-  background: rgba(186, 26, 26, 0.02) !important;
-}
-
-.cb-card.problem:hover {
-  border-color: rgba(186, 26, 26, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(186, 26, 26, 0.06) !important;
-}
-
-.cb-card.fix {
-  border-color: rgba(0, 163, 85, 0.15) !important;
-}
-
-.cb-card.fix:hover {
-  border-color: rgba(0, 163, 85, 0.3) !important;
-  box-shadow: 0 8px 48px rgba(0, 163, 85, 0.06) !important;
-}
-
-.cb-card-label {
-  font-family: 'DM Sans', 'Microsoft YaHei', sans-serif !important;
-}
-
-.cb-card-label.problem-label {
-  color: var(--accent-red) !important;
-}
-
-.cb-card-label.fix-label {
-  color: var(--brand-primary) !important;
-}
-
-.cb-card-text {
-  color: var(--text-muted) !important;
-}
-
-.cb-keyquote {
-  border-left-color: var(--brand-primary) !important;
-}
-
-.cb-body {
-  color: var(--text-muted) !important;
-}
-
-.cb-number {
-  font-family: 'DM Sans', 'Microsoft YaHei', sans-serif !important;
-}
 
 /* ====== @keyframes 覆写 — 品牌绿脉冲光晕 ====== */
 @keyframes pulseGlow {
