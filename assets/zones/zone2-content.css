@@ -1137,8 +1137,9 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(255,255,255,0.08);
-  z-index: 20;
+  background: rgba(255,255,255,0.08); /* 半透明分割线 */
+  /* 【关键修复】将分割线的层级降到5，确保其被激活的批注气泡(10)及中间面板(15)遮挡 */
+  z-index: 5; 
   pointer-events: none;
   transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.3s ease;
@@ -1163,6 +1164,12 @@
 /* 纯文章无答题时，只有一条分割线在批注展开时可见 */
 .quiz-annotation:not(.has-quiz):not(.notes-active) .qa-body::before {
   opacity: 0;
+}
+
+/* 【关键视觉修复】：因为气泡是带 backdrop-filter 的半透明玻璃盒子，如果底下存在分割线，哪怕 z-index 是物理正确的（分割线在底下），依然会像玻璃一样把背景的竖线透出来。所以当处于“焦点霸屏态”时，直接做隐藏退让处理，既解决穿透，也增强焦点沉浸感 */
+.quiz-annotation.has-active-note .qa-body::before,
+.quiz-annotation.has-active-note .qa-body::after {
+  opacity: 0 !important;
 }
 
 
@@ -1267,10 +1274,11 @@
   flex: 1;
   overflow-y: auto;
   /* 【破壁防裁切神技】: 让真正的滚动列表外扩。
-     原先的 padding 是 10px 8px。我们左右外扩 24px，所以 margin 设为 -24px；
-     为了保证内部气泡大小一点都不变，padding 左/右补偿 24px，变为 8+24 = 32px。*/
-  padding: 10px 32px;
-  margin: 0 -24px;
+     设定为最佳甜点值 18px，能正好藏进右侧专栏的 20px padding gap里，不会导致滚动条覆盖文字。
+     margin 设为 -18px；对应保持原气泡宽带的 padding 补偿为 8+18 = 26px。
+     同时扩大上下 padding（原 10px 改为 24px 和 32px），给大型光晕留足纵向的舒展空间，防止上下边缘出现光晕被“一刀切”的直角现象。*/
+  padding: 24px 26px 32px 26px;
+  margin: 0 -18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1439,13 +1447,18 @@
 .qa-note-bubble.note-active {
   background-color: rgba(255,255,255,0.15);
   border-color: var(--brand-primary, var(--accent-blue));
-  box-shadow: 0 0 16px 6px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15),
-              0 0 44px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
-  transform: scale(1.04) translateY(-2px);
+  /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
+     现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
+  box-shadow: 
+    0 0 8px 1px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35),
+    0 0 16px 4px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15),
+    0 0 28px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
+  /* 移除带鱼屏下极易引起裁切越界的 scale 缩放，仅仅保留 translateY 的悬浮感 */
+  transform: translateY(-2px);
   z-index: 10;
-  /* 焦点外扩：完全吃掉父级给的 24px 溢出空间，实现视觉上打破分割线 */
-  margin-left: -24px;
-  margin-right: -24px;
+  /* 焦点外扩：以物理负边距完美吃满 18px 的突破空间，实现霸屏 */
+  margin-left: -18px;
+  margin-right: -18px;
 }
 
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
@@ -1493,22 +1506,35 @@
   -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* 编辑模式操作按钮组 — hover 气泡后显示 */
+/* 操作按钮组 — 移至左侧把手(handle)下方，呈垂直排列 */
 .qa-note-actions {
-  position: absolute; top: 6px; right: 6px;
-  display: flex; gap: 4px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  position: absolute; bottom: 8px; left: 0; width: 32px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; 
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  z-index: 2; /* 位于 handle 背景之上 */
 }
 .qa-note-bubble:hover .qa-note-actions { opacity: 1; pointer-events: auto; }
+
+/* 基础按钮样式 — 为了适应竖条宽度，尺寸可以稍小一点，无边框全透明背景更美观 */
 .qa-note-action-btn {
   all: unset; box-sizing: border-box; display: flex;
   align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 6px;
-  background-color: rgba(255,255,255,0.8); border: 1px solid var(--border);
-  color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.2s;
+  width: 22px; height: 22px; border-radius: 4px;
+  background-color: rgba(255,255,255,0.2); 
+  color: var(--text-muted); font-size: 11px; cursor: pointer; transition: all 0.2s;
 }
-.qa-note-action-btn:hover { background-color: rgba(255,255,255,0.95); }
+.qa-note-action-btn:hover { 
+  background-color: rgba(255,255,255,0.9); 
+  color: var(--brand-primary, #333);
+}
+
 /* 关联按钮特殊颜色 */
 .qa-note-action-btn.link-btn { color: var(--brand-primary, var(--accent-blue)); }
+
+/* 非编辑模式下的显隐逻辑：只显示 📌 (action-select) */
+html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
+  display: none !important;
+}
 
 
 /* --- 14.9 SVG 连线 --- */

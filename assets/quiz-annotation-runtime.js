@@ -839,8 +839,29 @@
       });
     });
 
-    // 气泡：点击切换激活 + Hover 连线（仅气泡 hover，不监听锚点 hover）
+    // 气泡：点击切换激活 + Hover 连线 + 初始化按钮
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
+      // 动态补全操作按钮（防止原本写死的HTML缺少关联按钮）
+      const linkId = bubble.dataset.link;
+      const hasLeftLink = !!qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
+      const hasRightLink = !!qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"]`);
+      let actionsHTML = `
+        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+      `;
+      if (!hasLeftLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
+      if (!hasRightLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
+      
+      let actionsDiv = bubble.querySelector('.qa-note-actions');
+      if (actionsDiv) {
+        actionsDiv.innerHTML = actionsHTML;
+      } else {
+        actionsDiv = document.createElement('div');
+        actionsDiv.className = 'qa-note-actions';
+        actionsDiv.innerHTML = actionsHTML;
+        bubble.appendChild(actionsDiv);
+      }
+
       // 点击气泡 → 切换激活
       bubble.addEventListener('click', (e) => {
         if (e.target.closest('.qa-note-action-btn')) return;
