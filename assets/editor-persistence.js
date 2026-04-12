@@ -162,8 +162,7 @@
             var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
             var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
 
-            // 清除编辑态
-            clone.querySelectorAll('[contenteditable]').forEach(function (el) { el.removeAttribute('contenteditable'); });
+            // 保留 contenteditable，导出的文件依然可以进入编辑模式继续编辑
             var tg = clone.querySelector('#editToggle');
             if (tg) { tg.classList.remove('active', 'show'); tg.style.cssText = ''; }
             var tb = clone.querySelector('#richToolbar');
