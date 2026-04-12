@@ -2001,7 +2001,7 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
 /* --- 14.15 编辑模式浮动工具条 --- */
 .qa-annotation-toolbar {
   position: absolute;
-  z-index: 100;
+  z-index: 10005;
   display: none;
   align-items: center;
   gap: 4px;
@@ -2024,7 +2024,13 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
 }
 
 .qa-toolbar-btn {
-  all: unset;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -2036,13 +2042,45 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   font-weight: 600;
   color: #333333;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+  line-height: 1;
 }
 
 .qa-toolbar-btn:hover {
   background-color: #f0f0f0;
   border-color: #d0d0d0;
+}
+
+/* 浮动工具条内的下拉容器：保证与按钮同行居中 */
+.qa-annotation-toolbar .qa-format-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 浮动工具条内的下拉菜单：覆盖编辑器暗色主题，改用白色 */
+.qa-annotation-toolbar .rt-dropdown-menu {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.qa-annotation-toolbar .rt-dropdown-menu::before {
+  background: #ffffff;
+  border-left-color: #e0e0e0;
+  border-top-color: #e0e0e0;
+}
+
+/* 上弹模式：空间不足时从上方弹出 */
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up::before {
+  top: auto;
+  bottom: -6px;
+  transform: translateX(-50%) rotate(225deg);
 }
 
 

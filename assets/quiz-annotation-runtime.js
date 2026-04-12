@@ -59,6 +59,98 @@
     return qa.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
   }
 
+  /**
+   * 锚点变更后持久化：保存锚点所在的可编辑容器到 localStorage
+   * 优先查找锚点自身的 closest('[data-edit-id]')，
+   * 如果找不到则向上查找 .qa-passage 或 .qa-answer-content，
+   * 遍历其内所有带 data-edit-id 的子元素逐一保存。
+   */
+  function persistAnchorChange(anchor) {
+    if (!window.PersistenceLayer) return;
+    // 策略1：锚点本身在某个 data-edit-id 容器内
+    const directContainer = anchor.closest('[data-edit-id]');
+    if (directContainer) {
+      window.PersistenceLayer.saveElement(directContainer);
+      return;
+    }
+    // 策略2：向上找到 .qa-passage 或 .qa-answer-content，批量保存其下所有可编辑子元素
+    const panel = anchor.closest('.qa-passage') || anchor.closest('.qa-answer-content');
+    if (panel) {
+      panel.querySelectorAll('[data-edit-id]').forEach(el => {
+        window.PersistenceLayer.saveElement(el);
+      });
+    }
+  }
+
+  // --- 删除持久化工具 ---
+  // 策略：已删除列表同时存 localStorage（跨刷新）和 qa.dataset.deletedNotes（跟随 historyMgr 快照）
+
+  /** 获取 localStorage 存储键名 */
+  function _deletedNotesKey() {
+    return window._editorUtils ? window._editorUtils.storageKey('deleted-notes') : 'deleted-notes';
+  }
+
+  /** 获取当前文档的已删除批注 ID 集合 */
+  function getDeletedNoteIds() {
+    try {
+      const raw = localStorage.getItem(_deletedNotesKey());
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch (e) { return new Set(); }
+  }
+
+  /** 写入已删除列表到 localStorage */
+  function _saveDeletedNoteIds(ids) {
+    try {
+      localStorage.setItem(_deletedNotesKey(), JSON.stringify([...ids]));
+    } catch (e) { /* 静默 */ }
+  }
+
+  /** 添加一个已删除的批注 ID，同时持久化到 localStorage 和 DOM */
+  function addDeletedNoteId(qa, linkId) {
+    const ids = getDeletedNoteIds();
+    ids.add(linkId);
+    _saveDeletedNoteIds(ids);
+    // 嵌入 DOM：historyMgr 快照会自动携带此属性
+    qa.dataset.deletedNotes = JSON.stringify([...ids]);
+  }
+
+  /** 清除原始 HTML 中残留的已删除批注的锚点和气泡 */
+  function purgeDeletedNotes(qa) {
+    // 撤销/重做恢复时：从 DOM 的 data-deleted-notes 属性反向同步到 localStorage
+    // historyMgr 恢复的 DOM 携带的就是该历史时刻的正确列表
+    if (window.historyMgr && window.historyMgr.isRestoring) {
+      const domRaw = qa.dataset.deletedNotes;
+      const domIds = domRaw ? new Set(JSON.parse(domRaw)) : new Set();
+      _saveDeletedNoteIds(domIds);
+      // DOM 是 historyMgr 恢复的权威状态，不需要再清除
+      return;
+    }
+
+    const deletedIds = getDeletedNoteIds();
+    if (deletedIds.size === 0) return;
+
+    for (const linkId of deletedIds) {
+      // 清除左栏锚点
+      const anchor = qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
+      if (anchor) {
+        anchor.querySelectorAll('.note-badge').forEach(b => b.remove());
+        const parent = anchor.parentNode;
+        while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+        parent.removeChild(anchor);
+      }
+      // 清除右栏锚点
+      qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`).forEach(aa => {
+        aa.querySelectorAll('.note-badge').forEach(b => b.remove());
+        const parent = aa.parentNode;
+        while (aa.firstChild) parent.insertBefore(aa.firstChild, aa);
+        parent.removeChild(aa);
+      });
+      // 清除气泡
+      const bubble = qa.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
+      if (bubble) bubble.remove();
+    }
+  }
+
   /** 剥离锚点首尾的文本空格（将空格移到 span 外部），防止下划线等样式意外延伸 */
   function trimAnchorWhitespaces(anchor) {
     if (!anchor) return;
@@ -1039,6 +1131,8 @@
 
     // 清除左栏原文锚点格式并解包
     const anchor = getAnchorByLink(qa, linkId);
+    // 解包前先记录所在容器，解包后锚点消失就找不到了
+    const leftContainer = anchor ? (anchor.closest('[data-edit-id]') || anchor.closest('.qa-passage')) : null;
     if (anchor) {
       anchor.querySelectorAll('.note-badge').forEach(b => b.remove());
       anchor.removeAttribute('style');
@@ -1050,7 +1144,10 @@
     }
 
     // 清除右栏答题锚点的关联角标
+    const rightContainers = new Set();
     qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`).forEach(aa => {
+      const rc = aa.closest('[data-edit-id]') || aa.closest('.qa-answer-content');
+      if (rc) rightContainers.add(rc);
       aa.querySelectorAll('.note-badge').forEach(b => b.remove());
       // 解包 answer-anchor span
       const parent = aa.parentNode;
@@ -1060,12 +1157,33 @@
       parent.removeChild(aa);
     });
 
+    // 持久化解包后的容器变更
+    if (window.PersistenceLayer) {
+      if (leftContainer) {
+        if (leftContainer.hasAttribute('data-edit-id')) {
+          window.PersistenceLayer.saveElement(leftContainer);
+        } else {
+          leftContainer.querySelectorAll('[data-edit-id]').forEach(el => window.PersistenceLayer.saveElement(el));
+        }
+      }
+      rightContainers.forEach(rc => {
+        if (rc.hasAttribute('data-edit-id')) {
+          window.PersistenceLayer.saveElement(rc);
+        } else {
+          rc.querySelectorAll('[data-edit-id]').forEach(el => window.PersistenceLayer.saveElement(el));
+        }
+      });
+    }
+
     // 清除连线
     clearStepConnectors(qa);
     clearHoverConnectors(qa);
 
     // 重算序号
     recalcStepNumbers(qa);
+
+    // 持久化删除记录：必须在 recordState 之前写入 DOM，让快照捕获 data-deleted-notes
+    addDeletedNoteId(qa, linkId);
 
     // 【撤销栈护城河】：拦截删除变动，记入历史以防覆盖
     if (window.historyMgr && !window.historyMgr.isRestoring) {
@@ -1128,27 +1246,130 @@
       toolbar.className = 'qa-annotation-toolbar';
       toolbar.innerHTML = `
         <span class="qa-toolbar-label">添加批注</span>
-        <button class="qa-toolbar-btn btn-color" data-format="color" title="文字变色"><span style="font-weight:bold;color:#e74c3c;font-size:1.1em;">A</span></button>
-        <button class="qa-toolbar-btn btn-highlight" data-format="highlight" title="高亮背景"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
-        <button class="qa-toolbar-btn btn-underline" data-format="underline" title="下划线"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
+        <div class="rt-dropdown qa-format-dropdown" title="文字变色">
+          <button class="qa-toolbar-btn btn-color" data-format="color"><span style="font-weight:bold;color:#e74c3c;">A</span></button>
+          <div class="rt-dropdown-menu"><div class="palette-grid text-colors"></div></div>
+        </div>
+        <div class="rt-dropdown qa-format-dropdown" title="高亮背景">
+          <button class="qa-toolbar-btn btn-highlight" data-format="highlight"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
+          <div class="rt-dropdown-menu"><div class="palette-grid bg-colors"></div></div>
+        </div>
+        <div class="rt-dropdown qa-format-dropdown" title="下划线">
+          <button class="qa-toolbar-btn btn-underline" data-format="underline"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
+          <div class="rt-dropdown-menu"><div class="palette-grid ul-colors"></div></div>
+        </div>
         <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>
       `;
       qa.appendChild(toolbar);
+
+      // ===== 初始化调色板 =====
+      const tc = ['#000000', '#2C3E50', '#7F8C8D', '#FD79A8', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FFFFFF'];
+      const hc = [
+        'rgba(231, 76, 60, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(46, 204, 113, 0.4)',
+        'rgba(52, 152, 219, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(253, 121, 168, 0.4)', 'rgba(255, 255, 255, 0.4)',
+        'transparent'
+      ];
+
+      const fireFormat = (formatType, colorStr) => {
+        const curQA = getActiveQA();
+        if (!curQA) return;
+        if (linkingState) {
+          createLinkAssociation(curQA, formatType, colorStr);
+        } else {
+          createAnnotation(curQA, formatType, colorStr);
+        }
+        const tb = curQA.querySelector('.qa-annotation-toolbar');
+        if (tb) {
+          tb.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.remove('show'));
+          tb.classList.remove('visible');
+        }
+      };
+
+      const tg = toolbar.querySelector('.text-colors');
+      if (tg) tc.forEach(c => {
+        let s = document.createElement('div'); s.className = 'color-swatch'; s.style.background = c;
+        if (c === '#FFFFFF') s.style.border = '1px solid #ccc';
+        s.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fireFormat('color', c); });
+        tg.appendChild(s);
+      });
+
+      const bg = toolbar.querySelector('.bg-colors');
+      if (bg) {
+        bg.style.gridTemplateColumns = 'repeat(5, 1fr)';
+        hc.forEach(c => {
+          let s = document.createElement('div'); s.className = 'color-swatch';
+          if (c === 'transparent') {
+            s.style.background = '#fff';
+            s.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%),linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,4px 4px;border-radius:3px;"></div>';
+          } else { s.style.background = c; }
+          s.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fireFormat('highlight', c === 'transparent' ? 'rgba(0,0,0,0)' : c); });
+          bg.appendChild(s);
+        });
+      }
+
+      const ulGrid = toolbar.querySelector('.ul-colors');
+      if (ulGrid) {
+        tc.forEach(c => {
+          if (c === '#FFFFFF') return;
+          let s = document.createElement('div'); s.className = 'color-swatch'; s.style.background = c;
+          s.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fireFormat('underline', c); });
+          ulGrid.appendChild(s);
+        });
+      }
+
+      // ===== 按钮与下拉菜单相互作用 =====
+      toolbar.querySelectorAll('.qa-toolbar-btn').forEach(btn => {
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const format = btn.dataset.format;
+          
+          if (format === 'strikethrough') {
+            fireFormat('strikethrough', null);
+            return;
+          }
+
+          // 如果是带下拉菜单的按钮，则切换显示下拉菜单，但不直接应用格式
+          const menu = btn.nextElementSibling;
+          if (menu && menu.classList.contains('rt-dropdown-menu')) {
+            const isVisible = menu.classList.contains('show');
+            toolbar.querySelectorAll('.rt-dropdown-menu').forEach(m => { m.classList.remove('show'); m.classList.remove('drop-up'); });
+            if (!isVisible) {
+              // 智能方向：基于工具条位置统一判断（工具条下半部分空间 < 280px 就上弹）
+              const toolbarRect = toolbar.getBoundingClientRect();
+              const viewportH = window.innerHeight;
+              const spaceBelow = viewportH - toolbarRect.bottom;
+              const shouldDropUp = spaceBelow < 280;
+              menu.classList.add('show');
+              if (shouldDropUp) menu.classList.add('drop-up');
+            }
+          }
+        });
+      });
+
+      // 点击空白处关闭工具条内的下拉菜单
+      document.addEventListener('pointerdown', e => {
+        if (!e.target.closest('.qa-format-dropdown')) {
+          toolbar.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.remove('show'));
+        }
+      });
     }
 
     // 监听选区变化（仅编辑模式，防重复绑定）
     if (!document._qaSelectionchangeBound) {
       document._qaSelectionchangeBound = true;
       document.addEventListener('selectionchange', () => {
-        // 动态获取当前活跃 QA 及其工具条，避免闭包引用旧 DOM
         const activeQA = getActiveQA();
         if (!activeQA) return;
         const tb = activeQA.querySelector('.qa-annotation-toolbar');
         if (!tb) return;
+        
+        // 每次选区改变，确保关闭所有下拉菜单
+        tb.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.remove('show'));
+        
         const psg = activeQA.querySelector('.qa-passage');
         const ans = activeQA.querySelector('.qa-answer-panel');
 
-        // 如果当前不在编辑模式，隐藏
         if (!document.body.classList.contains('editor-mode')) {
           tb.classList.remove('visible');
           return;
@@ -1162,7 +1383,6 @@
 
         const range = sel.getRangeAt(0);
 
-        // 判断选区在左栏还是右栏
         const inPassage = psg && psg.contains(range.commonAncestorContainer);
         const inAnswer = ans && ans.contains(range.commonAncestorContainer);
 
@@ -1171,7 +1391,6 @@
           return;
         }
 
-        // 关联模式下：只接受目标栏的选区
         if (linkingState) {
           const targetOk = (linkingState.direction === 'left' && inPassage) ||
                             (linkingState.direction === 'right' && inAnswer);
@@ -1186,14 +1405,12 @@
           if (label) label.textContent = '添加批注';
         }
 
-        // 检查选中内容是否已经是锚点（避免重复添加）
         const parentAnchor = range.commonAncestorContainer.closest?.('.text-anchor, .answer-anchor');
         if (parentAnchor && !linkingState) {
           tb.classList.remove('visible');
           return;
         }
 
-        // 定位工具条到选区上方
         const rects = range.getClientRects();
         if (rects.length === 0) {
           tb.classList.remove('visible');
@@ -1207,28 +1424,6 @@
         tb.classList.add('visible');
       });
     }
-
-    // 工具条按钮点击
-    toolbar.querySelectorAll('.qa-toolbar-btn').forEach(btn => {
-      btn.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // 防止失去选区
-      });
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const format = btn.dataset.format;
-        // 动态获取当前 QA，防止闭包引用过期
-        const curQA = getActiveQA();
-        if (!curQA) return;
-
-        if (linkingState) {
-          createLinkAssociation(curQA, format);
-        } else {
-          createAnnotation(curQA, format);
-        }
-        const tb = curQA.querySelector('.qa-annotation-toolbar');
-        if (tb) tb.classList.remove('visible');
-      });
-    });
   }
 
   /** 安全地将选区文本包裹进锚点 span（替代会在跨元素边界时抛异常的 surroundContents） */
@@ -1244,7 +1439,7 @@
   }
 
   /** 创建新批注 */
-  function createAnnotation(qa, format) {
+  function createAnnotation(qa, format, colorStr) {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
 
@@ -1279,9 +1474,9 @@
 
     // 应用格式
     const formatStyles = {
-      color: 'color: var(--accent-blue);',
-      highlight: 'background-color: rgba(88, 166, 255, 0.15);',
-      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;',
+      color: `color: ${colorStr || 'var(--accent-blue)'};`,
+      highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
+      underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
       strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
@@ -1334,11 +1529,10 @@
     `;
     notesList.appendChild(bubble);
 
-    // 聚焦到新气泡的内容区
-    const contentEl = bubble.querySelector('.qa-note-content');
-    if (contentEl) contentEl.focus();
+    // 先清除选区（必须在 focus 之前）
+    sel.removeAllRanges();
 
-    // 确保批注面板展开
+    // 确保批注面板展开（可能触发 DOM 布局变动）
     if (!qa.classList.contains('notes-active')) {
       toggleNotesPanel(qa);
     }
@@ -1347,11 +1541,33 @@
     initNoteInteractions(qa);
     initDragAndDrop(qa);
 
-    sel.removeAllRanges();
+    // 持久化正文/答题区的锚点变更到 localStorage
+    persistAnchorChange(anchor);
+
+    // 【撤销栈】：记录新建批注变动，支持 Ctrl+Z 撤销
+    if (window.historyMgr && !window.historyMgr.isRestoring) {
+      window.historyMgr.recordState(true);
+    }
+
+    updateProgressCounter(qa);
+
+    // 最后再聚焦到新气泡的内容区（在所有 DOM 操作和事件绑定完成后）
+    const contentEl = bubble.querySelector('.qa-note-content');
+    if (contentEl) {
+      // 内容变化时自动持久化（与 AI 原生气泡走同一条 localStorage 链路）
+      contentEl.addEventListener('input', () => {
+        if (window.PersistenceLayer) window.PersistenceLayer.saveElement(contentEl);
+      });
+      contentEl.addEventListener('blur', () => {
+        if (window.PersistenceLayer) window.PersistenceLayer.saveElement(contentEl);
+      });
+      // 延迟一帧聚焦，确保 DOM 布局已稳定
+      requestAnimationFrame(() => contentEl.focus());
+    }
   }
 
   /** 建立关联（关联模式下使用） */
-  function createLinkAssociation(qa, format) {
+  function createLinkAssociation(qa, format, colorStr) {
     if (!linkingState) return;
     const { bubble, direction } = linkingState;
     const linkId = bubble.dataset.link;
@@ -1380,9 +1596,9 @@
 
     // 应用格式（下划线包含完整的防穿透三件套）
     const formatStyles = {
-      color: 'color: var(--accent-blue);',
-      highlight: 'background-color: rgba(88, 166, 255, 0.15);',
-      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;',
+      color: `color: ${colorStr || 'var(--accent-blue)'};`,
+      highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
+      underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
       strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
@@ -1410,6 +1626,18 @@
     // 重新绑定事件
     initNoteInteractions(qa);
 
+    // 角标避让
+    arrangeAdjacentBadges(qa);
+
+    // 持久化正文/答题区的锚点变更到 localStorage
+    persistAnchorChange(anchor);
+
+    // 【撤销栈】：记录关联变动，支持 Ctrl+Z 撤销
+    if (window.historyMgr && !window.historyMgr.isRestoring) {
+      window.historyMgr.recordState(true);
+    }
+
+    updateProgressCounter(qa);
     sel.removeAllRanges();
   }
 
@@ -1472,21 +1700,104 @@
 
 
   // =========================================
-  // 13. 快捷键 D
+  // 12.5 孤儿锚点扫描与气泡自动重建
   // =========================================
 
-  document.addEventListener('keydown', (e) => {
-    const qa = getActiveQA();
-    if (!qa) return;
+  /**
+   * 扫描正文 / 答题区中所有的 .text-anchor 和 .answer-anchor，
+   * 收集所有唯一的 linkId，然后检查 .qa-notes-list 中是否存在对应的 .qa-note-bubble。
+   * 对于缺失气泡的锚点（"孤儿锚点"），自动创建空气泡并追加到面板中。
+   * 这样用户动态添加的批注即使页面刷新，气泡也能被恢复。
+   */
+  function rebuildOrphanBubbles(qa) {
+    const notesList = qa.querySelector('.qa-notes-list');
+    if (!notesList) return;
 
-    // 如果焦点在输入框内，不拦截
-    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // 收集所有唯一 linkId 及其关联信息
+    const linkMap = new Map(); // linkId → { step, hasLeft, hasRight }
 
-    if (e.key === 'd' || e.key === 'D') {
-      e.preventDefault();
-      toggleNotesPanel(qa);
+    qa.querySelectorAll('.text-anchor[data-link]').forEach(anchor => {
+      const linkId = anchor.dataset.link;
+      if (!linkId) return;
+      if (!linkMap.has(linkId)) {
+        linkMap.set(linkId, { step: parseInt(anchor.dataset.step) || 0, hasLeft: false, hasRight: false });
+      }
+      linkMap.get(linkId).hasLeft = true;
+      // 取最大 step
+      const s = parseInt(anchor.dataset.step) || 0;
+      if (s > linkMap.get(linkId).step) linkMap.get(linkId).step = s;
+    });
+
+    qa.querySelectorAll('.answer-anchor[data-link-answer]').forEach(anchor => {
+      const linkId = anchor.dataset.linkAnswer;
+      if (!linkId) return;
+      if (!linkMap.has(linkId)) {
+        linkMap.set(linkId, { step: parseInt(anchor.dataset.step) || 0, hasLeft: false, hasRight: false });
+      }
+      linkMap.get(linkId).hasRight = true;
+      const s = parseInt(anchor.dataset.step) || 0;
+      if (s > linkMap.get(linkId).step) linkMap.get(linkId).step = s;
+    });
+
+    // 按 step 排序
+    const sortedEntries = [...linkMap.entries()].sort((a, b) => a[1].step - b[1].step);
+
+    for (const [linkId, info] of sortedEntries) {
+      // 检查是否已存在对应气泡
+      const existingBubble = notesList.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
+      if (existingBubble) continue;
+
+      // 创建空气泡
+      const bubble = document.createElement('div');
+      bubble.className = 'qa-note-bubble';
+      bubble.dataset.link = linkId;
+      if (info.hasRight) {
+        bubble.dataset.linkAnswer = linkId;
+      }
+      bubble.dataset.step = info.step;
+      bubble.setAttribute('draggable', 'false');
+
+      // 动态生成操作按钮
+      let actionsHTML = `
+        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+      `;
+      if (!info.hasLeft) {
+        actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
+      }
+      if (!info.hasRight) {
+        actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
+      }
+
+      bubble.innerHTML = `
+        <div class="qa-note-handle">
+          <span class="qa-note-step">${info.step}</span>
+        </div>
+        <div class="qa-note-content" contenteditable="true" data-edit-id="new-${linkId}"></div>
+        <div class="qa-note-actions">${actionsHTML}</div>
+      `;
+      notesList.appendChild(bubble);
+
+      // 从 localStorage 恢复内容（与 AI 原生气泡走同一条 restoreAllElements 链路）
+      const contentEl = bubble.querySelector('.qa-note-content');
+      if (contentEl && window.PersistenceLayer) {
+        const editId = contentEl.getAttribute('data-edit-id');
+        try {
+          const storageKey = window._editorUtils ? window._editorUtils.storageKey('e:' + editId) : null;
+          const saved = storageKey ? localStorage.getItem(storageKey) : null;
+          if (saved !== null) contentEl.innerHTML = saved;
+        } catch (e) { /* 静默 */ }
+        // 绑定持久化事件
+        contentEl.addEventListener('input', () => {
+          window.PersistenceLayer.saveElement(contentEl);
+        });
+        contentEl.addEventListener('blur', () => {
+          window.PersistenceLayer.saveElement(contentEl);
+        });
+      }
     }
-  });
+  }
+
 
 
   // =========================================
@@ -1528,8 +1839,14 @@
       trimAnchorWhitespaces(anchor);
     });
 
+    // 清除已删除的批注（从原始 HTML 中清除残留的锚点和气泡）
+    purgeDeletedNotes(qa);
+
     // 初始化批注面板栏头（动态生成 header + notes-list 结构）
     initNotesHeader(qa);
+
+    // 扫描孤儿锚点：正文/答题区中存在锚点但批注面板中没有对应气泡 → 自动重建
+    rebuildOrphanBubbles(qa);
 
     // 初始化各子系统
     initNoteInteractions(qa);
