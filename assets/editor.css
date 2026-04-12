@@ -456,6 +456,12 @@ body.editor-mode {
     margin: 0;
 }
 
+/* 修复紧凑型内联/固定尺寸的排版组件（如：选项序号）被统一的 100% 强行拉宽的问题 */
+.editable-wrap.native-edit-wrap:has(> .qa-option-label),
+.editable-wrap.native-edit-wrap:has(> .qa-drag-option) {
+    width: fit-content !important;
+}
+
 /* 自定义新增的文本框：绝对定位 */
 .editable-wrap.custom-box {
     position: absolute;
@@ -667,4 +673,12 @@ html.editor-mode .slide.active *::after {
 .editor-mode .image-block,
 .editor-mode .content-block {
     overflow: visible !important;
+}
+
+/* 答题与批注组件专用的溢出防裁切方案 
+   因为三栏内部带有 overflow-y: auto 需要保持滚动，不能轻易 visible，
+   所以在编辑模式下给内部增加足够的上内边距，让 top: -32px 的控件有合法的视觉空间 */
+.editor-mode .quiz-annotation .qa-passage,
+.editor-mode .quiz-annotation .qa-answer-panel {
+    padding-top: 40px !important;
 }

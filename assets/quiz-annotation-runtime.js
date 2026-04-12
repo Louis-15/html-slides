@@ -639,6 +639,7 @@
     // — 选择题点选 —
     qa.querySelectorAll('.qa-option').forEach(option => {
       option.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('editor-mode')) return;
         if (qa.classList.contains('submitted')) return;
 
         const isMulti = option.closest('.qa-question')?.dataset.type === 'multi';
@@ -654,6 +655,10 @@
     // — 拖拽填空：选项拖到空位 —
     qa.querySelectorAll('.qa-drag-option').forEach(opt => {
       opt.addEventListener('dragstart', (e) => {
+        if (document.documentElement.classList.contains('editor-mode')) {
+          e.preventDefault();
+          return;
+        }
         e.dataTransfer.setData('text/plain', opt.dataset.option);
         e.dataTransfer.effectAllowed = 'copy';
         opt.classList.add('dragging');
@@ -694,6 +699,7 @@
       });
 
       slot.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('editor-mode')) return;
         if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
         const usedOption = slot.dataset.userAnswer;
         if (usedOption) {
@@ -715,6 +721,7 @@
     const submitBtn = qa.querySelector('.qa-submit-btn');
     if (submitBtn) {
       submitBtn.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('editor-mode')) return;
         if (qa.classList.contains('submitted')) return;
         submitQuiz(qa);
       });

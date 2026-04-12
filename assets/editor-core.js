@@ -138,7 +138,9 @@
         /* 代码窗口文件名 */
         '.code-filename',
         /* 折叠卡片展开区 */
-        '.card-expand-inner'
+        '.card-expand-inner',
+        /* 答题与批注：正文与答题选项系统 */
+        '.qa-passage p', '.qa-answer-title', '.qa-question p', '.qa-question-text', '.qa-option-text', '.qa-option-label', '.qa-drag-option', '.qa-note-body'
     ].join(', ');
 
     /* 不允许被编辑的元素黑名单（防止误伤控件） */
@@ -347,7 +349,11 @@
 
     document.addEventListener('wheel', function (e) {
         if (editorCore._navLocked) {
+            // 放行富文本工具条内部（例如字体下拉列表的滚动）
             if (e.target.closest && e.target.closest('.rich-toolbar')) return;
+            // 【关键修复】放行所有局部存在滚动条的容器，允许在编辑模式下依然可以滑动阅读
+            if (e.target.closest && e.target.closest('.qa-passage, .qa-notes-panel, .qa-answer-panel, [data-scrollable]')) return;
+            
             e.preventDefault();
             e.stopPropagation();
         }
@@ -356,6 +362,7 @@
     document.addEventListener('touchmove', function (e) {
         if (editorCore._navLocked) {
             if (e.target.closest && e.target.closest('.rich-toolbar')) return;
+            if (e.target.closest && e.target.closest('.qa-passage, .qa-notes-panel, .qa-answer-panel, [data-scrollable]')) return;
             e.preventDefault();
             e.stopPropagation();
         }
