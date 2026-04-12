@@ -1202,7 +1202,9 @@
   width: auto;
   opacity: 1;
   pointer-events: auto;
-  overflow-y: auto;
+  overflow: visible; /* 【关键修复】外层取消裁切，让内部名单全权负责 */
+  position: relative;
+  z-index: 15; /* 确保物理重叠时悬浮在左右两栏上方 */
 }
 
 /* 批注面板在 grid 中的列位置 */
@@ -1264,13 +1266,15 @@
 .qa-notes-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 8px;
+  /* 【破壁防裁切神技】: 让真正的滚动列表外扩。
+     原先的 padding 是 10px 8px。我们左右外扩 24px，所以 margin 设为 -24px；
+     为了保证内部气泡大小一点都不变，padding 左/右补偿 24px，变为 8+24 = 32px。*/
+  padding: 10px 32px;
+  margin: 0 -24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  /* 允许气泡焦点外扩 */
-  overflow-x: visible;
 }
 
 
@@ -1439,9 +1443,9 @@
               0 0 44px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
   transform: scale(1.04) translateY(-2px);
   z-index: 10;
-  /* 焦点外扩：打破中间栏宽度限制 */
-  margin-left: -20px;
-  margin-right: -20px;
+  /* 焦点外扩：完全吃掉父级给的 24px 溢出空间，实现视觉上打破分割线 */
+  margin-left: -24px;
+  margin-right: -24px;
 }
 
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
