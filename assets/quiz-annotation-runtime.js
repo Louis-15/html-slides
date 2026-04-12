@@ -677,12 +677,15 @@
     // 默认关闭全局 draggable，防止覆盖输入框内的原生文字拖拽和选区
     b.setAttribute('draggable', 'false');
 
-    const handle = b.querySelector('.qa-note-handle');
-    if (handle) {
-      // 只有在左侧把手上按下鼠标时，才临时开启该气泡的拖拽能力
-      handle.addEventListener('mousedown', () => b.setAttribute('draggable', 'true'));
-      handle.addEventListener('mouseup', () => b.setAttribute('draggable', 'false'));
-      handle.addEventListener('mouseleave', () => b.setAttribute('draggable', 'false'));
+    const dragArea = b.querySelector('.qa-note-header') || b.querySelector('.qa-note-handle');
+    if (dragArea) {
+      // 在整个头部区域按下鼠标即可开启拖拽（明确排除对右侧操作按钮的点击）
+      dragArea.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.qa-note-actions')) return;
+        b.setAttribute('draggable', 'true');
+      });
+      dragArea.addEventListener('mouseup', () => b.setAttribute('draggable', 'false'));
+      dragArea.addEventListener('mouseleave', () => b.setAttribute('draggable', 'false'));
     }
 
     b.addEventListener('dragstart', (e) => {

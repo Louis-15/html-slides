@@ -1687,9 +1687,9 @@ body.editor-mode .qa-option {
   /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
      现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
   box-shadow:
-    0 0 8px 1px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35),
-    0 0 16px 4px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15),
-    0 0 28px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
+    0 0 8px 1px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.35),
+    0 0 16px 4px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.15),
+    0 0 28px 8px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.05);
   /* 移除带鱼屏下极易引起裁切越界的 scale 缩放，仅仅保留 translateY 的悬浮感 */
   transform: translateY(-2px);
   z-index: 10;
@@ -1733,10 +1733,11 @@ body.editor-mode .qa-option {
   border-bottom: none;
 }
 
-/* 左侧内部容器：包裹序号即可 */
+/* 左侧内部容器：包裹序号并占据剩余空间作为大面积拖拽热区 */
 .qa-note-handle {
   display: flex;
   align-items: center;
+  flex: 1; /* 使它的有效面积占满头部除按钮外的所有空间 */
 }
 
 /* 气泡序号圆标 — 嵌在 handle 内部 */
