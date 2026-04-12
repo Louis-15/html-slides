@@ -86,7 +86,9 @@
                     '</div>' +
                 '</div>' +
             '</div>' +
-            '<button class="rt-btn" id="addTextBoxBtn" title="添加文本框"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><path d="M8 8h8"/><path d="M12 8v8"/><path d="M10 16h4"/></svg></button>';
+            '<button class="rt-btn" id="addTextBoxBtn" title="添加文本框"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><path d="M8 8h8"/><path d="M12 8v8"/><path d="M10 16h4"/></svg></button>' +
+            '<div class="rt-divider"></div>' +
+            '<button class="rt-btn" id="hideToolbarBtn" title="收起工具条"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-top-close-icon lucide-panel-top-close"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="m9 16 3-3 3 3"/></svg></button>';
 
         document.body.insertBefore(toolbar, editToggle.nextSibling);
     }
@@ -300,6 +302,17 @@
             BoxManager.createTextBox('custom-' + Date.now(), '10%', '10%', null, cs);
             PersistenceLayer.saveCustomBoxes();
             historyMgr.recordState(true);
+        });
+    }
+
+    // 5. 隐藏工具条按钮
+    var hideToolbarBtn = document.getElementById('hideToolbarBtn');
+    if (hideToolbarBtn) {
+        hideToolbarBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var tbar = document.getElementById('richToolbar');
+            if (tbar) tbar.classList.remove('visible');
         });
     }
 

@@ -1081,7 +1081,7 @@
   margin-top: 0;
   flex: 1;
   max-width: none; /* 打破 1100px 限宽，霸占全屏 */
-  padding: 0;      /* 去除 48px 之类的内部防贴边缓冲 */
+  padding: 12px 0 0 0; /* 仅保留顶部 12px 呼吸空间避开工具栏阴影，其余方向边距清零 */
 }
 
 

@@ -106,7 +106,7 @@
 }
 
 .rich-toolbar.visible {
-    top: 8px;
+    top: 4px; /* 从 8px 上移至 4px，压榨顶部边缘空间 */
 }
 
 /* 工具栏按钮 */
