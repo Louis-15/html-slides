@@ -119,8 +119,13 @@ document.addEventListener('keydown', (e) => {
 
 let wheelCD = false;
 document.addEventListener('wheel', (e) => {
-  // 智能滚轮：鼠标在可滚动容器内时不翻页，让容器自然滚动
+  // 如果当前幻灯片包含答题与批注组件，完全禁止滚轮翻页（防误触）
+  const slide = e.target.closest && e.target.closest('.slide');
+  if (slide && slide.querySelector('.quiz-annotation')) return;
+
+  // 智能滚轮：鼠标在普通可滚动容器内时不翻页，让容器自然滚动
   if (e.target.closest && e.target.closest('[data-scrollable]')) return;
+  
   if (wheelCD) return; wheelCD = true;
   setTimeout(() => wheelCD=false, 600);
   if (e.deltaY>0||e.deltaX>0) next(); else prev();
