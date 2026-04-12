@@ -1120,8 +1120,6 @@
   // =========================================
 
   function initAnnotationToolbar(qa) {
-    const passage = qa.querySelector('.qa-passage');
-    const answerPanel = qa.querySelector('.qa-answer-panel');
 
     // 创建浮动工具条 DOM
     let toolbar = qa.querySelector('.qa-annotation-toolbar');
@@ -1130,10 +1128,10 @@
       toolbar.className = 'qa-annotation-toolbar';
       toolbar.innerHTML = `
         <span class="qa-toolbar-label">添加批注</span>
-        <button class="qa-toolbar-btn btn-color" data-format="color" title="文字变色">A</button>
-        <button class="qa-toolbar-btn btn-highlight" data-format="highlight" title="高亮背景">🖍</button>
-        <button class="qa-toolbar-btn btn-underline" data-format="underline" title="下划线">U</button>
-        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线">S</button>
+        <button class="qa-toolbar-btn btn-color" data-format="color" title="文字变色"><span style="font-weight:bold;color:#e74c3c;font-size:1.1em;">A</span></button>
+        <button class="qa-toolbar-btn btn-highlight" data-format="highlight" title="高亮背景"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
+        <button class="qa-toolbar-btn btn-underline" data-format="underline" title="下划线"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
+        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>
       `;
       qa.appendChild(toolbar);
     }
@@ -1142,66 +1140,72 @@
     if (!document._qaSelectionchangeBound) {
       document._qaSelectionchangeBound = true;
       document.addEventListener('selectionchange', () => {
-        // 如果当前不在编辑模式，隐藏所有 qa 的 toolbar
-        if (!document.body.classList.contains('edit-mode')) {
-          document.querySelectorAll('.qa-annotation-toolbar').forEach(t => t.classList.remove('visible'));
+        // 动态获取当前活跃 QA 及其工具条，避免闭包引用旧 DOM
+        const activeQA = getActiveQA();
+        if (!activeQA) return;
+        const tb = activeQA.querySelector('.qa-annotation-toolbar');
+        if (!tb) return;
+        const psg = activeQA.querySelector('.qa-passage');
+        const ans = activeQA.querySelector('.qa-answer-panel');
+
+        // 如果当前不在编辑模式，隐藏
+        if (!document.body.classList.contains('editor-mode')) {
+          tb.classList.remove('visible');
           return;
         }
 
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-        toolbar.classList.remove('visible');
-        return;
-      }
-
-      const range = sel.getRangeAt(0);
-
-      // 判断选区在左栏还是右栏
-      const inPassage = passage && passage.contains(range.commonAncestorContainer);
-      const inAnswer = answerPanel && answerPanel.contains(range.commonAncestorContainer);
-
-      if (!inPassage && !inAnswer) {
-        toolbar.classList.remove('visible');
-        return;
-      }
-
-      // 关联模式下：只接受目标栏的选区
-      if (linkingState) {
-        const targetOk = (linkingState.direction === 'left' && inPassage) ||
-                          (linkingState.direction === 'right' && inAnswer);
-        if (!targetOk) {
-          toolbar.classList.remove('visible');
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+          tb.classList.remove('visible');
           return;
         }
-        // 更新工具条标签为"建立关联"
-        const label = toolbar.querySelector('.qa-toolbar-label');
-        if (label) label.textContent = '建立关联';
-      } else {
-        // 正常模式：更新标签为"添加批注"
-        const label = toolbar.querySelector('.qa-toolbar-label');
-        if (label) label.textContent = '添加批注';
-      }
 
-      // 检查选中内容是否已经是锚点（避免重复添加）
-      const parentAnchor = range.commonAncestorContainer.closest?.('.text-anchor, .answer-anchor');
-      if (parentAnchor && !linkingState) {
-        toolbar.classList.remove('visible');
-        return;
-      }
+        const range = sel.getRangeAt(0);
 
-      // 定位工具条到选区上方
-      const rects = range.getClientRects();
-      if (rects.length === 0) {
-        toolbar.classList.remove('visible');
-        return;
-      }
-      const firstRect = rects[0];
-      const qaRect = qa.getBoundingClientRect();
+        // 判断选区在左栏还是右栏
+        const inPassage = psg && psg.contains(range.commonAncestorContainer);
+        const inAnswer = ans && ans.contains(range.commonAncestorContainer);
 
-      toolbar.style.left = `${firstRect.left - qaRect.left}px`;
-      toolbar.style.top = `${firstRect.top - qaRect.top - 45}px`;
-      toolbar.classList.add('visible');
-    });
+        if (!inPassage && !inAnswer) {
+          tb.classList.remove('visible');
+          return;
+        }
+
+        // 关联模式下：只接受目标栏的选区
+        if (linkingState) {
+          const targetOk = (linkingState.direction === 'left' && inPassage) ||
+                            (linkingState.direction === 'right' && inAnswer);
+          if (!targetOk) {
+            tb.classList.remove('visible');
+            return;
+          }
+          const label = tb.querySelector('.qa-toolbar-label');
+          if (label) label.textContent = '建立关联';
+        } else {
+          const label = tb.querySelector('.qa-toolbar-label');
+          if (label) label.textContent = '添加批注';
+        }
+
+        // 检查选中内容是否已经是锚点（避免重复添加）
+        const parentAnchor = range.commonAncestorContainer.closest?.('.text-anchor, .answer-anchor');
+        if (parentAnchor && !linkingState) {
+          tb.classList.remove('visible');
+          return;
+        }
+
+        // 定位工具条到选区上方
+        const rects = range.getClientRects();
+        if (rects.length === 0) {
+          tb.classList.remove('visible');
+          return;
+        }
+        const firstRect = rects[0];
+        const qaRect = activeQA.getBoundingClientRect();
+
+        tb.style.left = `${firstRect.left - qaRect.left}px`;
+        tb.style.top = `${firstRect.top - qaRect.top - 45}px`;
+        tb.classList.add('visible');
+      });
     }
 
     // 工具条按钮点击
@@ -1212,17 +1216,31 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const format = btn.dataset.format;
+        // 动态获取当前 QA，防止闭包引用过期
+        const curQA = getActiveQA();
+        if (!curQA) return;
 
         if (linkingState) {
-          // 关联模式：建立关联
-          createLinkAssociation(qa, format);
+          createLinkAssociation(curQA, format);
         } else {
-          // 正常模式：创建批注
-          createAnnotation(qa, format);
+          createAnnotation(curQA, format);
         }
-        toolbar.classList.remove('visible');
+        const tb = curQA.querySelector('.qa-annotation-toolbar');
+        if (tb) tb.classList.remove('visible');
       });
     });
+  }
+
+  /** 安全地将选区文本包裹进锚点 span（替代会在跨元素边界时抛异常的 surroundContents） */
+  function wrapRangeInAnchor(range, anchor) {
+    try {
+      range.surroundContents(anchor);
+    } catch (e) {
+      // 选区跨越了元素边界，改用 extractContents + insertNode
+      const fragment = range.extractContents();
+      anchor.appendChild(fragment);
+      range.insertNode(anchor);
+    }
   }
 
   /** 创建新批注 */
@@ -1263,12 +1281,12 @@
     const formatStyles = {
       color: 'color: var(--accent-blue);',
       highlight: 'background-color: rgba(88, 166, 255, 0.15);',
-      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue);',
+      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;',
       strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 
-    range.surroundContents(anchor);
+    wrapRangeInAnchor(range, anchor);
 
     // 添加角标
     const badge = document.createElement('sup');
@@ -1360,22 +1378,25 @@
     }
     anchor.dataset.step = step;
 
-    // 应用格式
+    // 应用格式（下划线包含完整的防穿透三件套）
     const formatStyles = {
       color: 'color: var(--accent-blue);',
       highlight: 'background-color: rgba(88, 166, 255, 0.15);',
-      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue);',
+      underline: 'text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;',
       strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 
-    range.surroundContents(anchor);
+    wrapRangeInAnchor(range, anchor);
 
     // 添加角标
     const badge = document.createElement('sup');
     badge.className = 'note-badge';
     badge.textContent = step;
     anchor.appendChild(badge);
+
+    // 即时清理首尾空格
+    trimAnchorWhitespaces(anchor);
 
     // 移除关联按钮（已经关联了）
     const actionBtn = direction === 'left'
