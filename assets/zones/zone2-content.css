@@ -1909,7 +1909,8 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   display: none;
 }
 
-.quiz-annotation.has-quiz:not(.submitted) .text-anchor {
+.quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
   text-decoration: none !important;
   background-color: transparent !important;
   color: inherit !important;

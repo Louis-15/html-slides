@@ -60,73 +60,46 @@
   }
 
   /**
-   * 锚点变更后持久化：保存锚点所在的可编辑容器到 localStorage
-   * 优先查找锚点自身的 closest('[data-edit-id]')，
-   * 如果找不到则向上查找 .qa-passage 或 .qa-answer-content，
-   * 遍历其内所有带 data-edit-id 的子元素逐一保存。
+   * 锚点变更后持久化：触发 JSON 文件保存
+   * AnnotationStore 会从 DOM 收集所有带 data-edit-id 容器的 innerHTML
    */
   function persistAnchorChange(anchor) {
-    if (!window.PersistenceLayer) return;
-    // 策略1：锚点本身在某个 data-edit-id 容器内
-    const directContainer = anchor.closest('[data-edit-id]');
-    if (directContainer) {
-      window.PersistenceLayer.saveElement(directContainer);
-      return;
-    }
-    // 策略2：向上找到 .qa-passage 或 .qa-answer-content，批量保存其下所有可编辑子元素
-    const panel = anchor.closest('.qa-passage') || anchor.closest('.qa-answer-content');
-    if (panel) {
-      panel.querySelectorAll('[data-edit-id]').forEach(el => {
-        window.PersistenceLayer.saveElement(el);
-      });
-    }
+    if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
   }
 
   // --- 删除持久化工具 ---
-  // 策略：已删除列表同时存 localStorage（跨刷新）和 qa.dataset.deletedNotes（跟随 historyMgr 快照）
+  // 策略：已删除列表仅存 qa.dataset.deletedNotes（DOM 属性）
+  // - historyMgr 快照自动捕获此属性（用于撤销/重做）
+  // - AnnotationStore.scheduleSave() 从 DOM 收集并写入 JSON 文件（用于跨刷新持久化）
 
-  /** 获取 localStorage 存储键名 */
-  function _deletedNotesKey() {
-    return window._editorUtils ? window._editorUtils.storageKey('deleted-notes') : 'deleted-notes';
-  }
-
-  /** 获取当前文档的已删除批注 ID 集合 */
-  function getDeletedNoteIds() {
+  /** 获取当前 QA 组件的已删除批注 ID 集合 */
+  function getDeletedNoteIds(qa) {
     try {
-      const raw = localStorage.getItem(_deletedNotesKey());
+      const raw = qa.dataset.deletedNotes;
       return raw ? new Set(JSON.parse(raw)) : new Set();
     } catch (e) { return new Set(); }
   }
 
-  /** 写入已删除列表到 localStorage */
-  function _saveDeletedNoteIds(ids) {
-    try {
-      localStorage.setItem(_deletedNotesKey(), JSON.stringify([...ids]));
-    } catch (e) { /* 静默 */ }
-  }
-
-  /** 添加一个已删除的批注 ID，同时持久化到 localStorage 和 DOM */
+  /** 添加一个已删除的批注 ID */
   function addDeletedNoteId(qa, linkId) {
-    const ids = getDeletedNoteIds();
+    const ids = getDeletedNoteIds(qa);
     ids.add(linkId);
-    _saveDeletedNoteIds(ids);
-    // 嵌入 DOM：historyMgr 快照会自动携带此属性
+    // 写入 DOM 属性：historyMgr 快照会自动携带
     qa.dataset.deletedNotes = JSON.stringify([...ids]);
+    // 保存到 JSON 文件
+    if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
   }
 
   /** 清除原始 HTML 中残留的已删除批注的锚点和气泡 */
   function purgeDeletedNotes(qa) {
-    // 撤销/重做恢复时：从 DOM 的 data-deleted-notes 属性反向同步到 localStorage
-    // historyMgr 恢复的 DOM 携带的就是该历史时刻的正确列表
+    // 撤销/重做恢复时：DOM data-deleted-notes 已被 historyMgr 恢复为正确状态
+    // 同步保存到 JSON 文件，然后直接返回（不需要再清除 DOM，因为 DOM 就是权威状态）
     if (window.historyMgr && window.historyMgr.isRestoring) {
-      const domRaw = qa.dataset.deletedNotes;
-      const domIds = domRaw ? new Set(JSON.parse(domRaw)) : new Set();
-      _saveDeletedNoteIds(domIds);
-      // DOM 是 historyMgr 恢复的权威状态，不需要再清除
+      if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
       return;
     }
 
-    const deletedIds = getDeletedNoteIds();
+    const deletedIds = getDeletedNoteIds(qa);
     if (deletedIds.size === 0) return;
 
     for (const linkId of deletedIds) {
@@ -1131,8 +1104,6 @@
 
     // 清除左栏原文锚点格式并解包
     const anchor = getAnchorByLink(qa, linkId);
-    // 解包前先记录所在容器，解包后锚点消失就找不到了
-    const leftContainer = anchor ? (anchor.closest('[data-edit-id]') || anchor.closest('.qa-passage')) : null;
     if (anchor) {
       anchor.querySelectorAll('.note-badge').forEach(b => b.remove());
       anchor.removeAttribute('style');
@@ -1144,10 +1115,7 @@
     }
 
     // 清除右栏答题锚点的关联角标
-    const rightContainers = new Set();
     qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`).forEach(aa => {
-      const rc = aa.closest('[data-edit-id]') || aa.closest('.qa-answer-content');
-      if (rc) rightContainers.add(rc);
       aa.querySelectorAll('.note-badge').forEach(b => b.remove());
       // 解包 answer-anchor span
       const parent = aa.parentNode;
@@ -1156,24 +1124,6 @@
       }
       parent.removeChild(aa);
     });
-
-    // 持久化解包后的容器变更
-    if (window.PersistenceLayer) {
-      if (leftContainer) {
-        if (leftContainer.hasAttribute('data-edit-id')) {
-          window.PersistenceLayer.saveElement(leftContainer);
-        } else {
-          leftContainer.querySelectorAll('[data-edit-id]').forEach(el => window.PersistenceLayer.saveElement(el));
-        }
-      }
-      rightContainers.forEach(rc => {
-        if (rc.hasAttribute('data-edit-id')) {
-          window.PersistenceLayer.saveElement(rc);
-        } else {
-          rc.querySelectorAll('[data-edit-id]').forEach(el => window.PersistenceLayer.saveElement(el));
-        }
-      });
-    }
 
     // 清除连线
     clearStepConnectors(qa);
@@ -1554,12 +1504,12 @@
     // 最后再聚焦到新气泡的内容区（在所有 DOM 操作和事件绑定完成后）
     const contentEl = bubble.querySelector('.qa-note-content');
     if (contentEl) {
-      // 内容变化时自动持久化（与 AI 原生气泡走同一条 localStorage 链路）
+      // 内容变化时自动保存到 JSON 文件
       contentEl.addEventListener('input', () => {
-        if (window.PersistenceLayer) window.PersistenceLayer.saveElement(contentEl);
+        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
       });
       contentEl.addEventListener('blur', () => {
-        if (window.PersistenceLayer) window.PersistenceLayer.saveElement(contentEl);
+        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
       });
       // 延迟一帧聚焦，确保 DOM 布局已稳定
       requestAnimationFrame(() => contentEl.focus());
@@ -1780,19 +1730,22 @@
 
       // 从 localStorage 恢复内容（与 AI 原生气泡走同一条 restoreAllElements 链路）
       const contentEl = bubble.querySelector('.qa-note-content');
-      if (contentEl && window.PersistenceLayer) {
+      // 从 AnnotationStore 恢复气泡内容（JSON 文件）
+      if (contentEl) {
         const editId = contentEl.getAttribute('data-edit-id');
-        try {
-          const storageKey = window._editorUtils ? window._editorUtils.storageKey('e:' + editId) : null;
-          const saved = storageKey ? localStorage.getItem(storageKey) : null;
-          if (saved !== null) contentEl.innerHTML = saved;
-        } catch (e) { /* 静默 */ }
-        // 绑定持久化事件
+        // 从 JSON 数据恢复
+        if (window.AnnotationStore && window.AnnotationStore.getInitData) {
+          const initData = window.AnnotationStore.getInitData();
+          if (initData && initData.elements && initData.elements[editId]) {
+            contentEl.innerHTML = initData.elements[editId];
+          }
+        }
+        // 绑定编辑事件：仅触发 JSON 文件保存
         contentEl.addEventListener('input', () => {
-          window.PersistenceLayer.saveElement(contentEl);
+          if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
         });
         contentEl.addEventListener('blur', () => {
-          window.PersistenceLayer.saveElement(contentEl);
+          if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
         });
       }
     }
@@ -1863,6 +1816,68 @@
 
     // 初始分割线位置
     requestAnimationFrame(() => updateDividerPositions(qa));
+
+    // 为所有 AI 原生气泡绑定内容编辑事件，确保编辑后触发 JSON 保存
+    qa.querySelectorAll('.qa-note-content[data-edit-id]').forEach(contentEl => {
+      contentEl.addEventListener('input', () => {
+        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+      });
+      contentEl.addEventListener('blur', () => {
+        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+      });
+    });
+
+    // 创建 AnnotationStore 状态指示器
+    _initStoreUI(qa);
+  }
+
+  /** 创建 AnnotationStore 状态指示器（自动授权模式） */
+  function _initStoreUI(qa) {
+    if (!window.AnnotationStore) return;
+    const header = qa.querySelector('.qa-notes-header');
+    if (!header) return;
+    if (header.querySelector('.annotation-store-status')) return;
+
+    const statusEl = document.createElement('span');
+    statusEl.className = 'annotation-store-status';
+    statusEl.style.cssText = 'font-size:12px; cursor:pointer; margin-left:8px; transition:opacity 0.3s;';
+
+    // 根据当前状态显示
+    if (window.AnnotationStore.hasWriteAccess()) {
+      statusEl.textContent = '📁 自动保存';
+      statusEl.style.color = 'var(--accent-blue, #58a6ff)';
+      statusEl.style.opacity = '0.5';
+    } else {
+      statusEl.textContent = '📁 点击授权保存';
+      statusEl.style.color = 'var(--text-dim, #8b949e)';
+      statusEl.title = '首次保存需要授权创建 JSON 存档文件';
+    }
+
+    statusEl.addEventListener('click', () => {
+      if (window.AnnotationStore.hasWriteAccess()) {
+        window.AnnotationStore.saveNow().then(() => {
+          statusEl.textContent = '✅ 已保存';
+          statusEl.style.color = 'var(--accent-green, #3fb950)';
+          statusEl.style.opacity = '1';
+          setTimeout(() => {
+            statusEl.textContent = '📁 自动保存';
+            statusEl.style.color = 'var(--accent-blue, #58a6ff)';
+            statusEl.style.opacity = '0.5';
+          }, 2000);
+        });
+      } else {
+        window.AnnotationStore.authorizeAndSave().then(ok => {
+          if (ok) {
+            statusEl.textContent = '📁 自动保存';
+            statusEl.style.color = 'var(--accent-blue, #58a6ff)';
+            statusEl.style.opacity = '0.5';
+            statusEl.title = '';
+          }
+        });
+      }
+    });
+
+    header.appendChild(statusEl);
   }
 
   /**
@@ -1905,12 +1920,21 @@
 
   // 自动标记并初始化
   function autoInit() {
-    document.querySelectorAll('.quiz-annotation').forEach(qa => {
-      if (!qa.hasAttribute('data-steppable')) {
-        qa.setAttribute('data-steppable', 'annotation');
-      }
-      initQuizAnnotation(qa);
-    });
+    function doInit() {
+      document.querySelectorAll('.quiz-annotation').forEach(qa => {
+        if (!qa.hasAttribute('data-steppable')) {
+          qa.setAttribute('data-steppable', 'annotation');
+        }
+        initQuizAnnotation(qa);
+      });
+    }
+
+    // 如果 AnnotationStore 存在，等它加载完 JSON 数据后再初始化
+    if (window.AnnotationStore && window.AnnotationStore.whenReady) {
+      window.AnnotationStore.whenReady().then(doInit).catch(doInit);
+    } else {
+      doInit();
+    }
   }
 
   // 在 DOMContentLoaded 或者立即执行
