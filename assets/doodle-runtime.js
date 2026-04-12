@@ -47,17 +47,7 @@
                 .doodle-mode .doodle-layer { pointer-events: auto !important; }
                 .doodle-layer { pointer-events: none; display: block; z-index: 400; }
                 
-                /* 涂鸦模式视觉避让布局 */
-                /* 赋予内容层和涂鸦层形变过渡属性，使偏移丝滑且不压缩画幅，同时不影响背景 */
-                .slide-content, svg.doodle-layer {
-                    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                }
-                
-                /* 涂鸦模式下，内容区与画布整体向右位移，为左侧工具栏留出充裕的安全空间，不压缩内部尺寸，且背景不穿帮 */
-                body.doodle-mode .slide-content,
-                body.doodle-mode .slide svg.doodle-layer {
-                    transform: translateX(60px) !important;
-                }
+
 
                 /* 确保涂鸦模式下，右侧页面导航、底部分页器等系统交互组件漂浮在画板之上 (画板的 z-index 为 400) */
                 .doodle-mode .slide-nav,
@@ -194,6 +184,20 @@
             });
             tb.appendChild(importBtn);
 
+            // 新增：隐藏工具栏按钮
+            var hideToolbarBtn = document.createElement('button');
+            hideToolbarBtn.className = 'rt-btn wide';
+            hideToolbarBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-close-icon lucide-panel-left-close"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>';
+            hideToolbarBtn.title = '隐藏工具栏 (保持涂鸦模式)';
+            hideToolbarBtn.style.marginTop = '8px';
+            hideToolbarBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                self.uiContainer.style.opacity = '0';
+                self.uiContainer.style.pointerEvents = 'none';
+                self.uiContainer.style.transform = 'translateY(-50%) translateX(-20px)';
+            });
+            tb.appendChild(hideToolbarBtn);
+
             document.body.appendChild(tb);
             this.uiContainer = tb;
             this.setTool('pen'); // 默认使用普通钢笔
@@ -216,12 +220,12 @@
             document.addEventListener('mousedown', function (e) {
                 if (e.button === 1) { // 鼠标滚轮中键
                     e.preventDefault();
-                    self.toggleDoodleMode();
+                    self.toggleDoodleMode(true);
                 }
             });
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && self.isActive) {
-                    self.toggleDoodleMode();
+                    self.toggleDoodleMode(true);
                 }
             });
 
@@ -261,14 +265,14 @@
                 }
             }, { passive: false });
             
-            // 防止右键菜单干扰 (涂鸦模式下按右键可以作为快捷退出, 这里使用双击右键)
+            // 防止右键菜单干扰涂鸦画板，并将双击右键绑定为：清空本页涂鸦
             var lastRbTime = 0;
             document.addEventListener('contextmenu', function(e) {
                 if (self.isActive) {
+                    e.preventDefault();
                     var now = Date.now();
                     if (now - lastRbTime < 400) {
-                        e.preventDefault();
-                        self.toggleDoodleMode();
+                        self.clearCurrentSlide();
                     }
                     lastRbTime = now;
                 }
@@ -289,7 +293,17 @@
             });
         },
 
-        toggleDoodleMode: function () {
+        toggleDoodleMode: function (forceHardToggle) {
+            // 如果已经是涂鸦模式，且工具栏被隐藏了，且没有强制开关，则此时点击左下角主按钮不再是退出，而是重新唤出工具栏
+            if (!forceHardToggle && this.isActive && this.uiContainer.style.opacity === '0') {
+                this.uiContainer.style.opacity = '1';
+                this.uiContainer.style.pointerEvents = 'auto';
+                this.uiContainer.style.transform = 'translateY(-50%) translateX(0)';
+                // 确保触发时系统光标不会干扰
+                document.documentElement.style.cursor = 'auto';
+                return;
+            }
+
             this.isActive = !this.isActive;
             var body = document.body;
 
