@@ -59,6 +59,66 @@
     return qa.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
   }
 
+  /** 剥离锚点首尾的文本空格（将空格移到 span 外部），防止下划线等样式意外延伸 */
+  function trimAnchorWhitespaces(anchor) {
+    if (!anchor) return;
+    const textNodes = [];
+    // 遍历锚点内的所有文本节点
+    const walker = document.createTreeWalker(anchor, NodeFilter.SHOW_TEXT, null, false);
+    let n;
+    while (n = walker.nextNode()) {
+      // 忽略角标内部的文本（否则剥离逻辑会被角标的数字阻断）
+      const parentElement = n.parentNode.nodeType === 1 ? n.parentNode : n.parentNode.parentElement;
+      if (parentElement && !parentElement.closest('.note-badge')) {
+        textNodes.push(n);
+      }
+    }
+
+    if (textNodes.length === 0) return;
+
+    // 1. 剥离尾部空格
+    let trailingSpaces = '';
+    for (let i = textNodes.length - 1; i >= 0; i--) {
+      let tNode = textNodes[i];
+      let val = tNode.nodeValue;
+      let match = val.match(/\s+$/);
+      if (match && match[0] === val) { 
+        trailingSpaces = val + trailingSpaces;
+        tNode.nodeValue = '';
+      } else if (match) {
+        trailingSpaces = match[0] + trailingSpaces;
+        tNode.nodeValue = val.substring(0, val.length - match[0].length);
+        break; 
+      } else {
+        break;
+      }
+    }
+    if (trailingSpaces) {
+      anchor.parentNode.insertBefore(document.createTextNode(trailingSpaces), anchor.nextSibling);
+    }
+
+    // 2. 剥离首部空格
+    let leadingSpaces = '';
+    for (let i = 0; i < textNodes.length; i++) {
+      let tNode = textNodes[i];
+      let val = tNode.nodeValue;
+      let match = val.match(/^\s+/);
+      if (match && match[0] === val) {
+        leadingSpaces += val;
+        tNode.nodeValue = '';
+      } else if (match) {
+        leadingSpaces += match[0];
+        tNode.nodeValue = val.substring(match[0].length);
+        break;
+      } else {
+        break;
+      }
+    }
+    if (leadingSpaces) {
+      anchor.parentNode.insertBefore(document.createTextNode(leadingSpaces), anchor);
+    }
+  }
+
   /** 平滑滚动到可见区域 */
   function scrollIntoViewSmooth(el) {
     if (!el) return;
@@ -126,7 +186,7 @@
     if (!dividerBtn) {
       dividerBtn = document.createElement('button');
       dividerBtn.className = 'qa-divider-btn';
-      dividerBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M15 18a3 3 0 1 0-6 0"/><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M12 13v-1"/></svg>`;
+      dividerBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></svg>`;
       dividerBtn.title = '展开批注面板 (D)';
       body.appendChild(dividerBtn);
     }
@@ -549,7 +609,24 @@
 
   /** 绑定单个气泡的拖拽事件 */
   function bindDragEvents(qa, b, placeholder) {
+    // 默认关闭全局 draggable，防止覆盖输入框内的原生文字拖拽和选区
+    b.setAttribute('draggable', 'false');
+
+    const handle = b.querySelector('.qa-note-handle');
+    if (handle) {
+      // 只有在左侧把手上按下鼠标时，才临时开启该气泡的拖拽能力
+      handle.addEventListener('mousedown', () => b.setAttribute('draggable', 'true'));
+      handle.addEventListener('mouseup', () => b.setAttribute('draggable', 'false'));
+      handle.addEventListener('mouseleave', () => b.setAttribute('draggable', 'false'));
+    }
+
     b.addEventListener('dragstart', (e) => {
+      // 若不是由 handle 唤醒的拖拽行为，直接阻止
+      if (b.getAttribute('draggable') !== 'true') {
+        e.preventDefault();
+        return;
+      }
+      
       draggedBubble = b;
       b.classList.add('dragging-source');
       e.dataTransfer.effectAllowed = 'move';
@@ -558,6 +635,7 @@
     });
 
     b.addEventListener('dragend', () => {
+      b.setAttribute('draggable', 'false');
       if (draggedBubble) {
         draggedBubble.classList.remove('dragging-source');
         draggedBubble.style.display = '';
@@ -988,6 +1066,11 @@
 
     // 重算序号
     recalcStepNumbers(qa);
+
+    // 【撤销栈护城河】：拦截删除变动，记入历史以防覆盖
+    if (window.historyMgr && !window.historyMgr.isRestoring) {
+      window.historyMgr.recordState(true);
+    }
     updateProgressCounter(qa);
   }
 
@@ -1055,12 +1138,15 @@
       qa.appendChild(toolbar);
     }
 
-    // 监听选区变化（仅编辑模式）
-    document.addEventListener('selectionchange', () => {
-      if (!document.body.classList.contains('edit-mode')) {
-        toolbar.classList.remove('visible');
-        return;
-      }
+    // 监听选区变化（仅编辑模式，防重复绑定）
+    if (!document._qaSelectionchangeBound) {
+      document._qaSelectionchangeBound = true;
+      document.addEventListener('selectionchange', () => {
+        // 如果当前不在编辑模式，隐藏所有 qa 的 toolbar
+        if (!document.body.classList.contains('edit-mode')) {
+          document.querySelectorAll('.qa-annotation-toolbar').forEach(t => t.classList.remove('visible'));
+          return;
+        }
 
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
@@ -1116,6 +1202,7 @@
       toolbar.style.top = `${firstRect.top - qaRect.top - 45}px`;
       toolbar.classList.add('visible');
     });
+    }
 
     // 工具条按钮点击
     toolbar.querySelectorAll('.qa-toolbar-btn').forEach(btn => {
@@ -1188,6 +1275,9 @@
     badge.className = 'note-badge';
     badge.textContent = newStep;
     anchor.appendChild(badge);
+    
+    // 即时清理，防止用户手滑框选到了首尾的空格影响排版
+    trimAnchorWhitespaces(anchor);
 
     // 在批注面板创建空气泡
     const notesList = qa.querySelector('.qa-notes-list');
@@ -1200,7 +1290,8 @@
       bubble.dataset.linkAnswer = newLinkId; // 从右栏创建时自动关联
     }
     bubble.dataset.step = newStep;
-    bubble.setAttribute('draggable', 'true');
+    // 默认关闭，仅在左侧手柄 hover 控制开启
+    bubble.setAttribute('draggable', 'false');
 
     // 动态生成操作按钮（包含关联按钮）
     const hasLeftLink = inPassage;
@@ -1311,8 +1402,18 @@
     const notesPanel = qa.querySelector('.qa-notes-panel');
     if (!notesPanel) return;
 
-    // 如果栏头已存在则跳过
-    if (notesPanel.querySelector('.qa-notes-header')) return;
+    // 如果栏头已存在，仅重新绑定事件后返回
+    const existingHeader = notesPanel.querySelector('.qa-notes-header');
+    if (existingHeader) {
+      const collapseBtn = existingHeader.querySelector('.qa-notes-collapse-btn');
+      if (collapseBtn) {
+        // 用克隆节点替换自身来清除所有旧事件
+        const fresh = collapseBtn.cloneNode(true);
+        collapseBtn.parentNode.replaceChild(fresh, collapseBtn);
+        fresh.addEventListener('click', () => toggleNotesPanel(qa));
+      }
+      return;
+    }
 
     // 创建栏头
     const header = document.createElement('div');
@@ -1324,7 +1425,7 @@
         <span class="qa-notes-counter">0/0</span>
       </div>
       <button class="qa-notes-collapse-btn" title="收起批注面板 (D)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></svg>
       </button>
     `;
 
@@ -1401,6 +1502,11 @@
       el.setAttribute('data-scrollable', '');
     });
 
+    // 清洗已存在锚点的首尾不当空格
+    qa.querySelectorAll('.text-anchor, .answer-anchor').forEach(anchor => {
+      trimAnchorWhitespaces(anchor);
+    });
+
     // 初始化批注面板栏头（动态生成 header + notes-list 结构）
     initNotesHeader(qa);
 
@@ -1420,6 +1526,44 @@
     // 初始分割线位置
     requestAnimationFrame(() => updateDividerPositions(qa));
   }
+
+  /**
+   * 【灾后净化函数】：剥离所有运行时动态生成的DOM元素
+   * 在 HistoryManager._restoreState 通过 innerHTML 恢复DOM后，
+   * 恢复出的HTML中残留着首次初始化时注入的动态节点（栏头、按钮容器、工具条等），
+   * 但这些节点上的 JavaScript 事件绑定已经全部丢失。
+   * 必须先将它们剥离干净，让 initQuizAnnotation 从零重建并正确绑定事件。
+   */
+  function stripDynamicElements(qa) {
+    // 1. 剥离栏头（initNotesHeader 会重建，需要重新绑定折叠按钮事件）
+    const header = qa.querySelector('.qa-notes-header');
+    if (header) header.remove();
+
+    // 2. 解包 .qa-notes-list 容器 — 将气泡搬回 .qa-notes-panel 再移除空壳
+    const notesList = qa.querySelector('.qa-notes-list');
+    if (notesList) {
+      const panel = notesList.parentNode;
+      // 先收集所有气泡，再逐个移出（避免迭代过程中DOM变动）
+      Array.from(notesList.children).forEach(child => panel.appendChild(child));
+      notesList.remove();
+    }
+
+    // 3. 剥离各气泡上的动态操作按钮容器（initNoteInteractions 会重建）
+    qa.querySelectorAll('.qa-note-actions').forEach(a => a.remove());
+
+    // 4. 剥离分割线悬浮按钮（initDividerButton 会重建）
+    qa.querySelectorAll('.qa-divider-btn').forEach(b => b.remove());
+
+    // 5. 剥离浮动批注工具条（initAnnotationToolbar 会重建）
+    qa.querySelectorAll('.qa-annotation-toolbar').forEach(t => t.remove());
+
+    // 6. 清除 data-scrollable 标记（initQuizAnnotation 会重新添加）
+    qa.querySelectorAll('[data-scrollable]').forEach(el => el.removeAttribute('data-scrollable'));
+  }
+
+  // 暴露给编辑器引擎：撤销/重做恢复 DOM 后，重新唤醒交互
+  window.initQuizAnnotation = initQuizAnnotation;
+  window.stripDynamicQAElements = stripDynamicElements;
 
   // 自动标记并初始化
   function autoInit() {

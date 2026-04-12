@@ -80,6 +80,22 @@
                         slide.getAnimations({ subtree: true }).forEach(function (a) { a.finish(); });
                     } catch (e) {}
                 }
+                
+                // 【灾后抢修机制】：恢复 innerHTML 后，DOM 节点属于全新重建，所有 JS 事件均已剥离
+                // 必须在此处重新唤醒并注入包含气泡、选项连线等复杂挂载了交互的组件
+                if (window.initQuizAnnotation) {
+                    slide.querySelectorAll('.quiz-annotation').forEach(function(qa) {
+                        // 第一步：净化 — 剥离残留在HTML快照中的动态生成节点（栏头、按钮容器等）
+                        // 这些节点的事件绑定已随 innerHTML 替换而灰飞烟灭
+                        if (window.stripDynamicQAElements) {
+                            window.stripDynamicQAElements(qa);
+                        }
+                        // 第二步：撕掉初始化标签，让 init 认为是全新的组件
+                        qa.removeAttribute('data-qa-initialized');
+                        // 第三步：从零重建 — 重新创建所有动态元素并绑定全套事件
+                        window.initQuizAnnotation(qa);
+                    });
+                }
             }
             this.isRestoring = false;
             this.updateUI();

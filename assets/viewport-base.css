@@ -143,6 +143,20 @@ img, .image-container {
    REDUCED MOTION
    Respect user preferences
    =========================================== */
+/* ===========================================
+   GLOBAL UNDERLINE OVERRIDES
+   保护全局下划线不被内联 shorthand 重置
+   =========================================== */
+[style*="text-decoration: underline"],
+[style*="text-decoration:underline"],
+u,
+.text-anchor,
+.answer-anchor {
+    text-underline-offset: 4px !important;
+    text-decoration-thickness: 2px !important;
+    text-decoration-skip-ink: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;

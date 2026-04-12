@@ -161,10 +161,10 @@
 }
 
 /* 确保内部组件（如卡片）自动撑满可用高度 */
-.slide-content > [class*="layout-"] > .col > *,
-.slide-content > [class*="layout-"] > .cell > *,
-.slide-content [class*="col"] > *,
-.slide-content [class*="cell"] > * {
+.slide-content>[class*="layout-"]>.col>*,
+.slide-content>[class*="layout-"]>.cell>*,
+.slide-content [class*="col"]>*,
+.slide-content [class*="cell"]>* {
   flex: 1;
 }
 
@@ -203,7 +203,7 @@
   transform: translateY(-2px) scale(1.02);
   border-color: var(--border-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12),
-              0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
+    0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
 }
 
 /* 卡片内部元素 */
@@ -300,7 +300,7 @@
 .flip-card.step-active .flip-back {
   border-color: var(--border-hover);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12),
-              0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
+    0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
 }
 
 .flip-front,
@@ -557,14 +557,38 @@
   margin-right: 20px;
 }
 
-.code-body .tag { color: #e06c75; }
-.code-body .attr { color: #d19a66; }
-.code-body .str { color: #98c379; }
-.code-body .kw { color: #c678dd; }
-.code-body .fn { color: #61afef; }
-.code-body .prop { color: #e5c07b; }
-.code-body .punc { color: #56b6c2; }
-.code-body .comment { color: #5c6370; font-style: italic; }
+.code-body .tag {
+  color: #e06c75;
+}
+
+.code-body .attr {
+  color: #d19a66;
+}
+
+.code-body .str {
+  color: #98c379;
+}
+
+.code-body .kw {
+  color: #c678dd;
+}
+
+.code-body .fn {
+  color: #61afef;
+}
+
+.code-body .prop {
+  color: #e5c07b;
+}
+
+.code-body .punc {
+  color: #56b6c2;
+}
+
+.code-body .comment {
+  color: #5c6370;
+  font-style: italic;
+}
 
 
 /* ====== 组件 5: 数字强调卡片 (.stat-card / Stat Card) ======
@@ -593,10 +617,37 @@
   -webkit-text-fill-color: transparent;
 }
 
-.stat-number.blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.green { background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.orange { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
-.stat-number.purple { background: linear-gradient(90deg, var(--accent-purple), var(--brand-primary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: unset; }
+.stat-number.blue {
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: unset;
+}
+
+.stat-number.green {
+  background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: unset;
+}
+
+.stat-number.orange {
+  background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: unset;
+}
+
+.stat-number.purple {
+  background: linear-gradient(90deg, var(--accent-purple), var(--brand-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: unset;
+}
 
 .stat-label {
   font-size: clamp(18px, 1.8vw, 24px);
@@ -1022,28 +1073,52 @@
    赋予内容区各分栏或独立卡片自动按顺序滑入的能力
    =========================================== */
 @keyframes slotFadeInUp {
-  0% { opacity: 0; transform: translateY(24px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 当幻灯片被激活时，内部的各项布局插槽（包括它装载的卡片）集体触发动画 */
-.slide.active .layout-single > *,
-.slide.active .layout-2col > .col,
-.slide.active .layout-2col-wide-left > .col,
-.slide.active .layout-2col-wide-right > .col,
-.slide.active .layout-3col > .col,
-.slide.active .layout-grid-2x2 > .cell,
-.slide.active .layout-2row > .row {
+.slide.active .layout-single>*,
+.slide.active .layout-2col>.col,
+.slide.active .layout-2col-wide-left>.col,
+.slide.active .layout-2col-wide-right>.col,
+.slide.active .layout-3col>.col,
+.slide.active .layout-grid-2x2>.cell,
+.slide.active .layout-2row>.row {
   animation: slotFadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* 跟随横幅出入的物理规律：整体从 0.35s 起步浮出，凸显从属跟进感 */
-.slide.active [class*="layout-"] > *:nth-child(1) { animation-delay: 0.35s; }
-.slide.active [class*="layout-"] > *:nth-child(2) { animation-delay: 0.45s; }
-.slide.active [class*="layout-"] > *:nth-child(3) { animation-delay: 0.55s; }
-.slide.active [class*="layout-"] > *:nth-child(4) { animation-delay: 0.65s; }
-.slide.active [class*="layout-"] > *:nth-child(5) { animation-delay: 0.75s; }
-.slide.active [class*="layout-"] > *:nth-child(6) { animation-delay: 0.85s; }
+.slide.active [class*="layout-"]>*:nth-child(1) {
+  animation-delay: 0.35s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(2) {
+  animation-delay: 0.45s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(3) {
+  animation-delay: 0.55s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(4) {
+  animation-delay: 0.65s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(5) {
+  animation-delay: 0.75s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(6) {
+  animation-delay: 0.85s;
+}
 
 
 /* ===========================================
@@ -1077,11 +1152,14 @@
 .slide:has(.quiz-annotation) .slide-header {
   display: none !important;
 }
+
 .slide:has(.quiz-annotation) .slide-content {
   margin-top: 0;
   flex: 1;
-  max-width: none; /* 打破 1100px 限宽，霸占全屏 */
-  padding: 12px 0 0 0; /* 仅保留顶部 12px 呼吸空间避开工具栏阴影，其余方向边距清零 */
+  max-width: none;
+  /* 打破 1100px 限宽，霸占全屏 */
+  padding: 12px 0 0 0;
+  /* 仅保留顶部 12px 呼吸空间避开工具栏阴影，其余方向边距清零 */
 }
 
 
@@ -1089,7 +1167,8 @@
 .quiz-annotation {
   position: relative;
   width: 100%;
-  flex: 1;               /* 占满 slide-content 剩余空间 */
+  flex: 1;
+  /* 占满 slide-content 剩余空间 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1137,12 +1216,13 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(255,255,255,0.08); /* 半透明分割线 */
+  background: rgba(255, 255, 255, 0.08);
+  /* 半透明分割线 */
   /* 【关键修复】将分割线的层级降到5，确保其被激活的批注气泡(10)及中间面板(15)遮挡 */
-  z-index: 5; 
+  z-index: 5;
   pointer-events: none;
   transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s ease;
+    opacity 0.3s ease;
 }
 
 /* 第一条分割线：左栏和中栏/右栏之间 */
@@ -1157,6 +1237,7 @@
   left: var(--divider-2-left, 70%);
   opacity: 0;
 }
+
 .quiz-annotation.has-quiz.notes-active .qa-body::after {
   opacity: 1;
 }
@@ -1209,9 +1290,11 @@
   width: auto;
   opacity: 1;
   pointer-events: auto;
-  overflow: visible; /* 【关键修复】外层取消裁切，让内部名单全权负责 */
+  overflow: visible;
+  /* 【关键修复】外层取消裁切，让内部名单全权负责 */
   position: relative;
-  z-index: 15; /* 确保物理重叠时悬浮在左右两栏上方 */
+  z-index: 15;
+  /* 确保物理重叠时悬浮在左右两栏上方 */
 }
 
 /* 批注面板在 grid 中的列位置 */
@@ -1219,10 +1302,12 @@
 .quiz-annotation.has-quiz .qa-notes-panel {
   grid-column: 2;
 }
+
 /* 纯文章时，批注也在第 2 列 */
 .quiz-annotation:not(.has-quiz) .qa-notes-panel {
   grid-column: 2;
 }
+
 /* 未展开时不渲染 */
 .quiz-annotation:not(.notes-active) .qa-notes-panel {
   display: none;
@@ -1235,20 +1320,25 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
 }
+
 .qa-notes-header-left {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .qa-notes-header-left svg {
-  width: 14px; height: 14px; opacity: 0.6;
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
 }
+
 /* 折叠按钮 */
 .qa-notes-collapse-btn {
   all: unset;
@@ -1263,8 +1353,9 @@
   color: var(--text-dim);
   transition: all 0.2s;
 }
+
 .qa-notes-collapse-btn:hover {
-  background-color: rgba(255,255,255,0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   color: var(--text);
 }
 
@@ -1303,10 +1394,12 @@
 .quiz-annotation.has-quiz:not(.notes-active) .qa-answer-panel {
   grid-column: 2;
 }
+
 /* 批注展开时，右栏是第 3 列 */
 .quiz-annotation.has-quiz.notes-active .qa-answer-panel {
   grid-column: 3;
 }
+
 /* 无答题内容时右栏不显示 */
 .quiz-annotation:not(.has-quiz) .qa-answer-panel {
   display: none;
@@ -1315,57 +1408,119 @@
 
 /* --- 14.6.1 选项区标题与内容 --- */
 .qa-answer-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 0; flex-shrink: 0;
-  font-size: 14px; font-weight: 600; color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
-.qa-answer-header .qa-answer-title { display: flex; align-items: center; gap: 8px; }
-.qa-answer-content { flex: 1; padding: 0; overflow-y: auto; min-height: 0; }
+
+.qa-answer-header .qa-answer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qa-answer-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
 
 
 /* --- 14.6.2 选择题选项 --- */
 .qa-option {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 14px; margin-bottom: 6px; border-radius: 10px;
-  background-color: var(--bg-card, rgba(255,255,255,0.06)); border: 1px solid var(--border);
-  cursor: pointer; transition: all 0.25s ease;
-  font-size: clamp(14px, 1.4vw, 19px); line-height: 1.5;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03); position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background-color: var(--bg-card, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: clamp(14px, 1.4vw, 19px);
+  line-height: 1.5;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  position: relative;
 }
-.qa-option:hover { border-color: var(--border-hover, rgba(255,255,255,0.15)); transform: translateY(-1px); }
+
+.qa-option:hover {
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.15));
+  transform: translateY(-1px);
+}
+
 .qa-option.selected {
   border-color: var(--brand-primary, var(--accent-blue));
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.06);
   box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
 }
+
 .qa-option-label {
-  display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border-radius: 50%;
-  background-color: var(--surface-container, rgba(255,255,255,0.05)); border: 1px solid var(--border);
-  font-size: 13px; font-weight: 700; color: var(--text-muted);
-  flex-shrink: 0; transition: all 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--surface-container, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.25s;
 }
+
 .qa-option.selected .qa-option-label {
-  background-color: var(--brand-primary, var(--accent-blue)); color: #fff; border-color: var(--brand-primary, var(--accent-blue));
+  background-color: var(--brand-primary, var(--accent-blue));
+  color: #fff;
+  border-color: var(--brand-primary, var(--accent-blue));
 }
 
 /* 状态圆点槽 — 始终显示在序号左侧，保留固定宽度占位 */
 .qa-status-dot {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
-  font-size: 13px; font-weight: 800;
-  opacity: 0; /* 未判分时透明占位 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0;
+  /* 未判分时透明占位 */
   transform: scale(0.3);
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.qa-status-dot.visible { opacity: 1; transform: scale(1); }
-.qa-status-dot.correct { background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15); color: var(--brand-primary, #00A355); }
-.qa-status-dot.incorrect { background-color: rgba(186,26,26,0.15); color: var(--accent-red, #ba1a1a); }
+
+.qa-status-dot.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.qa-status-dot.correct {
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-status-dot.incorrect {
+  background-color: rgba(186, 26, 26, 0.15);
+  color: var(--accent-red, #ba1a1a);
+}
+
 /* 选错的选项红色半透明高光 */
 .qa-option.result-incorrect {
-  background-color: rgba(186,26,26,0.06);
-  border-color: rgba(186,26,26,0.25);
+  background-color: rgba(186, 26, 26, 0.06);
+  border-color: rgba(186, 26, 26, 0.25);
 }
+
 /* 正确选项绿色高光 */
 .qa-option.result-correct {
   background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.06);
@@ -1375,50 +1530,103 @@
 
 /* --- 14.6.3 提交按钮 --- */
 .qa-submit-btn {
-  all: unset; box-sizing: border-box; display: inline-flex;
-  align-items: center; justify-content: center; gap: 6px;
-  padding: 5px 20px; border-radius: 8px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
   background: linear-gradient(135deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue));
-  color: #fff; border: none;
-  box-shadow: 0 2px 10px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.2); transition: all 0.25s;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.2);
+  transition: all 0.25s;
 }
-.qa-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35); }
-.qa-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.qa-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35);
+}
+
+.qa-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 
 /* --- 14.7 原文锚点 + 角标 --- */
-.text-anchor { position: relative; cursor: pointer; transition: background 0.25s; border-radius: 2px; }
+.text-anchor {
+  position: relative;
+  transition: background 0.25s;
+  border-radius: 2px;
+}
+
 .text-anchor.anchor-active {
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
   box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.1);
 }
+
 .note-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  position: relative; top: -0.6em;
-  width: 20px; height: 20px; padding: 0;
-  margin-left: 2px; font-size: 11px; font-weight: 700; line-height: 1;
-  color: #fff; background-color: var(--brand-primary, var(--accent-blue));
-  border-radius: 50%; cursor: pointer; transition: all 0.2s; user-select: none; z-index: 5;
-  vertical-align: middle; flex-shrink: 0; box-sizing: border-box;
-  text-indent: 0; /* ★ 极度关键：抵消外层 p 标签 2em 的首行缩进继承，防止数字飞出圆圈 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: -0.6em;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background-color: var(--brand-primary, var(--accent-blue));
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  z-index: 5;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  text-indent: 0;
+  /* ★ 极度关键：抵消外层 p 标签 2em 的首行缩进继承，防止数字飞出圆圈 */
 }
-.note-badge:hover { transform: scale(1.15); box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3); }
+
+.note-badge:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+}
+
 .text-anchor.anchor-active .note-badge {
   background-color: var(--accent-blue);
-  box-shadow: 0 0 12px rgba(0,96,170,0.5);
+  box-shadow: 0 0 12px rgba(0, 96, 170, 0.5);
   animation: qaBadgePulse 1.5s ease infinite;
 }
+
 @keyframes qaBadgePulse {
-  0%,100% { box-shadow: 0 0 4px rgba(0,96,170,0.3); }
-  50% { box-shadow: 0 0 16px rgba(0,96,170,0.6); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(0, 96, 170, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(0, 96, 170, 0.6);
+  }
 }
 
 /* 右栏答题条目的锚点角标 — 横向排列 */
 .answer-anchor {
   position: relative;
-  cursor: pointer;
 }
+
 .answer-anchor .note-badge {
   margin-right: 2px;
 }
@@ -1430,26 +1638,41 @@
    =========================================== */
 .qa-note-bubble {
   position: relative;
-  background-color: rgba(255,255,255,0.08);
+  background-color: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 12px 14px 12px 44px; /* 左侧为 handle + step 合并区域 */
+  padding: 12px 14px 12px 44px;
+  /* 左侧为 handle + step 合并区域 */
   font-size: clamp(13px, 1.3vw, 17px);
-  line-height: 1.65; color: var(--text);
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-  cursor: pointer; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  line-height: 1.65;
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* --- 编辑模式全局光标覆盖 --- */
+/* 为了解决 Windows/Mac 系统默认随着对比度反转成白色的工字光标，以及右栏原本选项附带的 Pointer 问题 */
+body.editor-mode .qa-note-bubble,
+body.editor-mode .qa-passage,
+body.editor-mode .qa-answer-panel,
+body.editor-mode .qa-option {
+  /* 强制采用一套包含描边加固的深色工型光标，中心锚定 */
+  cursor: url('data:image/svg+xml;utf8,<svg width="12" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M3 2h6M6 2v16M3 18h6" stroke="black" stroke-width="1.5" fill="none"/></svg>') 6 10, text !important;
+  caret-color: #000 !important;
+  /* 保证内部打字时光标闪动的竖线也是纯黑色 */
 }
 
 /* 气泡激活态 — 仅 scale 缩放，不改变字号 + 焦点外扩 */
 .qa-note-bubble.note-active {
-  background-color: rgba(255,255,255,0.15);
+  background-color: rgba(255, 255, 255, 0.15);
   border-color: var(--brand-primary, var(--accent-blue));
   /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
      现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
-  box-shadow: 
+  box-shadow:
     0 0 8px 1px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35),
     0 0 16px 4px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15),
     0 0 28px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
@@ -1463,73 +1686,126 @@
 
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
 .quiz-annotation.has-active-note .qa-note-bubble:not(.note-active) {
-  opacity: 0.35; transform: scale(0.96);
+  opacity: 0.35;
+  transform: scale(0.96);
 }
 
 /* 拖拽手柄 — 左侧全高贯通区域，嵌入序号球 */
 .qa-note-handle {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 32px; display: flex; justify-content: center; align-items: flex-start;
-  padding-top: 13px; cursor: grab;
-  transition: all 0.2s; user-select: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 13px;
+  cursor: grab;
+  transition: all 0.2s;
+  user-select: none;
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
   border-right: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
   border-radius: 12px 0 0 12px;
 }
-.qa-note-handle:hover { background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18); }
-.qa-note-handle:active { cursor: grabbing; }
+
+.qa-note-handle:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18);
+}
+
+.qa-note-handle:active {
+  cursor: grabbing;
+}
+
 /* 激活态下手柄变为实心底色 */
 .qa-note-bubble.note-active .qa-note-handle {
-  background-color: var(--brand-primary, var(--accent-blue)); border-right: none;
+  background-color: var(--brand-primary, var(--accent-blue));
+  border-right: none;
 }
 
 /* 气泡序号圆标 — 嵌在 handle 内部 */
 .qa-note-step {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border-radius: 50%;
-  background-color: var(--brand-primary, var(--accent-blue)); color: #fff;
-  font-size: 11px; font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--brand-primary, var(--accent-blue));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
   flex-shrink: 0;
   transition: all 0.2s;
 }
+
 /* 激活态序号反色 */
 .qa-note-bubble.note-active .qa-note-step {
-  background-color: #fff; color: var(--brand-primary, var(--accent-blue));
+  background-color: #fff;
+  color: var(--brand-primary, var(--accent-blue));
 }
 
 /* 气泡内容区 */
-.qa-note-content { display: inline; }
+.qa-note-content {
+  display: inline;
+}
 
 /* 气泡内容折叠 — 超 3 行截断（未激活时） */
 .qa-note-bubble:not(.note-active):not(.note-expanded) .qa-note-content {
-  display: -webkit-box; -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* 操作按钮组 — 移至左侧把手(handle)下方，呈垂直排列 */
 .qa-note-actions {
-  position: absolute; bottom: 8px; left: 0; width: 32px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px; 
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-  z-index: 2; /* 位于 handle 背景之上 */
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 2;
+  /* 位于 handle 背景之上 */
 }
-.qa-note-bubble:hover .qa-note-actions { opacity: 1; pointer-events: auto; }
+
+.qa-note-bubble:hover .qa-note-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* 基础按钮样式 — 为了适应竖条宽度，尺寸可以稍小一点，无边框全透明背景更美观 */
 .qa-note-action-btn {
-  all: unset; box-sizing: border-box; display: flex;
-  align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 4px;
-  background-color: rgba(255,255,255,0.2); 
-  color: var(--text-muted); font-size: 11px; cursor: pointer; transition: all 0.2s;
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.qa-note-action-btn:hover { 
-  background-color: rgba(255,255,255,0.9); 
+
+.qa-note-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.9);
   color: var(--brand-primary, #333);
 }
 
 /* 关联按钮特殊颜色 */
-.qa-note-action-btn.link-btn { color: var(--brand-primary, var(--accent-blue)); }
+.qa-note-action-btn.link-btn {
+  color: var(--brand-primary, var(--accent-blue));
+}
 
 /* 非编辑模式下的显隐逻辑：只显示 📌 (action-select) */
 html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
@@ -1539,14 +1815,28 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
 
 /* --- 14.9 SVG 连线 --- */
 .qa-connector-canvas {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 25; overflow: visible;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+  overflow: visible;
 }
+
 .qa-connector-line {
-  fill: none; stroke: var(--brand-primary, var(--accent-blue)); stroke-width: 2;
-  stroke-opacity: 0.4; transition: stroke-opacity 0.3s;
+  fill: none;
+  stroke: var(--brand-primary, var(--accent-blue));
+  stroke-width: 2;
+  stroke-opacity: 0.4;
+  transition: stroke-opacity 0.3s;
 }
-.qa-connector-line.connector-hover { stroke-opacity: 0.25; stroke-dasharray: 6 3; }
+
+.qa-connector-line.connector-hover {
+  stroke-opacity: 0.25;
+  stroke-dasharray: 6 3;
+}
+
 /* 边缘钉定箭头 */
 .qa-edge-arrow {
   fill: var(--brand-primary, var(--accent-blue));
@@ -1555,7 +1845,10 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   pointer-events: auto;
   transition: opacity 0.2s;
 }
-.qa-edge-arrow:hover { opacity: 0.8; }
+
+.qa-edge-arrow:hover {
+  opacity: 0.8;
+}
 
 
 /* --- 14.10 拖拽占位符 --- */
@@ -1589,17 +1882,22 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   transform: translateX(-50%);
   /* JS 动态设置 left 和 top */
 }
+
 .qa-divider-btn.visible {
   opacity: 1;
   pointer-events: auto;
 }
+
 .qa-divider-btn:hover {
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
   transform: translateX(-50%) scale(1.1);
 }
+
 .qa-divider-btn svg {
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
 }
+
 /* 批注已展开时隐藏悬浮按钮 */
 .quiz-annotation.notes-active .qa-divider-btn {
   display: none;
@@ -1607,16 +1905,44 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
 
 
 /* --- 14.12 答题隔离规则 --- */
-.quiz-annotation.has-quiz:not(.submitted) .note-badge { display: none; }
-.quiz-annotation.has-quiz:not(.submitted) .text-anchor {
-  text-decoration: none !important; background-color: transparent !important;
-  color: inherit !important; box-shadow: none !important;
+.quiz-annotation.has-quiz:not(.submitted) .note-badge {
+  display: none;
 }
-.quiz-annotation.has-quiz:not(.submitted) .qa-notes-panel { display: none !important; }
-.quiz-annotation.has-quiz:not(.submitted) .qa-divider-btn { display: none !important; }
-.quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge { display: none; }
-.quiz-annotation.submitted .note-badge { animation: qaFadeIn 0.5s ease both; }
-@keyframes qaFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.quiz-annotation.has-quiz:not(.submitted) .text-anchor {
+  text-decoration: none !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .qa-notes-panel {
+  display: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .qa-divider-btn {
+  display: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge {
+  display: none;
+}
+
+.quiz-annotation.submitted .note-badge {
+  animation: qaFadeIn 0.5s ease both;
+}
+
+@keyframes qaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 
 /* --- 14.13 关联模式视觉反馈 --- */
@@ -1625,49 +1951,105 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
   animation: qaLinkingPulse 2s ease infinite;
 }
+
 /* 关联右侧：右栏呼吸高亮边框 */
 .quiz-annotation.linking-right .qa-answer-panel {
   box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
   animation: qaLinkingPulse 2s ease infinite;
 }
+
 @keyframes qaLinkingPulse {
-  0%,100% { box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15); }
-  50% { box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.4); }
+
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  }
+
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.4);
+  }
 }
 
 
 /* --- 14.14 隐形滚动条 --- */
-.qa-passage::-webkit-scrollbar, .qa-answer-content::-webkit-scrollbar,
-.qa-notes-list::-webkit-scrollbar { width: 4px; }
-.qa-passage::-webkit-scrollbar-track, .qa-answer-content::-webkit-scrollbar-track,
-.qa-notes-list::-webkit-scrollbar-track { background: transparent; }
-.qa-passage::-webkit-scrollbar-thumb, .qa-answer-content::-webkit-scrollbar-thumb,
-.qa-notes-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
-.qa-passage:hover::-webkit-scrollbar-thumb, .qa-answer-content:hover::-webkit-scrollbar-thumb,
-.qa-notes-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+.qa-passage::-webkit-scrollbar,
+.qa-answer-content::-webkit-scrollbar,
+.qa-notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.qa-passage::-webkit-scrollbar-track,
+.qa-answer-content::-webkit-scrollbar-track,
+.qa-notes-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.qa-passage::-webkit-scrollbar-thumb,
+.qa-answer-content::-webkit-scrollbar-thumb,
+.qa-notes-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.qa-passage:hover::-webkit-scrollbar-thumb,
+.qa-answer-content:hover::-webkit-scrollbar-thumb,
+.qa-notes-list:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 
 /* --- 14.15 编辑模式浮动工具条 --- */
 .qa-annotation-toolbar {
-  position: absolute; z-index: 100;
-  display: none; align-items: center; gap: 6px; padding: 6px 12px;
-  background-color: rgba(30,30,30,0.9); backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  position: absolute;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: rgba(30, 30, 30, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
-.qa-annotation-toolbar.visible { display: flex; }
-.qa-toolbar-label { font-size: 12px; color: var(--text-dim); margin-right: 4px; white-space: nowrap; }
+
+.qa-annotation-toolbar.visible {
+  display: flex;
+}
+
+.qa-toolbar-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
 .qa-toolbar-btn {
-  all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 6px; font-size: 14px; font-weight: 600;
-  color: var(--text); cursor: pointer; transition: all 0.2s;
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
   border: 1px solid transparent;
 }
-.qa-toolbar-btn:hover { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+
+.qa-toolbar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
 
 
 /* --- 14.16 响应式与无障碍 --- */
 @media (prefers-reduced-motion: reduce) {
+
   .qa-body,
   .qa-answer-panel,
   .qa-notes-panel,
@@ -1682,4 +2064,3 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
     animation-duration: 0.01ms !important;
   }
 }
-

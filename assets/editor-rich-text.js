@@ -124,6 +124,8 @@
                     if (decorationType === 'underline') {
                         s.style.removeProperty('text-decoration-color');
                         s.style.removeProperty('text-underline-offset');
+                        s.style.removeProperty('text-decoration-thickness');
+                        s.style.removeProperty('text-decoration-skip-ink');
                     } else if (decorationType === 'line-through') {
                         // 如果有独立的删除线颜色（目前系统共用 text-decoration-color，所以也需择机移除，但稳妥起见只有当完全无样式时才移除）
                         if (parts.length === 0) s.style.removeProperty('text-decoration-color');
@@ -269,7 +271,11 @@
                 var span = document.createElement('span');
                 span.style.textDecoration = decorationType;
                 if (decoColor) span.style.textDecorationColor = decoColor;
-                if (decorationType === 'underline') span.style.textUnderlineOffset = '3px';
+                if (decorationType === 'underline') {
+                    span.style.textUnderlineOffset = '4px';
+                    span.style.textDecorationThickness = '2px';
+                    span.style.textDecorationSkipInk = 'none';
+                }
                 span.appendChild(fragment);
                 range.insertNode(span);
                 var newRange = document.createRange();
@@ -304,7 +310,9 @@
             var span = document.createElement('span');
             span.style.textDecoration = 'underline';
             span.style.textDecorationColor = color;
-            span.style.textUnderlineOffset = '3px';
+            span.style.textUnderlineOffset = '4px';
+            span.style.textDecorationThickness = '2px';
+            span.style.textDecorationSkipInk = 'none';
             span.appendChild(fragment);
             range.insertNode(span);
             var newRange = document.createRange();
@@ -354,7 +362,7 @@
             }
 
             if (sel.isCollapsed) {
-                var linkHtml = '<a href="' + url + '" target="_blank" style="text-decoration:underline;">' + url + '</a>';
+                var linkHtml = '<a href="' + url + '" target="_blank" style="text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;text-decoration-skip-ink:none;">' + url + '</a>';
                 document.execCommand('insertHTML', false, linkHtml);
             } else {
                 document.execCommand('createLink', false, url);
