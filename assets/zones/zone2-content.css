@@ -1047,30 +1047,43 @@
 
 
 /* ===========================================
-   组件 14: 答题与批注 (.quiz-annotation)
+   组件 14: 答题与批注 (.quiz-annotation) — v2
    独占整页的复合交互组件，融合答题与批注两大功能。
    适用于阅读理解、七选五、完形填空、作文批改等场景。
 
-   区域结构（CSS Grid 统一管理）：
-    ┌──────────────┬──────────────┐
-    │  qa-passage   │ qa-notes-top │  ← row 1 (正文)
-    ├──────────────┴──────────────┤
-    │       qa-resize-bar         │  ← row 2 (8px, 仅 answers-active)
-    ├──────────────┬──────────────┤
-    │ qa-answer-panel│ qa-notes-btm│  ← row 3 (答题)
-    └──────────────┴──────────────┘
+   v2 布局重构：左中右三栏水平布局
+    ┌─────────────┬──────────┬──────────────────┐
+    │  qa-passage  │ qa-notes │  qa-answer-panel │
+    │  (左栏 5)    │ (中栏 2) │  (右栏 3)        │
+    │  始终可见     │ 默认隐藏  │  有内容时可见     │
+    └─────────────┴──────────┴──────────────────┘
 
    状态类：
-    .notes-active    → 右侧批注面板展开
-    .answers-active  → 底部选项/作答区域展开
-    .answers-full    → 选项全屏覆盖正文
-    .has-quiz        → 有答题内容
+    .notes-active    → 中栏批注面板展开
+    .has-quiz        → 有答题内容（右栏可见）
     .submitted       → 已提交答案
     .has-active-note → 有激活的批注（降噪规则）
+    .linking-left    → 关联模式：正在关联左侧
+    .linking-right   → 关联模式：正在关联右侧
    =========================================== */
 
 
-/* --- 14.0 组件根容器 --- */
+/* ===========================================
+   14.0 沉浸式逃逸 (Immersive Override)
+   通过 :has() 伪类自动隐藏 Zone 1 标题栏，
+   使 Zone 2 霸占全页高度。
+   Logo (.branding) 为 fixed 定位，天然不受影响。
+   =========================================== */
+.slide:has(.quiz-annotation) .slide-header {
+  display: none !important;
+}
+.slide:has(.quiz-annotation) .slide-content {
+  margin-top: 0;
+  flex: 1;
+}
+
+
+/* --- 14.1 组件根容器 --- */
 .quiz-annotation {
   position: relative;
   width: 100%;
@@ -1079,13 +1092,16 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  /* 组件内部四方向外围 padding 全部清零，由 .slide / .slide-content 统管 */
+  padding: 0;
 }
 
-/* --- 14.1 主体区域：CSS Grid 统一管理 --- */
+
+/* --- 14.2 主体区域：CSS Grid 三栏布局 --- */
 .qa-body {
   flex: 1;
   display: grid;
-  /* 默认：单列、只有正文行 */
+  /* 默认：纯文章解析（无答题内容），只有正文 */
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
   overflow: hidden;
@@ -1094,28 +1110,67 @@
   transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 批注面板展开 → 左右 2:1 */
-.quiz-annotation.notes-active .qa-body {
+/* 有答题内容时：左栏 + 右栏（批注隐藏态） */
+.quiz-annotation.has-quiz .qa-body {
+  grid-template-columns: 5fr 3fr;
+}
+
+/* 批注面板展开时：左中右三栏 */
+.quiz-annotation.has-quiz.notes-active .qa-body {
+  grid-template-columns: 5fr 2fr 3fr;
+}
+
+/* 纯文章解析 + 批注展开时：左2 + 中1 */
+.quiz-annotation:not(.has-quiz).notes-active .qa-body {
   grid-template-columns: 2fr 1fr;
 }
 
-/* 作答面板展开 → 上中下三行 */
-.quiz-annotation.answers-active .qa-body {
-  grid-template-rows: 3fr 8px 2fr;
+
+/* --- 14.3 栏间分割线 --- */
+/* 使用伪元素绘制极细的半透明分割线 */
+.qa-body::before,
+.qa-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255,255,255,0.08);
+  z-index: 20;
+  pointer-events: none;
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease;
 }
 
-/* 全屏覆盖正文 — 仅影响左侧行分配，不影响右侧批注列 */
-.quiz-annotation.answers-full .qa-body {
-  grid-template-rows: 0px 0px 1fr;
+/* 第一条分割线：左栏和中栏/右栏之间 */
+.qa-body::before {
+  /* 位置由 JS 动态计算，默认隐藏 */
+  left: var(--divider-1-left, 62.5%);
+  opacity: 1;
+}
+
+/* 第二条分割线：中栏和右栏之间（仅批注展开+有答题时可见） */
+.qa-body::after {
+  left: var(--divider-2-left, 70%);
+  opacity: 0;
+}
+.quiz-annotation.has-quiz.notes-active .qa-body::after {
+  opacity: 1;
+}
+
+/* 纯文章无答题时，只有一条分割线在批注展开时可见 */
+.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-body::before {
+  opacity: 0;
 }
 
 
-/* --- 14.2 正文/题干区域 (col1, row1) --- */
+/* --- 14.4 正文/题干区域（左栏）--- */
 .qa-passage {
   grid-column: 1;
   grid-row: 1;
   overflow-y: auto;
-  padding: 24px 28px;
+  /* 非对称 Padding：左侧和上下无 padding（外层统管），右侧保留栏间间距 */
+  padding: 0 20px 0 0;
   font-size: clamp(16px, 1.6vw, 22px);
   line-height: 1.9;
   color: var(--text);
@@ -1124,92 +1179,137 @@
   min-width: 0;
 }
 
-/* 正文全屏时隐藏 */
-.quiz-annotation.answers-full .qa-passage {
-  overflow: hidden; padding: 0; opacity: 0; pointer-events: none;
+
+/* --- 14.5 批注面板（中栏） --- */
+.qa-notes-panel {
+  grid-row: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  /* 默认隐藏 */
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 批注面板展开态 */
+.quiz-annotation.notes-active .qa-notes-panel {
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+
+/* 批注面板在 grid 中的列位置 */
+/* 有答题时，批注在第 2 列 */
+.quiz-annotation.has-quiz .qa-notes-panel {
+  grid-column: 2;
+}
+/* 纯文章时，批注也在第 2 列 */
+.quiz-annotation:not(.has-quiz) .qa-notes-panel {
+  grid-column: 2;
+}
+/* 未展开时不渲染 */
+.quiz-annotation:not(.notes-active) .qa-notes-panel {
+  display: none;
 }
 
 
-/* --- 14.3 批注上半 (col2, row1) --- */
-.qa-notes-top {
-  grid-column: 2;
-  grid-row: 1;
+/* --- 14.5.1 批注面板栏头 --- */
+.qa-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.qa-notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qa-notes-header-left svg {
+  width: 14px; height: 14px; opacity: 0.6;
+}
+/* 折叠按钮 */
+.qa-notes-collapse-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.qa-notes-collapse-btn:hover {
+  background-color: rgba(255,255,255,0.1);
+  color: var(--text);
+}
+
+
+/* --- 14.5.2 批注气泡列表区域 --- */
+.qa-notes-list {
+  flex: 1;
   overflow-y: auto;
-  padding: 12px 10px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  min-width: 0;
-  border-left: 1px solid var(--border);
-  /* 默认隐藏 */
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.35s ease;
-}
-.quiz-annotation.notes-active .qa-notes-top { opacity: 1; pointer-events: auto; }
-.quiz-annotation:not(.notes-active) .qa-notes-top { display: none; }
-
-
-/* --- 14.4 可拖动分隔条 (横跨所有列) --- */
-.qa-resize-bar {
-  grid-column: 1 / -1;  /* ★ 横跨所有列 ★ */
-  grid-row: 2;
-  cursor: row-resize;
-  position: relative;
-  z-index: 15;
-  touch-action: none;
-  background: transparent;
-  display: none;  /* 仅 answers-active 时才显示 */
-}
-.quiz-annotation.answers-active .qa-resize-bar { display: block; }
-.qa-resize-bar::after {
-  content: '';
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-  width: 50px; height: 4px; border-radius: 2px;
-  background: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
-  transition: background 0.2s, width 0.2s;
-}
-.qa-resize-bar:hover::after, .qa-resize-bar.dragging::after {
-  background: var(--brand-primary, var(--accent-blue)); width: 80px;
+  /* 允许气泡焦点外扩 */
+  overflow-x: visible;
 }
 
 
-/* --- 14.5 选项/作答区域 (col1, row3) --- */
+/* --- 14.6 选项/作答区域（右栏） --- */
 .qa-answer-panel {
-  grid-column: 1;
-  grid-row: 3;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
   min-width: 0;
-  /* 默认隐藏（grid-template-rows 里 row 3 不存在） */
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s ease;
+  /* 非对称 Padding：右侧和上下无 padding，左侧保留栏间间距 */
+  padding: 0 0 0 20px;
 }
-.quiz-annotation.answers-active .qa-answer-panel { opacity: 1; pointer-events: auto; }
-.quiz-annotation:not(.answers-active) .qa-answer-panel { display: none; }
+
+/* 右栏在 grid 中的列位置 */
+/* 批注隐藏时，右栏是第 2 列 */
+.quiz-annotation.has-quiz:not(.notes-active) .qa-answer-panel {
+  grid-column: 2;
+}
+/* 批注展开时，右栏是第 3 列 */
+.quiz-annotation.has-quiz.notes-active .qa-answer-panel {
+  grid-column: 3;
+}
+/* 无答题内容时右栏不显示 */
+.quiz-annotation:not(.has-quiz) .qa-answer-panel {
+  display: none;
+}
 
 
-/* --- 14.5.1 选项区标题与内容 --- */
+/* --- 14.6.1 选项区标题与内容 --- */
 .qa-answer-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 20px; border-top: 1px solid var(--border); flex-shrink: 0;
+  padding: 8px 0; flex-shrink: 0;
   font-size: 14px; font-weight: 600; color: var(--text-muted);
 }
 .qa-answer-header .qa-answer-title { display: flex; align-items: center; gap: 8px; }
-.qa-fullscreen-btn {
-  all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
-  color: var(--text-dim); background: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.04);
-  border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
-}
-.qa-fullscreen-btn:hover { border-color: var(--brand-primary, var(--accent-blue)); color: var(--brand-primary, var(--accent-blue)); }
-.qa-fullscreen-btn svg { width: 14px; height: 14px; }
-.qa-answer-content { flex: 1; padding: 12px 20px; overflow-y: auto; min-height: 0; }
+.qa-answer-content { flex: 1; padding: 0; overflow-y: auto; min-height: 0; }
 
 
-/* --- 14.5.2 选择题选项 --- */
+/* --- 14.6.2 选择题选项 --- */
 .qa-option {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 14px; margin-bottom: 6px; border-radius: 10px;
@@ -1259,7 +1359,7 @@
 }
 
 
-/* --- 14.5.3 提交按钮（嵌入 answer-header 行） --- */
+/* --- 14.6.3 提交按钮 --- */
 .qa-submit-btn {
   all: unset; box-sizing: border-box; display: inline-flex;
   align-items: center; justify-content: center; gap: 6px;
@@ -1271,29 +1371,6 @@
 }
 .qa-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35); }
 .qa-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-
-/* --- 14.6 批注下半 (col2, row3) --- */
-.qa-notes-btm {
-  grid-column: 2;
-  grid-row: 3;
-  overflow-y: auto;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-  min-width: 0;
-  border-left: 1px solid var(--border);
-  border-top: none; /* 分隔线由 resize-bar 统一管理 */
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-.quiz-annotation.answers-active.notes-active .qa-notes-btm {
-  opacity: 1; pointer-events: auto; padding: 12px 10px; overflow-y: auto;
-}
-.quiz-annotation:not(.answers-active) .qa-notes-btm,
-.quiz-annotation:not(.notes-active) .qa-notes-btm { display: none; }
 
 
 /* --- 14.7 原文锚点 + 角标 --- */
@@ -1323,6 +1400,15 @@
   50% { box-shadow: 0 0 16px rgba(0,96,170,0.6); }
 }
 
+/* 右栏答题条目的锚点角标 — 横向排列 */
+.answer-anchor {
+  position: relative;
+  cursor: pointer;
+}
+.answer-anchor .note-badge {
+  margin-right: 2px;
+}
+
 
 /* ===========================================
    14.8 批注气泡 (.qa-note-bubble)
@@ -1343,7 +1429,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* 气泡激活态 — 仅 scale 缩放，不改变字号 */
+/* 气泡激活态 — 仅 scale 缩放，不改变字号 + 焦点外扩 */
 .qa-note-bubble.note-active {
   background-color: rgba(255,255,255,0.15);
   border-color: var(--brand-primary, var(--accent-blue));
@@ -1351,6 +1437,9 @@
               0 0 44px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
   transform: scale(1.04) translateY(-2px);
   z-index: 10;
+  /* 焦点外扩：打破中间栏宽度限制 */
+  margin-left: -20px;
+  margin-right: -20px;
 }
 
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
@@ -1398,12 +1487,12 @@
   -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* 编辑模式操作按钮组 — 点击气泡后显示 */
+/* 编辑模式操作按钮组 — hover 气泡后显示 */
 .qa-note-actions {
   position: absolute; top: 6px; right: 6px;
   display: flex; gap: 4px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
-.qa-note-bubble.note-selected .qa-note-actions { opacity: 1; pointer-events: auto; }
+.qa-note-bubble:hover .qa-note-actions { opacity: 1; pointer-events: auto; }
 .qa-note-action-btn {
   all: unset; box-sizing: border-box; display: flex;
   align-items: center; justify-content: center;
@@ -1411,6 +1500,9 @@
   background-color: rgba(255,255,255,0.8); border: 1px solid var(--border);
   color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.2s;
 }
+.qa-note-action-btn:hover { background-color: rgba(255,255,255,0.95); }
+/* 关联按钮特殊颜色 */
+.qa-note-action-btn.link-btn { color: var(--brand-primary, var(--accent-blue)); }
 
 
 /* --- 14.9 SVG 连线 --- */
@@ -1423,6 +1515,15 @@
   stroke-opacity: 0.4; transition: stroke-opacity 0.3s;
 }
 .qa-connector-line.connector-hover { stroke-opacity: 0.25; stroke-dasharray: 6 3; }
+/* 边缘钉定箭头 */
+.qa-edge-arrow {
+  fill: var(--brand-primary, var(--accent-blue));
+  opacity: 0.5;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.2s;
+}
+.qa-edge-arrow:hover { opacity: 0.8; }
 
 
 /* --- 14.10 拖拽占位符 --- */
@@ -1436,30 +1537,40 @@
 }
 
 
-/* --- 14.11 控制按钮区 --- */
-.qa-controls {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 28px; border-top: 1px solid var(--border); flex-shrink: 0;
-}
-.qa-toggle-btn {
-  all: unset; box-sizing: border-box; display: inline-flex;
-  align-items: center; gap: 6px; padding: 8px 18px; border-radius: 10px;
-  font-size: 14px; font-weight: 600; color: var(--text-muted);
-  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.04); border: 1px solid var(--border);
-  cursor: pointer; transition: all 0.25s;
-}
-.qa-toggle-btn:hover { border-color: var(--brand-primary, var(--accent-blue)); color: var(--brand-primary, var(--accent-blue)); }
-.qa-toggle-btn.active {
-  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.1);
-  border-color: var(--brand-primary, var(--accent-blue));
+/* --- 14.11 分割线悬浮按钮（批注隐藏态的入口） --- */
+.qa-divider-btn {
+  position: absolute;
+  z-index: 30;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
+  border: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
   color: var(--brand-primary, var(--accent-blue));
-  box-shadow: 0 0 12px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  transform: translateX(-50%);
+  /* JS 动态设置 left 和 top */
 }
-.qa-toggle-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.qa-step-counter {
-  font-size: 12px; font-weight: 700; color: var(--brand-primary, var(--accent-blue));
-  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
-  padding: 2px 8px; border-radius: 10px; margin-left: 4px;
+.qa-divider-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.qa-divider-btn:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+  transform: translateX(-50%) scale(1.1);
+}
+.qa-divider-btn svg {
+  width: 16px; height: 16px;
+}
+/* 批注已展开时隐藏悬浮按钮 */
+.quiz-annotation.notes-active .qa-divider-btn {
+  display: none;
 }
 
 
@@ -1469,25 +1580,42 @@
   text-decoration: none !important; background-color: transparent !important;
   color: inherit !important; box-shadow: none !important;
 }
-.quiz-annotation.has-quiz:not(.submitted) .qa-toggle-btn[data-panel="notes"] { opacity: 0.35; pointer-events: none; }
-.quiz-annotation.has-quiz:not(.submitted) .qa-notes-top,
-.quiz-annotation.has-quiz:not(.submitted) .qa-notes-btm { display: none !important; }
+.quiz-annotation.has-quiz:not(.submitted) .qa-notes-panel { display: none !important; }
+.quiz-annotation.has-quiz:not(.submitted) .qa-divider-btn { display: none !important; }
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge { display: none; }
 .quiz-annotation.submitted .note-badge { animation: qaFadeIn 0.5s ease both; }
 @keyframes qaFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 
-/* --- 14.13 隐形滚动条 --- */
+/* --- 14.13 关联模式视觉反馈 --- */
+/* 关联左侧：左栏呼吸高亮边框 */
+.quiz-annotation.linking-left .qa-passage {
+  box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  animation: qaLinkingPulse 2s ease infinite;
+}
+/* 关联右侧：右栏呼吸高亮边框 */
+.quiz-annotation.linking-right .qa-answer-panel {
+  box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  animation: qaLinkingPulse 2s ease infinite;
+}
+@keyframes qaLinkingPulse {
+  0%,100% { box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15); }
+  50% { box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.4); }
+}
+
+
+/* --- 14.14 隐形滚动条 --- */
 .qa-passage::-webkit-scrollbar, .qa-answer-content::-webkit-scrollbar,
-.qa-notes-top::-webkit-scrollbar, .qa-notes-btm::-webkit-scrollbar { width: 4px; }
+.qa-notes-list::-webkit-scrollbar { width: 4px; }
 .qa-passage::-webkit-scrollbar-track, .qa-answer-content::-webkit-scrollbar-track,
-.qa-notes-top::-webkit-scrollbar-track, .qa-notes-btm::-webkit-scrollbar-track { background: transparent; }
+.qa-notes-list::-webkit-scrollbar-track { background: transparent; }
 .qa-passage::-webkit-scrollbar-thumb, .qa-answer-content::-webkit-scrollbar-thumb,
-.qa-notes-top::-webkit-scrollbar-thumb, .qa-notes-btm::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+.qa-notes-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 .qa-passage:hover::-webkit-scrollbar-thumb, .qa-answer-content:hover::-webkit-scrollbar-thumb,
-.qa-notes-top:hover::-webkit-scrollbar-thumb, .qa-notes-btm:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+.qa-notes-list:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
 
-/* --- 14.14 编辑模式浮动工具条 --- */
+/* --- 14.15 编辑模式浮动工具条 --- */
 .qa-annotation-toolbar {
   position: absolute; z-index: 100;
   display: none; align-items: center; gap: 6px; padding: 6px 12px;
@@ -1496,7 +1624,7 @@
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 .qa-annotation-toolbar.visible { display: flex; }
-.qa-toolbar-label { font-size: 12px; color: var(--text-dim); margin-right: 4px; }
+.qa-toolbar-label { font-size: 12px; color: var(--text-dim); margin-right: 4px; white-space: nowrap; }
 .qa-toolbar-btn {
   all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 6px; font-size: 14px; font-weight: 600;
@@ -1506,18 +1634,18 @@
 .qa-toolbar-btn:hover { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
 
 
-/* --- 14.15 响应式与无障碍 --- */
+/* --- 14.16 响应式与无障碍 --- */
 @media (prefers-reduced-motion: reduce) {
   .qa-body,
   .qa-answer-panel,
-  .qa-notes-top,
-  .qa-notes-btm,
+  .qa-notes-panel,
   .qa-note-bubble,
   .text-anchor,
   .note-badge,
   .qa-option,
   .qa-status-dot,
-  .qa-annotation-toolbar {
+  .qa-annotation-toolbar,
+  .qa-divider-btn {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }

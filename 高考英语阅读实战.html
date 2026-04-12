@@ -122,17 +122,11 @@
                             </p>
                         </div>
 
-                        <!-- 可拖动分隔条 -->
-                        <div class="qa-resize-bar"></div>
-
-                        <!-- ② 选项/作答区域 -->
+                        <!-- ② 选项/作答区域（右栏） -->
                         <div class="qa-answer-panel">
                             <div class="qa-answer-header">
                                 <div class="qa-answer-title">📋 七选五 · 拖拽选项到正文空位</div>
-                                <div style="display:flex;gap:8px;align-items:center;">
-                                    <button class="qa-submit-btn" id="submitBtn1">提交答案</button>
-                                    <button class="qa-fullscreen-btn" id="fsBtn1">⬆ 全屏</button>
-                                </div>
+                                <button class="qa-submit-btn" id="submitBtn1">提交答案</button>
                             </div>
                             <div class="qa-answer-content" data-scrollable>
                                 <!-- 七选五选项（拖拽式） -->
@@ -176,8 +170,8 @@
                             </div>
                         </div>
 
-                        <!-- ③ 批注上半 -->
-                        <div class="qa-notes-top" data-scrollable>
+                        <!-- ② 批注面板（中栏，JS 自动创建 header + notes-list） -->
+                        <div class="qa-notes-panel">
                             <div class="qa-note-bubble" data-link="note-01" data-step="1" draggable="true">
                                 <div class="qa-note-handle">
                                     <span class="qa-note-step">1</span>
@@ -230,23 +224,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- ③' 批注下半 -->
-                        <div class="qa-notes-btm" data-scrollable></div>
                     </div><!-- /qa-body -->
-
-                    <!-- 控制按钮区 -->
-                    <div class="qa-controls">
-                        <button class="qa-toggle-btn" data-panel="notes">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            批注
-                            <span class="qa-step-counter">0/4</span>
-                        </button>
-                        <button class="qa-toggle-btn" data-panel="answers">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                            作答
-                        </button>
-                    </div>
                 </div><!-- /quiz-annotation -->
             </div>
 
@@ -307,17 +285,11 @@
                             </p>
                         </div>
 
-                        <!-- 可拖动分隔条 -->
-                        <div class="qa-resize-bar"></div>
-
-                        <!-- ② 选项/作答区域 -->
+                        <!-- ② 选项/作答区域（右栏） -->
                         <div class="qa-answer-panel">
                             <div class="qa-answer-header">
                                 <div class="qa-answer-title">📋 阅读理解 · 选择题</div>
-                                <div style="display:flex;gap:8px;align-items:center;">
-                                    <button class="qa-submit-btn" id="submitBtn2">提交答案</button>
-                                    <button class="qa-fullscreen-btn" id="fsBtn2">⬆ 全屏</button>
-                                </div>
+                                <button class="qa-submit-btn" id="submitBtn2">提交答案</button>
                             </div>
                             <div class="qa-answer-content" data-scrollable>
                                 <!-- 第 24 题：单选 -->
@@ -422,8 +394,8 @@
                             </div>
                         </div>
 
-                        <!-- ③ 批注上半 -->
-                        <div class="qa-notes-top" data-scrollable>
+                        <!-- ② 批注面板（中栏） -->
+                        <div class="qa-notes-panel">
                             <div class="qa-note-bubble" data-link="note-11" data-step="1" draggable="true">
                                 <div class="qa-note-handle">
                                     <span class="qa-note-step">1</span>
@@ -476,23 +448,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- ③' 批注下半 -->
-                        <div class="qa-notes-btm" data-scrollable></div>
                     </div><!-- /qa-body -->
-
-                    <!-- 控制按钮区 -->
-                    <div class="qa-controls">
-                        <button class="qa-toggle-btn" data-panel="notes">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            批注
-                            <span class="qa-step-counter">0/4</span>
-                        </button>
-                        <button class="qa-toggle-btn" data-panel="answers">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                            作答
-                        </button>
-                    </div>
                 </div><!-- /quiz-annotation -->
             </div>
 
