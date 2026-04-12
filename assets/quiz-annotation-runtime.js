@@ -1471,11 +1471,13 @@
     }
 
     bubble.innerHTML = `
-      <div class="qa-note-handle">
-        <span class="qa-note-step">${newStep}</span>
+      <div class="qa-note-header">
+        <div class="qa-note-handle">
+          <span class="qa-note-step">${newStep}</span>
+        </div>
+        <div class="qa-note-actions">${actionsHTML}</div>
       </div>
       <div class="qa-note-content" contenteditable="true" data-edit-id="new-${newLinkId}"></div>
-      <div class="qa-note-actions">${actionsHTML}</div>
     `;
     notesList.appendChild(bubble);
 
@@ -1648,6 +1650,28 @@
     collapseBtn.addEventListener('click', () => toggleNotesPanel(qa));
   }
 
+  /**
+   * 将旧结构的气泡自动迁移到新的带 qa-note-header 的结构
+   * 使得之前硬编码生成的页面无需重新生成也能应用新排版。
+   */
+  function migrateLegacyBubbles(qa) {
+    qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
+      if (bubble.querySelector('.qa-note-header')) return; // 已是新版结构
+      
+      const handle = bubble.querySelector('.qa-note-handle');
+      const actions = bubble.querySelector('.qa-note-actions');
+      if (handle && actions) {
+        const header = document.createElement('div');
+        header.className = 'qa-note-header';
+        
+        // 移入
+        bubble.insertBefore(header, bubble.firstChild);
+        header.appendChild(handle);
+        header.appendChild(actions);
+      }
+    });
+  }
+
 
   // =========================================
   // 12.5 孤儿锚点扫描与气泡自动重建
@@ -1720,11 +1744,13 @@
       }
 
       bubble.innerHTML = `
-        <div class="qa-note-handle">
-          <span class="qa-note-step">${info.step}</span>
+        <div class="qa-note-header">
+          <div class="qa-note-handle">
+            <span class="qa-note-step">${info.step}</span>
+          </div>
+          <div class="qa-note-actions">${actionsHTML}</div>
         </div>
         <div class="qa-note-content" contenteditable="true" data-edit-id="new-${linkId}"></div>
-        <div class="qa-note-actions">${actionsHTML}</div>
       `;
       notesList.appendChild(bubble);
 
@@ -1794,6 +1820,9 @@
 
     // 清除已删除的批注（从原始 HTML 中清除残留的锚点和气泡）
     purgeDeletedNotes(qa);
+
+    // 将任何由于历史生成的 HTML 硬编码带来的旧气泡自动迁移至新的 qa-note-header 结构
+    migrateLegacyBubbles(qa);
 
     // 初始化批注面板栏头（动态生成 header + notes-list 结构）
     initNotesHeader(qa);

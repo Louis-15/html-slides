@@ -1568,8 +1568,7 @@
 }
 
 .text-anchor.anchor-active {
-  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
-  box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.1);
+  /* 移除高光背景，留给长难句分析功能 */
 }
 
 .note-badge {
@@ -1604,10 +1603,11 @@
   box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
 }
 
-.text-anchor.anchor-active .note-badge {
-  background-color: var(--accent-blue);
-  box-shadow: 0 0 12px rgba(0, 96, 170, 0.5);
-  animation: qaBadgePulse 1.5s ease infinite;
+.text-anchor.anchor-active .note-badge,
+.answer-anchor.anchor-active .note-badge {
+  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
+  box-shadow: 0 0 12px rgba(243, 152, 0, 0.5);
+  animation: qaBadgePulseOrange 1.5s ease infinite;
 }
 
 @keyframes qaBadgePulse {
@@ -1619,6 +1619,18 @@
 
   50% {
     box-shadow: 0 0 16px rgba(0, 96, 170, 0.6);
+  }
+}
+
+@keyframes qaBadgePulseOrange {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(243, 152, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(243, 152, 0, 0.6);
   }
 }
 
@@ -1643,8 +1655,10 @@
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 12px 14px 12px 44px;
-  /* 左侧为 handle + step 合并区域 */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  /* 结构改为 包含 header 栏 和 下方内容区 */
   font-size: clamp(13px, 1.3vw, 17px);
   line-height: 1.65;
   color: var(--text);
@@ -1690,37 +1704,39 @@ body.editor-mode .qa-option {
   transform: scale(0.96);
 }
 
-/* 拖拽手柄 — 左侧全高贯通区域，嵌入序号球 */
-.qa-note-handle {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 32px;
+/* 顶部头部：包含序号和操作按钮的横条 */
+.qa-note-header {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 13px;
-  cursor: grab;
-  transition: all 0.2s;
-  user-select: none;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 4px 8px;
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
-  border-right: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
-  border-radius: 12px 0 0 12px;
+  border-bottom: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  border-radius: 11px 11px 0 0;
+  cursor: grab;
+  transition: background-color 0.2s;
+  user-select: none;
 }
 
-.qa-note-handle:hover {
+.qa-note-header:hover {
   background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18);
 }
 
-.qa-note-handle:active {
+.qa-note-header:active {
   cursor: grabbing;
 }
 
-/* 激活态下手柄变为实心底色 */
-.qa-note-bubble.note-active .qa-note-handle {
-  background-color: var(--brand-primary, var(--accent-blue));
-  border-right: none;
+/* 激活态下头部变为实心主要色（改用橙色） */
+.qa-note-bubble.note-active .qa-note-header {
+  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
+  border-bottom: none;
+}
+
+/* 左侧内部容器：包裹序号即可 */
+.qa-note-handle {
+  display: flex;
+  align-items: center;
 }
 
 /* 气泡序号圆标 — 嵌在 handle 内部 */
@@ -1742,12 +1758,14 @@ body.editor-mode .qa-option {
 /* 激活态序号反色 */
 .qa-note-bubble.note-active .qa-note-step {
   background-color: #fff;
-  color: var(--brand-primary, var(--accent-blue));
+  color: var(--brand-secondary, var(--accent-orange, #f39800));
 }
 
 /* 气泡内容区 */
 .qa-note-content {
-  display: inline;
+  display: block; /* 覆盖原本的 inline */
+  padding: 8px 12px 12px 12px;
+  outline: none;
 }
 
 /* 气泡内容折叠 — 超 3 行截断（未激活时） */
@@ -1758,21 +1776,14 @@ body.editor-mode .qa-option {
   overflow: hidden;
 }
 
-/* 操作按钮组 — 移至左侧把手(handle)下方，呈垂直排列 */
+/* 操作按钮组 — 居右横向排列 */
 .qa-note-actions {
-  position: absolute;
-  bottom: 8px;
-  left: 0;
-  width: 32px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row-reverse;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   opacity: 0;
-  pointer-events: none;
   transition: opacity 0.2s;
-  z-index: 2;
-  /* 位于 handle 背景之上 */
 }
 
 .qa-note-bubble:hover .qa-note-actions {
@@ -1780,17 +1791,17 @@ body.editor-mode .qa-option {
   pointer-events: auto;
 }
 
-/* 基础按钮样式 — 为了适应竖条宽度，尺寸可以稍小一点，无边框全透明背景更美观 */
+/* 基础按钮样式 — 为了适应顶部栏，尺寸全透明高亮 */
 .qa-note-action-btn {
   all: unset;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(128, 128, 128, 0.15);
   color: var(--text-muted);
   font-size: 11px;
   cursor: pointer;
@@ -1805,6 +1816,16 @@ body.editor-mode .qa-option {
 /* 关联按钮特殊颜色 */
 .qa-note-action-btn.link-btn {
   color: var(--brand-primary, var(--accent-blue));
+}
+
+/* 激活态下的按钮颜色自适应，防淹没在橙色中 */
+.qa-note-bubble.note-active .qa-note-action-btn {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.qa-note-bubble.note-active .qa-note-action-btn:hover {
+  background-color: #fff;
+  color: var(--brand-secondary, var(--accent-orange, #f39800));
 }
 
 /* 非编辑模式下的显隐逻辑：只显示 📌 (action-select) */
@@ -1829,7 +1850,12 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   stroke: var(--brand-primary, var(--accent-blue));
   stroke-width: 2;
   stroke-opacity: 0.4;
-  transition: stroke-opacity 0.3s;
+  transition: stroke-opacity 0.3s, stroke 0.3s;
+}
+
+.qa-connector-line.connector-step {
+  stroke: var(--brand-secondary, var(--accent-orange, #f39800));
+  stroke-opacity: 0.5;
 }
 
 .qa-connector-line.connector-hover {
@@ -1843,7 +1869,11 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
   opacity: 0.5;
   cursor: pointer;
   pointer-events: auto;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, fill 0.3s;
+}
+
+.qa-edge-arrow.arrow-step {
+  fill: var(--brand-secondary, var(--accent-orange, #f39800));
 }
 
 .qa-edge-arrow:hover {
