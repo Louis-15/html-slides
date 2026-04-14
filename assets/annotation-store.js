@@ -17,6 +17,7 @@
   var _fileHandle = null;
   var _saveTimer = null;
   var _initData = null;
+  var _permissionGranted = false;  // 真实权限状态追踪
 
   // === 文件名推导 ===
 
@@ -98,12 +99,54 @@
       return handle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
         if (perm === 'granted') {
           _fileHandle = handle;
+          _permissionGranted = true;
           return true;
         }
         _fileHandle = handle;
+        _permissionGranted = false;
+        // 注册一次性用户手势监听器，在第一次交互时自动重新获取权限
+        _installAutoReauth();
         return 'needs-reauth';
       });
     }).catch(function () { return false; });
+  }
+
+  /**
+   * 安装一次性自动重授权监听器
+   * File System Access API 的 requestPermission 需要用户手势上下文，
+   * 所以我们在全局 click/keydown 中透明地完成重授权
+   */
+  var _autoReauthInstalled = false;
+  function _installAutoReauth() {
+    if (_autoReauthInstalled) return;
+    _autoReauthInstalled = true;
+
+    function doReauth() {
+      if (!_fileHandle || _permissionGranted) {
+        _removeListeners();
+        return;
+      }
+      _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
+        if (perm === 'granted') {
+          _permissionGranted = true;
+          _updateStatus('ready');
+          // 如果有挂起的保存需求，立即执行
+          var data = _collectData();
+          _writeToFile(data);
+        }
+      }).catch(function () { /* 用户拒绝或浏览器不支持，静默忽略 */ });
+      _removeListeners();
+    }
+
+    function _removeListeners() {
+      _autoReauthInstalled = false;
+      document.removeEventListener('click', doReauth, { capture: true });
+      document.removeEventListener('keydown', doReauth, { capture: true });
+    }
+
+    // capture: true 确保在任何 stopPropagation 之前触发
+    document.addEventListener('click', doReauth, { capture: true, once: true });
+    document.addEventListener('keydown', doReauth, { capture: true, once: true });
   }
 
   function _requestWritePermission() {
@@ -127,6 +170,7 @@
       }]
     }).then(function (handle) {
       _fileHandle = handle;
+      _permissionGranted = true;
       return _storeHandle(handle).then(function () { return true; });
     }).catch(function (e) {
       if (e.name !== 'AbortError') console.warn('[AnnotationStore] 选择文件失败:', e);
@@ -336,13 +380,21 @@
       if (_saveTimer) clearTimeout(_saveTimer);
       _saveTimer = setTimeout(function () {
         var data = _collectData();
-        if (_fileHandle) {
-          _fileHandle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+        if (_fileHandle && _permissionGranted) {
+          // 权限已确认，直接写入
+          _writeToFile(data);
+        } else if (_fileHandle && !_permissionGranted) {
+          // 句柄存在但权限未授予，尝试 requestPermission（需要用户手势上下文）
+          _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
             if (perm === 'granted') {
+              _permissionGranted = true;
+              _updateStatus('ready');
               _writeToFile(data);
             } else {
               _updateStatus('needs-auth');
             }
+          }).catch(function () {
+            _updateStatus('needs-auth');
           });
         } else {
           _updateStatus('needs-auth');
@@ -359,6 +411,7 @@
     authorizeAndSave: function () {
       return _requestWritePermission().then(function (ok) {
         if (ok) {
+          _permissionGranted = true;
           _updateStatus('ready');
           var data = _collectData();
           return _writeToFile(data);
@@ -368,7 +421,7 @@
     },
 
     hasWriteAccess: function () {
-      return !!_fileHandle;
+      return !!_fileHandle && _permissionGranted;
     }
   };
 
