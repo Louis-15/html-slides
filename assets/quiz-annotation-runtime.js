@@ -900,10 +900,12 @@
       if (isCorrect) {
         markEl.textContent = '✓';
         markEl.classList.add('correct');
+        option.classList.add('result-correct');
         setTimeout(() => markEl.classList.add('visible'), 100);
       } else if (isSelected && !isCorrect) {
         markEl.textContent = '✗';
         markEl.classList.add('incorrect');
+        option.classList.add('result-incorrect');
         setTimeout(() => markEl.classList.add('visible'), 150);
       }
     });

@@ -1459,9 +1459,9 @@
 }
 
 .qa-option.selected {
-  border-color: var(--brand-primary, var(--accent-blue));
-  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.1);
-  box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(243, 152, 0, 0.15);
 }
 
 .qa-option-label {
@@ -1481,9 +1481,9 @@
 }
 
 .qa-option.selected .qa-option-label {
-  background-color: var(--brand-primary, var(--accent-blue));
+  background-color: var(--accent-orange, #f39800);
   color: #fff;
-  border-color: var(--brand-primary, var(--accent-blue));
+  border-color: var(--accent-orange, #f39800);
 }
 
 /* 状态圆点槽 — 始终显示在序号左侧，保留固定宽度占位 */
@@ -1520,14 +1520,26 @@
 
 /* 选错的选项红色半透明高光 */
 .qa-option.result-incorrect {
-  background-color: rgba(186, 26, 26, 0.06);
-  border-color: rgba(186, 26, 26, 0.25);
+  background-color: rgba(186, 26, 26, 0.15);
+  border-color: var(--accent-red, #ba1a1a);
+  box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.15);
+}
+.qa-option.result-incorrect .qa-option-label {
+  background-color: var(--accent-red, #ba1a1a);
+  color: #fff;
+  border-color: var(--accent-red, #ba1a1a);
 }
 
 /* 正确选项绿色高光 */
 .qa-option.result-correct {
-  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.06);
-  border-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.25);
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+  border-color: var(--brand-primary, #00A355);
+  box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+}
+.qa-option.result-correct .qa-option-label {
+  background-color: var(--brand-primary, #00A355);
+  color: #fff;
+  border-color: var(--brand-primary, #00A355);
 }
 
 
