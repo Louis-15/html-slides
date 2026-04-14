@@ -1683,7 +1683,8 @@ body.editor-mode .qa-option {
 /* 气泡激活态 — 仅 scale 缩放，不改变字号 + 焦点外扩 */
 .qa-note-bubble.note-active {
   background-color: rgba(255, 255, 255, 0.15);
-  border-color: var(--brand-primary, var(--accent-blue));
+  /* 将原本绿色的边框改为半透明的橙色，与外面的 box-shadow 完美融合，消除空隙 */
+  border-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.5);
   /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
      现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
   box-shadow:

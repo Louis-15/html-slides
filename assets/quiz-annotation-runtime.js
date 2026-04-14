@@ -21,7 +21,7 @@
    通过 data-scrollable 利用现有滚轮拦截。
    =========================================== */
 
-(function() {
+(function () {
   'use strict';
 
   // =========================================
@@ -147,13 +147,13 @@
       let tNode = textNodes[i];
       let val = tNode.nodeValue;
       let match = val.match(/\s+$/);
-      if (match && match[0] === val) { 
+      if (match && match[0] === val) {
         trailingSpaces = val + trailingSpaces;
         tNode.nodeValue = '';
       } else if (match) {
         trailingSpaces = match[0] + trailingSpaces;
         tNode.nodeValue = val.substring(0, val.length - match[0].length);
-        break; 
+        break;
       } else {
         break;
       }
@@ -200,7 +200,7 @@
     if (!qa) return;
     // 如果被答题隔离规则禁用，不允许展开
     if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-        !document.body.classList.contains('edit-mode')) {
+      !document.body.classList.contains('edit-mode')) {
       return;
     }
     const isActive = qa.classList.toggle('notes-active');
@@ -264,7 +264,7 @@
       if (qa.classList.contains('notes-active')) return;
       // 答题隔离规则下不显示
       if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-          !document.body.classList.contains('edit-mode')) {
+        !document.body.classList.contains('edit-mode')) {
         dividerBtn.classList.remove('visible');
         return;
       }
@@ -694,7 +694,7 @@
         e.preventDefault();
         return;
       }
-      
+
       draggedBubble = b;
       b.classList.add('dragging-source');
       e.dataTransfer.effectAllowed = 'move';
@@ -997,7 +997,7 @@
       `;
       if (!hasLeftLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
       if (!hasRightLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
-      
+
       let actionsDiv = bubble.querySelector('.qa-note-actions');
       if (actionsDiv) {
         actionsDiv.innerHTML = actionsHTML;
@@ -1276,7 +1276,7 @@
         btn.addEventListener('click', e => {
           e.stopPropagation();
           const format = btn.dataset.format;
-          
+
           if (format === 'strikethrough') {
             fireFormat('strikethrough', null);
             return;
@@ -1316,10 +1316,10 @@
         if (!activeQA) return;
         const tb = activeQA.querySelector('.qa-annotation-toolbar');
         if (!tb) return;
-        
+
         // 每次选区改变，确保关闭所有下拉菜单
         tb.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.remove('show'));
-        
+
         const psg = activeQA.querySelector('.qa-passage');
         const ans = activeQA.querySelector('.qa-answer-panel');
 
@@ -1346,7 +1346,7 @@
 
         if (linkingState) {
           const targetOk = (linkingState.direction === 'left' && inPassage) ||
-                            (linkingState.direction === 'right' && inAnswer);
+            (linkingState.direction === 'right' && inAnswer);
           if (!targetOk) {
             tb.classList.remove('visible');
             return;
@@ -1441,7 +1441,7 @@
     badge.className = 'note-badge';
     badge.textContent = newStep;
     anchor.appendChild(badge);
-    
+
     // 即时清理，防止用户手滑框选到了首尾的空格影响排版
     trimAnchorWhitespaces(anchor);
 
@@ -1660,13 +1660,13 @@
   function migrateLegacyBubbles(qa) {
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
       if (bubble.querySelector('.qa-note-header')) return; // 已是新版结构
-      
+
       const handle = bubble.querySelector('.qa-note-handle');
       const actions = bubble.querySelector('.qa-note-actions');
       if (handle && actions) {
         const header = document.createElement('div');
         header.className = 'qa-note-header';
-        
+
         // 移入
         bubble.insertBefore(header, bubble.firstChild);
         header.appendChild(handle);
@@ -1796,7 +1796,7 @@
       const currRect = currBadge.getBoundingClientRect();
 
       if (Math.abs(prevRect.top - currRect.top) < 5 &&
-          Math.abs(prevRect.right - currRect.left) < 5) {
+        Math.abs(prevRect.right - currRect.left) < 5) {
         currBadge.style.marginLeft = '0px';
       }
     }
@@ -1978,7 +1978,7 @@
 
   // 监听页面切换，重置步进索引
   if (typeof window.addSlideChangeListener === 'function') {
-    window.addSlideChangeListener(function() {
+    window.addSlideChangeListener(function (currentIdx, prevIdx) {
       annotationStepIndex = -1;
       // 退出关联模式
       exitLinkingMode();

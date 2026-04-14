@@ -49,6 +49,14 @@ body {
   pointer-events: auto;
 }
 
+/* 【关键修复】非活跃 slide 的所有子元素强制禁用指针事件。
+   原因：部分组件（如 .qa-notes-panel.notes-active）显式设置了
+   pointer-events: auto，会穿透父级 .slide 的 pointer-events: none，
+   导致不可见的旧页面面板拦截当前页面的点击事件。 */
+.slide:not(.active):not(.leaving) * {
+  pointer-events: none !important;
+}
+
 /* -- Particles -- */
 .particles {
   position: fixed;
