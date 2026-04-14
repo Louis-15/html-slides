@@ -791,6 +791,8 @@
       option.addEventListener('click', () => {
         if (document.documentElement.classList.contains('editor-mode')) return;
         if (qa.classList.contains('submitted')) return;
+        // 连线题不使用点选，由拖拽交互驱动
+        if (option.closest('.qa-question')?.dataset.type === 'matching') return;
 
         const isMulti = option.closest('.qa-question')?.dataset.type === 'multi';
         if (!isMulti) {
@@ -802,70 +804,127 @@
       });
     });
 
-    // — 拖拽填空：选项拖到空位 —
-    qa.querySelectorAll('.qa-drag-option').forEach(opt => {
-      opt.addEventListener('dragstart', (e) => {
-        if (document.documentElement.classList.contains('editor-mode')) {
-          e.preventDefault();
-          return;
+    // — 连线题（七选五）：在右栏动态生成答题槽位并绑定拖拽 —
+    const matchingQuestion = qa.querySelector('.qa-question[data-type="matching"]');
+    if (matchingQuestion) {
+      const passageSlots = qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]');
+      if (passageSlots.length > 0) {
+        // 创建答题槽位容器
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'qa-answer-slots';
+
+        passageSlots.forEach(pSlot => {
+          const blankId = pSlot.dataset.blankId;
+          const correctAnswer = pSlot.dataset.correctAnswer;
+          const slot = document.createElement('div');
+          slot.className = 'qa-answer-slot';
+          slot.dataset.blankId = blankId;
+          slot.dataset.correctAnswer = correctAnswer;
+          slot.innerHTML =
+            '<span class="qa-slot-label">' + blankId + '.</span>' +
+            '<span class="qa-slot-blank">_______</span>';
+          slotsContainer.appendChild(slot);
+        });
+
+        // 插入到选项列表之前
+        const answerContent = qa.querySelector('.qa-answer-content');
+        if (answerContent) {
+          answerContent.insertBefore(slotsContainer, answerContent.firstChild);
         }
-        e.dataTransfer.setData('text/plain', opt.dataset.option);
-        e.dataTransfer.effectAllowed = 'copy';
-        opt.classList.add('dragging');
-      });
-      opt.addEventListener('dragend', () => {
-        opt.classList.remove('dragging');
-      });
-    });
 
-    qa.querySelectorAll('.qa-blank-slot').forEach(slot => {
-      slot.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        slot.classList.add('drag-over');
-      });
-      slot.addEventListener('dragleave', () => {
-        slot.classList.remove('drag-over');
-      });
-      slot.addEventListener('drop', (e) => {
-        e.preventDefault();
-        slot.classList.remove('drag-over');
-        if (qa.classList.contains('submitted')) return;
-
-        const optionId = e.dataTransfer.getData('text/plain');
-        if (!optionId) return;
-
-        const userSpan = slot.querySelector('.qa-blank-user');
-        if (userSpan) {
-          userSpan.textContent = optionId;
-        } else {
-          slot.textContent = optionId;
+        // 提示分隔线
+        const divider = document.createElement('div');
+        divider.className = 'qa-slots-divider';
+        divider.textContent = '↑ 将下方选项拖入上方槽位 ↓';
+        if (answerContent) {
+          answerContent.insertBefore(divider, matchingQuestion);
         }
-        slot.classList.add('filled');
-        slot.dataset.userAnswer = optionId;
 
-        const dragOpt = qa.querySelector(`.qa-drag-option[data-option="${optionId}"]`);
-        if (dragOpt) dragOpt.classList.add('used');
-      });
+        // 为可拖拽选项绑定 dragstart / dragend
+        matchingQuestion.querySelectorAll('.qa-option[draggable="true"]').forEach(opt => {
+          opt.addEventListener('dragstart', (e) => {
+            if (document.documentElement.classList.contains('editor-mode')) { e.preventDefault(); return; }
+            if (qa.classList.contains('submitted')) { e.preventDefault(); return; }
+            if (opt.classList.contains('used')) { e.preventDefault(); return; }
+            e.dataTransfer.setData('text/plain', opt.dataset.option);
+            e.dataTransfer.effectAllowed = 'copy';
+            opt.classList.add('dragging');
+          });
+          opt.addEventListener('dragend', () => {
+            opt.classList.remove('dragging');
+            slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => s.classList.remove('drag-over'));
+          });
+        });
 
-      slot.addEventListener('click', () => {
-        if (document.documentElement.classList.contains('editor-mode')) return;
-        if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
-        const usedOption = slot.dataset.userAnswer;
-        if (usedOption) {
-          const dragOpt = qa.querySelector(`.qa-drag-option[data-option="${usedOption}"]`);
-          if (dragOpt) dragOpt.classList.remove('used');
-        }
-        const userSpan = slot.querySelector('.qa-blank-user');
-        if (userSpan) {
-          userSpan.textContent = '___';
-        } else {
-          slot.textContent = '___';
-        }
-        slot.classList.remove('filled');
-        delete slot.dataset.userAnswer;
-      });
-    });
+        // 为每个槽位绑定 dragover / drop / click 事件
+        slotsContainer.querySelectorAll('.qa-answer-slot').forEach(slot => {
+          slot.addEventListener('dragover', (e) => {
+            if (qa.classList.contains('submitted')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            slot.classList.add('drag-over');
+          });
+          slot.addEventListener('dragleave', () => {
+            slot.classList.remove('drag-over');
+          });
+          slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slot.classList.remove('drag-over');
+            if (qa.classList.contains('submitted')) return;
+
+            const optionId = e.dataTransfer.getData('text/plain');
+            if (!optionId) return;
+
+            // 如果该槽位已有答案，先释放旧选项
+            const oldAnswer = slot.dataset.userAnswer;
+            if (oldAnswer) {
+              const oldOpt = matchingQuestion.querySelector('.qa-option[data-option="' + oldAnswer + '"]');
+              if (oldOpt) oldOpt.classList.remove('used');
+            }
+
+            // 如果该选项已被其他槽位使用，先从旧槽位移除
+            slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => {
+              if (s.dataset.userAnswer === optionId) {
+                delete s.dataset.userAnswer;
+                s.classList.remove('filled');
+                s.querySelector('.qa-slot-blank').textContent = '_______';
+              }
+            });
+
+            // 填入答案
+            slot.querySelector('.qa-slot-blank').textContent = optionId;
+            slot.classList.add('filled');
+            slot.dataset.userAnswer = optionId;
+
+            // 标记选项为已使用
+            const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + optionId + '"]');
+            if (dragOpt) dragOpt.classList.add('used');
+
+            // 同步到正文中的 blank-slot
+            syncSlotToPassage(qa, slot.dataset.blankId, optionId);
+          });
+
+          // 点击已填槽位可清除答案
+          slot.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('editor-mode')) return;
+            if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
+
+            const usedOption = slot.dataset.userAnswer;
+            if (usedOption) {
+              const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + usedOption + '"]');
+              if (dragOpt) dragOpt.classList.remove('used');
+            }
+
+            slot.querySelector('.qa-slot-blank').textContent = '_______';
+            slot.classList.remove('filled');
+            delete slot.dataset.userAnswer;
+
+            // 同步清除正文中的 blank-slot
+            clearPassageSlot(qa, slot.dataset.blankId);
+          });
+        });
+      }
+    }
 
     // — 提交按钮 —
     const submitBtn = qa.querySelector('.qa-submit-btn');
@@ -875,6 +934,34 @@
         if (qa.classList.contains('submitted')) return;
         submitQuiz(qa);
       });
+    }
+  }
+
+  /** 同步右栏槽位答案到正文空位 */
+  function syncSlotToPassage(qa, blankId, optionId) {
+    const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
+    if (!passageSlot) return;
+    passageSlot.dataset.userAnswer = optionId;
+    passageSlot.classList.add('filled');
+    const userSpan = passageSlot.querySelector('.qa-blank-user');
+    if (userSpan) {
+      const sup = passageSlot.querySelector('sup');
+      userSpan.textContent = optionId + ' ';
+      if (sup) userSpan.appendChild(sup);
+    }
+  }
+
+  /** 清除正文空位的答案 */
+  function clearPassageSlot(qa, blankId) {
+    const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
+    if (!passageSlot) return;
+    delete passageSlot.dataset.userAnswer;
+    passageSlot.classList.remove('filled');
+    const userSpan = passageSlot.querySelector('.qa-blank-user');
+    if (userSpan) {
+      const sup = passageSlot.querySelector('sup');
+      userSpan.textContent = '___';
+      if (sup) userSpan.appendChild(sup);
     }
   }
 
@@ -944,6 +1031,24 @@
           correctEl.textContent = correctAnswer;
           slot.appendChild(correctEl);
         }
+      }
+    });
+
+    // — 连线题右栏槽位判分标记 —
+    qa.querySelectorAll('.qa-answer-slot[data-correct-answer]').forEach(slot => {
+      const correctAnswer = slot.dataset.correctAnswer;
+      const userAnswer = slot.dataset.userAnswer || '';
+      const isCorrect = userAnswer.toUpperCase() === correctAnswer.toUpperCase();
+
+      if (slot.classList.contains('filled')) {
+        slot.classList.add(isCorrect ? 'slot-correct' : 'slot-incorrect');
+      }
+      // 未填或填错时，显示正确答案
+      if (!isCorrect) {
+        const correctEl = document.createElement('span');
+        correctEl.className = 'qa-slot-correct';
+        correctEl.textContent = correctAnswer;
+        slot.appendChild(correctEl);
       }
     });
   }

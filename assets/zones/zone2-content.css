@@ -1432,6 +1432,122 @@
 }
 
 
+/* --- 14.6.1a 连线题右栏答题槽位 --- */
+.qa-answer-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.qa-answer-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px dashed var(--border-hover, rgba(0, 0, 0, 0.12));
+  transition: all 0.25s ease;
+  min-height: 36px;
+  cursor: default;
+  position: relative;
+}
+
+.qa-answer-slot.drag-over {
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.08);
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(243, 152, 0, 0.15);
+}
+
+.qa-answer-slot.filled {
+  border-style: solid;
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.1);
+  cursor: pointer;
+}
+
+.qa-slot-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-muted);
+  min-width: 28px;
+  flex-shrink: 0;
+}
+
+.qa-slot-blank {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+
+.qa-answer-slot.filled .qa-slot-blank {
+  color: var(--accent-orange, #f39800);
+  font-weight: 800;
+  letter-spacing: 0;
+  font-size: 17px;
+}
+
+/* 槽位判分状态 */
+.qa-answer-slot.slot-correct {
+  border-color: var(--brand-primary, #00A355);
+  border-style: solid;
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.12);
+}
+
+.qa-answer-slot.slot-correct .qa-slot-blank {
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-answer-slot.slot-incorrect {
+  border-color: var(--accent-red, #ba1a1a);
+  border-style: solid;
+  background-color: rgba(186, 26, 26, 0.1);
+}
+
+.qa-answer-slot.slot-incorrect .qa-slot-blank {
+  color: var(--accent-red, #ba1a1a);
+  text-decoration: line-through;
+}
+
+.qa-slot-correct {
+  color: var(--brand-primary, #00A355);
+  font-weight: 700;
+  font-size: 15px;
+  margin-left: auto;
+}
+
+/* 提示分隔线 */
+.qa-slots-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  border-top: 1px dashed var(--border);
+}
+
+/* 已拖入槽位的选项变暗 */
+.qa-option.used {
+  opacity: 0.4;
+  pointer-events: none;
+  transform: scale(0.97);
+}
+
+/* 正在被拖拽的选项 */
+.qa-option.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+
 /* --- 14.6.2 选择题选项 --- */
 .qa-option {
   display: flex;
