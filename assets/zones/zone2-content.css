@@ -1781,7 +1781,7 @@ body.editor-mode .qa-option {
 /* 操作按钮组 — 居右横向排列 */
 .qa-note-actions {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   gap: 4px;
   opacity: 0;

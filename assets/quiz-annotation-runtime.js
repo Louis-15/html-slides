@@ -991,13 +991,13 @@
       const linkId = bubble.dataset.link;
       const hasLeftLink = !!qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
       const hasRightLink = !!qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"]`);
-      let actionsHTML = `
-        <button class="qa-note-action-btn action-select-left" title="选中左侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>
-        <button class="qa-note-action-btn action-select-right" title="选中右侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>
-        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-      `;
+      // 按钮排列顺序：关联左侧 → 关联右侧 → 选中左侧原文 → 选中右侧原文 → 删除批注
+      let actionsHTML = '';
       if (!hasLeftLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
       if (!hasRightLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
+      if (hasLeftLink) actionsHTML += `<button class="qa-note-action-btn action-select-left" title="选中左侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>`;
+      if (hasRightLink) actionsHTML += `<button class="qa-note-action-btn action-select-right" title="选中右侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>`;
+      actionsHTML += `<button class="qa-note-action-btn action-delete" title="删除批注">✖</button>`;
 
       let actionsDiv = bubble.querySelector('.qa-note-actions');
       if (actionsDiv) {
@@ -1084,16 +1084,18 @@
         const anchor = qa.querySelector(`.answer-anchor[data-link-answer="${rightLinkId}"]`) || qa.querySelector(`.answer-anchor[data-link="${rightLinkId}"]`);
         if (!anchor) return;
 
+        const targetNode = anchor.closest('.qa-option') || anchor;
+
         const range = document.createRange();
-        range.selectNodeContents(anchor);
-        const badges = anchor.querySelectorAll('.note-badge');
+        range.selectNodeContents(targetNode);
+        const badges = targetNode.querySelectorAll('.note-badge');
         if (badges.length > 0) {
           range.setEndBefore(badges[0]);
         }
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
-        scrollIntoViewSmooth(anchor);
+        scrollIntoViewSmooth(targetNode);
       });
     });
 
@@ -1487,17 +1489,13 @@
     // 动态生成操作按钮（包含关联按钮）
     const hasLeftLink = inPassage;
     const hasRightLink = inAnswer;
-    let actionsHTML = `
-      <button class="qa-note-action-btn action-select-left" title="选中左侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>
-      <button class="qa-note-action-btn action-select-right" title="选中右侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>
-      <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-    `;
-    if (!hasLeftLink) {
-      actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
-    }
-    if (!hasRightLink) {
-      actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
-    }
+    // 按钮排列顺序：关联左侧 → 关联右侧 → 选中左侧原文 → 选中右侧原文 → 删除批注
+    let actionsHTML = '';
+    if (!hasLeftLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
+    if (!hasRightLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
+    if (hasLeftLink) actionsHTML += `<button class="qa-note-action-btn action-select-left" title="选中左侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>`;
+    if (hasRightLink) actionsHTML += `<button class="qa-note-action-btn action-select-right" title="选中右侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>`;
+    actionsHTML += `<button class="qa-note-action-btn action-delete" title="删除批注">✖</button>`;
 
     bubble.innerHTML = `
       <div class="qa-note-header">
@@ -1761,17 +1759,13 @@
       bubble.setAttribute('draggable', 'false');
 
       // 动态生成操作按钮
-      let actionsHTML = `
-        <button class="qa-note-action-btn action-select-left" title="选中左侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>
-        <button class="qa-note-action-btn action-select-right" title="选中右侧原文"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>
-        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-      `;
-      if (!info.hasLeft) {
-        actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
-      }
-      if (!info.hasRight) {
-        actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
-      }
+      // 按钮排列顺序：关联左侧 → 关联右侧 → 选中左侧原文 → 选中右侧原文 → 删除批注
+      let actionsHTML = '';
+      if (!info.hasLeft) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧">🔗←</button>`;
+      if (!info.hasRight) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-right" title="关联右侧">🔗→</button>`;
+      if (info.hasLeft) actionsHTML += `<button class="qa-note-action-btn action-select-left" title="选中左侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon"><path d="M20 11V4a2 2 0 0 0-2-2h-8a2.4 2.4 0 0 0-1.706.706l-3.588 3.588A2.4 2.4 0 0 0 4 8v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-7"/><path d="M10 2v5a1 1 0 0 1-1 1H4"/><path d="m14 18-3-3 3-3"/></svg></button>`;
+      if (info.hasRight) actionsHTML += `<button class="qa-note-action-btn action-select-right" title="选中右侧原文" style="color: var(--text-dim, #8b949e);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-symlink-icon lucide-file-symlink"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h7"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m10 18 3-3-3-3"/></svg></button>`;
+      actionsHTML += `<button class="qa-note-action-btn action-delete" title="删除批注">✖</button>`;
 
       bubble.innerHTML = `
         <div class="qa-note-header">
