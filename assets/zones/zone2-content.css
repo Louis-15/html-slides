@@ -1486,21 +1486,9 @@
   border-color: var(--accent-orange, #f39800);
 }
 
-/* 状态圆点槽 — 始终显示在序号左侧，保留固定宽度占位 */
+/* 状态圆点槽已弃用，隐去原本的冗余宽度占位 */
 .qa-status-dot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 800;
-  opacity: 0;
-  /* 未判分时透明占位 */
-  transform: scale(0.3);
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: none !important;
 }
 
 .qa-status-dot.visible {
@@ -1524,6 +1512,7 @@
   border-color: var(--accent-red, #ba1a1a);
   box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.15);
 }
+
 .qa-option.result-incorrect .qa-option-label {
   background-color: var(--accent-red, #ba1a1a);
   color: #fff;
@@ -1536,6 +1525,7 @@
   border-color: var(--brand-primary, #00A355);
   box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
 }
+
 .qa-option.result-correct .qa-option-label {
   background-color: var(--brand-primary, #00A355);
   color: #fff;
@@ -1549,7 +1539,7 @@
 .qa-option .qa-result-mark {
   position: absolute;
   left: 28px;
-  top: 24px;
+  top: 20px;
   font-size: 24px;
   font-weight: 900;
   z-index: 10;
@@ -1784,7 +1774,8 @@ body.editor-mode .qa-option {
 .qa-note-handle {
   display: flex;
   align-items: center;
-  flex: 1; /* 使它的有效面积占满头部除按钮外的所有空间 */
+  flex: 1;
+  /* 使它的有效面积占满头部除按钮外的所有空间 */
 }
 
 /* 气泡序号圆标 — 嵌在 handle 内部 */
@@ -1811,7 +1802,8 @@ body.editor-mode .qa-option {
 
 /* 气泡内容区 */
 .qa-note-content {
-  display: block; /* 覆盖原本的 inline */
+  display: block;
+  /* 覆盖原本的 inline */
   padding: 8px 12px 12px 12px;
   outline: none;
 }
@@ -1871,6 +1863,7 @@ body.editor-mode .qa-option {
   background-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
+
 .qa-note-bubble.note-active .qa-note-action-btn:hover {
   background-color: #fff;
   color: var(--brand-secondary, var(--accent-orange, #f39800));
