@@ -1043,10 +1043,33 @@
       });
     });
 
+    // 全局恢复拖拽状态函数
+    const restoreDragState = () => {
+      qa.querySelectorAll('.temp-no-drag').forEach(el => {
+        el.setAttribute('draggable', 'true');
+        el.classList.remove('temp-no-drag');
+      });
+    };
+
+    // 防止按钮点击时偷走焦点，导致放映模式下文字选中失效或隐形
+    qa.querySelectorAll('.qa-note-action-btn').forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+    });
+
+    // 任何鼠标按下（如果不是点击操作按钮），都尝试无缝恢复原来的可拖拽状态，保障做题交互无损
+    qa.addEventListener('mousedown', (e) => {
+      if (!e.target.closest('.qa-note-action-btn')) {
+        restoreDragState();
+      }
+    });
+
     // 点击空白处取消气泡选中
     qa.addEventListener('click', (e) => {
       if (!e.target.closest('.qa-note-bubble')) {
         qa.querySelectorAll('.note-selected').forEach(b => b.classList.remove('note-selected'));
+        restoreDragState();
       }
     });
 
@@ -1054,11 +1077,19 @@
     qa.querySelectorAll('.qa-note-action-btn.action-select-left').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        restoreDragState(); // 先重置以往状态
         const bubble = btn.closest('.qa-note-bubble');
         if (!bubble) return;
         const linkId = bubble.dataset.link;
         const anchor = getAnchorByLink(qa, linkId);
         if (!anchor) return;
+
+        // 临时禁用拖拽以允许原生 Selection 高亮穿透
+        const parentDraggable = anchor.closest('[draggable="true"]');
+        if (parentDraggable && !document.documentElement.classList.contains('editor-mode')) {
+          parentDraggable.setAttribute('draggable', 'false');
+          parentDraggable.classList.add('temp-no-drag');
+        }
 
         const range = document.createRange();
         range.selectNodeContents(anchor);
@@ -1077,6 +1108,7 @@
     qa.querySelectorAll('.qa-note-action-btn.action-select-right').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        restoreDragState(); // 先重置以往状态
         const bubble = btn.closest('.qa-note-bubble');
         if (!bubble) return;
         const linkId = bubble.dataset.link;
@@ -1084,18 +1116,23 @@
         const anchor = qa.querySelector(`.answer-anchor[data-link-answer="${rightLinkId}"]`) || qa.querySelector(`.answer-anchor[data-link="${rightLinkId}"]`);
         if (!anchor) return;
 
-        const targetNode = anchor.closest('.qa-option') || anchor;
+        // 临时禁用拖拽以允许原生 Selection 高亮穿透
+        const parentDraggable = anchor.closest('[draggable="true"]');
+        if (parentDraggable && !document.documentElement.classList.contains('editor-mode')) {
+          parentDraggable.setAttribute('draggable', 'false');
+          parentDraggable.classList.add('temp-no-drag');
+        }
 
         const range = document.createRange();
-        range.selectNodeContents(targetNode);
-        const badges = targetNode.querySelectorAll('.note-badge');
+        range.selectNodeContents(anchor);
+        const badges = anchor.querySelectorAll('.note-badge');
         if (badges.length > 0) {
           range.setEndBefore(badges[0]);
         }
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
-        scrollIntoViewSmooth(targetNode);
+        scrollIntoViewSmooth(anchor);
       });
     });
 
