@@ -1830,8 +1830,8 @@ body.editor-mode .qa-option {
   color: var(--brand-secondary, var(--accent-orange, #f39800));
 }
 
-/* 非编辑模式下的显隐逻辑：只显示 📌 (action-select) */
-html:not(.editor-mode) .qa-note-action-btn:not(.action-select) {
+/* 非编辑模式下的显隐逻辑：只显示跳转原文图标 (action-select-left、action-select-right) */
+html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-select-right) {
   display: none !important;
 }
 
