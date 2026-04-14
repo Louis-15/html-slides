@@ -208,6 +208,10 @@
     // 展开时更新分割线位置
     if (isActive) {
       requestAnimationFrame(() => updateDividerPositions(qa));
+    } else {
+      // 收起时，自动退出所有的激活焦点、隐藏连线并重置步进计数器
+      clearAllActive(qa);
+      annotationStepIndex = -1;
     }
 
     // 更新进度指示器
