@@ -937,32 +937,18 @@
     }
   }
 
-  /** 同步右栏槽位答案到正文空位 */
+  /** 同步右栏槽位答案到正文空位（仅同步数据，不改变视觉） */
   function syncSlotToPassage(qa, blankId, optionId) {
     const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
     if (!passageSlot) return;
     passageSlot.dataset.userAnswer = optionId;
-    passageSlot.classList.add('filled');
-    const userSpan = passageSlot.querySelector('.qa-blank-user');
-    if (userSpan) {
-      const sup = passageSlot.querySelector('sup');
-      userSpan.textContent = optionId + ' ';
-      if (sup) userSpan.appendChild(sup);
-    }
   }
 
-  /** 清除正文空位的答案 */
+  /** 清除正文空位的答案数据 */
   function clearPassageSlot(qa, blankId) {
     const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
     if (!passageSlot) return;
     delete passageSlot.dataset.userAnswer;
-    passageSlot.classList.remove('filled');
-    const userSpan = passageSlot.querySelector('.qa-blank-user');
-    if (userSpan) {
-      const sup = passageSlot.querySelector('sup');
-      userSpan.textContent = '___';
-      if (sup) userSpan.appendChild(sup);
-    }
   }
 
   /** 提交判分 */
@@ -997,8 +983,12 @@
       }
     });
 
-    // — 填空题判分 —
+    // — 填空题判分（连线题的正文空位不再显示判分标记，由右栏槽位统一处理） —
+    const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
     qa.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(slot => {
+      // 连线题的正文空位跳过视觉标记
+      if (hasMatchingQ) return;
+
       const correctAnswer = slot.dataset.correctAnswer;
       const userAnswer = slot.dataset.userAnswer || '';
 
@@ -1043,14 +1033,48 @@
       if (slot.classList.contains('filled')) {
         slot.classList.add(isCorrect ? 'slot-correct' : 'slot-incorrect');
       }
-      // 未填或填错时，显示正确答案
+
+      // 在序号右下方添加 ✓✗ 角标
+      const markEl = document.createElement('span');
+      markEl.className = 'qa-slot-mark';
+      if (slot.classList.contains('filled')) {
+        markEl.textContent = isCorrect ? '✓' : '✗';
+        markEl.classList.add(isCorrect ? 'correct' : 'incorrect');
+      } else {
+        markEl.textContent = '✗';
+        markEl.classList.add('incorrect');
+      }
+      const label = slot.querySelector('.qa-slot-label');
+      if (label) label.after(markEl);
+
+      // 未填或填错时，显示“正确选项：X”
       if (!isCorrect) {
         const correctEl = document.createElement('span');
         correctEl.className = 'qa-slot-correct';
-        correctEl.textContent = correctAnswer;
+        correctEl.innerHTML = '<span class="qa-slot-correct-prefix">正确选项：</span>' + correctAnswer;
         slot.appendChild(correctEl);
       }
     });
+
+    // — 连线题：提交后在正文空位填上正确答案（绿色加粗，保持下划线） —
+    if (hasMatchingQ) {
+      qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
+        const correctAnswer = slot.dataset.correctAnswer;
+        const userSpan = slot.querySelector('.qa-blank-user');
+        if (userSpan) {
+          const sup = slot.querySelector('sup');
+          userSpan.textContent = correctAnswer;
+          if (sup) {
+            userSpan.appendChild(document.createTextNode(' '));
+            userSpan.appendChild(sup);
+          }
+        }
+        slot.classList.add('slot-answered');
+        // 隐藏可能残留的答案展示span
+        const answerSpan = slot.querySelector('.qa-blank-answer');
+        if (answerSpan) answerSpan.style.display = 'none';
+      });
+    }
   }
 
 

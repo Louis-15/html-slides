@@ -1432,6 +1432,21 @@
 }
 
 
+/* --- 14.6.0 正文空位基础样式 --- */
+/* 彻底隐藏正文空位内的所有判分残留元素 */
+.qa-blank-slot .qa-blank-answer,
+.qa-blank-slot .qa-result-mark,
+.qa-blank-slot .qa-blank-correct {
+  display: none !important;
+}
+
+.qa-blank-slot.slot-answered .qa-blank-user {
+  color: var(--brand-primary, #00A355);
+  font-weight: 700;
+  border-bottom: 2px solid var(--brand-primary, #00A355);
+  padding-bottom: 1px;
+}
+
 /* --- 14.6.1a 连线题右栏答题槽位 --- */
 .qa-answer-slots {
   display: flex;
@@ -1449,7 +1464,7 @@
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1.5px dashed var(--border-hover, rgba(0, 0, 0, 0.12));
+  border: 1px dashed var(--border-hover, rgba(0, 0, 0, 0.12));
   transition: all 0.25s ease;
   min-height: 36px;
   cursor: default;
@@ -1511,7 +1526,23 @@
 
 .qa-answer-slot.slot-incorrect .qa-slot-blank {
   color: var(--accent-red, #ba1a1a);
-  text-decoration: line-through;
+}
+
+/* 槽位判分角标 ✓✗（序号右下方） */
+.qa-slot-mark {
+  font-size: 18px;
+  font-weight: 900;
+  margin-left: -4px;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.qa-slot-mark.correct {
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-slot-mark.incorrect {
+  color: var(--accent-red, #ba1a1a);
 }
 
 .qa-slot-correct {
@@ -1519,6 +1550,12 @@
   font-weight: 700;
   font-size: 15px;
   margin-left: auto;
+}
+
+.qa-slot-correct-prefix {
+  color: var(--text, #1a2e23);
+  font-weight: 600;
+  font-size: 13px;
 }
 
 /* 提示分隔线 */
