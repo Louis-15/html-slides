@@ -10,6 +10,15 @@ const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 
+function clickElement(window, element) {
+  element.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+}
+
+function ensureQaInitialized(window, qa) {
+  qa.removeAttribute('data-qa-initialized');
+  window.initQuizAnnotation(qa);
+}
+
 function createQuizDom() {
   const html = `<!DOCTYPE html><html><body>
     <div class="slide active" data-slide="1">
@@ -122,5 +131,42 @@ describe('quiz annotation runtime', () => {
 
     const directActionChildren = Array.from(bubble.children).filter((child) => child.classList.contains('qa-note-actions'));
     assert.equal(directActionChildren.length, 0, 'expected qa-note-actions not to be appended to qa-note-bubble root');
+  });
+
+  it('renders single-choice result marks inside the option label so multi-line answers stay aligned', () => {
+    const dom = createQuizDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    ensureQaInitialized(window, qa);
+    const option = qa.querySelector('.qa-option');
+    const optionLabel = option.querySelector('.qa-option-label');
+    const optionText = option.querySelector('.qa-option-text');
+    const submitBtn = qa.querySelector('.qa-submit-btn');
+
+    optionText.textContent = 'A long option answer that intentionally wraps to a second line so the correctness mark must stay attached to the option badge instead of the whole card.';
+
+    clickElement(window, option);
+    clickElement(window, submitBtn);
+
+    const resultMark = option.querySelector('.qa-result-mark');
+    assert.ok(resultMark, 'expected single-choice submit to create a result mark');
+    assert.equal(resultMark.parentElement, optionLabel, 'expected result mark to be rendered inside qa-option-label');
+  });
+
+  it('adds an entry animation state when a note badge activates its bubble', () => {
+    const dom = createQuizDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    ensureQaInitialized(window, qa);
+    const badge = qa.querySelector('.note-badge');
+    const bubble = qa.querySelector('.qa-note-bubble');
+
+    qa.classList.remove('notes-active');
+    bubble.classList.remove('note-active', 'note-expanded');
+
+    clickElement(window, badge);
+
+    assert.ok(qa.classList.contains('notes-active'), 'expected note badge click to expand the notes panel');
+    assert.ok(bubble.classList.contains('note-activating'), 'expected activated bubble to receive an entry animation state');
   });
 });

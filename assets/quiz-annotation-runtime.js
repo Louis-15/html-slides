@@ -91,6 +91,26 @@
     clearStepConnectors(qa);
   }
 
+  function replayNoteActivationAnimation(bubble) {
+    if (!bubble) return;
+
+    if (bubble.__qaActivationTimer) {
+      window.clearTimeout(bubble.__qaActivationTimer);
+    }
+
+    bubble.classList.remove('note-activating');
+    void bubble.offsetWidth;
+    bubble.classList.add('note-activating');
+
+    const clearAnimationState = () => {
+      bubble.classList.remove('note-activating');
+      bubble.__qaActivationTimer = null;
+    };
+
+    bubble.addEventListener('animationend', clearAnimationState, { once: true });
+    bubble.__qaActivationTimer = window.setTimeout(clearAnimationState, 380);
+  }
+
   /**
    * 锚点变更后持久化：触发 JSON 文件保存
    * AnnotationStore 会从 DOM 收集所有带 data-edit-id 容器的 innerHTML
@@ -493,6 +513,7 @@
     // 自动展开折叠内容
     bubble.classList.add('note-expanded');
     qa.classList.add('has-active-note');
+    replayNoteActivationAnimation(bubble);
 
     // 激活左栏原文锚点
     const anchor = getAnchorByLink(qa, linkId);
@@ -1422,12 +1443,13 @@
       options.forEach(option => {
         const isCorrect = option.dataset.correct === 'true';
         const isSelected = option.classList.contains('selected');
+        const optionLabel = option.querySelector('.qa-option-label') || option;
 
-        let markEl = option.querySelector('.qa-result-mark');
+        let markEl = optionLabel.querySelector('.qa-result-mark');
         if (!markEl) {
           markEl = document.createElement('span');
           markEl.className = 'qa-result-mark';
-          option.appendChild(markEl);
+          optionLabel.appendChild(markEl);
         }
 
         if (isCorrect) {

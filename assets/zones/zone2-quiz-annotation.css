@@ -657,6 +657,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -725,11 +726,13 @@
    选择题结果角标标志 (✓ / ✗)
    绝对定位附着于 A/B/C/D 序号圆圈的右下方
    ========================================= */
-.qa-option .qa-result-mark {
+.qa-option-label .qa-result-mark {
   position: absolute;
-  left: 28px;
-  top: 20px;
-  font-size: 24px;
+  right: -7px;
+  bottom: -6px;
+  left: auto;
+  top: auto;
+  font-size: 20px;
   font-weight: 900;
   z-index: 10;
   opacity: 0;
@@ -934,9 +937,31 @@ body.editor-mode .qa-option {
   margin-right: -18px;
 }
 
+.qa-note-bubble.note-active.note-activating {
+  transform-origin: center top;
+  animation: qa-note-focus-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .qa-note-bubble.note-expanded:not(.note-active) {
   opacity: 1;
   transform: none;
+}
+
+@keyframes qa-note-focus-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
+  }
 }
 
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
