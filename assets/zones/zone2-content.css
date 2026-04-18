@@ -1270,36 +1270,48 @@
 }
 
 .qa-passage .qa-blank-slot {
-  display: inline-flex;
-  align-items: flex-end;
-  margin: 0 0.06em;
+  display: inline-block;
+  margin: 0 0.18em 0 0.03em;
   vertical-align: baseline;
+  line-height: 1;
+  white-space: nowrap;
+  text-indent: 0;
 }
 
 .qa-passage .qa-blank-user {
-  display: inline-flex;
-  align-items: flex-end;
-  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: end;
+  column-gap: 0.08em;
+  vertical-align: baseline;
+  text-indent: 0;
 }
 
 .qa-passage .qa-blank-value {
-  display: inline-flex;
-  align-items: flex-end;
-  justify-content: center;
-  min-width: 3.1em;
-  padding: 0 0.1em 0.06em;
+  display: inline-block;
+  width: 2.45em;
+  padding: 0 0 0.08em;
+  box-sizing: border-box;
   border-bottom: 2px solid rgba(38, 61, 51, 0.45);
   color: transparent;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+  text-indent: 0;
+  letter-spacing: 0;
   transition: color 0.25s ease, border-color 0.25s ease;
 }
 
 .qa-passage .qa-matching-passage-slot .qa-blank-user sup {
-  position: absolute;
-  left: calc(100% + 0.08em);
-  top: -0.36em;
+  display: inline-block;
+  margin-right: 0.02em;
+  font-size: 1em !important;
+  font-weight: 800;
+  color: var(--brand-primary, #00A355) !important;
   line-height: 1;
+  vertical-align: baseline;
+  text-indent: 0;
 }
 
 .qa-passage .qa-blank-slot.show-correct-answer .qa-blank-value {
@@ -1815,10 +1827,6 @@
   border-radius: 2px;
 }
 
-.text-anchor.anchor-active {
-  /* 移除高光背景，留给长难句分析功能 */
-}
-
 .note-badge {
   display: inline-flex;
   align-items: center;
@@ -1916,6 +1924,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+.quiz-annotation.notes-active .qa-note-bubble:not(.note-expanded):not(.note-active) {
+  display: none;
+}
+
 /* --- 编辑模式全局光标覆盖 --- */
 /* 为了解决 Windows/Mac 系统默认随着对比度反转成白色的工字光标，以及右栏原本选项附带的 Pointer 问题 */
 body.editor-mode .qa-note-bubble,
@@ -1947,10 +1959,15 @@ body.editor-mode .qa-option {
   margin-right: -18px;
 }
 
+.qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 1;
+  transform: none;
+}
+
 /* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
-.quiz-annotation.has-active-note .qa-note-bubble:not(.note-active) {
-  opacity: 0.35;
-  transform: scale(0.96);
+.quiz-annotation.has-active-note .qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 0.72;
+  transform: none;
 }
 
 /* 顶部头部：包含序号和操作按钮的横条 */
@@ -2023,9 +2040,25 @@ body.editor-mode .qa-option {
 /* 气泡内容折叠 — 超 3 行截断（未激活时） */
 .qa-note-bubble:not(.note-active):not(.note-expanded) .qa-note-content {
   display: -webkit-box;
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+html.editor-mode .quiz-annotation.notes-active .qa-note-bubble,
+body.editor-mode .quiz-annotation.notes-active .qa-note-bubble {
+  display: flex;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.editor-mode .qa-note-bubble .qa-note-content,
+body.editor-mode .qa-note-bubble .qa-note-content {
+  display: block !important;
+  line-clamp: unset;
+  -webkit-line-clamp: unset;
+  overflow: visible;
 }
 
 /* 操作按钮组 — 居右横向排列 */

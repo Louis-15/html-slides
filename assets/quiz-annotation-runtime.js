@@ -59,6 +59,32 @@
     return qa.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
   }
 
+  function isEditorMode() {
+    return document.documentElement.classList.contains('editor-mode') ||
+      document.body.classList.contains('editor-mode');
+  }
+
+  function expandAllBubbles(qa) {
+    if (!qa) return;
+    qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
+      bubble.classList.remove('note-active');
+      bubble.classList.add('note-expanded');
+    });
+    qa.classList.remove('has-active-note');
+    qa.querySelectorAll('.anchor-active').forEach(anchor => anchor.classList.remove('anchor-active'));
+    clearStepConnectors(qa);
+  }
+
+  function hideAllBubbles(qa) {
+    if (!qa) return;
+    qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
+      bubble.classList.remove('note-active', 'note-expanded');
+    });
+    qa.classList.remove('has-active-note');
+    qa.querySelectorAll('.anchor-active').forEach(anchor => anchor.classList.remove('anchor-active'));
+    clearStepConnectors(qa);
+  }
+
   /**
    * 锚点变更后持久化：触发 JSON 文件保存
    * AnnotationStore 会从 DOM 收集所有带 data-edit-id 容器的 innerHTML
@@ -184,6 +210,91 @@
     }
   }
 
+  function hasMeaningfulSibling(node, direction) {
+    let current = node ? node[direction] : null;
+    while (current) {
+      if (current.nodeType === Node.TEXT_NODE) {
+        if (/\S/.test(current.nodeValue || '')) return true;
+      } else if (current.nodeType === Node.ELEMENT_NODE) {
+        return true;
+      }
+      current = current[direction];
+    }
+    return false;
+  }
+
+  function trimBlankSlotWhitespaces(slot) {
+    if (!slot || !slot.parentNode) return;
+
+    const prevNode = slot.previousSibling;
+    if (prevNode && prevNode.nodeType === Node.TEXT_NODE) {
+      if (/\S/.test(prevNode.nodeValue || '')) {
+        prevNode.nodeValue = prevNode.nodeValue.replace(/\s*$/, ' ');
+      } else {
+        prevNode.nodeValue = hasMeaningfulSibling(prevNode, 'previousSibling') ? ' ' : '';
+      }
+    } else if (hasMeaningfulSibling(slot, 'previousSibling')) {
+      slot.parentNode.insertBefore(document.createTextNode(' '), slot);
+    }
+
+    const nextNode = slot.nextSibling;
+    if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
+      if (/\S/.test(nextNode.nodeValue || '')) {
+        nextNode.nodeValue = nextNode.nodeValue.replace(/^\s*/, ' ');
+      } else {
+        nextNode.nodeValue = hasMeaningfulSibling(nextNode, 'nextSibling') ? ' ' : '';
+      }
+    } else if (hasMeaningfulSibling(slot, 'nextSibling')) {
+      slot.parentNode.insertBefore(document.createTextNode(' '), nextNode || null);
+    }
+  }
+
+  function syncNotesPanelForCurrentMode(qa) {
+    if (!qa) return;
+
+    if (isEditorMode()) {
+      expandAllBubbles(qa);
+    } else {
+      hideAllBubbles(qa);
+    }
+
+    updateProgressCounter(qa);
+  }
+
+  function syncAllNotesPanelsForCurrentMode() {
+    document.querySelectorAll('.quiz-annotation').forEach(qa => {
+      syncNotesPanelForCurrentMode(qa);
+      requestAnimationFrame(() => updateDividerPositions(qa));
+    });
+  }
+
+  let editorModeSyncBound = false;
+
+  function bindEditorModeSync() {
+    if (editorModeSyncBound) return;
+    editorModeSyncBound = true;
+
+    const sync = () => syncAllNotesPanelsForCurrentMode();
+    let lastEditorMode = isEditorMode();
+
+    if (window.EditorHooks && typeof window.EditorHooks.register === 'function') {
+      window.EditorHooks.register('onEditModeEnter', sync);
+      window.EditorHooks.register('onEditModeExit', sync);
+    }
+
+    if (typeof MutationObserver === 'function' && document.documentElement && document.body) {
+      const observer = new MutationObserver(() => {
+        const currentEditorMode = isEditorMode();
+        if (currentEditorMode === lastEditorMode) return;
+        lastEditorMode = currentEditorMode;
+        sync();
+      });
+
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+
   /** 平滑滚动到可见区域 */
   function scrollIntoViewSmooth(el) {
     if (!el) return;
@@ -200,17 +311,18 @@
     if (!qa) return;
     // 如果被答题隔离规则禁用，不允许展开
     if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-      !document.body.classList.contains('edit-mode')) {
+      !isEditorMode()) {
       return;
     }
     const isActive = qa.classList.toggle('notes-active');
 
     // 展开时更新分割线位置
     if (isActive) {
+      syncNotesPanelForCurrentMode(qa);
       requestAnimationFrame(() => updateDividerPositions(qa));
     } else {
       // 收起时，自动退出所有的激活焦点、隐藏连线并重置步进计数器
-      clearAllActive(qa);
+      hideAllBubbles(qa);
       annotationStepIndex = -1;
     }
 
@@ -268,7 +380,7 @@
       if (qa.classList.contains('notes-active')) return;
       // 答题隔离规则下不显示
       if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-        !document.body.classList.contains('edit-mode')) {
+        !isEditorMode()) {
         dividerBtn.classList.remove('visible');
         return;
       }
@@ -365,8 +477,8 @@
     const linkId = bubble.dataset.link;
     const answerLinkId = bubble.dataset.linkAnswer; // 可选的右侧关联
 
-    // 清除其他激活状态
-    clearAllActive(qa);
+    // 现有焦点降级为展开态，保留已展开批注
+    clearAllActive(qa, true);
 
     // 激活气泡
     bubble.classList.add('note-active');
@@ -402,7 +514,12 @@
   /** 取消指定批注激活 */
   function deactivateNote(qa, bubble) {
     if (!bubble) return;
-    bubble.classList.remove('note-active', 'note-expanded');
+    bubble.classList.remove('note-active');
+    if (isEditorMode()) {
+      bubble.classList.add('note-expanded');
+    } else {
+      bubble.classList.remove('note-expanded');
+    }
     const linkId = bubble.dataset.link;
     const anchor = getAnchorByLink(qa, linkId);
     if (anchor) anchor.classList.remove('anchor-active');
@@ -412,9 +529,19 @@
   }
 
   /** 清除所有激活状态 */
-  function clearAllActive(qa) {
+  function clearAllActive(qa, preserveExpanded) {
     if (!qa) return;
-    qa.querySelectorAll('.note-active').forEach(b => b.classList.remove('note-active', 'note-expanded'));
+    qa.querySelectorAll('.note-active').forEach(bubble => {
+      bubble.classList.remove('note-active');
+      if (preserveExpanded || isEditorMode()) {
+        bubble.classList.add('note-expanded');
+      } else {
+        bubble.classList.remove('note-expanded');
+      }
+    });
+    if (!preserveExpanded && !isEditorMode()) {
+      qa.querySelectorAll('.qa-note-bubble').forEach(bubble => bubble.classList.remove('note-expanded'));
+    }
     qa.querySelectorAll('.anchor-active').forEach(a => a.classList.remove('anchor-active'));
     qa.classList.remove('has-active-note');
     clearStepConnectors(qa);
@@ -993,6 +1120,7 @@
     if (!slot) return null;
 
     slot.classList.add('qa-matching-passage-slot');
+    trimBlankSlotWhitespaces(slot);
 
     let userSpan = slot.querySelector('.qa-blank-user');
     if (!userSpan) {
@@ -1001,22 +1129,23 @@
       slot.prepend(userSpan);
     }
 
-    const sup = userSpan.querySelector('sup');
+    let sup = userSpan.querySelector('sup');
+    if (!sup) {
+      sup = document.createElement('sup');
+      sup.textContent = slot.dataset.blankId || '';
+    } else if (!sup.textContent && slot.dataset.blankId) {
+      sup.textContent = slot.dataset.blankId;
+    }
+
     let valueSpan = userSpan.querySelector('.qa-blank-value');
     if (!valueSpan) {
       valueSpan = document.createElement('span');
       valueSpan.className = 'qa-blank-value';
-      userSpan.textContent = '';
-      userSpan.appendChild(valueSpan);
-      if (sup) userSpan.appendChild(sup);
     }
 
-    Array.from(userSpan.childNodes).forEach(node => {
-      if (node === valueSpan || node === sup) return;
-      if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
-        node.remove();
-      }
-    });
+    userSpan.textContent = '';
+    userSpan.appendChild(sup);
+    userSpan.appendChild(valueSpan);
 
     let answerSpan = slot.querySelector('.qa-blank-answer');
     if (!answerSpan) {
@@ -1941,6 +2070,10 @@
 
     updateProgressCounter(qa);
 
+    if (isEditorMode()) {
+      expandAllBubbles(qa);
+    }
+
     // 最后再聚焦到新气泡的内容区（在所有 DOM 操作和事件绑定完成后）
     const contentEl = bubble.querySelector('.qa-note-content');
     if (contentEl) {
@@ -2254,6 +2387,10 @@
       trimAnchorWhitespaces(anchor);
     });
 
+    qa.querySelectorAll('.qa-passage .qa-blank-slot[data-blank-id]').forEach(slot => {
+      trimBlankSlotWhitespaces(slot);
+    });
+
     // 清除已删除的批注（从原始 HTML 中清除残留的锚点和气泡）
     purgeDeletedNotes(qa);
 
@@ -2275,6 +2412,8 @@
 
     // 角标避让
     arrangeAdjacentBadges(qa);
+
+    syncNotesPanelForCurrentMode(qa);
 
     // 初始化进度指示器
     updateProgressCounter(qa);
@@ -2394,6 +2533,7 @@
   // 自动标记并初始化
   function autoInit() {
     function doInit() {
+      bindEditorModeSync();
       document.querySelectorAll('.quiz-annotation').forEach(qa => {
         if (!qa.hasAttribute('data-steppable')) {
           qa.setAttribute('data-steppable', 'annotation');
