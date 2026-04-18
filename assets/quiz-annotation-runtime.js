@@ -64,6 +64,12 @@
       document.body.classList.contains('editor-mode');
   }
 
+  function isDoodleMode() {
+    return document.documentElement.classList.contains('doodle-mode') ||
+      document.body.classList.contains('doodle-mode') ||
+      !!(window.DoodleManager && window.DoodleManager.isActive);
+  }
+
   function expandAllBubbles(qa) {
     if (!qa) return;
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
@@ -309,9 +315,8 @@
   /** 切换批注面板 */
   function toggleNotesPanel(qa) {
     if (!qa) return;
-    // 如果被答题隔离规则禁用，不允许展开
-    if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-      !isEditorMode()) {
+    // 涂鸦模式下不允许切换批注面板，避免两套浮层交叉干扰
+    if (isDoodleMode()) {
       return;
     }
     const isActive = qa.classList.toggle('notes-active');
@@ -377,10 +382,12 @@
 
     body.addEventListener('mousemove', (e) => {
       // 批注已展开时不显示
-      if (qa.classList.contains('notes-active')) return;
-      // 答题隔离规则下不显示
-      if (qa.classList.contains('has-quiz') && !qa.classList.contains('submitted') &&
-        !isEditorMode()) {
+      if (qa.classList.contains('notes-active')) {
+        dividerBtn.classList.remove('visible');
+        return;
+      }
+      // 涂鸦模式下不显示
+      if (isDoodleMode()) {
         dividerBtn.classList.remove('visible');
         return;
       }
@@ -412,6 +419,7 @@
     // 点击悬浮按钮 → 展开批注面板
     dividerBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (isDoodleMode()) return;
       toggleNotesPanel(qa);
     });
   }
@@ -1197,7 +1205,8 @@
     qa.querySelectorAll('.qa-answer-slot[data-correct-answer]').forEach(slot => {
       const correctAnswer = slot.dataset.correctAnswer || '';
       const userAnswer = slot.dataset.userAnswer || '';
-      const isCorrect = !!userAnswer && userAnswer.toUpperCase() === correctAnswer.toUpperCase();
+      const isAnswered = !!userAnswer;
+      const isCorrect = isAnswered && userAnswer.toUpperCase() === correctAnswer.toUpperCase();
       const blankEl = slot.querySelector('.qa-slot-blank');
       if (!blankEl) return;
 
@@ -1205,12 +1214,21 @@
       blankEl.querySelectorAll('.qa-slot-mark').forEach(el => el.remove());
       slot.querySelectorAll('.qa-slot-correct').forEach(el => el.remove());
 
-      if (userAnswer) {
-        slot.classList.add(isCorrect ? 'slot-correct' : 'slot-incorrect');
+      if (isCorrect) {
+        slot.classList.add('slot-correct');
 
         const markEl = document.createElement('span');
-        markEl.className = 'qa-slot-mark ' + (isCorrect ? 'correct' : 'incorrect');
-        markEl.textContent = isCorrect ? '✓' : '✗';
+        markEl.className = 'qa-slot-mark correct';
+        markEl.textContent = '✓';
+        blankEl.appendChild(markEl);
+      } else {
+        slot.classList.add('slot-incorrect');
+      }
+
+      if (isAnswered && !isCorrect) {
+        const markEl = document.createElement('span');
+        markEl.className = 'qa-slot-mark incorrect';
+        markEl.textContent = '✗';
         blankEl.appendChild(markEl);
       }
 

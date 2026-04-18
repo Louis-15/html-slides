@@ -2233,11 +2233,11 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   box-shadow: none !important;
 }
 
-.quiz-annotation.has-quiz:not(.submitted) .qa-notes-panel {
-  display: none !important;
+.quiz-annotation.has-quiz:not(.submitted).notes-active .qa-notes-panel {
+  display: flex !important;
 }
 
-.quiz-annotation.has-quiz:not(.submitted) .qa-divider-btn {
+.doodle-mode .qa-divider-btn {
   display: none !important;
 }
 
