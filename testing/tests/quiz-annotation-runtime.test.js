@@ -22,6 +22,22 @@ function rightClickElement(window, element) {
   element.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, button: 2 }));
 }
 
+function dispatchDragEvent(window, element, type, init = {}) {
+  const event = new window.Event(type, { bubbles: true, cancelable: true });
+  Object.assign(event, init);
+  if (!event.dataTransfer) {
+    Object.defineProperty(event, 'dataTransfer', {
+      value: {
+        effectAllowed: '',
+        setData() {},
+        getData() { return ''; }
+      }
+    });
+  }
+  element.dispatchEvent(event);
+  return event;
+}
+
 function findTextNode(container, text) {
   const walker = container.ownerDocument.createTreeWalker(container, container.ownerDocument.defaultView.NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
@@ -208,7 +224,7 @@ function createBubbleEditorDom() {
         <div class="qa-body">
           <svg class="qa-connector-canvas" aria-hidden="true"></svg>
           <div class="qa-passage">
-            <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">Anchor sentence.<sup class="note-badge">1</sup></span></p>
+            <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">Anchor fragment sample sentence.<sup class="note-badge">1</sup></span></p>
           </div>
           <div class="qa-answer-panel">
             <div class="qa-answer-header">
@@ -235,6 +251,75 @@ function createBubbleEditorDom() {
               <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Keyword fragment sample note.</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
+function createLeftLinkEditorDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage"><p data-edit-id="passage-01">The first sentence. The second sentence.</p></div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text">Option A</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel">
+            <div class="qa-note-bubble" data-link="note-01" data-step="1">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Explain the sentence.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
+function createDragEditorDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage"><p data-edit-id="passage-01">The first sentence. The second sentence.</p></div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text">Option A</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel"></div>
         </div>
       </div>
     </div>
@@ -508,7 +593,29 @@ describe('quiz annotation runtime', () => {
     assert.equal(toolbar.querySelector('.btn-strikethrough'), null, 'expected linking mode to remove strikethrough entry');
   });
 
-  it('shows a dedicated fragment toolbar only for partial selection inside the active note bubble', () => {
+  it('allows left-side linking to open the underline palette when the selected sentence omits terminal punctuation', () => {
+    const dom = createLeftLinkEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    clickElement(window, qa.querySelector('.qa-note-bubble .action-link-left'));
+    selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence');
+
+    const toolbar = qa.querySelector('.qa-annotation-toolbar');
+    assert.ok(toolbar?.classList.contains('visible'), 'expected left-side linking to show the underline palette for a full sentence selection');
+
+    clickElement(window, toolbar.querySelector('.btn-underline'));
+    clickElement(window, toolbar.querySelector('.ul-colors .color-swatch'));
+
+    const anchor = qa.querySelector('.text-anchor[data-link="note-01"]');
+    assert.ok(anchor, 'expected selecting a left-side sentence to create the matching text anchor');
+  });
+
+  it('shows the fragment toolbar for partial selection inside an existing source anchor instead of the note bubble', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -517,26 +624,94 @@ describe('quiz annotation runtime', () => {
     window.document.body.classList.add('editor-mode');
 
     ensureQaInitialized(window, qa);
-    selectText(window, qa.querySelector('.qa-note-content'), 'fragment');
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment');
 
     const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
-    assert.ok(fragmentToolbar?.classList.contains('visible'), 'expected selecting note text to show the fragment toolbar');
-    assert.equal(qa.querySelector('.qa-annotation-toolbar')?.classList.contains('visible'), false, 'expected note-fragment selection not to reuse the anchor-creation toolbar');
+    assert.ok(fragmentToolbar?.classList.contains('visible'), 'expected selecting anchored source text to show the fragment toolbar');
+    assert.equal(qa.querySelector('.qa-annotation-toolbar')?.classList.contains('visible'), false, 'expected anchored source fragments not to reuse the anchor-creation toolbar');
   });
 
-  it('reveals an authored fragment on right click in presentation mode', () => {
+  it('applies fragment markup inside the linked source anchor instead of the note bubble', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment');
+
+    const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
+    clickElement(window, fragmentToolbar.querySelector('.btn-strikethrough'));
+
+    assert.ok(qa.querySelector('.text-anchor [data-fragment-step="true"]'), 'expected fragment markup to be authored inside the source anchor');
+    assert.equal(qa.querySelector('.qa-note-content [data-fragment-step="true"]'), null, 'expected note bubble text not to receive step fragments');
+  });
+
+  it('uses the same ruby icon as the global editor toolbar', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
 
     ensureQaInitialized(window, qa);
 
-    const noteContent = qa.querySelector('.qa-note-content');
-    noteContent.innerHTML = 'Keyword <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample note.';
-    const fragment = noteContent.querySelector('[data-fragment-step="true"]');
+    const rubyBtn = qa.querySelector('.qa-note-fragment-toolbar .btn-ruby');
+    const rubySvg = rubyBtn?.querySelector('svg');
+    const rubyPaths = Array.from(rubySvg?.querySelectorAll('path') || []).map((path) => path.getAttribute('d'));
+
+    assert.ok(rubySvg, 'expected the fragment toolbar ruby button to use an SVG icon');
+    assert.deepEqual(
+      rubyPaths,
+      ['M4 19h16', 'm12 15 4-8 4 8', 'M14 11h4', 'M4 9h5', 'M6 5h1'],
+      'expected the fragment toolbar to reuse the same ruby icon paths as the main editor toolbar'
+    );
+  });
+
+  it('reveals an authored source fragment on right click in presentation mode', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+    const fragment = anchor.querySelector('[data-fragment-step="true"]');
 
     rightClickElement(window, fragment);
 
-    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected right click to reveal the authored fragment immediately');
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected right click to reveal the authored source fragment immediately');
+  });
+
+  it('keeps only one drag placeholder and removes it after drag end even after multiple note creations', () => {
+    const dom = createDragEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+
+    selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence.');
+    clickElement(window, qa.querySelector('.qa-annotation-toolbar .btn-underline'));
+    clickElement(window, qa.querySelector('.qa-annotation-toolbar .ul-colors .color-swatch'));
+
+    selectText(window, qa.querySelector('.qa-passage p'), 'The second sentence.');
+    clickElement(window, qa.querySelector('.qa-annotation-toolbar .btn-underline'));
+    clickElement(window, qa.querySelector('.qa-annotation-toolbar .ul-colors .color-swatch'));
+
+    const notesList = qa.querySelector('.qa-notes-list');
+    const bubble = qa.querySelector('.qa-note-bubble');
+    clickElement(window, bubble.querySelector('.qa-note-header'));
+    bubble.querySelector('.qa-note-header').dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true }));
+    dispatchDragEvent(window, bubble, 'dragstart');
+    dispatchDragEvent(window, notesList, 'dragover', { clientY: 999 });
+
+    assert.equal(qa.querySelectorAll('.qa-note-placeholder').length, 1, 'expected drag sorting to render only one placeholder slot');
+
+    dispatchDragEvent(window, bubble, 'dragend');
+    assert.equal(qa.querySelectorAll('.qa-note-placeholder').length, 0, 'expected drag end to remove placeholder slots completely');
   });
 });

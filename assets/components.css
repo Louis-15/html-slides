@@ -155,8 +155,8 @@ body {
 /* 右下角翻页按钮：三种模式下都保留，因此使用独立的高层级悬浮层。 */
 .slide-pager {
   position: fixed;
-  right: 24px;
-  bottom: 56px;
+  right: 118px;
+  bottom: 18px;
   z-index: 520;
   display: flex;
   align-items: center;
@@ -251,8 +251,8 @@ body {
 
 @media (max-width: 768px) {
   .slide-pager {
-    right: 16px;
-    bottom: 52px;
+    right: 88px;
+    bottom: 14px;
     gap: 8px;
   }
 

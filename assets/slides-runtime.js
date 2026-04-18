@@ -140,15 +140,20 @@ function goTo(index) {
 function next() { goTo(current+1); }
 function prev() { goTo(current-1); }
 
+function isQuizAnnotationSlide(index = current) {
+  const slide = slides[index];
+  return !!(slide && slide.querySelector('.quiz-annotation'));
+}
+
 document.addEventListener('keydown', (e) => {
   // 一级步进：↑↓ 先走当前页组件焦点，页内耗尽后再翻页。
   if (e.key === 'ArrowDown') {
     e.preventDefault();
-    if (!stepForward()) next();
+    if (!stepForward() && !isQuizAnnotationSlide()) next();
   }
   if (e.key === 'ArrowUp') {
     e.preventDefault();
-    if (!stepBackward()) prev();
+    if (!stepBackward() && !isQuizAnnotationSlide()) prev();
   }
   // PageDown/PageUp 仍保留为直接翻页，兼容键盘习惯。
   if (e.key === 'PageDown') { e.preventDefault(); next(); }

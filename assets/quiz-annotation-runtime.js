@@ -149,6 +149,32 @@
   // 片段二级步进状态只存在于运行时，不写回 HTML。
   const noteFragmentState = new WeakMap();
 
+  function getFragmentOwnerAnchor(node) {
+    const root = getSelectionRootNode(node);
+    return root && root.closest ? root.closest('.text-anchor, .answer-anchor') : null;
+  }
+
+  function getFragmentOwnerLinkId(fragment) {
+    const ownerAnchor = fragment ? fragment.closest('.text-anchor, .answer-anchor') : null;
+    if (!ownerAnchor) return '';
+    return ownerAnchor.getAttribute('data-link-answer') || ownerAnchor.getAttribute('data-link') || '';
+  }
+
+  function getFragmentTargetsForBubble(bubble) {
+    if (!bubble) return [];
+    const qa = bubble.closest('.quiz-annotation');
+    const linkId = bubble.getAttribute('data-link');
+    if (!qa || !linkId) return [];
+
+    const targets = [];
+    const leftAnchor = getAnchorByLink(qa, linkId);
+    if (leftAnchor) targets.push(leftAnchor);
+    qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"], .answer-anchor[data-link="${linkId}"]`).forEach((anchor) => {
+      if (!targets.includes(anchor)) targets.push(anchor);
+    });
+    return targets;
+  }
+
   function getNoteFragmentState(bubble) {
     if (!bubble) return null;
     if (!noteFragmentState.has(bubble)) {
@@ -162,7 +188,7 @@
 
   function getNoteFragments(bubble) {
     if (!bubble) return [];
-    return Array.from(bubble.querySelectorAll('[data-fragment-step="true"]'));
+    return getFragmentTargetsForBubble(bubble).flatMap((target) => Array.from(target.querySelectorAll('[data-fragment-step="true"]')));
   }
 
   function syncNoteFragments(bubble) {
@@ -216,7 +242,9 @@
 
   function revealNoteFragmentImmediately(fragment) {
     if (!fragment) return false;
-    const bubble = fragment.closest('.qa-note-bubble');
+    const ownerLinkId = getFragmentOwnerLinkId(fragment);
+    const qa = fragment.closest('.quiz-annotation');
+    const bubble = qa && ownerLinkId ? getBubbleByLink(qa, ownerLinkId) : null;
     const fragments = getNoteFragments(bubble);
     const index = fragments.indexOf(fragment);
     if (!bubble || index === -1) return false;
@@ -246,10 +274,50 @@
 
   function isSentenceLikeSelection(range) {
     if (!range) return false;
-    const text = String(range.toString() || '').replace(/\s+/g, ' ').trim();
-    if (!text) return false;
-    // 当前阶段按“人工整句选择”约束处理：必须由句末标点收尾，避免半句直接建锚点。
-    return /[。！？.!?]$/.test(text);
+    const selectedText = normalizeSentenceText(range.toString());
+    if (!selectedText) return false;
+
+    const commonNode = getSelectionRootNode(range.commonAncestorContainer);
+    const sentenceHost = commonNode && commonNode.closest
+      ? commonNode.closest('.qa-option-text, p, li, .qa-passage, .qa-answer-panel')
+      : null;
+    const hostText = normalizeSentenceText(sentenceHost ? sentenceHost.textContent : range.toString());
+    if (!hostText) return false;
+
+    const candidates = splitSentenceCandidates(hostText);
+    return candidates.includes(selectedText);
+  }
+
+  function normalizeSentenceText(text) {
+    return String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[。！？.!?]+$/, '')
+      .trim();
+  }
+
+  function splitSentenceCandidates(text) {
+    const rawText = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!rawText) return [];
+    const matches = rawText.match(/[^。！？.!?]+[。！？.!?]?/g) || [];
+    const candidates = matches.map(normalizeSentenceText).filter(Boolean);
+    return candidates.length > 0 ? candidates : [normalizeSentenceText(rawText)].filter(Boolean);
+  }
+
+  function cleanupDragArtifacts(qa) {
+    if (!qa) return;
+    qa.querySelectorAll('.qa-note-placeholder').forEach((placeholder) => placeholder.remove());
+    qa.querySelectorAll('.qa-note-bubble.dragging-source').forEach((bubble) => {
+      bubble.classList.remove('dragging-source');
+      bubble.style.display = '';
+      bubble.setAttribute('draggable', 'false');
+    });
+    if (draggedBubble && qa.contains(draggedBubble)) {
+      draggedBubble.classList.remove('dragging-source');
+      draggedBubble.style.display = '';
+      draggedBubble.setAttribute('draggable', 'false');
+    }
+    draggedBubble = null;
   }
 
   // --- 删除持久化工具 ---
@@ -410,6 +478,8 @@
 
   function syncNotesPanelForCurrentMode(qa) {
     if (!qa) return;
+
+    cleanupDragArtifacts(qa);
 
     if (isEditorMode()) {
       expandAllBubbles(qa);
@@ -983,27 +1053,40 @@
     const notesList = qa.querySelector('.qa-notes-list');
     if (!notesList) return;
 
-    const placeholder = document.createElement('div');
-    placeholder.className = 'qa-note-placeholder';
+    cleanupDragArtifacts(qa);
+
+    let placeholder = notesList.__qaNotePlaceholder;
+    if (!placeholder) {
+      placeholder = document.createElement('div');
+      placeholder.className = 'qa-note-placeholder';
+      notesList.__qaNotePlaceholder = placeholder;
+    }
 
     // 为每个气泡绑定拖拽事件
     qa.querySelectorAll('.qa-note-bubble').forEach(b => bindDragEvents(qa, b, placeholder));
 
     // 容器级委托 dragover
-    notesList.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      if (!draggedBubble) return;
-      const afterElement = getDragAfterElement(notesList, e.clientY);
-      if (afterElement == null) {
-        notesList.appendChild(placeholder);
-      } else {
-        notesList.insertBefore(placeholder, afterElement);
-      }
-    });
+    if (!notesList.__qaDragOverBound) {
+      notesList.__qaDragOverBound = true;
+      notesList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedBubble) return;
+        const currentPlaceholder = notesList.__qaNotePlaceholder;
+        const afterElement = getDragAfterElement(notesList, e.clientY);
+        if (afterElement == null) {
+          notesList.appendChild(currentPlaceholder);
+        } else {
+          notesList.insertBefore(currentPlaceholder, afterElement);
+        }
+      });
+    }
   }
 
   /** 绑定单个气泡的拖拽事件 */
   function bindDragEvents(qa, b, placeholder) {
+    if (b.__qaDragBound) return;
+    b.__qaDragBound = true;
+
     // 默认关闭全局 draggable，防止覆盖输入框内的原生文字拖拽和选区
     b.setAttribute('draggable', 'false');
 
@@ -1040,6 +1123,8 @@
       }
       if (placeholder.parentNode && draggedBubble) {
         placeholder.parentNode.replaceChild(draggedBubble, placeholder);
+      } else if (placeholder.parentNode) {
+        placeholder.remove();
       }
       draggedBubble = null;
 
@@ -1912,6 +1997,18 @@
   // =========================================
 
   function initNoteInteractions(qa) {
+    if (!qa.__qaSourceFragmentContextMenuBound) {
+      qa.__qaSourceFragmentContextMenuBound = true;
+      qa.addEventListener('contextmenu', (e) => {
+        const fragment = e.target.closest('[data-fragment-step="true"]');
+        const ownerAnchor = fragment && fragment.closest('.text-anchor, .answer-anchor');
+        if (!fragment || !ownerAnchor || isEditorMode()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        revealNoteFragmentImmediately(fragment);
+      });
+    }
+
     // 角标点击 → 激活对应批注
     qa.querySelectorAll('.note-badge').forEach(badge => {
       badge.addEventListener('click', (e) => {
@@ -1990,16 +2087,6 @@
         annotationStepIndex = bubbles.indexOf(bubble);
         activateNote(qa, bubble);
       });
-
-      // 放映/涂鸦模式下，右键点到片段时临时揭示该片段，但不推进默认顺序。
-      bubble.addEventListener('contextmenu', (e) => {
-        const fragment = e.target.closest('[data-fragment-step="true"]');
-        if (!fragment || isEditorMode()) return;
-        e.preventDefault();
-        e.stopPropagation();
-        revealNoteFragmentImmediately(fragment);
-      });
-
       // Hover 连线 — 仅气泡 hover
       bubble.addEventListener('mouseenter', () => {
         if (!qa.classList.contains('notes-active')) return;
@@ -2320,9 +2407,8 @@
           const swatch = document.createElement('div');
           swatch.className = 'color-swatch';
           swatch.style.background = color;
-          swatch.addEventListener('pointerdown', e => {
-            e.preventDefault();
-            e.stopPropagation();
+          let handledByPointer = false;
+          const applyUnderlineColor = () => {
             const curQA = getActiveQA();
             if (!curQA) return;
             if (linkingState) {
@@ -2331,6 +2417,21 @@
               createAnnotation(curQA, 'underline', color);
             }
             hideQASelectionToolbars(curQA);
+          };
+          swatch.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            handledByPointer = true;
+            applyUnderlineColor();
+          });
+          swatch.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (handledByPointer) {
+              handledByPointer = false;
+              return;
+            }
+            applyUnderlineColor();
           });
           ulGrid.appendChild(swatch);
         });
@@ -2353,7 +2454,7 @@
           <div class="rt-dropdown-menu"><div class="palette-grid bg-colors"></div></div>
         </div>
         <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>
-        <button class="qa-toolbar-btn btn-ruby" data-format="ruby" title="顶标"><span style="font-weight:bold;">注</span></button>
+        <button class="qa-toolbar-btn btn-ruby" data-format="ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>
       `;
       qa.appendChild(fragmentToolbar);
 
@@ -2370,11 +2471,25 @@
           const swatch = document.createElement('div');
           swatch.className = 'color-swatch';
           swatch.style.background = color;
+          let handledByPointer = false;
+          const applyTextColor = () => {
+            applyNoteFragmentFormat('color', color);
+            hideQASelectionToolbars(getActiveQA());
+          };
           swatch.addEventListener('pointerdown', e => {
             e.preventDefault();
             e.stopPropagation();
-            applyNoteFragmentFormat('color', color);
-            hideQASelectionToolbars(getActiveQA());
+            handledByPointer = true;
+            applyTextColor();
+          });
+          swatch.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (handledByPointer) {
+              handledByPointer = false;
+              return;
+            }
+            applyTextColor();
           });
           colorGrid.appendChild(swatch);
         });
@@ -2392,11 +2507,25 @@
           } else {
             swatch.style.background = color;
           }
+          let handledByPointer = false;
+          const applyHighlightColor = () => {
+            applyNoteFragmentFormat('highlight', color);
+            hideQASelectionToolbars(getActiveQA());
+          };
           swatch.addEventListener('pointerdown', e => {
             e.preventDefault();
             e.stopPropagation();
-            applyNoteFragmentFormat('highlight', color);
-            hideQASelectionToolbars(getActiveQA());
+            handledByPointer = true;
+            applyHighlightColor();
+          });
+          swatch.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (handledByPointer) {
+              handledByPointer = false;
+              return;
+            }
+            applyHighlightColor();
           });
           bgGrid.appendChild(swatch);
         });
@@ -2459,8 +2588,8 @@
 
         const range = sel.getRangeAt(0);
         const commonNode = getSelectionRootNode(range.commonAncestorContainer);
-        const noteBubble = commonNode && commonNode.closest ? commonNode.closest('.qa-note-bubble') : null;
-        if (noteBubble && noteBubble.querySelector('.qa-note-content') && noteBubble.querySelector('.qa-note-content').contains(commonNode)) {
+        const fragmentOwnerAnchor = getFragmentOwnerAnchor(commonNode);
+        if (fragmentOwnerAnchor && !linkingState) {
           anchorToolbar.classList.remove('visible');
           if (!positionFloatingToolbar(noteToolbar, activeQA, range, 45)) {
             noteToolbar.classList.remove('visible');
@@ -2574,7 +2703,11 @@
 
     const range = sel.getRangeAt(0);
     const commonNode = getSelectionRootNode(range.commonAncestorContainer);
-    const bubble = commonNode && commonNode.closest ? commonNode.closest('.qa-note-bubble') : null;
+    const anchor = getFragmentOwnerAnchor(commonNode);
+    if (!anchor) return;
+
+    const ownerLinkId = anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link') || '';
+    const bubble = ownerLinkId ? getBubbleByLink(qa, ownerLinkId) : null;
     if (!bubble) return;
 
     const wrapper = document.createElement('span');
@@ -3188,6 +3321,7 @@
     // 5. 剥离浮动批注工具条（initAnnotationToolbar 会重建）
     qa.querySelectorAll('.qa-annotation-toolbar').forEach(t => t.remove());
     qa.querySelectorAll('.qa-note-fragment-toolbar').forEach(t => t.remove());
+    qa.querySelectorAll('.qa-note-placeholder').forEach(p => p.remove());
 
     // 6. 清除 data-scrollable 标记（initQuizAnnotation 会重新添加）
     qa.querySelectorAll('[data-scrollable]').forEach(el => el.removeAttribute('data-scrollable'));

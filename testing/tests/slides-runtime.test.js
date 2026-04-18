@@ -148,6 +148,63 @@ function createSteppingDom() {
   return { dom, host };
 }
 
+function createQuizAnnotationLockDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation" data-steppable="annotation"></div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="anim-1">Slide 2</div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  let stepped = false;
+  window.registerStepStrategy('annotation', {
+    canStepTopLevelForward() {
+      return !stepped;
+    },
+    canStepTopLevelBackward() {
+      return stepped;
+    },
+    forwardTopLevel() {
+      if (stepped) return false;
+      stepped = true;
+      return true;
+    },
+    backwardTopLevel() {
+      if (!stepped) return false;
+      stepped = false;
+      return true;
+    },
+    stepFragment() {
+      return false;
+    }
+  });
+
+  return dom;
+}
+
 describe('slides runtime', () => {
   it('finishes animations on the newly active slide while editor mode is enabled', () => {
     const dom = createSlidesDom();
@@ -213,5 +270,22 @@ describe('slides runtime', () => {
 
     clickElement(window, prevBtn);
     assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected previous pager button to navigate back to the previous slide');
+  });
+
+  it('does not let ArrowDown or ArrowUp flip pages on quiz-annotation slides after stepping is exhausted', () => {
+    const dom = createQuizAnnotationLockDom();
+    const { window } = dom;
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected the first top-level step to stay on the quiz slide');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected exhausted quiz-annotation steps not to auto-flip to the next slide');
+
+    pressKey(window, 'ArrowUp');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected backward stepping on quiz-annotation slides to stay on the same page');
+
+    pressKey(window, 'ArrowUp');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected exhausted backward steps on quiz-annotation slides not to auto-flip to the previous slide');
   });
 });

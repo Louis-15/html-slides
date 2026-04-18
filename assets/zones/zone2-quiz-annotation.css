@@ -1516,16 +1516,20 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   -webkit-box-decoration-break: clone;
 }
 
-.qa-note-content [data-fragment-step="true"] {
+.text-anchor [data-fragment-step="true"],
+.answer-anchor [data-fragment-step="true"] {
   opacity: 0;
   filter: blur(6px);
   transform: translateY(0.14em);
   transition: opacity 0.24s ease, filter 0.24s ease, transform 0.24s ease;
 }
 
-.qa-note-content [data-fragment-step="true"].qa-fragment-visible,
-html.editor-mode .qa-note-content [data-fragment-step="true"],
-body.editor-mode .qa-note-content [data-fragment-step="true"] {
+.text-anchor [data-fragment-step="true"].qa-fragment-visible,
+.answer-anchor [data-fragment-step="true"].qa-fragment-visible,
+html.editor-mode .text-anchor [data-fragment-step="true"],
+html.editor-mode .answer-anchor [data-fragment-step="true"],
+body.editor-mode .text-anchor [data-fragment-step="true"],
+body.editor-mode .answer-anchor [data-fragment-step="true"] {
   opacity: 1;
   filter: none;
   transform: none;
