@@ -195,6 +195,37 @@
 
   // === 数据收集 ===
 
+  function _stripTransientQuizState(html) {
+    if (!html || html.indexOf('qa-blank-slot') === -1) return html;
+
+    var temp = document.createElement('div');
+    temp.innerHTML = html;
+
+    temp.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(function (slot) {
+      slot.removeAttribute('data-user-answer');
+      slot.classList.remove('filled', 'slot-answered', 'result-correct', 'result-incorrect', 'show-correct-answer');
+      slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(function (el) { el.remove(); });
+
+      var answerSpan = slot.querySelector('.qa-blank-answer');
+      if (answerSpan) {
+        answerSpan.textContent = '';
+        answerSpan.style.display = 'none';
+      }
+
+      var userSpan = slot.querySelector('.qa-blank-user');
+      if (userSpan) {
+        var sup = userSpan.querySelector('sup');
+        userSpan.textContent = '';
+        var valueSpan = document.createElement('span');
+        valueSpan.className = 'qa-blank-value';
+        userSpan.appendChild(valueSpan);
+        if (sup) userSpan.appendChild(sup);
+      }
+    });
+
+    return temp.innerHTML;
+  }
+
   function _collectData() {
     var data = {
       version: 1,
@@ -217,7 +248,7 @@
 
       // 左侧段落（含 text-anchor 锚点，有 data-edit-id）
       qa.querySelectorAll('.qa-passage [data-edit-id]').forEach(function (el) {
-        data.elements[el.getAttribute('data-edit-id')] = _cleanDeletedAnchors(el.innerHTML, data.deletedNotes);
+        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(_cleanDeletedAnchors(el.innerHTML, data.deletedNotes));
       });
 
       // 答题面板中有 data-edit-id 的元素（AI 原生气泡等）

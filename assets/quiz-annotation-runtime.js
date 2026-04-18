@@ -809,35 +809,86 @@
     if (matchingQuestion) {
       const passageSlots = qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]');
       if (passageSlots.length > 0) {
+        if (!qa.classList.contains('submitted')) {
+          resetMatchingQuestionState(qa);
+        }
+
+        passageSlots.forEach(slot => renderMatchingPassageSlot(slot, qa.classList.contains('submitted')));
+
+        const answerContent = qa.querySelector('.qa-answer-content');
+        if (!answerContent) return;
+
+        let optionsScroll = answerContent.querySelector('.qa-answer-options-scroll');
+        if (!optionsScroll) {
+          optionsScroll = document.createElement('div');
+          optionsScroll.className = 'qa-answer-options-scroll';
+          optionsScroll.setAttribute('data-scrollable', '');
+          if (matchingQuestion.parentNode === answerContent) {
+            answerContent.appendChild(optionsScroll);
+          }
+          optionsScroll.appendChild(matchingQuestion);
+        } else if (matchingQuestion.parentNode !== optionsScroll) {
+          optionsScroll.appendChild(matchingQuestion);
+        }
+
+        if (!optionsScroll.dataset.connectorScrollBound) {
+          optionsScroll.addEventListener('scroll', () => {
+            window.requestAnimationFrame(() => {
+              const activeBubble = qa.querySelector('.qa-note-bubble.note-active');
+              if (activeBubble && qa.classList.contains('notes-active')) {
+                drawStepConnectors(qa, activeBubble);
+              }
+            });
+          });
+          optionsScroll.dataset.connectorScrollBound = 'true';
+        }
+
         // 创建答题槽位容器
-        const slotsContainer = document.createElement('div');
-        slotsContainer.className = 'qa-answer-slots';
+        let slotsContainer = answerContent.querySelector('.qa-answer-slots');
+        if (!slotsContainer) {
+          slotsContainer = document.createElement('div');
+          slotsContainer.className = 'qa-answer-slots';
+        }
+        slotsContainer.innerHTML = '';
+
+        matchingQuestion.querySelectorAll('.qa-option').forEach(opt => {
+          opt.classList.remove('used');
+        });
 
         passageSlots.forEach(pSlot => {
           const blankId = pSlot.dataset.blankId;
           const correctAnswer = pSlot.dataset.correctAnswer;
+          const userAnswer = pSlot.dataset.userAnswer || '';
           const slot = document.createElement('div');
           slot.className = 'qa-answer-slot';
           slot.dataset.blankId = blankId;
           slot.dataset.correctAnswer = correctAnswer;
           slot.innerHTML =
             '<span class="qa-slot-label">' + blankId + '.</span>' +
-            '<span class="qa-slot-blank">_______</span>';
+            '<span class="qa-slot-blank"><span class="qa-slot-value"></span></span>';
+          setMatchingAnswerSlotValue(slot, userAnswer);
+          if (userAnswer) {
+            const usedOpt = matchingQuestion.querySelector('.qa-option[data-option="' + userAnswer + '"]');
+            if (usedOpt) usedOpt.classList.add('used');
+          }
           slotsContainer.appendChild(slot);
         });
 
-        // 插入到选项列表之前
-        const answerContent = qa.querySelector('.qa-answer-content');
-        if (answerContent) {
-          answerContent.insertBefore(slotsContainer, answerContent.firstChild);
+        if (slotsContainer.parentNode !== answerContent) {
+          answerContent.insertBefore(slotsContainer, optionsScroll);
         }
 
         // 提示分隔线
-        const divider = document.createElement('div');
-        divider.className = 'qa-slots-divider';
+        let divider = answerContent.querySelector('.qa-slots-divider');
+        if (!divider) {
+          divider = document.createElement('div');
+          divider.className = 'qa-slots-divider';
+        }
         divider.textContent = '↑ 将下方选项拖入上方槽位 ↓';
-        if (answerContent) {
-          answerContent.insertBefore(divider, matchingQuestion);
+        if (divider.parentNode !== answerContent) {
+          answerContent.insertBefore(divider, optionsScroll);
+        } else {
+          answerContent.insertBefore(divider, optionsScroll);
         }
 
         // 为可拖拽选项绑定 dragstart / dragend
@@ -885,16 +936,12 @@
             // 如果该选项已被其他槽位使用，先从旧槽位移除
             slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => {
               if (s.dataset.userAnswer === optionId) {
-                delete s.dataset.userAnswer;
-                s.classList.remove('filled');
-                s.querySelector('.qa-slot-blank').textContent = '_______';
+                setMatchingAnswerSlotValue(s, '');
               }
             });
 
             // 填入答案
-            slot.querySelector('.qa-slot-blank').textContent = optionId;
-            slot.classList.add('filled');
-            slot.dataset.userAnswer = optionId;
+            setMatchingAnswerSlotValue(slot, optionId);
 
             // 标记选项为已使用
             const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + optionId + '"]');
@@ -915,20 +962,25 @@
               if (dragOpt) dragOpt.classList.remove('used');
             }
 
-            slot.querySelector('.qa-slot-blank').textContent = '_______';
-            slot.classList.remove('filled');
-            delete slot.dataset.userAnswer;
+            setMatchingAnswerSlotValue(slot, '');
 
             // 同步清除正文中的 blank-slot
             clearPassageSlot(qa, slot.dataset.blankId);
           });
         });
+
+        if (qa.classList.contains('submitted')) {
+          renderMatchingAnswerResults(qa);
+        }
       }
     }
 
     // — 提交按钮 —
     const submitBtn = qa.querySelector('.qa-submit-btn');
     if (submitBtn) {
+      if (qa.classList.contains('submitted')) {
+        submitBtn.disabled = true;
+      }
       submitBtn.addEventListener('click', () => {
         if (document.documentElement.classList.contains('editor-mode')) return;
         if (qa.classList.contains('submitted')) return;
@@ -937,18 +989,181 @@
     }
   }
 
-  /** 同步右栏槽位答案到正文空位（仅同步数据，不改变视觉） */
+  function ensureMatchingPassageSlotStructure(slot) {
+    if (!slot) return null;
+
+    slot.classList.add('qa-matching-passage-slot');
+
+    let userSpan = slot.querySelector('.qa-blank-user');
+    if (!userSpan) {
+      userSpan = document.createElement('span');
+      userSpan.className = 'qa-blank-user';
+      slot.prepend(userSpan);
+    }
+
+    const sup = userSpan.querySelector('sup');
+    let valueSpan = userSpan.querySelector('.qa-blank-value');
+    if (!valueSpan) {
+      valueSpan = document.createElement('span');
+      valueSpan.className = 'qa-blank-value';
+      userSpan.textContent = '';
+      userSpan.appendChild(valueSpan);
+      if (sup) userSpan.appendChild(sup);
+    }
+
+    Array.from(userSpan.childNodes).forEach(node => {
+      if (node === valueSpan || node === sup) return;
+      if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+        node.remove();
+      }
+    });
+
+    let answerSpan = slot.querySelector('.qa-blank-answer');
+    if (!answerSpan) {
+      answerSpan = document.createElement('span');
+      answerSpan.className = 'qa-blank-answer';
+      slot.appendChild(answerSpan);
+    }
+    answerSpan.textContent = '';
+    answerSpan.style.display = 'none';
+
+    slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(el => el.remove());
+    slot.classList.remove('result-correct', 'result-incorrect', 'slot-answered');
+
+    return { userSpan, valueSpan };
+  }
+
+  function renderMatchingPassageSlot(slot, showCorrectAnswer) {
+    const structure = ensureMatchingPassageSlotStructure(slot);
+    if (!structure) return;
+
+    const { valueSpan } = structure;
+    slot.classList.toggle('show-correct-answer', !!showCorrectAnswer);
+    valueSpan.textContent = showCorrectAnswer ? (slot.dataset.correctAnswer || '') : '';
+  }
+
+  function setMatchingAnswerSlotValue(slot, optionId) {
+    if (!slot) return;
+
+    const blankEl = slot.querySelector('.qa-slot-blank');
+    if (!blankEl) return;
+
+    let valueEl = blankEl.querySelector('.qa-slot-value');
+    if (!valueEl) {
+      valueEl = document.createElement('span');
+      valueEl.className = 'qa-slot-value';
+      blankEl.appendChild(valueEl);
+    }
+
+    valueEl.textContent = optionId || '';
+    slot.classList.toggle('filled', !!optionId);
+    if (optionId) {
+      slot.dataset.userAnswer = optionId;
+    } else {
+      delete slot.dataset.userAnswer;
+    }
+  }
+
+  function renderMatchingAnswerResults(qa) {
+    qa.querySelectorAll('.qa-answer-slot[data-correct-answer]').forEach(slot => {
+      const correctAnswer = slot.dataset.correctAnswer || '';
+      const userAnswer = slot.dataset.userAnswer || '';
+      const isCorrect = !!userAnswer && userAnswer.toUpperCase() === correctAnswer.toUpperCase();
+      const blankEl = slot.querySelector('.qa-slot-blank');
+      if (!blankEl) return;
+
+      slot.classList.remove('slot-correct', 'slot-incorrect');
+      blankEl.querySelectorAll('.qa-slot-mark').forEach(el => el.remove());
+      slot.querySelectorAll('.qa-slot-correct').forEach(el => el.remove());
+
+      if (userAnswer) {
+        slot.classList.add(isCorrect ? 'slot-correct' : 'slot-incorrect');
+
+        const markEl = document.createElement('span');
+        markEl.className = 'qa-slot-mark ' + (isCorrect ? 'correct' : 'incorrect');
+        markEl.textContent = isCorrect ? '✓' : '✗';
+        blankEl.appendChild(markEl);
+      }
+
+      if (!isCorrect) {
+        const correctEl = document.createElement('span');
+        correctEl.className = 'qa-slot-correct';
+        correctEl.innerHTML = '<span class="qa-slot-correct-prefix">正确选项：</span>' + correctAnswer;
+        slot.appendChild(correctEl);
+      }
+    });
+  }
+
+  function resetMatchingQuestionState(qa) {
+    if (!qa) return;
+
+    qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
+      delete slot.dataset.userAnswer;
+      slot.classList.remove('filled', 'slot-answered', 'result-correct', 'result-incorrect', 'show-correct-answer');
+      slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(el => el.remove());
+
+      const answerSpan = slot.querySelector('.qa-blank-answer');
+      if (answerSpan) {
+        answerSpan.textContent = '';
+        answerSpan.style.display = 'none';
+      }
+
+      renderMatchingPassageSlot(slot, false);
+    });
+
+    qa.querySelectorAll('.qa-answer-slot').forEach(slot => {
+      slot.classList.remove('filled', 'slot-correct', 'slot-incorrect', 'drag-over');
+      delete slot.dataset.userAnswer;
+      slot.querySelectorAll('.qa-slot-correct').forEach(el => el.remove());
+      const blankEl = slot.querySelector('.qa-slot-blank');
+      if (blankEl) {
+        blankEl.querySelectorAll('.qa-slot-mark').forEach(el => el.remove());
+      }
+      setMatchingAnswerSlotValue(slot, '');
+    });
+
+    qa.querySelectorAll('.qa-question[data-type="matching"] .qa-option').forEach(option => {
+      option.classList.remove('used', 'selected', 'result-correct', 'result-incorrect');
+      option.querySelectorAll('.qa-result-mark').forEach(el => el.remove());
+    });
+  }
+
+  /** 同步右栏槽位答案到正文空位 */
   function syncSlotToPassage(qa, blankId, optionId) {
     const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
     if (!passageSlot) return;
     passageSlot.dataset.userAnswer = optionId;
+    passageSlot.classList.add('filled');
+    if (qa.querySelector('.qa-question[data-type="matching"]')) {
+      renderMatchingPassageSlot(passageSlot, qa.classList.contains('submitted'));
+      return;
+    }
+
+    const userSpan = passageSlot.querySelector('.qa-blank-user');
+    if (userSpan) {
+      const sup = passageSlot.querySelector('sup');
+      userSpan.textContent = optionId + ' ';
+      if (sup) userSpan.appendChild(sup);
+    }
   }
 
-  /** 清除正文空位的答案数据 */
+  /** 清除正文空位的答案 */
   function clearPassageSlot(qa, blankId) {
     const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
     if (!passageSlot) return;
     delete passageSlot.dataset.userAnswer;
+    passageSlot.classList.remove('filled');
+    if (qa.querySelector('.qa-question[data-type="matching"]')) {
+      renderMatchingPassageSlot(passageSlot, qa.classList.contains('submitted'));
+      return;
+    }
+
+    const userSpan = passageSlot.querySelector('.qa-blank-user');
+    if (userSpan) {
+      const sup = passageSlot.querySelector('sup');
+      userSpan.textContent = '___';
+      if (sup) userSpan.appendChild(sup);
+    }
   }
 
   /** 提交判分 */
@@ -983,8 +1198,15 @@
       }
     });
 
-    // — 填空题判分（连线题的正文空位不再显示判分标记，由右栏槽位统一处理） —
     const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
+    if (hasMatchingQ) {
+      qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
+        renderMatchingPassageSlot(slot, true);
+      });
+      renderMatchingAnswerResults(qa);
+    }
+
+    // — 填空题判分（连线题的正文空位不再显示判分标记，由右栏槽位统一处理） —
     qa.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(slot => {
       // 连线题的正文空位跳过视觉标记
       if (hasMatchingQ) return;
@@ -1024,57 +1246,6 @@
       }
     });
 
-    // — 连线题右栏槽位判分标记 —
-    qa.querySelectorAll('.qa-answer-slot[data-correct-answer]').forEach(slot => {
-      const correctAnswer = slot.dataset.correctAnswer;
-      const userAnswer = slot.dataset.userAnswer || '';
-      const isCorrect = userAnswer.toUpperCase() === correctAnswer.toUpperCase();
-
-      if (slot.classList.contains('filled')) {
-        slot.classList.add(isCorrect ? 'slot-correct' : 'slot-incorrect');
-      }
-
-      // 在序号右下方添加 ✓✗ 角标
-      const markEl = document.createElement('span');
-      markEl.className = 'qa-slot-mark';
-      if (slot.classList.contains('filled')) {
-        markEl.textContent = isCorrect ? '✓' : '✗';
-        markEl.classList.add(isCorrect ? 'correct' : 'incorrect');
-      } else {
-        markEl.textContent = '✗';
-        markEl.classList.add('incorrect');
-      }
-      const label = slot.querySelector('.qa-slot-label');
-      if (label) label.after(markEl);
-
-      // 未填或填错时，显示“正确选项：X”
-      if (!isCorrect) {
-        const correctEl = document.createElement('span');
-        correctEl.className = 'qa-slot-correct';
-        correctEl.innerHTML = '<span class="qa-slot-correct-prefix">正确选项：</span>' + correctAnswer;
-        slot.appendChild(correctEl);
-      }
-    });
-
-    // — 连线题：提交后在正文空位填上正确答案（绿色加粗，保持下划线） —
-    if (hasMatchingQ) {
-      qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
-        const correctAnswer = slot.dataset.correctAnswer;
-        const userSpan = slot.querySelector('.qa-blank-user');
-        if (userSpan) {
-          const sup = slot.querySelector('sup');
-          userSpan.textContent = correctAnswer;
-          if (sup) {
-            userSpan.appendChild(document.createTextNode(' '));
-            userSpan.appendChild(sup);
-          }
-        }
-        slot.classList.add('slot-answered');
-        // 隐藏可能残留的答案展示span
-        const answerSpan = slot.querySelector('.qa-blank-answer');
-        if (answerSpan) answerSpan.style.display = 'none';
-      });
-    }
   }
 
 
@@ -2206,6 +2377,14 @@
 
     // 6. 清除 data-scrollable 标记（initQuizAnnotation 会重新添加）
     qa.querySelectorAll('[data-scrollable]').forEach(el => el.removeAttribute('data-scrollable'));
+
+    // 7. 剥离七选五运行时插入的固定槽位与滚动包装层
+    qa.querySelectorAll('.qa-answer-slots, .qa-slots-divider').forEach(el => el.remove());
+    qa.querySelectorAll('.qa-answer-options-scroll').forEach(wrapper => {
+      const parent = wrapper.parentNode;
+      Array.from(wrapper.children).forEach(child => parent.appendChild(child));
+      wrapper.remove();
+    });
   }
 
   // 暴露给编辑器引擎：撤销/重做恢复 DOM 后，重新唤醒交互

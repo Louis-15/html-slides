@@ -1269,6 +1269,50 @@
   min-width: 0;
 }
 
+.qa-passage .qa-blank-slot {
+  display: inline-flex;
+  align-items: flex-end;
+  margin: 0 0.06em;
+  vertical-align: baseline;
+}
+
+.qa-passage .qa-blank-user {
+  display: inline-flex;
+  align-items: flex-end;
+  position: relative;
+}
+
+.qa-passage .qa-blank-value {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 3.1em;
+  padding: 0 0.1em 0.06em;
+  border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+  color: transparent;
+  font-weight: 800;
+  line-height: 1;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.qa-passage .qa-matching-passage-slot .qa-blank-user sup {
+  position: absolute;
+  left: calc(100% + 0.08em);
+  top: -0.36em;
+  line-height: 1;
+}
+
+.qa-passage .qa-blank-slot.show-correct-answer .qa-blank-value {
+  color: var(--brand-primary, #00A355);
+  border-bottom-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.6);
+}
+
+.qa-passage .qa-blank-answer,
+.qa-passage .qa-matching-passage-slot .qa-result-mark,
+.qa-passage .qa-matching-passage-slot .qa-blank-correct {
+  display: none !important;
+}
+
 
 /* --- 14.5 批注面板（中栏） --- */
 .qa-notes-panel {
@@ -1427,25 +1471,20 @@
 .qa-answer-content {
   flex: 1;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-
-/* --- 14.6.0 正文空位基础样式 --- */
-/* 彻底隐藏正文空位内的所有判分残留元素 */
-.qa-blank-slot .qa-blank-answer,
-.qa-blank-slot .qa-result-mark,
-.qa-blank-slot .qa-blank-correct {
-  display: none !important;
+.qa-answer-options-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 4px;
 }
 
-.qa-blank-slot.slot-answered .qa-blank-user {
-  color: var(--brand-primary, #00A355);
-  font-weight: 700;
-  border-bottom: 2px solid var(--brand-primary, #00A355);
-  padding-bottom: 1px;
-}
 
 /* --- 14.6.1a 连线题右栏答题槽位 --- */
 .qa-answer-slots {
@@ -1453,12 +1492,14 @@
   flex-direction: column;
   gap: 6px;
   margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .qa-answer-slot {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  column-gap: 6px;
   padding: 6px 14px;
   border-radius: 8px;
   background-color: rgba(255, 255, 255, 0.15);
@@ -1489,22 +1530,32 @@
   font-weight: 700;
   font-size: 14px;
   color: var(--text-muted);
-  min-width: 28px;
+  min-width: 24px;
   flex-shrink: 0;
 }
 
 .qa-slot-blank {
-  font-size: 15px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  position: relative;
+  font-size: 17px;
+  font-weight: 800;
   color: var(--text-dim);
-  letter-spacing: 2px;
+  letter-spacing: 0;
 }
 
 .qa-answer-slot.filled .qa-slot-blank {
   color: var(--accent-orange, #f39800);
   font-weight: 800;
   letter-spacing: 0;
-  font-size: 17px;
+}
+
+.qa-slot-value {
+  position: relative;
+  z-index: 1;
 }
 
 /* 槽位判分状态 */
@@ -1530,11 +1581,14 @@
 
 /* 槽位判分角标 ✓✗（序号右下方） */
 .qa-slot-mark {
-  font-size: 18px;
+  position: absolute;
+  left: calc(100% - 0.22em);
+  top: 58%;
+  transform: translate(-10%, -12%);
+  font-size: 20px;
   font-weight: 900;
-  margin-left: -4px;
-  margin-right: 2px;
-  flex-shrink: 0;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .qa-slot-mark.correct {
@@ -1546,6 +1600,8 @@
 }
 
 .qa-slot-correct {
+  grid-column: 3;
+  justify-self: end;
   color: var(--brand-primary, #00A355);
   font-weight: 700;
   font-size: 15px;
@@ -1569,6 +1625,7 @@
   color: var(--text-dim);
   opacity: 0.6;
   border-top: 1px dashed var(--border);
+  flex-shrink: 0;
 }
 
 /* 已拖入槽位的选项变暗 */
@@ -1727,6 +1784,8 @@
   gap: 6px;
   padding: 5px 20px;
   border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -2199,18 +2258,21 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 /* --- 14.14 隐形滚动条 --- */
 .qa-passage::-webkit-scrollbar,
 .qa-answer-content::-webkit-scrollbar,
+.qa-answer-options-scroll::-webkit-scrollbar,
 .qa-notes-list::-webkit-scrollbar {
   width: 4px;
 }
 
 .qa-passage::-webkit-scrollbar-track,
 .qa-answer-content::-webkit-scrollbar-track,
+.qa-answer-options-scroll::-webkit-scrollbar-track,
 .qa-notes-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .qa-passage::-webkit-scrollbar-thumb,
 .qa-answer-content::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll::-webkit-scrollbar-thumb,
 .qa-notes-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
@@ -2218,6 +2280,7 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 
 .qa-passage:hover::-webkit-scrollbar-thumb,
 .qa-answer-content:hover::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll:hover::-webkit-scrollbar-thumb,
 .qa-notes-list:hover::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
