@@ -921,6 +921,11 @@
       qa.classList.add('has-quiz');
     }
 
+    // 普通选择题的未作答提醒与判分角标都属于运行时反馈，未提交时统一清理，避免历史 DOM 残留。
+    if (!qa.classList.contains('submitted')) {
+      clearSelectionQuestionResults(qa);
+    }
+
     // — 选择题点选 —
     qa.querySelectorAll('.qa-option').forEach(option => {
       option.addEventListener('click', () => {
@@ -936,6 +941,9 @@
           });
         }
         option.classList.toggle('selected');
+
+        // 一旦用户重新作答，立即移除“未作答判错”的即时提示，避免旧反馈残留误导。
+        clearQuestionUnansweredState(option.closest('.qa-question'));
       });
     });
 
@@ -1212,7 +1220,7 @@
 
       slot.classList.remove('slot-correct', 'slot-incorrect');
       blankEl.querySelectorAll('.qa-slot-mark').forEach(el => el.remove());
-      slot.querySelectorAll('.qa-slot-correct').forEach(el => el.remove());
+      slot.querySelectorAll('.qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
 
       if (isCorrect) {
         slot.classList.add('slot-correct');
@@ -1230,6 +1238,14 @@
         markEl.className = 'qa-slot-mark incorrect';
         markEl.textContent = '✗';
         blankEl.appendChild(markEl);
+      }
+
+      // 连线题未作答时也给出明确文本胶囊，避免只靠红框表达“判错”。
+      if (!isAnswered) {
+        const feedbackEl = document.createElement('span');
+        feedbackEl.className = 'qa-slot-feedback unanswered';
+        feedbackEl.textContent = '未作答';
+        slot.appendChild(feedbackEl);
       }
 
       if (!isCorrect) {
@@ -1261,7 +1277,7 @@
     qa.querySelectorAll('.qa-answer-slot').forEach(slot => {
       slot.classList.remove('filled', 'slot-correct', 'slot-incorrect', 'drag-over');
       delete slot.dataset.userAnswer;
-      slot.querySelectorAll('.qa-slot-correct').forEach(el => el.remove());
+      slot.querySelectorAll('.qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
       const blankEl = slot.querySelector('.qa-slot-blank');
       if (blankEl) {
         blankEl.querySelectorAll('.qa-slot-mark').forEach(el => el.remove());
@@ -1313,6 +1329,122 @@
     }
   }
 
+  /** 清除普通选择题的“未作答判错”提醒 */
+  function clearQuestionUnansweredState(question) {
+    if (!question) return;
+    question.classList.remove('result-unanswered');
+    question.removeAttribute('aria-invalid');
+    question.querySelectorAll('.qa-question-feedback.unanswered').forEach(el => el.remove());
+  }
+
+  /** 确保普通选择题拥有可读的结果提示，避免只靠颜色表达状态 */
+  function ensureQuestionResultFeedback(question, variant, message) {
+    if (!question) return null;
+
+    let feedback = question.querySelector('.qa-question-feedback.' + variant);
+    if (!feedback) {
+      feedback = document.createElement('div');
+      feedback.className = 'qa-question-feedback ' + variant;
+      feedback.setAttribute('role', 'status');
+      feedback.setAttribute('aria-live', 'polite');
+      feedback.setAttribute('aria-atomic', 'true');
+
+      const badge = document.createElement('span');
+      badge.className = 'qa-question-feedback-badge';
+      feedback.appendChild(badge);
+
+      const prompt = question.querySelector('p, .qa-question-text');
+      if (prompt) {
+        prompt.insertAdjacentElement('afterend', feedback);
+      } else {
+        question.insertBefore(feedback, question.firstChild);
+      }
+    }
+
+    const badgeEl = feedback.querySelector('.qa-question-feedback-badge');
+    if (badgeEl) badgeEl.textContent = variant === 'unanswered' ? '未作答' : '提示';
+
+    const existingTextEl = feedback.querySelector('.qa-question-feedback-text');
+    if (message) {
+      let textEl = existingTextEl;
+      if (!textEl) {
+        textEl = document.createElement('span');
+        textEl.className = 'qa-question-feedback-text';
+        feedback.appendChild(textEl);
+      }
+      textEl.textContent = message;
+      feedback.setAttribute('aria-label', (badgeEl ? badgeEl.textContent : '') + '，' + message);
+    } else {
+      if (existingTextEl) existingTextEl.remove();
+      feedback.setAttribute('aria-label', badgeEl ? badgeEl.textContent : '提示');
+    }
+
+    return feedback;
+  }
+
+  /** 清理普通选择题的运行时判分 UI，但保留用户当前选择状态 */
+  function clearSelectionQuestionResults(qa) {
+    if (!qa) return;
+
+    qa.querySelectorAll('.qa-question').forEach(question => {
+      if (question.dataset.type === 'matching') return;
+
+      clearQuestionUnansweredState(question);
+
+      question.querySelectorAll('.qa-option').forEach(option => {
+        option.classList.remove('result-correct', 'result-incorrect');
+        option.querySelectorAll('.qa-result-mark').forEach(el => el.remove());
+      });
+    });
+  }
+
+  /** 渲染普通选择题的提交反馈：保留正确答案高亮，并对未作答题给出明确失败提示 */
+  function renderSelectionQuestionResults(qa) {
+    if (!qa) return;
+    clearSelectionQuestionResults(qa);
+
+    qa.querySelectorAll('.qa-question').forEach(question => {
+      const questionType = question.dataset.type;
+      if (questionType === 'matching') return;
+
+      const options = Array.from(question.querySelectorAll('.qa-option'));
+      if (!options.length) return;
+
+      const selectedOptions = options.filter(option => option.classList.contains('selected'));
+      const isAnswered = selectedOptions.length > 0;
+
+      if (!isAnswered) {
+        question.classList.add('result-unanswered');
+        question.setAttribute('aria-invalid', 'true');
+        ensureQuestionResultFeedback(question, 'unanswered');
+      }
+
+      options.forEach(option => {
+        const isCorrect = option.dataset.correct === 'true';
+        const isSelected = option.classList.contains('selected');
+
+        let markEl = option.querySelector('.qa-result-mark');
+        if (!markEl) {
+          markEl = document.createElement('span');
+          markEl.className = 'qa-result-mark';
+          option.appendChild(markEl);
+        }
+
+        if (isCorrect) {
+          markEl.textContent = '✓';
+          markEl.classList.add('correct');
+          option.classList.add('result-correct');
+          setTimeout(() => markEl.classList.add('visible'), 100);
+        } else if (isSelected) {
+          markEl.textContent = '✗';
+          markEl.classList.add('incorrect');
+          option.classList.add('result-incorrect');
+          setTimeout(() => markEl.classList.add('visible'), 150);
+        }
+      });
+    });
+  }
+
   /** 提交判分 */
   function submitQuiz(qa) {
     qa.classList.add('submitted');
@@ -1320,30 +1452,8 @@
     const submitBtn = qa.querySelector('.qa-submit-btn');
     if (submitBtn) submitBtn.disabled = true;
 
-    // — 选择题判分 —
-    qa.querySelectorAll('.qa-option').forEach(option => {
-      const isCorrect = option.dataset.correct === 'true';
-      const isSelected = option.classList.contains('selected');
-
-      let markEl = option.querySelector('.qa-result-mark');
-      if (!markEl) {
-        markEl = document.createElement('span');
-        markEl.className = 'qa-result-mark';
-        option.appendChild(markEl);
-      }
-
-      if (isCorrect) {
-        markEl.textContent = '✓';
-        markEl.classList.add('correct');
-        option.classList.add('result-correct');
-        setTimeout(() => markEl.classList.add('visible'), 100);
-      } else if (isSelected && !isCorrect) {
-        markEl.textContent = '✗';
-        markEl.classList.add('incorrect');
-        option.classList.add('result-incorrect');
-        setTimeout(() => markEl.classList.add('visible'), 150);
-      }
-    });
+    // 普通选择题在提交时统一重渲染结果，这样“选错”和“未作答判错”能共享同一套反馈入口。
+    renderSelectionQuestionResults(qa);
 
     const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
     if (hasMatchingQ) {
