@@ -51,7 +51,8 @@
 
                 /* 确保涂鸦模式下，右侧页面导航、底部分页器等系统交互组件漂浮在画板之上 (画板的 z-index 为 400) */
                 .doodle-mode .slide-nav,
-                .doodle-mode .slide-counter {
+                .doodle-mode .slide-counter,
+                .doodle-mode .slide-pager {
                     z-index: 500 !important;
                 }
             `;
@@ -235,7 +236,7 @@
                 self.laserCursor.style.left = e.clientX + 'px';
                 self.laserCursor.style.top = e.clientY + 'px';
 
-                if (e.target.closest && e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .rich-toolbar')) {
+                if (e.target.closest && e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .slide-pager, .slide-pager-btn, .rich-toolbar')) {
                     self.laserCursor.style.opacity = '0';
                     document.documentElement.style.cursor = 'auto'; // 在 UI 上恢复系统光标
                 } else {
@@ -260,7 +261,7 @@
             }, { capture: true, passive: false });
 
             document.addEventListener('touchmove', function(e) {
-                if (self.isActive && !e.target.closest('.slide-nav') && !e.target.closest('.doodle-toolbar')) {
+                if (self.isActive && !e.target.closest('.slide-nav') && !e.target.closest('.slide-pager') && !e.target.closest('.doodle-toolbar')) {
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -434,7 +435,7 @@
         _onPointerDown: function (e) {
             if (!this.isActive || e.button !== 0) return;
             // 屏蔽所有的系统级 UI 操作面板点按，防止将其污染为画笔轨迹
-            if (e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .rich-toolbar, .edit-toggle, .edit-hotzone')) {
+            if (e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .slide-pager, .slide-pager-btn, .rich-toolbar, .edit-toggle, .edit-hotzone')) {
                 return;
             }
             

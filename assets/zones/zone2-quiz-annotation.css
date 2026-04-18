@@ -1417,7 +1417,8 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 
 
 /* --- 14.15 编辑模式浮动工具条 --- */
-.qa-annotation-toolbar {
+.qa-annotation-toolbar,
+.qa-note-fragment-toolbar {
   position: absolute;
   z-index: 10005;
   display: none;
@@ -1430,7 +1431,8 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-.qa-annotation-toolbar.visible {
+.qa-annotation-toolbar.visible,
+.qa-note-fragment-toolbar.visible {
   display: flex;
 }
 
@@ -1470,35 +1472,63 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 }
 
 /* 浮动工具条内的下拉容器：保证与按钮同行居中 */
-.qa-annotation-toolbar .qa-format-dropdown {
+.qa-annotation-toolbar .qa-format-dropdown,
+.qa-note-fragment-toolbar .qa-format-dropdown {
   position: relative;
   display: flex;
   align-items: center;
 }
 
 /* 浮动工具条内的下拉菜单：覆盖编辑器暗色主题，改用白色 */
-.qa-annotation-toolbar .rt-dropdown-menu {
+.qa-annotation-toolbar .rt-dropdown-menu,
+.qa-note-fragment-toolbar .rt-dropdown-menu {
   background: #ffffff;
   border-color: #e0e0e0;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.qa-annotation-toolbar .rt-dropdown-menu::before {
+.qa-annotation-toolbar .rt-dropdown-menu::before,
+.qa-note-fragment-toolbar .rt-dropdown-menu::before {
   background: #ffffff;
   border-left-color: #e0e0e0;
   border-top-color: #e0e0e0;
 }
 
 /* 上弹模式：空间不足时从上方弹出 */
-.qa-annotation-toolbar .rt-dropdown-menu.drop-up {
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up,
+.qa-note-fragment-toolbar .rt-dropdown-menu.drop-up {
   top: auto;
   bottom: calc(100% + 10px);
 }
 
-.qa-annotation-toolbar .rt-dropdown-menu.drop-up::before {
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up::before,
+.qa-note-fragment-toolbar .rt-dropdown-menu.drop-up::before {
   top: auto;
   bottom: -6px;
   transform: translateX(-50%) rotate(225deg);
+}
+
+/* --- 14.15A 批注气泡内富文本片段（二级步进） --- */
+.qa-note-fragment {
+  border-radius: 0.35em;
+  padding: 0 0.04em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.qa-note-content [data-fragment-step="true"] {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(0.14em);
+  transition: opacity 0.24s ease, filter 0.24s ease, transform 0.24s ease;
+}
+
+.qa-note-content [data-fragment-step="true"].qa-fragment-visible,
+html.editor-mode .qa-note-content [data-fragment-step="true"],
+body.editor-mode .qa-note-content [data-fragment-step="true"] {
+  opacity: 1;
+  filter: none;
+  transform: none;
 }
 
 
@@ -1516,6 +1546,7 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   .qa-option,
   .qa-status-dot,
   .qa-annotation-toolbar,
+  .qa-note-fragment-toolbar,
   .qa-divider-btn {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;

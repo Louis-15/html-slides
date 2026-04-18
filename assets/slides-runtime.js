@@ -58,10 +58,31 @@ slides.forEach((_, i) => {
   slideNav.appendChild(dot);
 });
 
+function ensureSlidePager() {
+  if (document.getElementById('slidePager')) return;
+
+  const pager = document.createElement('div');
+  pager.id = 'slidePager';
+  pager.className = 'slide-pager';
+  pager.innerHTML = `
+    <button type="button" class="slide-pager-btn slide-pager-prev" aria-label="上一页">上一页</button>
+    <button type="button" class="slide-pager-btn slide-pager-next" aria-label="下一页">下一页</button>
+  `;
+
+  pager.querySelector('.slide-pager-prev').addEventListener('click', prev);
+  pager.querySelector('.slide-pager-next').addEventListener('click', next);
+  document.body.appendChild(pager);
+}
+
 function updateUI() {
   progress.style.width = ((current+1)/total*100)+'%';
   counter.textContent = `${current+1} / ${total}`;
   document.querySelectorAll('.slide-nav-dot').forEach((d,i) => d.classList.toggle('active', i===current));
+
+  const prevBtn = document.querySelector('.slide-pager-prev');
+  const nextBtn = document.querySelector('.slide-pager-next');
+  if (prevBtn) prevBtn.disabled = current <= 0;
+  if (nextBtn) nextBtn.disabled = current >= total - 1;
 }
 
 function finishSlideAnimationsForEditorMode(slide) {
@@ -120,12 +141,21 @@ function next() { goTo(current+1); }
 function prev() { goTo(current-1); }
 
 document.addEventListener('keydown', (e) => {
-  // 上下键 / PageDown/Up = 翻页
-  if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); next(); }
-  if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); prev(); }
-  // 左右键 = 页内组件步进（不翻页）
-  if (e.key === 'ArrowRight') { e.preventDefault(); stepForward(); }
-  if (e.key === 'ArrowLeft') { e.preventDefault(); stepBackward(); }
+  // 一级步进：↑↓ 先走当前页组件焦点，页内耗尽后再翻页。
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (!stepForward()) next();
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!stepBackward()) prev();
+  }
+  // PageDown/PageUp 仍保留为直接翻页，兼容键盘习惯。
+  if (e.key === 'PageDown') { e.preventDefault(); next(); }
+  if (e.key === 'PageUp') { e.preventDefault(); prev(); }
+  // 二级步进：←→ 只交给当前焦点组件内部的片段逻辑。
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepFragment('forward'); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepFragment('backward'); }
   // 空格键 = 预留给长文组件页内滚动（无长文组件时不做操作）
   if (e.key === ' ') { e.preventDefault(); handleSpaceKey(); }
   // Home / End = 跳页
@@ -215,6 +245,55 @@ const slideStepState = {};
 let interactionQueue = [];
 let stepIndex = -1;
 
+function getStrategyByElement(el) {
+  if (!el) return null;
+  const type = el.getAttribute('data-steppable');
+  return type ? StepStrategies[type] : null;
+}
+
+function canStepTopLevelForward(strategy, el) {
+  if (!strategy) return false;
+  if (typeof strategy.canStepTopLevelForward === 'function') return !!strategy.canStepTopLevelForward(el);
+  if (typeof strategy.hasNextStep === 'function') return !!strategy.hasNextStep(el);
+  return false;
+}
+
+function canStepTopLevelBackward(strategy, el) {
+  if (!strategy) return false;
+  if (typeof strategy.canStepTopLevelBackward === 'function') return !!strategy.canStepTopLevelBackward(el);
+  if (typeof strategy.hasPrevStep === 'function') return !!strategy.hasPrevStep(el);
+  if (typeof strategy.hasNextStep === 'function') return !strategy.hasNextStep(el);
+  return true;
+}
+
+function hasExplicitBackwardState(strategy) {
+  return !!strategy && (
+    typeof strategy.canStepTopLevelBackward === 'function' ||
+    typeof strategy.hasPrevStep === 'function' ||
+    typeof strategy.hasNextStep === 'function'
+  );
+}
+
+function runTopLevelForward(strategy, el) {
+  if (!strategy) return false;
+  if (typeof strategy.forwardTopLevel === 'function') return strategy.forwardTopLevel(el) !== false;
+  if (typeof strategy.forward === 'function') {
+    strategy.forward(el);
+    return true;
+  }
+  return false;
+}
+
+function runTopLevelBackward(strategy, el) {
+  if (!strategy) return false;
+  if (typeof strategy.backwardTopLevel === 'function') return strategy.backwardTopLevel(el) !== false;
+  if (typeof strategy.backward === 'function') {
+    strategy.backward(el);
+    return true;
+  }
+  return false;
+}
+
 /* 构建指定页的交互队列，并恢复记忆的步进位置 */
 function buildInteractionQueue(slideIndex) {
   interactionQueue = Array.from(
@@ -236,10 +315,9 @@ function stepForward() {
   // 先检查当前组件是否还有内部步骤（多步组件支持）
   if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
     const el = interactionQueue[stepIndex];
-    const type = el.getAttribute('data-steppable');
-    const strategy = StepStrategies[type];
-    if (strategy && strategy.hasNextStep && strategy.hasNextStep(el)) {
-      strategy.forward(el);
+    const strategy = getStrategyByElement(el);
+    if (canStepTopLevelForward(strategy, el)) {
+      runTopLevelForward(strategy, el);
       updateStepActiveClass();
       saveStepState();
       return true;
@@ -249,9 +327,8 @@ function stepForward() {
   if (interactionQueue.length === 0 || stepIndex >= interactionQueue.length - 1) return false;
   stepIndex++;
   const el = interactionQueue[stepIndex];
-  const type = el.getAttribute('data-steppable');
-  const strategy = StepStrategies[type];
-  if (strategy) strategy.forward(el);
+  const strategy = getStrategyByElement(el);
+  runTopLevelForward(strategy, el);
   updateStepActiveClass();
   saveStepState();
   return true;
@@ -262,12 +339,11 @@ function stepForward() {
 function stepBackward() {
   if (stepIndex < 0) return false;
   const el = interactionQueue[stepIndex];
-  const type = el.getAttribute('data-steppable');
-  const strategy = StepStrategies[type];
-  if (strategy) strategy.backward(el);
+  const strategy = getStrategyByElement(el);
+  if (!runTopLevelBackward(strategy, el)) return false;
   // 检查当前组件是否已经完全回退（无更多内部步骤可回退）
   // 对于多步组件，backward 会逐步回退，只有全部回退完才减 stepIndex
-  if (strategy && strategy.hasNextStep && strategy.hasNextStep(el)) {
+  if (hasExplicitBackwardState(strategy) ? canStepTopLevelBackward(strategy, el) : false) {
     // 还有内部步骤（backward 后仍有状态），保持在当前组件
     updateStepActiveClass();
     saveStepState();
@@ -277,6 +353,19 @@ function stepBackward() {
   updateStepActiveClass();
   saveStepState();
   return true;
+}
+
+function stepFragment(direction) {
+  if (stepIndex < 0 || stepIndex >= interactionQueue.length) return false;
+  const el = interactionQueue[stepIndex];
+  const strategy = getStrategyByElement(el);
+  if (!strategy || typeof strategy.stepFragment !== 'function') return false;
+  const didStep = strategy.stepFragment(el, direction);
+  if (didStep) {
+    updateStepActiveClass();
+    saveStepState();
+  }
+  return !!didStep;
 }
 
 
@@ -301,6 +390,7 @@ function handleSpaceKey() {
 
 // --- 初始化 ---
 autoTagSteppables();
+ensureSlidePager();
 updateUI();
 buildInteractionQueue(0);
 finishSlideAnimationsForEditorMode(slides[current]);

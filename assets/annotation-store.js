@@ -197,32 +197,45 @@
   // === 数据收集 ===
 
   function _stripTransientQuizState(html) {
-    if (!html || html.indexOf('qa-blank-slot') === -1) return html;
+    if (!html) return html;
+
+    var needsQuizCleanup = html.indexOf('qa-blank-slot') !== -1;
+    var needsFragmentCleanup = html.indexOf('data-fragment-step') !== -1 || html.indexOf('qa-fragment-visible') !== -1;
+    if (!needsQuizCleanup && !needsFragmentCleanup) return html;
 
     var temp = document.createElement('div');
     temp.innerHTML = html;
 
-    temp.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(function (slot) {
-      slot.removeAttribute('data-user-answer');
-      slot.classList.remove('filled', 'slot-answered', 'result-correct', 'result-incorrect', 'show-correct-answer');
-      slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(function (el) { el.remove(); });
+    if (needsQuizCleanup) {
+      temp.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(function (slot) {
+        slot.removeAttribute('data-user-answer');
+        slot.classList.remove('filled', 'slot-answered', 'result-correct', 'result-incorrect', 'show-correct-answer');
+        slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(function (el) { el.remove(); });
 
-      var answerSpan = slot.querySelector('.qa-blank-answer');
-      if (answerSpan) {
-        answerSpan.textContent = '';
-        answerSpan.style.display = 'none';
-      }
+        var answerSpan = slot.querySelector('.qa-blank-answer');
+        if (answerSpan) {
+          answerSpan.textContent = '';
+          answerSpan.style.display = 'none';
+        }
 
-      var userSpan = slot.querySelector('.qa-blank-user');
-      if (userSpan) {
-        var sup = userSpan.querySelector('sup');
-        userSpan.textContent = '';
-        var valueSpan = document.createElement('span');
-        valueSpan.className = 'qa-blank-value';
-        userSpan.appendChild(valueSpan);
-        if (sup) userSpan.appendChild(sup);
-      }
-    });
+        var userSpan = slot.querySelector('.qa-blank-user');
+        if (userSpan) {
+          var sup = userSpan.querySelector('sup');
+          userSpan.textContent = '';
+          var valueSpan = document.createElement('span');
+          valueSpan.className = 'qa-blank-value';
+          userSpan.appendChild(valueSpan);
+          if (sup) userSpan.appendChild(sup);
+        }
+      });
+    }
+
+    if (needsFragmentCleanup) {
+      temp.querySelectorAll('[data-fragment-step]').forEach(function (fragment) {
+        fragment.classList.remove('qa-fragment-visible');
+        fragment.removeAttribute('data-fragment-manual-reveal');
+      });
+    }
 
     return temp.innerHTML;
   }
@@ -255,7 +268,7 @@
 
       // 答题面板中有 data-edit-id 的元素（AI 原生气泡等）
       qa.querySelectorAll('.qa-answer-panel [data-edit-id]').forEach(function (el) {
-        data.elements[el.getAttribute('data-edit-id')] = _cleanDeletedAnchors(el.innerHTML, data.deletedNotes);
+        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(_cleanDeletedAnchors(el.innerHTML, data.deletedNotes));
       });
 
       // 批注气泡内容（只保存未删除的）
@@ -263,7 +276,7 @@
         var bubble = el.closest('.qa-note-bubble');
         var linkId = bubble ? bubble.getAttribute('data-link') : null;
         if (linkId && data.deletedNotes.indexOf(linkId) !== -1) return;
-        data.elements[el.getAttribute('data-edit-id')] = el.innerHTML;
+        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(el.innerHTML);
       });
 
       // 右侧关联：answer-anchor 在 .qa-option-text 中（没有 data-edit-id）
@@ -277,7 +290,7 @@
           data.elements[linkId + '-right'] = {
             qaIndex: qaIndex,
             option: option.getAttribute('data-option'),
-            innerHTML: optionText.innerHTML
+            innerHTML: _stripTransientQuizState(optionText.innerHTML)
           };
         }
       });

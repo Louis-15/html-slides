@@ -14,12 +14,29 @@
     var getAllSlides = utils.getAllSlides;
     var EditorHooks = window.EditorHooks;
 
+    function stripTransientEditableHTML(html) {
+        if (!html) return html;
+        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1) {
+            return html;
+        }
+
+        var temp = document.createElement('div');
+        temp.innerHTML = html;
+        temp.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
+            el.classList.remove('qa-fragment-visible');
+        });
+        temp.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
+            el.removeAttribute('data-fragment-manual-reveal');
+        });
+        return temp.innerHTML;
+    }
+
     var PersistenceLayer = {
         /** 保存单个可编辑元素的内容 */
         saveElement: function (el) {
             var id = el.getAttribute('data-edit-id');
             if (!id) return;
-            try { localStorage.setItem(storageKey('e:' + id), el.innerHTML); } catch (e) { }
+            try { localStorage.setItem(storageKey('e:' + id), stripTransientEditableHTML(el.innerHTML)); } catch (e) { }
         },
 
         /** 从 localStorage 恢复所有可编辑元素的内容 */
@@ -28,7 +45,7 @@
                 var id = el.getAttribute('data-edit-id');
                 try {
                     var saved = localStorage.getItem(storageKey('e:' + id));
-                    if (saved !== null) el.innerHTML = saved;
+                    if (saved !== null) el.innerHTML = stripTransientEditableHTML(saved);
                 } catch (e) { }
             });
         },
@@ -172,6 +189,9 @@
 
             // 移除浮动控件及编辑器专有图元挂载节点
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+            clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar').forEach(function (el) { el.remove(); });
+            clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) { el.classList.remove('qa-fragment-visible'); });
+            clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) { el.removeAttribute('data-fragment-manual-reveal'); });
 
             // 剥离原生的安全隔离壳 (.native-edit-wrap)
             clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {

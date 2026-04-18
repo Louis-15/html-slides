@@ -152,6 +152,49 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* 右下角翻页按钮：三种模式下都保留，因此使用独立的高层级悬浮层。 */
+.slide-pager {
+  position: fixed;
+  right: 24px;
+  bottom: 56px;
+  z-index: 520;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.slide-pager-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 78px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--text, #e6edf3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease, opacity 0.22s ease;
+}
+
+.slide-pager-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(88, 166, 255, 0.45);
+}
+
+.slide-pager-btn:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
 .nav-hints {
   position: fixed;
   bottom: 20px;
@@ -204,6 +247,21 @@ body {
 .slide-nav-dot:hover {
   background: rgba(255, 255, 255, 0.4);
   transform: scale(1.3);
+}
+
+@media (max-width: 768px) {
+  .slide-pager {
+    right: 16px;
+    bottom: 52px;
+    gap: 8px;
+  }
+
+  .slide-pager-btn {
+    min-width: 68px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
 }
 
 /* -- Typography -- */
