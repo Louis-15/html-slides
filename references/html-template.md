@@ -38,7 +38,12 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="./assets/viewport-base.css">
     <link rel="stylesheet" href="./assets/themes/[teaching-theme].css"> <!-- teaching theme -->
     <link rel="stylesheet" href="./assets/components.css">
-    <link rel="stylesheet" href="./assets/editor.css"> <!-- always included -->
+    <link rel="stylesheet" href="./assets/zones/zone1-header.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-content.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
+    <link rel="stylesheet" href="./assets/editor.css"> <!-- always included and loaded after Zone CSS -->
     <link rel="stylesheet" href="./assets/slide-animations.css"> <!-- custom animations -->
 
     <style>
@@ -165,8 +170,13 @@ The editing system is powered by external asset files — **all via `<link>` and
 
 ### 1. CSS Reference
 
-Reference `editor.css` via `<link>`, **after** the theme CSS:
+Reference `editor.css` via `<link>`, **after** the Zone CSS chain:
 ```html
+<link rel="stylesheet" href="./assets/zones/zone1-header.css">
+<link rel="stylesheet" href="./assets/zones/zone2-content.css">
+<link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+<link rel="stylesheet" href="./assets/zones/zone3-summary.css">
 <link rel="stylesheet" href="./assets/editor.css">
 ```
 
@@ -319,6 +329,12 @@ assets/                        # CSS, JS modules, themes, images
 ├── viewport-base.css          # Mandatory responsive CSS
 ├── themes/                    # Theme CSS files
 ├── components.css             # Component CSS
+├── zones/
+│   ├── zone1-header.css       # Zone 1 header bar
+│   ├── zone2-content.css      # Zone 2 base layouts + common components
+│   ├── zone2-immersive-components.css # Zone 2 immersive components
+│   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
+│   └── zone3-summary.css      # Zone 3 summary panel
 ├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
 ├── editor-utils.js            # Editor base utilities

@@ -1565,13 +1565,34 @@
       actionsHTML += `<button class="qa-note-action-btn action-delete" title="删除批注">✖</button>`;
 
       let actionsDiv = bubble.querySelector('.qa-note-actions');
+      let noteHeader = bubble.querySelector('.qa-note-header');
+
+      // 历史恢复后 strip 只会剥离按钮容器，不会移除 qa-note-header。
+      // 这里统一保证按钮优先回挂到头部容器里，避免重新漂回气泡根节点。
+      if (!noteHeader) {
+        const noteHandle = bubble.querySelector('.qa-note-handle');
+        if (noteHandle) {
+          noteHeader = document.createElement('div');
+          noteHeader.className = 'qa-note-header';
+          bubble.insertBefore(noteHeader, bubble.firstChild);
+          noteHeader.appendChild(noteHandle);
+        }
+      }
+
       if (actionsDiv) {
         actionsDiv.innerHTML = actionsHTML;
+        if (noteHeader && actionsDiv.parentNode !== noteHeader) {
+          noteHeader.appendChild(actionsDiv);
+        }
       } else {
         actionsDiv = document.createElement('div');
         actionsDiv.className = 'qa-note-actions';
         actionsDiv.innerHTML = actionsHTML;
-        bubble.appendChild(actionsDiv);
+        if (noteHeader) {
+          noteHeader.appendChild(actionsDiv);
+        } else {
+          bubble.appendChild(actionsDiv);
+        }
       }
 
       // 点击气泡 → 切换激活

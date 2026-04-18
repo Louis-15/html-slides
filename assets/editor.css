@@ -674,11 +674,3 @@ html.editor-mode .slide.active *::after {
 .editor-mode .content-block {
     overflow: visible !important;
 }
-
-/* 答题与批注组件专用的溢出防裁切方案 
-   因为三栏内部带有 overflow-y: auto 需要保持滚动，不能轻易 visible，
-   所以在编辑模式下给内部增加足够的上内边距，让 top: -32px 的控件有合法的视觉空间 */
-.editor-mode .quiz-annotation .qa-passage,
-.editor-mode .quiz-annotation .qa-answer-panel {
-    padding-top: 40px !important;
-}

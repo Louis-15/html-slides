@@ -2,6 +2,8 @@
 
 > 来源：`docs/superpowers/plans/2026-04-18-zone2-css-architecture.md`
 > 说明：本文件为中文译稿，供开发执行与开发者文档目录查阅使用。
+> 状态：本计划已于 2026-04-18 执行完成。下文复选框与步骤描述保留为历史执行记录，不再代表“待办”。
+> 执行完成后的现状，请以 `开发者文档/布局与组件开发文档.md`、`开发者文档/答题与批注组件.md`、`开发者文档/沉浸式逃逸组件.md` 为准；另外，后续又补充了一次 `assets/quiz-annotation-runtime.js` 的撤销/重做恢复修正，用于保持批注气泡头部结构一致。
 
 > **面向代理执行者：** 必须配合 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 按任务逐项执行。以下步骤使用复选框 `- [ ]` 进行追踪。
 

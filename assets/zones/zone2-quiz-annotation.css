@@ -1,0 +1,1401 @@
+/* ===========================================
+   ZONE 2: 答题与批注组件 (Quiz Annotation)
+   负责 .quiz-annotation 及全部 .qa-* 视觉样式。
+
+   包含：
+   - 沉浸式逃逸规则
+   - 三栏布局
+   - 正文、批注、答题区
+   - 判分反馈、连线槽位、批注气泡、连线与拖拽
+   - quiz 专属编辑模式补丁
+   - 无障碍与 reduced-motion 补丁
+   =========================================== */
+
+
+/* ===========================================
+   组件 14: 答题与批注 (.quiz-annotation) — v2
+   独占整页的复合交互组件，融合答题与批注两大功能。
+   适用于阅读理解、七选五、完形填空、作文批改等场景。
+
+   v2 布局重构：左中右三栏水平布局
+    ┌─────────────┬──────────┬──────────────────┐
+    │  qa-passage  │ qa-notes │  qa-answer-panel │
+    │  (左栏 5)    │ (中栏 2) │  (右栏 3)        │
+    │  始终可见     │ 默认隐藏  │  有内容时可见     │
+    └─────────────┴──────────┴──────────────────┘
+
+   状态类：
+    .notes-active    → 中栏批注面板展开
+    .has-quiz        → 有答题内容（右栏可见）
+    .submitted       → 已提交答案
+    .has-active-note → 有激活的批注（降噪规则）
+    .linking-left    → 关联模式：正在关联左侧
+    .linking-right   → 关联模式：正在关联右侧
+   =========================================== */
+
+
+/* ===========================================
+   14.0 沉浸式逃逸 (Immersive Override)
+   通过 :has() 伪类自动隐藏 Zone 1 标题栏，
+   使 Zone 2 霸占全页高度。
+   Logo (.branding) 为 fixed 定位，天然不受影响。
+   =========================================== */
+.slide:has(.quiz-annotation) .slide-header {
+  display: none !important;
+}
+
+.slide:has(.quiz-annotation) .slide-content {
+  margin-top: 0;
+  flex: 1;
+  max-width: none;
+  /* 打破 1100px 限宽，霸占全屏 */
+  padding: 12px 0 0 0;
+  /* 仅保留顶部 12px 呼吸空间避开工具栏阴影，其余方向边距清零 */
+}
+
+
+/* --- 14.1 组件根容器 --- */
+.quiz-annotation {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  /* 占满 slide-content 剩余空间 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  /* 组件内部四方向外围 padding 全部清零，由 .slide / .slide-content 统管 */
+  padding: 0;
+}
+
+
+/* --- 14.2 主体区域：CSS Grid 三栏布局 --- */
+.qa-body {
+  flex: 1;
+  display: grid;
+  /* 默认：纯文章解析（无答题内容），只有正文 */
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 有答题内容时：左栏 + 右栏（批注隐藏态） */
+.quiz-annotation.has-quiz .qa-body {
+  grid-template-columns: 5fr 3fr;
+}
+
+/* 批注面板展开时：左中右三栏 */
+.quiz-annotation.has-quiz.notes-active .qa-body {
+  grid-template-columns: 5fr 2fr 3fr;
+}
+
+/* 纯文章解析 + 批注展开时：左2 + 中1 */
+.quiz-annotation:not(.has-quiz).notes-active .qa-body {
+  grid-template-columns: 2fr 1fr;
+}
+
+
+/* --- 14.3 栏间分割线 --- */
+/* 使用伪元素绘制极细的半透明分割线 */
+.qa-body::before,
+.qa-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  /* 半透明分割线 */
+  /* 【关键修复】将分割线的层级降到5，确保其被激活的批注气泡(10)及中间面板(15)遮挡 */
+  z-index: 5;
+  pointer-events: none;
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+}
+
+/* 第一条分割线：左栏和中栏/右栏之间 */
+.qa-body::before {
+  /* 位置由 JS 动态计算，默认隐藏 */
+  left: var(--divider-1-left, 62.5%);
+  opacity: 1;
+}
+
+/* 第二条分割线：中栏和右栏之间（仅批注展开+有答题时可见） */
+.qa-body::after {
+  left: var(--divider-2-left, 70%);
+  opacity: 0;
+}
+
+.quiz-annotation.has-quiz.notes-active .qa-body::after {
+  opacity: 1;
+}
+
+/* 纯文章无答题时，只有一条分割线在批注展开时可见 */
+.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-body::before {
+  opacity: 0;
+}
+
+/* 【关键视觉修复】：因为气泡是带 backdrop-filter 的半透明玻璃盒子，如果底下存在分割线，哪怕 z-index 是物理正确的（分割线在底下），依然会像玻璃一样把背景的竖线透出来。所以当处于“焦点霸屏态”时，直接做隐藏退让处理，既解决穿透，也增强焦点沉浸感 */
+.quiz-annotation.has-active-note .qa-body::before,
+.quiz-annotation.has-active-note .qa-body::after {
+  opacity: 0 !important;
+}
+
+
+/* --- 14.4 正文/题干区域（左栏）--- */
+.qa-passage {
+  grid-column: 1;
+  grid-row: 1;
+  overflow-y: auto;
+  /* 非对称 Padding：左侧和上下无 padding（外层统管），右侧保留栏间间距 */
+  padding: 0 20px 0 0;
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.9;
+  color: var(--text);
+  scroll-behavior: smooth;
+  min-height: 0;
+  min-width: 0;
+}
+
+.qa-passage .qa-blank-slot {
+  display: inline-block;
+  margin: 0 0.18em 0 0.03em;
+  vertical-align: baseline;
+  line-height: 1;
+  white-space: nowrap;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-user {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: end;
+  column-gap: 0.08em;
+  vertical-align: baseline;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-value {
+  display: inline-block;
+  width: 2.45em;
+  padding: 0 0 0.08em;
+  box-sizing: border-box;
+  border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+  color: transparent;
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+  text-indent: 0;
+  letter-spacing: 0;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.qa-passage .qa-matching-passage-slot .qa-blank-user sup {
+  display: inline-block;
+  margin-right: 0.02em;
+  font-size: 1em !important;
+  font-weight: 800;
+  color: var(--brand-primary, #00A355) !important;
+  line-height: 1;
+  vertical-align: baseline;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-slot.show-correct-answer .qa-blank-value {
+  color: var(--brand-primary, #00A355);
+  border-bottom-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.6);
+}
+
+.qa-passage .qa-blank-answer,
+.qa-passage .qa-matching-passage-slot .qa-result-mark,
+.qa-passage .qa-matching-passage-slot .qa-blank-correct {
+  display: none !important;
+}
+
+
+/* --- 14.5 批注面板（中栏） --- */
+.qa-notes-panel {
+  grid-row: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  /* 默认隐藏 */
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 批注面板展开态 */
+.quiz-annotation.notes-active .qa-notes-panel {
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  overflow: visible;
+  /* 【关键修复】外层取消裁切，让内部名单全权负责 */
+  position: relative;
+  z-index: 15;
+  /* 确保物理重叠时悬浮在左右两栏上方 */
+}
+
+/* 批注面板在 grid 中的列位置 */
+/* 有答题时，批注在第 2 列 */
+.quiz-annotation.has-quiz .qa-notes-panel {
+  grid-column: 2;
+}
+
+/* 纯文章时，批注也在第 2 列 */
+.quiz-annotation:not(.has-quiz) .qa-notes-panel {
+  grid-column: 2;
+}
+
+/* 未展开时不渲染 */
+.quiz-annotation:not(.notes-active) .qa-notes-panel {
+  display: none;
+}
+
+
+/* --- 14.5.1 批注面板栏头 --- */
+.qa-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.qa-notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qa-notes-header-left svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+/* 折叠按钮 */
+.qa-notes-collapse-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+
+.qa-notes-collapse-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+
+/* --- 14.5.2 批注气泡列表区域 --- */
+.qa-notes-list {
+  flex: 1;
+  overflow-y: auto;
+  /* 【破壁防裁切神技】: 让真正的滚动列表外扩。
+     设定为最佳甜点值 18px，能正好藏进右侧专栏的 20px padding gap里，不会导致滚动条覆盖文字。
+     margin 设为 -18px；对应保持原气泡宽带的 padding 补偿为 8+18 = 26px。
+     同时扩大上下 padding（原 10px 改为 24px 和 32px），给大型光晕留足纵向的舒展空间，防止上下边缘出现光晕被“一刀切”的直角现象。*/
+  padding: 24px 26px 32px 26px;
+  margin: 0 -18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+
+/* --- 14.6 选项/作答区域（右栏） --- */
+.qa-answer-panel {
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  /* 非对称 Padding：右侧和上下无 padding，左侧保留栏间间距 */
+  padding: 0 0 0 20px;
+}
+
+/* 右栏在 grid 中的列位置 */
+/* 批注隐藏时，右栏是第 2 列 */
+.quiz-annotation.has-quiz:not(.notes-active) .qa-answer-panel {
+  grid-column: 2;
+}
+
+/* 批注展开时，右栏是第 3 列 */
+.quiz-annotation.has-quiz.notes-active .qa-answer-panel {
+  grid-column: 3;
+}
+
+/* 无答题内容时右栏不显示 */
+.quiz-annotation:not(.has-quiz) .qa-answer-panel {
+  display: none;
+}
+
+
+/* --- 14.6.1 选项区标题与内容 --- */
+.qa-answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.qa-answer-header .qa-answer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qa-answer-content {
+  flex: 1;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qa-answer-options-scroll {
+  flex: 1 1 140px;
+  min-height: clamp(112px, 18vh, 180px);
+  overflow-y: auto;
+  padding-bottom: 4px;
+}
+
+
+/* --- 14.6.1a 连线题右栏答题槽位 --- */
+.qa-answer-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.qa-answer-slot {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px dashed var(--border-hover, rgba(0, 0, 0, 0.12));
+  transition: all 0.25s ease;
+  min-height: 36px;
+  cursor: default;
+  position: relative;
+}
+
+.qa-answer-slot.drag-over {
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.08);
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(243, 152, 0, 0.15);
+}
+
+.qa-answer-slot.filled {
+  border-style: solid;
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.1);
+  cursor: pointer;
+}
+
+.qa-slot-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-muted);
+  min-width: 24px;
+  flex-shrink: 0;
+}
+
+.qa-slot-blank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  position: relative;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0;
+}
+
+.qa-answer-slot.filled .qa-slot-blank {
+  color: var(--accent-orange, #f39800);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.qa-slot-value {
+  position: relative;
+  z-index: 1;
+}
+
+/* 槽位判分状态 */
+.qa-answer-slot.slot-correct {
+  border-color: var(--brand-primary, #00A355);
+  border-style: solid;
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.12);
+}
+
+.qa-answer-slot.slot-correct .qa-slot-blank {
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-answer-slot.slot-incorrect {
+  border-color: var(--accent-red, #ba1a1a);
+  border-style: solid;
+  background-color: rgba(186, 26, 26, 0.1);
+}
+
+.qa-answer-slot.slot-incorrect .qa-slot-blank {
+  color: var(--accent-red, #ba1a1a);
+}
+
+/* 槽位判分角标 ✓✗（序号右下方） */
+.qa-slot-mark {
+  position: absolute;
+  left: calc(100% - 0.22em);
+  top: 58%;
+  transform: translate(-10%, -12%);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.qa-slot-mark.correct {
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-slot-mark.incorrect {
+  color: var(--accent-red, #ba1a1a);
+}
+
+.qa-slot-correct {
+  grid-column: 4;
+  justify-self: end;
+  color: var(--brand-primary, #00A355);
+  font-weight: 700;
+  font-size: 15px;
+  margin-left: auto;
+}
+
+.qa-slot-feedback {
+  grid-column: 3;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.qa-slot-feedback.unanswered {
+  border: 1px solid rgba(186, 26, 26, 0.24);
+  background-color: rgba(186, 26, 26, 0.16);
+  color: var(--accent-red, #ba1a1a);
+}
+
+.qa-slot-correct-prefix {
+  color: var(--text, #1a2e23);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* 提示分隔线 */
+.qa-slots-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  border-top: 1px dashed var(--border);
+  flex-shrink: 0;
+}
+
+/* 已拖入槽位的选项变暗 */
+.qa-option.used {
+  opacity: 0.4;
+  pointer-events: none;
+  transform: scale(0.97);
+}
+
+/* 正在被拖拽的选项 */
+.qa-option.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+
+/* --- 14.6.2 选择题选项 --- */
+.qa-question.result-unanswered {
+  border: 1px solid rgba(186, 26, 26, 0.34);
+  border-radius: 14px;
+  padding: 10px 12px 8px;
+  background-color: rgba(186, 26, 26, 0.08);
+  box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.08);
+  animation: qa-question-unanswered-nudge 220ms ease-out;
+}
+
+.qa-question-feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.qa-question-feedback-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(186, 26, 26, 0.24);
+  background-color: rgba(186, 26, 26, 0.16);
+  color: var(--accent-red, #ba1a1a);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.qa-question-feedback-text {
+  color: var(--accent-red, #ba1a1a);
+  font-weight: 600;
+}
+
+@keyframes qa-question-unanswered-nudge {
+  0% {
+    transform: translateX(0);
+  }
+  35% {
+    transform: translateX(-4px);
+  }
+  70% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.qa-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(24px) saturate(120%);
+  -webkit-backdrop-filter: blur(24px) saturate(120%);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: clamp(14px, 1.4vw, 19px);
+  line-height: 1.5;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+.qa-option:hover {
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.15));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.qa-option.selected {
+  border-color: var(--accent-orange, #f39800);
+  background-color: rgba(243, 152, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(243, 152, 0, 0.15);
+}
+
+.qa-option-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--surface-container, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.qa-option.selected .qa-option-label {
+  background-color: var(--accent-orange, #f39800);
+  color: #fff;
+  border-color: var(--accent-orange, #f39800);
+}
+
+/* 状态圆点槽已弃用，隐去原本的冗余宽度占位 */
+.qa-status-dot {
+  display: none !important;
+}
+
+.qa-status-dot.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.qa-status-dot.correct {
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-status-dot.incorrect {
+  background-color: rgba(186, 26, 26, 0.15);
+  color: var(--accent-red, #ba1a1a);
+}
+
+/* 选错的选项红色半透明高光 */
+.qa-option.result-incorrect {
+  background-color: rgba(186, 26, 26, 0.15);
+  border-color: var(--accent-red, #ba1a1a);
+  box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.15);
+}
+
+.qa-option.result-incorrect .qa-option-label {
+  background-color: var(--accent-red, #ba1a1a);
+  color: #fff;
+  border-color: var(--accent-red, #ba1a1a);
+}
+
+/* 正确选项绿色高光 */
+.qa-option.result-correct {
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+  border-color: var(--brand-primary, #00A355);
+  box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+}
+
+.qa-option.result-correct .qa-option-label {
+  background-color: var(--brand-primary, #00A355);
+  color: #fff;
+  border-color: var(--brand-primary, #00A355);
+}
+
+/* =========================================
+   选择题结果角标标志 (✓ / ✗)
+   绝对定位附着于 A/B/C/D 序号圆圈的右下方
+   ========================================= */
+.qa-option .qa-result-mark {
+  position: absolute;
+  left: 28px;
+  top: 20px;
+  font-size: 24px;
+  font-weight: 900;
+  z-index: 10;
+  opacity: 0;
+  transform: scale(0.5) rotate(-15deg);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 1px 1px 2px rgba(255, 255, 255, 0.8), -1px -1px 2px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.qa-option .qa-result-mark.visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.qa-option .qa-result-mark.correct {
+  color: var(--brand-primary, #00A355);
+}
+
+.qa-option .qa-result-mark.incorrect {
+  color: var(--accent-red, #ba1a1a);
+}
+
+
+/* --- 14.6.3 提交按钮 --- */
+.qa-submit-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 20px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue));
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.2);
+  transition: all 0.25s;
+}
+
+.qa-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35);
+}
+
+.qa-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* --- 14.7 原文锚点 + 角标 --- */
+.text-anchor {
+  position: relative;
+  transition: background 0.25s;
+  border-radius: 2px;
+}
+
+.note-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: -0.6em;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background-color: var(--brand-primary, var(--accent-blue));
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  z-index: 5;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  text-indent: 0;
+  /* ★ 极度关键：抵消外层 p 标签 2em 的首行缩进继承，防止数字飞出圆圈 */
+}
+
+.note-badge:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+}
+
+.text-anchor.anchor-active .note-badge,
+.answer-anchor.anchor-active .note-badge {
+  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
+  box-shadow: 0 0 12px rgba(243, 152, 0, 0.5);
+  animation: qaBadgePulseOrange 1.5s ease infinite;
+}
+
+@keyframes qaBadgePulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(0, 96, 170, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(0, 96, 170, 0.6);
+  }
+}
+
+@keyframes qaBadgePulseOrange {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(243, 152, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(243, 152, 0, 0.6);
+  }
+}
+
+/* 右栏答题条目的锚点角标 — 横向排列 */
+.answer-anchor {
+  position: relative;
+}
+
+.answer-anchor .note-badge {
+  margin-right: 2px;
+}
+
+
+/* ===========================================
+   14.8 批注气泡 (.qa-note-bubble)
+   Glassmorphism 风格，点击切换激活，拖拽手柄与序号合并。
+   =========================================== */
+.qa-note-bubble {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  /* 结构改为 包含 header 栏 和 下方内容区 */
+  font-size: clamp(13px, 1.3vw, 17px);
+  line-height: 1.65;
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-annotation.notes-active .qa-note-bubble:not(.note-expanded):not(.note-active) {
+  display: none;
+}
+
+/* 答题与批注组件专用的溢出防裁切方案
+   因为三栏内部带有 overflow-y: auto 需要保持滚动，不能轻易 visible，
+   所以在编辑模式下给内部增加足够的上内边距，让 top: -32px 的控件有合法的视觉空间 */
+.editor-mode .quiz-annotation .qa-passage,
+.editor-mode .quiz-annotation .qa-answer-panel {
+  padding-top: 40px !important;
+}
+
+/* --- 编辑模式全局光标覆盖 --- */
+/* 为了解决 Windows/Mac 系统默认随着对比度反转成白色的工字光标，以及右栏原本选项附带的 Pointer 问题 */
+body.editor-mode .qa-note-bubble,
+body.editor-mode .qa-passage,
+body.editor-mode .qa-answer-panel,
+body.editor-mode .qa-option {
+  /* 强制采用一套包含描边加固的深色工型光标，中心锚定 */
+  cursor: url('data:image/svg+xml;utf8,<svg width="12" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M3 2h6M6 2v16M3 18h6" stroke="black" stroke-width="1.5" fill="none"/></svg>') 6 10, text !important;
+  caret-color: #000 !important;
+  /* 保证内部打字时光标闪动的竖线也是纯黑色 */
+}
+
+/* 气泡激活态 — 仅 scale 缩放，不改变字号 + 焦点外扩 */
+.qa-note-bubble.note-active {
+  background-color: rgba(255, 255, 255, 0.15);
+  /* 将原本绿色的边框改为半透明的橙色，与外面的 box-shadow 完美融合，消除空隙 */
+  border-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.5);
+  /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
+     现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
+  box-shadow:
+    0 0 8px 1px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.35),
+    0 0 16px 4px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.15),
+    0 0 28px 8px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.05);
+  /* 移除带鱼屏下极易引起裁切越界的 scale 缩放，仅仅保留 translateY 的悬浮感 */
+  transform: translateY(-2px);
+  z-index: 10;
+  /* 焦点外扩：以物理负边距完美吃满 18px 的突破空间，实现霸屏 */
+  margin-left: -18px;
+  margin-right: -18px;
+}
+
+.qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 1;
+  transform: none;
+}
+
+/* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
+.quiz-annotation.has-active-note .qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 0.72;
+  transform: none;
+}
+
+/* 顶部头部：包含序号和操作按钮的横条 */
+.qa-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 4px 8px;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
+  border-bottom: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  border-radius: 11px 11px 0 0;
+  cursor: grab;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.qa-note-header:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18);
+}
+
+.qa-note-header:active {
+  cursor: grabbing;
+}
+
+/* 激活态下头部变为实心主要色（改用橙色） */
+.qa-note-bubble.note-active .qa-note-header {
+  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
+  border-bottom: none;
+}
+
+/* 左侧内部容器：包裹序号并占据剩余空间作为大面积拖拽热区 */
+.qa-note-handle {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  /* 使它的有效面积占满头部除按钮外的所有空间 */
+}
+
+/* 气泡序号圆标 — 嵌在 handle 内部 */
+.qa-note-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--brand-primary, var(--accent-blue));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+/* 激活态序号反色 */
+.qa-note-bubble.note-active .qa-note-step {
+  background-color: #fff;
+  color: var(--brand-secondary, var(--accent-orange, #f39800));
+}
+
+/* 气泡内容区 */
+.qa-note-content {
+  display: block;
+  /* 覆盖原本的 inline */
+  padding: 8px 12px 12px 12px;
+  outline: none;
+}
+
+/* 气泡内容折叠 — 超 3 行截断（未激活时） */
+.qa-note-bubble:not(.note-active):not(.note-expanded) .qa-note-content {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+html.editor-mode .quiz-annotation.notes-active .qa-note-bubble,
+body.editor-mode .quiz-annotation.notes-active .qa-note-bubble {
+  display: flex;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.editor-mode .qa-note-bubble .qa-note-content,
+body.editor-mode .qa-note-bubble .qa-note-content {
+  display: block !important;
+  line-clamp: unset;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* 操作按钮组 — 居右横向排列 */
+.qa-note-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.qa-note-bubble:hover .qa-note-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 基础按钮样式 — 为了适应顶部栏，尺寸全透明高亮 */
+.qa-note-action-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: rgba(128, 128, 128, 0.15);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qa-note-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--brand-primary, #333);
+}
+
+/* 关联按钮特殊颜色 */
+.qa-note-action-btn.link-btn {
+  color: var(--brand-primary, var(--accent-blue));
+}
+
+/* 激活态下的按钮颜色自适应，防淹没在橙色中 */
+.qa-note-bubble.note-active .qa-note-action-btn {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.qa-note-bubble.note-active .qa-note-action-btn:hover {
+  background-color: #fff;
+  color: var(--brand-secondary, var(--accent-orange, #f39800));
+}
+
+/* 非编辑模式下的显隐逻辑：只显示跳转原文图标 (action-select-left、action-select-right) */
+html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-select-right) {
+  display: none !important;
+}
+
+
+/* --- 14.9 SVG 连线 --- */
+.qa-connector-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+  overflow: visible;
+}
+
+.qa-connector-line {
+  fill: none;
+  stroke: var(--brand-primary, var(--accent-blue));
+  stroke-width: 2;
+  stroke-opacity: 0.4;
+  transition: stroke-opacity 0.3s, stroke 0.3s;
+}
+
+.qa-connector-line.connector-step {
+  stroke: var(--brand-secondary, var(--accent-orange, #f39800));
+  stroke-opacity: 0.5;
+}
+
+.qa-connector-line.connector-hover {
+  stroke-opacity: 0.25;
+  stroke-dasharray: 6 3;
+}
+
+/* 边缘钉定箭头 */
+.qa-edge-arrow {
+  fill: var(--brand-primary, var(--accent-blue));
+  opacity: 0.5;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.2s, fill 0.3s;
+}
+
+.qa-edge-arrow.arrow-step {
+  fill: var(--brand-secondary, var(--accent-orange, #f39800));
+}
+
+.qa-edge-arrow:hover {
+  opacity: 0.8;
+}
+
+
+/* --- 14.10 拖拽占位符 --- */
+.qa-note-placeholder {
+  min-height: 60px;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
+  border: 2px dashed rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  border-radius: 12px;
+  transition: min-height 0.2s;
+  pointer-events: none;
+}
+
+
+/* --- 14.11 分割线悬浮按钮（批注隐藏态的入口） --- */
+.qa-divider-btn {
+  position: absolute;
+  z-index: 30;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
+  border: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+  color: var(--brand-primary, var(--accent-blue));
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  transform: translateX(-50%);
+  /* JS 动态设置 left 和 top */
+}
+
+.qa-divider-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qa-divider-btn:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+  transform: translateX(-50%) scale(1.1);
+}
+
+.qa-divider-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 批注已展开时隐藏悬浮按钮 */
+.quiz-annotation.notes-active .qa-divider-btn {
+  display: none;
+}
+
+
+/* --- 14.12 答题隔离规则 --- */
+.quiz-annotation.has-quiz:not(.submitted) .note-badge {
+  display: none;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
+  text-decoration: none !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted).notes-active .qa-notes-panel {
+  display: flex !important;
+}
+
+.doodle-mode .qa-divider-btn {
+  display: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge {
+  display: none;
+}
+
+.quiz-annotation.submitted .note-badge {
+  animation: qaFadeIn 0.5s ease both;
+}
+
+@keyframes qaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* --- 14.13 关联模式视觉反馈 --- */
+/* 关联左侧：左栏呼吸高亮边框 */
+.quiz-annotation.linking-left .qa-passage {
+  box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  animation: qaLinkingPulse 2s ease infinite;
+}
+
+/* 关联右侧：右栏呼吸高亮边框 */
+.quiz-annotation.linking-right .qa-answer-panel {
+  box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  animation: qaLinkingPulse 2s ease infinite;
+}
+
+@keyframes qaLinkingPulse {
+
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  }
+
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.4);
+  }
+}
+
+
+/* --- 14.14 隐形滚动条 --- */
+.qa-passage::-webkit-scrollbar,
+.qa-answer-content::-webkit-scrollbar,
+.qa-answer-options-scroll::-webkit-scrollbar,
+.qa-notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.qa-passage::-webkit-scrollbar-track,
+.qa-answer-content::-webkit-scrollbar-track,
+.qa-answer-options-scroll::-webkit-scrollbar-track,
+.qa-notes-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.qa-passage::-webkit-scrollbar-thumb,
+.qa-answer-content::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll::-webkit-scrollbar-thumb,
+.qa-notes-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.qa-passage:hover::-webkit-scrollbar-thumb,
+.qa-answer-content:hover::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll:hover::-webkit-scrollbar-thumb,
+.qa-notes-list:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* --- 14.15 编辑模式浮动工具条 --- */
+.qa-annotation-toolbar {
+  position: absolute;
+  z-index: 10005;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.qa-annotation-toolbar.visible {
+  display: flex;
+}
+
+.qa-toolbar-label {
+  font-size: 12px;
+  color: #666666;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.qa-toolbar-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  line-height: 1;
+}
+
+.qa-toolbar-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #d0d0d0;
+}
+
+/* 浮动工具条内的下拉容器：保证与按钮同行居中 */
+.qa-annotation-toolbar .qa-format-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 浮动工具条内的下拉菜单：覆盖编辑器暗色主题，改用白色 */
+.qa-annotation-toolbar .rt-dropdown-menu {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.qa-annotation-toolbar .rt-dropdown-menu::before {
+  background: #ffffff;
+  border-left-color: #e0e0e0;
+  border-top-color: #e0e0e0;
+}
+
+/* 上弹模式：空间不足时从上方弹出 */
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+
+.qa-annotation-toolbar .rt-dropdown-menu.drop-up::before {
+  top: auto;
+  bottom: -6px;
+  transform: translateX(-50%) rotate(225deg);
+}
+
+
+/* --- 14.16 响应式与无障碍 --- */
+@media (prefers-reduced-motion: reduce) {
+
+  .qa-body,
+  .qa-answer-panel,
+  .qa-notes-panel,
+  .qa-note-bubble,
+  .qa-question,
+  .qa-question-feedback,
+  .text-anchor,
+  .note-badge,
+  .qa-option,
+  .qa-status-dot,
+  .qa-annotation-toolbar,
+  .qa-divider-btn {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

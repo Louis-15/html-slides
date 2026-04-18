@@ -214,12 +214,14 @@ Do NOT include summary for:
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
+- Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone3-summary.css`
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
 - HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/`
+- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone3-summary.css → editor.css`
 - **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor-core.js` at runtime
 - Reference the teaching theme CSS + components.css via `<link>`, and slides-runtime.js via `<script>`
 - Custom animations for this courseware → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
@@ -350,6 +352,11 @@ If the user declines, stop here.
 | [layout-system.md](references/layout-system.md) | Canvas structure: header bar + content area (8+1 layout modes) + summary component | Phase 3 (layout planning) |
 | [component-templates.md](references/component-templates.md) | Component style reference — interactive elements for layout slots | Phase 4 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards | Phase 4 (generation) |
+| [zones/zone1-header.css](assets/zones/zone1-header.css) | Zone 1 标题栏样式 — header bar 的固定结构 | Phase 4 (generation) |
+| [zones/zone2-content.css](assets/zones/zone2-content.css) | Zone 2 基础布局与通用组件 | Phase 4 (generation) |
+| [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面与未来沉浸式组件结构 | Phase 4 (generation) |
+| [zones/zone2-quiz-annotation.css](assets/zones/zone2-quiz-annotation.css) | 答题与批注组件专属样式 | Phase 4 (generation) |
+| [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 4 (generation) |
 | [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |
 | [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
 | [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 4 (generation) |

@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="./assets/components.css">
     <link rel="stylesheet" href="./assets/zones/zone1-header.css">
     <link rel="stylesheet" href="./assets/zones/zone2-content.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
     <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
     <link rel="stylesheet" href="./assets/editor.css">
 </head>
@@ -173,54 +175,62 @@
                         <!-- ② 批注面板（中栏，JS 自动创建 header + notes-list） -->
                         <div class="qa-notes-panel">
                             <div class="qa-note-bubble" data-link="note-01" data-step="1" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">1</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">1</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s1-note-01">
                                     <strong>词汇衔接线索：</strong>"focus on how you feel" 直接对应选项 D 中的 "Ask yourself how you feel"。这是典型的<em>原词复现</em>（feel 重复出现），且逻辑上构成"总—分"关系：先给出建议（focus on...），再具体化操作（ask yourself...）。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-02" data-step="2" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">2</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">2</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s1-note-02">
                                     <strong>照应分析：</strong>"Sharing a meal with others" 与前文 "eat with others" 构成<em>词汇衔接</em>（同义替换）。emotional benefits 是 relieve stress 的上位概念。注意：该句既承上又启下，是段落的核心论据。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-03" data-step="3" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">3</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">3</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s1-note-03">
                                     <strong>连接词信号：</strong>"listen to your body" 是本段主旨，后文 "signals" 和 "stuffed" 都属于身体信号的范畴。选项 F "Pay attention to how your hunger cues feel" 中的 hunger cues（饥饿信号）与 signals 构成<em>同义替换</em>关系。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-04" data-step="4" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">4</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">4</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s1-note-04">
                                     <strong>逻辑链条分析：</strong>"process" 一词是关键锚点。空后说 "Don't get discouraged"（不要气馁），暗示这是一个需要时间的过程。选项 C "It takes time for your body to adjust" 中的 "takes time" 与 "process" 完美呼应，且与 "be patient" 形成因果关系：因为需要时间适应（C），所以要有耐心（be patient）。
-                                </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
                                 </div>
                             </div>
                         </div>
@@ -397,54 +407,62 @@
                         <!-- ② 批注面板（中栏） -->
                         <div class="qa-notes-panel">
                             <div class="qa-note-bubble" data-link="note-11" data-step="1" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">1</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">1</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s2-note-11">
                                     <strong>主旨定位：</strong>首句即主旨句——John 是退休教师，花了十年把后院变成野生动物庇护所。注意 "What started as... has blossomed into..." 这个对比结构，暗示他<em>最初的目的</em>（种菜）和<em>最终的结果</em>（生态系统）是不同的。这直接对应第 24 题。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-12" data-step="2" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">2</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">2</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s2-note-12">
                                     <strong>细节题定位句：</strong>"In an effort to attract more pollinators"（为了吸引更多传粉者）直接回答第 25 题。milkweed（马利筋）和 coneflowers（锥花）都是蜜源植物，专门为蜜蜂和蝴蝶种植。注意 "In an effort to" 这个目的状语结构，是高考常考的细节定位信号。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-13" data-step="3" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">3</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">3</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s2-note-13">
                                     <strong>词义猜测：</strong>"stopover" 后文紧跟 "rest and refuel during their long journeys"（在长途旅行中休息和补给）。这是典型的<em>上下文释义</em>——"休息+补给+旅途中" 共同指向"<strong>临时歇脚点</strong>"的含义，对应 B 选项 "A temporary resting place"。注意 migratory birds（候鸟）这个关键词也暗示了"迁徙途中的临时停留"。
                                 </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
-                                </div>
                             </div>
 
                             <div class="qa-note-bubble" data-link="note-14" data-step="4" draggable="true">
-                                <div class="qa-note-handle">
-                                    <span class="qa-note-step">4</span>
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle">
+                                        <span class="qa-note-step">4</span>
+                                    </div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
                                 </div>
                                 <div class="qa-note-content" data-edit-id="s2-note-14">
                                     <strong>推断题解析：</strong>"initially skeptical"（起初持怀疑态度）与 "have started to take notice"（开始关注）形成鲜明<em>对比</em>。这组对比结构说明邻居的态度发生了<strong>由怀疑到认可的转变</strong>。关键词 "initially" 暗示后来有所改变，直接对应 C 选项 "changed their attitude"。A 选项错在 "always"（一直），与 "initially skeptical" 矛盾。
-                                </div>
-                                <div class="qa-note-actions">
-                                    <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
-                                    <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
                                 </div>
                             </div>
                         </div>
