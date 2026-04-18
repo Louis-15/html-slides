@@ -539,6 +539,82 @@
   font-size: 13px;
 }
 
+.qa-answer-key-row {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.qa-answer-key-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.qa-answer-key-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qa-answer-key-chip {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--surface-container, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qa-answer-key-chip:hover {
+  border-color: var(--accent-orange, #f39800);
+  color: var(--accent-orange, #f39800);
+  transform: translateY(-1px);
+}
+
+.qa-answer-key-chip.is-correct {
+  background-color: var(--brand-primary, #00A355);
+  border-color: var(--brand-primary, #00A355);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+}
+
+.qa-answer-slot.qa-answer-key-slot {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  row-gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.qa-answer-slot.qa-answer-key-slot .qa-slot-label {
+  padding-top: 4px;
+}
+
+.qa-answer-slot.qa-answer-key-slot .qa-answer-key-options {
+  grid-column: 2;
+}
+
 /* 提示分隔线 */
 .qa-slots-divider {
   display: flex;
@@ -728,8 +804,8 @@
    ========================================= */
 .qa-option-label .qa-result-mark {
   position: absolute;
-  right: -7px;
-  bottom: -6px;
+  right: -6px;
+  bottom: -9px;
   left: auto;
   top: auto;
   font-size: 20px;
@@ -1053,12 +1129,33 @@ body.editor-mode .quiz-annotation.notes-active .qa-note-bubble {
   transform: none !important;
 }
 
+html.editor-mode .qa-answer-key-row,
+body.editor-mode .qa-answer-key-row {
+  display: flex;
+}
+
+html.editor-mode .qa-answer-key-chip,
+body.editor-mode .qa-answer-key-chip {
+  cursor: pointer !important;
+}
+
 html.editor-mode .qa-note-bubble .qa-note-content,
 body.editor-mode .qa-note-bubble .qa-note-content {
   display: block !important;
   line-clamp: unset;
   -webkit-line-clamp: unset;
   overflow: visible;
+}
+
+html.editor-mode .qa-question-feedback,
+body.editor-mode .qa-question-feedback,
+html.editor-mode .qa-slot-feedback,
+body.editor-mode .qa-slot-feedback,
+html.editor-mode .qa-slot-correct,
+body.editor-mode .qa-slot-correct,
+html.editor-mode .qa-result-mark,
+body.editor-mode .qa-result-mark {
+  display: none !important;
 }
 
 /* 操作按钮组 — 居右横向排列 */

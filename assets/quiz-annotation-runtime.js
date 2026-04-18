@@ -119,6 +119,31 @@
     if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
   }
 
+  /** 统一的批注存档调度入口，避免各处重复判断 API 能力 */
+  function scheduleAnnotationSave() {
+    if (window.AnnotationStore && typeof window.AnnotationStore.scheduleSave === 'function') {
+      window.AnnotationStore.scheduleSave();
+    }
+  }
+
+  /** 统一检查 AnnotationStore 是否暴露了写入能力查询接口 */
+  function canUseAnnotationStoreWriteAPI() {
+    return !!(window.AnnotationStore && typeof window.AnnotationStore.hasWriteAccess === 'function');
+  }
+
+  /** 正确答案等结构化编辑要进入历史栈，保证撤销/重做可用 */
+  function recordHistorySnapshot() {
+    if (window.historyMgr && !window.historyMgr.isRestoring && typeof window.historyMgr.recordState === 'function') {
+      window.historyMgr.recordState(true);
+    }
+  }
+
+  /** 编辑模式下的结构化变更需要同时触发保存和历史快照 */
+  function persistQuizAuthoringChange() {
+    scheduleAnnotationSave();
+    recordHistorySnapshot();
+  }
+
   // --- 删除持久化工具 ---
   // 策略：已删除列表仅存 qa.dataset.deletedNotes（DOM 属性）
   // - historyMgr 快照自动捕获此属性（用于撤销/重做）
@@ -283,6 +308,9 @@
     } else {
       hideAllBubbles(qa);
     }
+
+    syncChoiceAnswerKeyEditors(qa);
+    syncMatchingAnswerUI(qa, { resetTransientState: false });
 
     updateProgressCounter(qa);
   }
@@ -935,6 +963,355 @@
   // 7. 答题系统
   // =========================================
 
+  function getCorrectOptionIds(question) {
+    if (!question) return [];
+    return Array.from(question.querySelectorAll('.qa-option[data-correct="true"]'))
+      .map(option => option.getAttribute('data-option'))
+      .filter(Boolean);
+  }
+
+  function updateAnswerKeyChipSelection(container, selectedOptions) {
+    if (!container) return;
+    const selected = new Set(selectedOptions || []);
+    container.querySelectorAll('.qa-answer-key-chip').forEach(chip => {
+      const isSelected = selected.has(chip.getAttribute('data-option'));
+      chip.classList.toggle('is-correct', isSelected);
+      chip.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+  }
+
+  function createAnswerKeyChip(optionId, isSelected) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'qa-answer-key-chip';
+    chip.textContent = optionId;
+    chip.setAttribute('data-option', optionId);
+    chip.setAttribute('contenteditable', 'false');
+    chip.setAttribute('aria-label', '将 ' + optionId + ' 设为正确答案');
+    chip.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    chip.classList.toggle('is-correct', !!isSelected);
+    return chip;
+  }
+
+  function setChoiceCorrectAnswers(question, nextCorrectOptions) {
+    if (!question) return;
+
+    const selected = new Set(nextCorrectOptions || []);
+    question.querySelectorAll('.qa-option').forEach(option => {
+      const optionId = option.getAttribute('data-option');
+      if (optionId && selected.has(optionId)) {
+        option.setAttribute('data-correct', 'true');
+      } else {
+        option.removeAttribute('data-correct');
+      }
+    });
+
+    updateAnswerKeyChipSelection(question.querySelector('.qa-answer-key-row'), nextCorrectOptions || []);
+  }
+
+  function resetQuizSubmissionState(qa) {
+    if (!qa) return;
+
+    qa.classList.remove('submitted');
+
+    const submitBtn = qa.querySelector('.qa-submit-btn');
+    if (submitBtn) submitBtn.disabled = false;
+
+    clearSelectionQuestionResults(qa);
+
+    if (qa.querySelector('.qa-question[data-type="matching"]')) {
+      resetMatchingQuestionState(qa);
+    }
+  }
+
+  function syncChoiceAnswerKeyEditors(qa) {
+    if (!qa) return;
+
+    qa.querySelectorAll('.qa-question[data-type="single"], .qa-question[data-type="multi"]').forEach(question => {
+      const prompt = question.querySelector('p, .qa-question-text');
+      const firstOption = question.querySelector('.qa-option');
+      if (!firstOption) return;
+
+      let row = question.querySelector('.qa-answer-key-row');
+      if (!row) {
+        row = document.createElement('div');
+        row.className = 'qa-answer-key-row';
+      }
+
+      row.innerHTML = '';
+
+      const label = document.createElement('span');
+      label.className = 'qa-answer-key-label';
+      label.textContent = '正确答案';
+
+      const chips = document.createElement('div');
+      chips.className = 'qa-answer-key-options';
+
+      const correctOptions = getCorrectOptionIds(question);
+      question.querySelectorAll('.qa-option').forEach(option => {
+        const optionId = option.getAttribute('data-option') || '';
+        if (!optionId) return;
+
+        const chip = createAnswerKeyChip(optionId, correctOptions.indexOf(optionId) !== -1);
+        chip.addEventListener('click', () => {
+          if (!isEditorMode()) return;
+
+          const currentCorrect = getCorrectOptionIds(question);
+          const isMulti = question.dataset.type === 'multi';
+          const isAlreadyCorrect = currentCorrect.indexOf(optionId) !== -1;
+          let nextCorrectOptions = currentCorrect.slice();
+
+          if (isMulti) {
+            if (isAlreadyCorrect) {
+              nextCorrectOptions = currentCorrect.filter(id => id !== optionId);
+            } else {
+              nextCorrectOptions.push(optionId);
+            }
+          } else {
+            if (currentCorrect.length === 1 && currentCorrect[0] === optionId) return;
+            nextCorrectOptions = [optionId];
+          }
+
+          setChoiceCorrectAnswers(question, nextCorrectOptions);
+          resetQuizSubmissionState(qa);
+          persistQuizAuthoringChange();
+        });
+
+        chips.appendChild(chip);
+      });
+
+      row.appendChild(label);
+      row.appendChild(chips);
+
+      if (prompt) {
+        prompt.insertAdjacentElement('afterend', row);
+      } else {
+        question.insertBefore(row, firstOption);
+      }
+
+      updateAnswerKeyChipSelection(row, getCorrectOptionIds(question));
+    });
+  }
+
+  function syncMatchingAnswerUI(qa, options) {
+    if (!qa) return;
+
+    const settings = options || {};
+    const matchingQuestion = qa.querySelector('.qa-question[data-type="matching"]');
+    if (!matchingQuestion) return;
+
+    const passageSlots = Array.from(qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]'));
+    if (passageSlots.length === 0) return;
+
+    const answerContent = qa.querySelector('.qa-answer-content');
+    if (!answerContent) return;
+
+    if (settings.resetTransientState && !qa.classList.contains('submitted')) {
+      resetMatchingQuestionState(qa);
+    }
+
+    passageSlots.forEach(slot => {
+      renderMatchingPassageSlot(slot, qa.classList.contains('submitted') && !isEditorMode());
+    });
+
+    let optionsScroll = answerContent.querySelector('.qa-answer-options-scroll');
+    if (!optionsScroll) {
+      optionsScroll = document.createElement('div');
+      optionsScroll.className = 'qa-answer-options-scroll';
+      optionsScroll.setAttribute('data-scrollable', '');
+      if (matchingQuestion.parentNode === answerContent) {
+        answerContent.appendChild(optionsScroll);
+      }
+      optionsScroll.appendChild(matchingQuestion);
+    } else if (matchingQuestion.parentNode !== optionsScroll) {
+      optionsScroll.appendChild(matchingQuestion);
+    }
+
+    if (!optionsScroll.dataset.connectorScrollBound) {
+      optionsScroll.addEventListener('scroll', () => {
+        window.requestAnimationFrame(() => {
+          const activeBubble = qa.querySelector('.qa-note-bubble.note-active');
+          if (activeBubble && qa.classList.contains('notes-active')) {
+            drawStepConnectors(qa, activeBubble);
+          }
+        });
+      });
+      optionsScroll.dataset.connectorScrollBound = 'true';
+    }
+
+    let slotsContainer = answerContent.querySelector('.qa-answer-slots');
+    if (!slotsContainer) {
+      slotsContainer = document.createElement('div');
+      slotsContainer.className = 'qa-answer-slots';
+    }
+    slotsContainer.innerHTML = '';
+
+    const optionIds = Array.from(matchingQuestion.querySelectorAll('.qa-option'))
+      .map(option => option.getAttribute('data-option'))
+      .filter(Boolean);
+
+    matchingQuestion.querySelectorAll('.qa-option').forEach(opt => {
+      opt.classList.remove('used');
+
+      if (!opt.dataset.qaMatchingDragBound) {
+        opt.addEventListener('dragstart', (e) => {
+          if (isEditorMode()) { e.preventDefault(); return; }
+          if (qa.classList.contains('submitted')) { e.preventDefault(); return; }
+          if (opt.classList.contains('used')) { e.preventDefault(); return; }
+          e.dataTransfer.setData('text/plain', opt.dataset.option);
+          e.dataTransfer.effectAllowed = 'copy';
+          opt.classList.add('dragging');
+        });
+        opt.addEventListener('dragend', () => {
+          opt.classList.remove('dragging');
+          slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => s.classList.remove('drag-over'));
+        });
+        opt.dataset.qaMatchingDragBound = 'true';
+      }
+
+      opt.setAttribute('draggable', isEditorMode() ? 'false' : 'true');
+    });
+
+    passageSlots.forEach(pSlot => {
+      const blankId = pSlot.dataset.blankId || '';
+      const correctAnswer = pSlot.dataset.correctAnswer || '';
+      const userAnswer = pSlot.dataset.userAnswer || '';
+      const slot = document.createElement('div');
+      slot.className = 'qa-answer-slot';
+      slot.dataset.blankId = blankId;
+      slot.dataset.correctAnswer = correctAnswer;
+
+      if (isEditorMode()) {
+        slot.classList.add('qa-answer-key-slot');
+
+        const label = document.createElement('span');
+        label.className = 'qa-slot-label';
+        label.textContent = blankId + '.';
+
+        const chips = document.createElement('div');
+        chips.className = 'qa-answer-key-options';
+
+        optionIds.forEach(optionId => {
+          const chip = createAnswerKeyChip(optionId, optionId === correctAnswer);
+          chip.addEventListener('click', () => {
+            if (!isEditorMode()) return;
+            if ((pSlot.dataset.correctAnswer || '') === optionId) return;
+
+            resetQuizSubmissionState(qa);
+
+            passageSlots.forEach(otherSlot => {
+              if (otherSlot === pSlot) return;
+              if ((otherSlot.dataset.correctAnswer || '') !== optionId) return;
+
+              otherSlot.setAttribute('data-correct-answer', '');
+              renderMatchingPassageSlot(otherSlot, false);
+
+              const otherAnswerSlot = slotsContainer.querySelector('.qa-answer-slot[data-blank-id="' + otherSlot.dataset.blankId + '"]');
+              if (otherAnswerSlot) {
+                otherAnswerSlot.setAttribute('data-correct-answer', '');
+                updateAnswerKeyChipSelection(otherAnswerSlot.querySelector('.qa-answer-key-options'), []);
+              }
+            });
+
+            pSlot.setAttribute('data-correct-answer', optionId);
+            slot.setAttribute('data-correct-answer', optionId);
+            renderMatchingPassageSlot(pSlot, false);
+            updateAnswerKeyChipSelection(chips, [optionId]);
+            persistQuizAuthoringChange();
+          });
+          chips.appendChild(chip);
+        });
+
+        slot.appendChild(label);
+        slot.appendChild(chips);
+      } else {
+        slot.innerHTML =
+          '<span class="qa-slot-label">' + blankId + '.</span>' +
+          '<span class="qa-slot-blank"><span class="qa-slot-value"></span></span>';
+        setMatchingAnswerSlotValue(slot, userAnswer);
+        if (userAnswer) {
+          const usedOpt = matchingQuestion.querySelector('.qa-option[data-option="' + userAnswer + '"]');
+          if (usedOpt) usedOpt.classList.add('used');
+        }
+      }
+
+      slotsContainer.appendChild(slot);
+    });
+
+    if (slotsContainer.parentNode !== answerContent) {
+      answerContent.insertBefore(slotsContainer, optionsScroll);
+    }
+
+    let divider = answerContent.querySelector('.qa-slots-divider');
+    if (!divider) {
+      divider = document.createElement('div');
+      divider.className = 'qa-slots-divider';
+    }
+    divider.textContent = isEditorMode() ? '↑ 点击设置每个空位的正确答案 ↓' : '↑ 将下方选项拖入上方槽位 ↓';
+    answerContent.insertBefore(divider, optionsScroll);
+
+    if (isEditorMode()) {
+      return;
+    }
+
+    slotsContainer.querySelectorAll('.qa-answer-slot').forEach(slot => {
+      slot.addEventListener('dragover', (e) => {
+        if (qa.classList.contains('submitted')) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        slot.classList.add('drag-over');
+      });
+      slot.addEventListener('dragleave', () => {
+        slot.classList.remove('drag-over');
+      });
+      slot.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slot.classList.remove('drag-over');
+        if (qa.classList.contains('submitted')) return;
+
+        const optionId = e.dataTransfer.getData('text/plain');
+        if (!optionId) return;
+
+        const oldAnswer = slot.dataset.userAnswer;
+        if (oldAnswer) {
+          const oldOpt = matchingQuestion.querySelector('.qa-option[data-option="' + oldAnswer + '"]');
+          if (oldOpt) oldOpt.classList.remove('used');
+        }
+
+        slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => {
+          if (s.dataset.userAnswer === optionId) {
+            setMatchingAnswerSlotValue(s, '');
+          }
+        });
+
+        setMatchingAnswerSlotValue(slot, optionId);
+
+        const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + optionId + '"]');
+        if (dragOpt) dragOpt.classList.add('used');
+
+        syncSlotToPassage(qa, slot.dataset.blankId, optionId);
+      });
+
+      slot.addEventListener('click', () => {
+        if (isEditorMode()) return;
+        if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
+
+        const usedOption = slot.dataset.userAnswer;
+        if (usedOption) {
+          const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + usedOption + '"]');
+          if (dragOpt) dragOpt.classList.remove('used');
+        }
+
+        setMatchingAnswerSlotValue(slot, '');
+        clearPassageSlot(qa, slot.dataset.blankId);
+      });
+    });
+
+    if (qa.classList.contains('submitted')) {
+      renderMatchingAnswerResults(qa);
+    }
+  }
+
   function initQuizSystem(qa) {
     // 检测是否有答题内容
     const answerContent = qa.querySelector('.qa-answer-content');
@@ -949,8 +1326,11 @@
 
     // — 选择题点选 —
     qa.querySelectorAll('.qa-option').forEach(option => {
+      if (option.dataset.qaSelectBound === 'true') return;
+      option.dataset.qaSelectBound = 'true';
+
       option.addEventListener('click', () => {
-        if (document.documentElement.classList.contains('editor-mode')) return;
+        if (isEditorMode()) return;
         if (qa.classList.contains('submitted')) return;
         // 连线题不使用点选，由拖拽交互驱动
         if (option.closest('.qa-question')?.dataset.type === 'matching') return;
@@ -968,175 +1348,14 @@
       });
     });
 
+    syncChoiceAnswerKeyEditors(qa);
+
     // — 连线题（七选五）：在右栏动态生成答题槽位并绑定拖拽 —
     const matchingQuestion = qa.querySelector('.qa-question[data-type="matching"]');
     if (matchingQuestion) {
-      const passageSlots = qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]');
-      if (passageSlots.length > 0) {
-        if (!qa.classList.contains('submitted')) {
-          resetMatchingQuestionState(qa);
-        }
-
-        passageSlots.forEach(slot => renderMatchingPassageSlot(slot, qa.classList.contains('submitted')));
-
-        const answerContent = qa.querySelector('.qa-answer-content');
-        if (!answerContent) return;
-
-        let optionsScroll = answerContent.querySelector('.qa-answer-options-scroll');
-        if (!optionsScroll) {
-          optionsScroll = document.createElement('div');
-          optionsScroll.className = 'qa-answer-options-scroll';
-          optionsScroll.setAttribute('data-scrollable', '');
-          if (matchingQuestion.parentNode === answerContent) {
-            answerContent.appendChild(optionsScroll);
-          }
-          optionsScroll.appendChild(matchingQuestion);
-        } else if (matchingQuestion.parentNode !== optionsScroll) {
-          optionsScroll.appendChild(matchingQuestion);
-        }
-
-        if (!optionsScroll.dataset.connectorScrollBound) {
-          optionsScroll.addEventListener('scroll', () => {
-            window.requestAnimationFrame(() => {
-              const activeBubble = qa.querySelector('.qa-note-bubble.note-active');
-              if (activeBubble && qa.classList.contains('notes-active')) {
-                drawStepConnectors(qa, activeBubble);
-              }
-            });
-          });
-          optionsScroll.dataset.connectorScrollBound = 'true';
-        }
-
-        // 创建答题槽位容器
-        let slotsContainer = answerContent.querySelector('.qa-answer-slots');
-        if (!slotsContainer) {
-          slotsContainer = document.createElement('div');
-          slotsContainer.className = 'qa-answer-slots';
-        }
-        slotsContainer.innerHTML = '';
-
-        matchingQuestion.querySelectorAll('.qa-option').forEach(opt => {
-          opt.classList.remove('used');
-        });
-
-        passageSlots.forEach(pSlot => {
-          const blankId = pSlot.dataset.blankId;
-          const correctAnswer = pSlot.dataset.correctAnswer;
-          const userAnswer = pSlot.dataset.userAnswer || '';
-          const slot = document.createElement('div');
-          slot.className = 'qa-answer-slot';
-          slot.dataset.blankId = blankId;
-          slot.dataset.correctAnswer = correctAnswer;
-          slot.innerHTML =
-            '<span class="qa-slot-label">' + blankId + '.</span>' +
-            '<span class="qa-slot-blank"><span class="qa-slot-value"></span></span>';
-          setMatchingAnswerSlotValue(slot, userAnswer);
-          if (userAnswer) {
-            const usedOpt = matchingQuestion.querySelector('.qa-option[data-option="' + userAnswer + '"]');
-            if (usedOpt) usedOpt.classList.add('used');
-          }
-          slotsContainer.appendChild(slot);
-        });
-
-        if (slotsContainer.parentNode !== answerContent) {
-          answerContent.insertBefore(slotsContainer, optionsScroll);
-        }
-
-        // 提示分隔线
-        let divider = answerContent.querySelector('.qa-slots-divider');
-        if (!divider) {
-          divider = document.createElement('div');
-          divider.className = 'qa-slots-divider';
-        }
-        divider.textContent = '↑ 将下方选项拖入上方槽位 ↓';
-        if (divider.parentNode !== answerContent) {
-          answerContent.insertBefore(divider, optionsScroll);
-        } else {
-          answerContent.insertBefore(divider, optionsScroll);
-        }
-
-        // 为可拖拽选项绑定 dragstart / dragend
-        matchingQuestion.querySelectorAll('.qa-option[draggable="true"]').forEach(opt => {
-          opt.addEventListener('dragstart', (e) => {
-            if (document.documentElement.classList.contains('editor-mode')) { e.preventDefault(); return; }
-            if (qa.classList.contains('submitted')) { e.preventDefault(); return; }
-            if (opt.classList.contains('used')) { e.preventDefault(); return; }
-            e.dataTransfer.setData('text/plain', opt.dataset.option);
-            e.dataTransfer.effectAllowed = 'copy';
-            opt.classList.add('dragging');
-          });
-          opt.addEventListener('dragend', () => {
-            opt.classList.remove('dragging');
-            slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => s.classList.remove('drag-over'));
-          });
-        });
-
-        // 为每个槽位绑定 dragover / drop / click 事件
-        slotsContainer.querySelectorAll('.qa-answer-slot').forEach(slot => {
-          slot.addEventListener('dragover', (e) => {
-            if (qa.classList.contains('submitted')) return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-            slot.classList.add('drag-over');
-          });
-          slot.addEventListener('dragleave', () => {
-            slot.classList.remove('drag-over');
-          });
-          slot.addEventListener('drop', (e) => {
-            e.preventDefault();
-            slot.classList.remove('drag-over');
-            if (qa.classList.contains('submitted')) return;
-
-            const optionId = e.dataTransfer.getData('text/plain');
-            if (!optionId) return;
-
-            // 如果该槽位已有答案，先释放旧选项
-            const oldAnswer = slot.dataset.userAnswer;
-            if (oldAnswer) {
-              const oldOpt = matchingQuestion.querySelector('.qa-option[data-option="' + oldAnswer + '"]');
-              if (oldOpt) oldOpt.classList.remove('used');
-            }
-
-            // 如果该选项已被其他槽位使用，先从旧槽位移除
-            slotsContainer.querySelectorAll('.qa-answer-slot').forEach(s => {
-              if (s.dataset.userAnswer === optionId) {
-                setMatchingAnswerSlotValue(s, '');
-              }
-            });
-
-            // 填入答案
-            setMatchingAnswerSlotValue(slot, optionId);
-
-            // 标记选项为已使用
-            const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + optionId + '"]');
-            if (dragOpt) dragOpt.classList.add('used');
-
-            // 同步到正文中的 blank-slot
-            syncSlotToPassage(qa, slot.dataset.blankId, optionId);
-          });
-
-          // 点击已填槽位可清除答案
-          slot.addEventListener('click', () => {
-            if (document.documentElement.classList.contains('editor-mode')) return;
-            if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
-
-            const usedOption = slot.dataset.userAnswer;
-            if (usedOption) {
-              const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + usedOption + '"]');
-              if (dragOpt) dragOpt.classList.remove('used');
-            }
-
-            setMatchingAnswerSlotValue(slot, '');
-
-            // 同步清除正文中的 blank-slot
-            clearPassageSlot(qa, slot.dataset.blankId);
-          });
-        });
-
-        if (qa.classList.contains('submitted')) {
-          renderMatchingAnswerResults(qa);
-        }
-      }
+      syncMatchingAnswerUI(qa, {
+        resetTransientState: !qa.querySelector('.qa-answer-slots')
+      });
     }
 
     // — 提交按钮 —
@@ -1145,11 +1364,14 @@
       if (qa.classList.contains('submitted')) {
         submitBtn.disabled = true;
       }
-      submitBtn.addEventListener('click', () => {
-        if (document.documentElement.classList.contains('editor-mode')) return;
-        if (qa.classList.contains('submitted')) return;
-        submitQuiz(qa);
-      });
+      if (submitBtn.dataset.qaSubmitBound !== 'true') {
+        submitBtn.dataset.qaSubmitBound = 'true';
+        submitBtn.addEventListener('click', () => {
+          if (isEditorMode()) return;
+          if (qa.classList.contains('submitted')) return;
+          submitQuiz(qa);
+        });
+      }
     }
   }
 
@@ -2595,10 +2817,10 @@
     // 为所有 AI 原生气泡绑定内容编辑事件，确保编辑后触发 JSON 保存
     qa.querySelectorAll('.qa-note-content[data-edit-id]').forEach(contentEl => {
       contentEl.addEventListener('input', () => {
-        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+        scheduleAnnotationSave();
       });
       contentEl.addEventListener('blur', () => {
-        if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+        scheduleAnnotationSave();
       });
     });
 
@@ -2617,8 +2839,10 @@
     statusEl.className = 'annotation-store-status';
     statusEl.style.cssText = 'font-size:12px; cursor:pointer; margin-left:8px; transition:opacity 0.3s;';
 
+    const hasWriteAccess = () => canUseAnnotationStoreWriteAPI() && window.AnnotationStore.hasWriteAccess();
+
     // 根据当前状态显示
-    if (window.AnnotationStore.hasWriteAccess()) {
+    if (hasWriteAccess()) {
       statusEl.textContent = '📁 自动保存';
       statusEl.style.color = 'var(--accent-blue, #58a6ff)';
       statusEl.style.opacity = '0.5';
@@ -2629,7 +2853,7 @@
     }
 
     statusEl.addEventListener('click', () => {
-      if (window.AnnotationStore.hasWriteAccess()) {
+      if (hasWriteAccess() && typeof window.AnnotationStore.saveNow === 'function') {
         window.AnnotationStore.saveNow().then(() => {
           statusEl.textContent = '✅ 已保存';
           statusEl.style.color = 'var(--accent-green, #3fb950)';
@@ -2640,7 +2864,7 @@
             statusEl.style.opacity = '0.5';
           }, 2000);
         });
-      } else {
+      } else if (typeof window.AnnotationStore.authorizeAndSave === 'function') {
         window.AnnotationStore.authorizeAndSave().then(ok => {
           if (ok) {
             statusEl.textContent = '📁 自动保存';

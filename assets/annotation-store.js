@@ -8,6 +8,7 @@
    数据格式：
    - "{editId}": "innerHTML"         — 普通段落/气泡（有 data-edit-id 的元素）
    - "{linkId}-right": { qaIndex, option, innerHTML } — 右侧关联锚点
+  - answerKeys[]                      — 题目正确答案配置（单选/多选/连线题）
    =========================================== */
 
 (function () {
@@ -232,6 +233,7 @@
       timestamp: new Date().toISOString(),
       title: document.title || '',
       elements: {},
+      answerKeys: [],
       deletedNotes: []
     };
 
@@ -279,6 +281,44 @@
           };
         }
       });
+
+      // 正确答案配置：选择题保存 data-correct，连线题保存每个空位的 data-correct-answer
+      qa.querySelectorAll('.qa-question').forEach(function (question, questionIndex) {
+        var questionType = question.getAttribute('data-type') || 'single';
+
+        if (questionType === 'matching') {
+          var blanks = [];
+          qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(function (slot) {
+            blanks.push({
+              blankId: slot.getAttribute('data-blank-id') || '',
+              correctAnswer: slot.getAttribute('data-correct-answer') || ''
+            });
+          });
+
+          if (blanks.length > 0) {
+            data.answerKeys.push({
+              qaIndex: qaIndex,
+              questionIndex: questionIndex,
+              type: questionType,
+              blanks: blanks
+            });
+          }
+          return;
+        }
+
+        var correctOptions = [];
+        question.querySelectorAll('.qa-option[data-correct="true"]').forEach(function (option) {
+          var optionId = option.getAttribute('data-option');
+          if (optionId) correctOptions.push(optionId);
+        });
+
+        data.answerKeys.push({
+          qaIndex: qaIndex,
+          questionIndex: questionIndex,
+          type: questionType,
+          correctOptions: correctOptions
+        });
+      });
     });
 
     // deletedNotes 仅用于清洗 HTML，清洗完毕后置空（不写入文件）
@@ -319,11 +359,12 @@
   // === 数据恢复 ===
 
   function _applyData(data) {
-    if (!data || !data.elements) return;
+    if (!data) return;
     var qas = document.querySelectorAll('.quiz-annotation');
+    var elements = data.elements || {};
 
-    Object.keys(data.elements).forEach(function (key) {
-      var val = data.elements[key];
+    Object.keys(elements).forEach(function (key) {
+      var val = elements[key];
 
       if (key.match(/-right$/) && val && typeof val === 'object' && val.innerHTML !== undefined) {
         // 右侧关联：通过 qaIndex + data-option 定位 .qa-option-text
@@ -337,6 +378,37 @@
         if (el) el.innerHTML = val;
       }
     });
+
+    if (Array.isArray(data.answerKeys)) {
+      data.answerKeys.forEach(function (entry) {
+        var qa = qas[entry.qaIndex];
+        if (!qa) return;
+
+        var questions = qa.querySelectorAll('.qa-question');
+        var question = questions[entry.questionIndex];
+        if (!question) return;
+
+        if (entry.type === 'matching') {
+          (entry.blanks || []).forEach(function (blank) {
+            if (!blank || !blank.blankId) return;
+            var slot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blank.blankId + '"]');
+            if (slot) {
+              slot.setAttribute('data-correct-answer', blank.correctAnswer || '');
+            }
+          });
+          return;
+        }
+
+        question.querySelectorAll('.qa-option').forEach(function (option) {
+          option.removeAttribute('data-correct');
+        });
+
+        (entry.correctOptions || []).forEach(function (optionId) {
+          var option = question.querySelector('.qa-option[data-option="' + optionId + '"]');
+          if (option) option.setAttribute('data-correct', 'true');
+        });
+      });
+    }
 
     if (data.deletedNotes && data.deletedNotes.length > 0) {
       var jsonStr = JSON.stringify(data.deletedNotes);

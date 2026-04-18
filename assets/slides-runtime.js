@@ -64,6 +64,23 @@ function updateUI() {
   document.querySelectorAll('.slide-nav-dot').forEach((d,i) => d.classList.toggle('active', i===current));
 }
 
+function finishSlideAnimationsForEditorMode(slide) {
+  if (!slide) return;
+
+  const editorMode = document.documentElement.classList.contains('editor-mode') ||
+    document.body.classList.contains('editor-mode');
+  if (!editorMode || typeof slide.getAnimations !== 'function') return;
+
+  slide.getAnimations({ subtree: true }).forEach((animation) => {
+    if (!animation || typeof animation.finish !== 'function') return;
+    try {
+      animation.finish();
+    } catch (e) {
+      // 某些浏览器在动画已结束或不可控时会抛错，这里静默跳过即可。
+    }
+  });
+}
+
 function goTo(index) {
   if (index<0 || index>=total || index===current) return;
   const prev = current;
@@ -79,6 +96,7 @@ function goTo(index) {
 
   // 激活新幻灯片
   slides[current].classList.add('active');
+  finishSlideAnimationsForEditorMode(slides[current]);
 
   updateUI();
   showSpeakerNotes(current);
@@ -285,6 +303,7 @@ function handleSpaceKey() {
 autoTagSteppables();
 updateUI();
 buildInteractionQueue(0);
+finishSlideAnimationsForEditorMode(slides[current]);
 
 // =========================================
 // Chart.js Integration
