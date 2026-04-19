@@ -334,6 +334,112 @@ function createTwoBubbleEditorDom() {
   return createRuntimeDom(html);
 }
 
+function createAutoReorderEditorDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active has-active-note">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01">
+              <span class="text-anchor" data-link="note-01" data-step="1">Alpha<sup class="note-badge">1</sup></span>
+              middle text
+              <span class="text-anchor" data-link="note-02" data-step="2">Omega<sup class="note-badge">2</sup></span>
+            </p>
+          </div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text">Answer anchor target.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel">
+            <div class="qa-note-bubble note-expanded" data-link="note-01" data-step="1" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Note alpha.</div>
+            </div>
+            <div class="qa-note-bubble note-expanded" data-link="note-02" data-step="2" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-02">Note omega.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
+function createRightOnlyAssociationDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active has-active-note">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01">
+              <span class="text-anchor" data-link="note-01" data-step="1">Alpha<sup class="note-badge">1</sup></span>
+              inserted gap
+              <span class="text-anchor" data-link="note-02" data-step="2">Omega<sup class="note-badge">2</sup></span>
+            </p>
+          </div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-03" data-step="3">Right-only answer anchor.<sup class="note-badge">3</sup></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel">
+            <div class="qa-note-bubble note-expanded" data-link="note-01" data-step="1" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Note alpha.</div>
+            </div>
+            <div class="qa-note-bubble note-expanded" data-link="note-02" data-step="2" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-02">Note omega.</div>
+            </div>
+            <div class="qa-note-bubble note-expanded" data-link="note-03" data-link-answer="note-03" data-step="3" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">3</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-03">Right-only note.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
 function createBiDirectionalAssociationDom() {
   const html = `<!DOCTYPE html><html><body>
     <div class="slide active" data-slide="1">
@@ -782,6 +888,35 @@ describe('quiz annotation runtime', () => {
     assert.equal(anchor.childNodes[0]?.textContent, 'first', 'expected the created anchor to preserve exactly the selected text fragment');
   });
 
+  it('inserts a newly created left-side note between existing passage-linked notes and renumbers the following notes', () => {
+    const dom = createAutoReorderEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'middle text');
+
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const bubbles = Array.from(qa.querySelectorAll('.qa-note-bubble'));
+    assert.deepEqual(
+      bubbles.map((bubble) => ({ link: bubble.dataset.link, step: bubble.dataset.step, text: bubble.querySelector('.qa-note-content')?.textContent || '' })),
+      [
+        { link: 'note-01', step: '1', text: 'Note alpha.' },
+        { link: 'note-03', step: '2', text: '' },
+        { link: 'note-02', step: '3', text: 'Note omega.' }
+      ],
+      'expected a new passage-linked note to be inserted into the middle bubble position and push later notes back by one step'
+    );
+
+    const insertedAnchor = qa.querySelector('.text-anchor[data-link="note-03"]');
+    assert.equal(insertedAnchor?.dataset.step, '2', 'expected the new middle passage anchor to inherit the inserted step number');
+    assert.equal(qa.querySelector('.text-anchor[data-link="note-02"]')?.dataset.step, '3', 'expected later passage anchors to be renumbered after the insertion');
+  });
+
   it('opens the same reused underline dropdown while linking an existing note to the answer panel', () => {
     const dom = createQuizDom();
     const { window } = dom;
@@ -861,6 +996,36 @@ describe('quiz annotation runtime', () => {
     const anchor = qa.querySelector('.text-anchor[data-link="note-01"]');
     assert.ok(anchor, 'expected partial left-side selections to create a matching text anchor');
     assert.equal(anchor.childNodes[0]?.textContent, 'first', 'expected the linked anchor to preserve exactly the text selected by the user');
+  });
+
+  it('reorders a right-only note into passage order once it gains a left-side anchor', () => {
+    const dom = createRightOnlyAssociationDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-03"] .action-link-left'));
+    selectText(window, qa.querySelector('.qa-passage p'), 'inserted gap');
+
+    const toolbar = getAnnotationToolbar(qa);
+    clickElement(window, toolbar.querySelector('.ul-colors .color-swatch'));
+
+    const bubbles = Array.from(qa.querySelectorAll('.qa-note-bubble'));
+    assert.deepEqual(
+      bubbles.map((bubble) => ({ link: bubble.dataset.link, step: bubble.dataset.step })),
+      [
+        { link: 'note-01', step: '1' },
+        { link: 'note-03', step: '2' },
+        { link: 'note-02', step: '3' }
+      ],
+      'expected a previously right-only note to join the passage-order sequence as soon as it gains a left-side anchor'
+    );
+
+    assert.equal(qa.querySelector('.text-anchor[data-link="note-03"]')?.dataset.step, '2', 'expected the newly linked left anchor to receive the inserted step number');
+    assert.equal(qa.querySelector('.answer-anchor[data-link-answer="note-03"] .note-badge')?.textContent, '2', 'expected the original right-side anchor badge to be renumbered together with the reordered note');
   });
 
   it('shows the fragment toolbar for partial selection inside an existing source anchor instead of the note bubble', () => {

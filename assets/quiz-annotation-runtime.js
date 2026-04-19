@@ -44,6 +44,68 @@
     return bubbles;
   }
 
+  /** 获取中栏真实承载气泡的容器。栏头存在时优先使用 .qa-notes-list。 */
+  function getNotesBubbleContainer(qa) {
+    if (!qa) return null;
+    return qa.querySelector('.qa-notes-list') || qa.querySelector('.qa-notes-panel');
+  }
+
+  /**
+   * 收集左栏正文锚点的 linkId 顺序。
+   * 这里以正文中的真实 DOM 先后为准，并去重，作为“自动排序”的唯一来源。
+   */
+  function getOrderedPassageLinkIds(qa) {
+    if (!qa) return [];
+    const orderedLinkIds = [];
+    const seen = new Set();
+
+    qa.querySelectorAll('.qa-passage .text-anchor[data-link]').forEach((anchor) => {
+      const linkId = anchor.getAttribute('data-link') || '';
+      if (!linkId || seen.has(linkId)) return;
+      seen.add(linkId);
+      orderedLinkIds.push(linkId);
+    });
+
+    return orderedLinkIds;
+  }
+
+  /**
+   * 统一把中栏气泡顺序拉回“左侧正文顺序优先”的规则：
+   * - 只要某条批注已经关联左侧正文，就按正文中的上下文顺序排；
+   * - 仍未关联左侧正文的批注保留当前相对顺序，统一放在后面。
+   */
+  function syncBubbleOrderToPassageAnchors(qa) {
+    const notesContainer = getNotesBubbleContainer(qa);
+    if (!qa || !notesContainer) return;
+
+    const bubbles = Array.from(notesContainer.children).filter((child) => child.classList && child.classList.contains('qa-note-bubble'));
+    if (bubbles.length <= 1) return;
+
+    const bubbleByLinkId = new Map();
+    bubbles.forEach((bubble) => {
+      const linkId = bubble.getAttribute('data-link') || '';
+      if (linkId) bubbleByLinkId.set(linkId, bubble);
+    });
+
+    const orderedPassageBubbles = [];
+    const placed = new Set();
+    getOrderedPassageLinkIds(qa).forEach((linkId) => {
+      const bubble = bubbleByLinkId.get(linkId);
+      if (!bubble || placed.has(bubble)) return;
+      placed.add(bubble);
+      orderedPassageBubbles.push(bubble);
+    });
+
+    const remainingBubbles = bubbles.filter((bubble) => !placed.has(bubble));
+    const desiredOrder = [...orderedPassageBubbles, ...remainingBubbles];
+
+    desiredOrder.forEach((bubble) => {
+      if (bubble.parentNode === notesContainer) {
+        notesContainer.appendChild(bubble);
+      }
+    });
+  }
+
   /** 获取左栏原文锚点元素 */
   function getAnchorByLink(qa, linkId) {
     return qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
@@ -1619,6 +1681,8 @@
 
   /** 重算所有气泡的 data-step 序号并同步左右两栏角标（统一序号系统） */
   function recalcStepNumbers(qa) {
+    syncBubbleOrderToPassageAnchors(qa);
+
     const allBubbles = qa.querySelectorAll('.qa-note-bubble');
     allBubbles.forEach((bubble, index) => {
       const newStep = index + 1;
@@ -1639,6 +1703,7 @@
       // 同步右栏答题锚点的角标
       const answerAnchors = getAnswerAnchorsByLink(qa, linkId);
       answerAnchors.forEach(aa => {
+        aa.dataset.step = newStep;
         const badge = aa.querySelector('.note-badge');
         if (badge) badge.textContent = newStep;
       });
@@ -2722,6 +2787,9 @@
         const anchor = qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
         if (anchor) removeAnchorWrap(anchor);
 
+        // 一旦失去左侧正文锚点，这条批注就要退出正文顺序队列并重算全局编号。
+        recalcStepNumbers(qa);
+
         if (window.linkingState && window.linkingState.bubble === bubble && window.linkingState.direction === 'left') {
             window.linkingState = null;
             document.body.classList.remove('linking-mode');
@@ -3556,6 +3624,9 @@
       toggleNotesPanel(qa);
     }
 
+    // 只要新批注落在左侧正文，就按正文真实顺序把气泡插回正确位置，并重算后续序号。
+    recalcStepNumbers(qa);
+
     // 重新绑定事件
     initNoteInteractions(qa);
     initDragAndDrop(qa);
@@ -3645,6 +3716,9 @@
 
     // 退出关联模式
     exitLinkingMode();
+
+    // 右侧先建、后补左侧关联时，也必须立刻并入正文顺序。
+    recalcStepNumbers(qa);
 
     // 重新绑定事件
     initNoteInteractions(qa);
