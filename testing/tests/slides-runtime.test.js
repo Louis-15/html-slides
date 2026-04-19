@@ -207,6 +207,59 @@ function createQuizAnnotationLockDom() {
   return dom;
 }
 
+function createManualActivationSyncDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation" data-steppable="annotation"></div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  const host = window.document.querySelector('.quiz-annotation');
+  host.dataset.visibleFragments = '';
+  window.registerStepStrategy('annotation', {
+    canStepTopLevelForward() {
+      return false;
+    },
+    canStepTopLevelBackward() {
+      return false;
+    },
+    forwardTopLevel() {
+      return false;
+    },
+    backwardTopLevel() {
+      return false;
+    },
+    stepFragment(_, direction) {
+      if (direction !== 'forward') return false;
+      host.dataset.visibleFragments = 'frag-01';
+      return true;
+    }
+  });
+
+  return dom;
+}
+
 describe('slides runtime', () => {
   it('finishes animations on the newly active slide while editor mode is enabled', () => {
     const dom = createSlidesDom();
@@ -277,6 +330,18 @@ describe('slides runtime', () => {
   it('styles pager buttons with the theme secondary color token and white text', () => {
     assert.match(componentsSource, /\.slide-pager-btn\s*\{[\s\S]*background:\s*var\(--brand-secondary, var\(--accent-orange, #f39800\)\);/, 'expected pager buttons to use the theme secondary color variable as their fill');
     assert.match(componentsSource, /\.slide-pager-btn\s*\{[\s\S]*color:\s*#fff;/, 'expected pager buttons to render white button text');
+  });
+
+  it('exposes a way to sync manual component activation before fragment stepping', () => {
+    const dom = createManualActivationSyncDom();
+    const { window } = dom;
+    const host = window.document.querySelector('.quiz-annotation');
+
+    const didSync = window.activateInteractionStepForElement(host);
+    pressKey(window, 'ArrowRight');
+
+    assert.equal(didSync, true, 'expected slides runtime to accept manual interaction sync for the current steppable component');
+    assert.equal(host.dataset.visibleFragments, 'frag-01', 'expected ArrowRight to route into fragment stepping after manual activation sync');
   });
 
   it('does not let ArrowDown or ArrowUp flip pages on quiz-annotation slides after stepping is exhausted', () => {

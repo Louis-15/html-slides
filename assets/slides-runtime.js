@@ -373,6 +373,26 @@ function stepFragment(direction) {
   return !!didStep;
 }
 
+window.activateInteractionStepForElement = function(el) {
+  if (!el) return false;
+  const currentSlide = slides[current];
+  if (!currentSlide) return false;
+
+  const target = el.matches && el.matches('[data-steppable]')
+    ? el
+    : (el.closest ? el.closest('[data-steppable]') : null);
+
+  if (!target || !currentSlide.contains(target)) return false;
+
+  const nextIndex = interactionQueue.indexOf(target);
+  if (nextIndex === -1) return false;
+
+  stepIndex = nextIndex;
+  updateStepActiveClass();
+  saveStepState();
+  return true;
+};
+
 
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
    焦点始终跟着“最后一个已触发的组件”，全部撤销后无焦点。 */

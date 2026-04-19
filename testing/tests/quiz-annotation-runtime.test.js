@@ -261,6 +261,53 @@ function createBubbleEditorDom() {
   return createRuntimeDom(html);
 }
 
+function createTwoBubbleEditorDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active has-active-note">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01"><span class="text-anchor anchor-active" data-link="note-01" data-step="1">Anchor fragment one.<sup class="note-badge">1</sup></span></p>
+            <p data-edit-id="passage-02"><span class="text-anchor" data-link="note-02" data-step="2">Anchor fragment two.<sup class="note-badge">2</sup></span></p>
+          </div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text">Answer sentence.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel">
+            <div class="qa-note-bubble note-active note-expanded" data-link="note-01" data-step="1" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Note one.</div>
+            </div>
+            <div class="qa-note-bubble note-expanded" data-link="note-02" data-step="2" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-02">Note two.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
 function createLeftLinkEditorDom() {
   const html = `<!DOCTYPE html><html><body>
     <div class="slide active" data-slide="1">
@@ -727,6 +774,116 @@ describe('quiz annotation runtime', () => {
     assert.equal(Array.from(groupedFragments).filter((fragment) => fragment.classList.contains('qa-fragment-visible')).length, 2, 'expected one right click to reveal every authored layer that belongs to the same fragment group');
   });
 
+  it('reuses the same fragment group when a second rich-text layer is authored inside an existing fragment', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment sample');
+    clickElement(window, qa.querySelector('.qa-note-fragment-toolbar .btn-highlight'));
+    clickElement(window, qa.querySelector('.qa-note-fragment-toolbar .bg-colors .color-swatch'));
+
+    const outerFragment = qa.querySelector('.text-anchor [data-fragment-step="true"]');
+    selectText(window, outerFragment, 'fragment');
+    clickElement(window, qa.querySelector('.qa-note-fragment-toolbar .btn-ruby'));
+
+    const nestedFragment = outerFragment.querySelector('[data-fragment-step="true"]');
+    assert.ok(outerFragment, 'expected the first authored fragment to exist');
+    assert.ok(nestedFragment, 'expected the nested authored fragment to exist');
+    assert.equal(
+      nestedFragment.getAttribute('data-fragment-group'),
+      outerFragment.getAttribute('data-fragment-group'),
+      'expected nested rich-text layers authored inside the same text span to share one reveal group'
+    );
+  });
+
+  it('keeps revealed source fragments visible when the active bubble is clicked again', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+    const fragment = anchor.querySelector('[data-fragment-step="true"]');
+    const bubble = qa.querySelector('.qa-note-bubble');
+
+    rightClickElement(window, fragment);
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected the fragment to be visible before clicking the active bubble');
+
+    clickElement(window, bubble);
+
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected clicking the already active bubble not to reset revealed fragment state');
+  });
+
+  it('preserves a previously focused bubble fragment visibility when focus moves to another bubble', () => {
+    const dom = createTwoBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const firstAnchor = qa.querySelector('.text-anchor[data-link="note-01"]');
+    firstAnchor.innerHTML = 'Anchor <span class="qa-note-fragment qa-fragment-visible" data-fragment-step="true">fragment</span> one.<sup class="note-badge">1</sup>';
+    const firstFragment = firstAnchor.querySelector('[data-fragment-step="true"]');
+
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-02"]'));
+
+    assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected switching focus to another bubble not to hide the previous bubble fragments');
+  });
+
+  it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    let activatedElement = null;
+
+    window.activateInteractionStepForElement = (element) => {
+      activatedElement = element;
+      return true;
+    };
+
+    ensureQaInitialized(window, qa);
+
+    clickElement(window, qa.querySelector('.qa-note-bubble'));
+
+    assert.equal(activatedElement, qa, 'expected manual bubble activation to sync the current quiz-annotation with slides runtime stepping');
+  });
+
+  it('renders a remove-format button at the far right of the fragment toolbar and clears fragment wrappers', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true" data-fragment-format="highlight" data-fragment-group="frag-01"><span class="qa-note-fragment" data-fragment-step="true" data-fragment-format="ruby" data-fragment-group="frag-01"><ruby>fragment<rt>主语</rt></ruby></span></span> sample sentence.<sup class="note-badge">1</sup>';
+
+    selectText(window, anchor, 'fragment');
+
+    const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
+    const removeBtn = fragmentToolbar.querySelector('.btn-remove-format');
+    const divider = fragmentToolbar.querySelector('.qa-toolbar-divider');
+    const toolbarChildren = Array.from(fragmentToolbar.children);
+
+    assert.ok(removeBtn, 'expected the fragment toolbar to expose a remove-format button');
+    assert.ok(divider, 'expected the fragment toolbar to show a divider before the remove-format button');
+    assert.equal(toolbarChildren.at(-1), removeBtn, 'expected the remove-format button to sit at the far right edge of the fragment toolbar');
+
+    clickElement(window, removeBtn);
+
+    assert.equal(anchor.querySelector('[data-fragment-step="true"]'), null, 'expected remove-format to clear authored fragment wrappers from the current selection');
+  });
+
   it('keeps hidden source fragments readable by neutralizing authored styles until reveal', () => {
     assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*color:\s*inherit\s*!important;/, 'expected hidden source fragments to preserve readable base text color before reveal');
     assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*background(?:-color)?:\s*transparent\s*!important;/, 'expected hidden source fragments to suppress authored highlight backgrounds before reveal');
@@ -736,6 +893,7 @@ describe('quiz annotation runtime', () => {
   it('uses the theme secondary color for linking-mode emphasis instead of the primary green', () => {
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*brand-secondary-rgb/, 'expected left-side linking emphasis to use the theme secondary color token');
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-right \.qa-answer-panel[\s\S]*brand-secondary-rgb/, 'expected right-side linking emphasis to use the theme secondary color token');
+    assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*inset 0 0 0 12px/, 'expected the left-side linking frame to be much thicker than the earlier thin outline');
   });
 
   it('keeps only one drag placeholder and removes it after drag end even after multiple note creations', () => {

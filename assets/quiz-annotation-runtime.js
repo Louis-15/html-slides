@@ -197,13 +197,8 @@
 
   function resolveSelectedFragmentGroupId(qa, range, commonNode) {
     const fragmentRoot = commonNode && commonNode.closest ? commonNode.closest('[data-fragment-step="true"]') : null;
-    const selectedText = normalizeFragmentSelectionText(range ? range.toString() : '');
-    if (!fragmentRoot || !selectedText) return getNextFragmentGroupId(qa);
-
-    const fragmentText = getFragmentPlainText(fragmentRoot);
-    if (fragmentText !== selectedText) return getNextFragmentGroupId(qa);
-
-    return ensureFragmentGroup(fragmentRoot, qa);
+    if (fragmentRoot) return ensureFragmentGroup(fragmentRoot, qa);
+    return getNextFragmentGroupId(qa);
   }
 
   function normalizeFragmentPresentation(fragment) {
@@ -845,6 +840,15 @@
   /** 激活指定批注 */
   function activateNote(qa, bubble) {
     if (!qa || !bubble) return;
+
+    if (bubble.classList.contains('note-active')) {
+      if (typeof window.activateInteractionStepForElement === 'function') {
+        window.activateInteractionStepForElement(qa);
+      }
+      updateProgressCounter(qa);
+      return;
+    }
+
     const linkId = bubble.dataset.link;
     const answerLinkId = bubble.dataset.linkAnswer; // 可选的右侧关联
 
@@ -882,6 +886,10 @@
 
     // 更新进度指示器
     updateProgressCounter(qa);
+
+    if (typeof window.activateInteractionStepForElement === 'function') {
+      window.activateInteractionStepForElement(qa);
+    }
   }
 
   /** 取消指定批注激活 */
