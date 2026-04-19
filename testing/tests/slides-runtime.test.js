@@ -8,7 +8,9 @@ import { JSDOM } from 'jsdom';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'slides-runtime.js');
+const componentsPath = path.join(projectRoot, 'assets', 'components.css');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
+const componentsSource = fs.readFileSync(componentsPath, 'utf-8');
 
 function pressKey(window, key) {
   window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
@@ -270,6 +272,11 @@ describe('slides runtime', () => {
 
     clickElement(window, prevBtn);
     assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected previous pager button to navigate back to the previous slide');
+  });
+
+  it('styles pager buttons with the theme secondary color token and white text', () => {
+    assert.match(componentsSource, /\.slide-pager-btn\s*\{[\s\S]*background:\s*var\(--brand-secondary, var\(--accent-orange, #f39800\)\);/, 'expected pager buttons to use the theme secondary color variable as their fill');
+    assert.match(componentsSource, /\.slide-pager-btn\s*\{[\s\S]*color:\s*#fff;/, 'expected pager buttons to render white button text');
   });
 
   it('does not let ArrowDown or ArrowUp flip pages on quiz-annotation slides after stepping is exhausted', () => {

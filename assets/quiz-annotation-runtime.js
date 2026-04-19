@@ -148,6 +148,112 @@
 
   // 片段二级步进状态只存在于运行时，不写回 HTML。
   const noteFragmentState = new WeakMap();
+  const fragmentIdentityKeys = new WeakMap();
+  let fragmentIdentitySeed = 0;
+  let fragmentGroupSeed = 0;
+
+  function normalizeFragmentSelectionText(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function getFragmentPlainText(fragment) {
+    if (!fragment) return '';
+    const clone = fragment.cloneNode(true);
+    clone.querySelectorAll('rt').forEach((rt) => rt.remove());
+    return normalizeFragmentSelectionText(clone.textContent);
+  }
+
+  function getFragmentIdentityKey(fragment) {
+    if (!fragment) return '';
+    const groupId = fragment.getAttribute('data-fragment-group');
+    if (groupId) return `group:${groupId}`;
+    if (!fragmentIdentityKeys.has(fragment)) {
+      fragmentIdentitySeed += 1;
+      fragmentIdentityKeys.set(fragment, `single:${fragmentIdentitySeed}`);
+    }
+    return fragmentIdentityKeys.get(fragment);
+  }
+
+  function getNextFragmentGroupId(qa) {
+    if (qa) {
+      qa.querySelectorAll('[data-fragment-group]').forEach((fragment) => {
+        const match = String(fragment.getAttribute('data-fragment-group') || '').match(/^frag-group-(\d+)$/);
+        if (match) fragmentGroupSeed = Math.max(fragmentGroupSeed, Number(match[1]));
+      });
+    }
+    fragmentGroupSeed += 1;
+    return `frag-group-${fragmentGroupSeed}`;
+  }
+
+  function ensureFragmentGroup(fragment, qa) {
+    if (!fragment) return getNextFragmentGroupId(qa);
+    let groupId = fragment.getAttribute('data-fragment-group');
+    if (!groupId) {
+      groupId = getNextFragmentGroupId(qa);
+      fragment.setAttribute('data-fragment-group', groupId);
+    }
+    return groupId;
+  }
+
+  function resolveSelectedFragmentGroupId(qa, range, commonNode) {
+    const fragmentRoot = commonNode && commonNode.closest ? commonNode.closest('[data-fragment-step="true"]') : null;
+    const selectedText = normalizeFragmentSelectionText(range ? range.toString() : '');
+    if (!fragmentRoot || !selectedText) return getNextFragmentGroupId(qa);
+
+    const fragmentText = getFragmentPlainText(fragmentRoot);
+    if (fragmentText !== selectedText) return getNextFragmentGroupId(qa);
+
+    return ensureFragmentGroup(fragmentRoot, qa);
+  }
+
+  function normalizeFragmentPresentation(fragment) {
+    if (!fragment || fragment.dataset.fragmentPresentationReady === 'true') return;
+
+    const formatType = fragment.getAttribute('data-fragment-format');
+    if (formatType === 'color') {
+      const authoredColor = fragment.style.getPropertyValue('--qa-fragment-color') || fragment.style.color || fragment.dataset.fragmentColor || '';
+      if (authoredColor) {
+        fragment.style.setProperty('--qa-fragment-color', authoredColor);
+        fragment.dataset.fragmentColor = authoredColor;
+      }
+      fragment.style.color = '';
+    } else if (formatType === 'highlight') {
+      const authoredHighlight = fragment.style.getPropertyValue('--qa-fragment-highlight') || fragment.style.backgroundColor || fragment.dataset.fragmentHighlight || '';
+      if (authoredHighlight) {
+        fragment.style.setProperty('--qa-fragment-highlight', authoredHighlight);
+        fragment.dataset.fragmentHighlight = authoredHighlight;
+      }
+      fragment.style.backgroundColor = '';
+    } else if (formatType === 'strikethrough') {
+      const authoredStrikeColor = fragment.style.getPropertyValue('--qa-fragment-strike-color') || fragment.style.textDecorationColor || fragment.dataset.fragmentStrikeColor || 'var(--accent-red)';
+      fragment.style.setProperty('--qa-fragment-strike-color', authoredStrikeColor);
+      fragment.dataset.fragmentStrikeColor = authoredStrikeColor;
+      fragment.style.textDecoration = '';
+      fragment.style.textDecorationColor = '';
+    }
+
+    fragment.dataset.fragmentPresentationReady = 'true';
+  }
+
+  function getNoteFragmentEntries(bubble) {
+    if (!bubble) return [];
+
+    const entries = [];
+    const entryMap = new Map();
+    getFragmentTargetsForBubble(bubble).forEach((target) => {
+      target.querySelectorAll('[data-fragment-step="true"]').forEach((fragment) => {
+        normalizeFragmentPresentation(fragment);
+        const key = getFragmentIdentityKey(fragment);
+        if (!entryMap.has(key)) {
+          const entry = { key, fragments: [] };
+          entryMap.set(key, entry);
+          entries.push(entry);
+        }
+        entryMap.get(key).fragments.push(fragment);
+      });
+    });
+    return entries;
+  }
 
   function getFragmentOwnerAnchor(node) {
     const root = getSelectionRootNode(node);
@@ -188,16 +294,18 @@
 
   function getNoteFragments(bubble) {
     if (!bubble) return [];
-    return getFragmentTargetsForBubble(bubble).flatMap((target) => Array.from(target.querySelectorAll('[data-fragment-step="true"]')));
+    return getNoteFragmentEntries(bubble).map((entry) => entry.fragments[0]);
   }
 
   function syncNoteFragments(bubble) {
     if (!bubble) return;
     const state = getNoteFragmentState(bubble);
     const forceVisible = isEditorMode();
-    getNoteFragments(bubble).forEach((fragment, index) => {
+    getNoteFragmentEntries(bubble).forEach((entry, index) => {
       const visible = forceVisible || state.visible.has(index);
-      fragment.classList.toggle('qa-fragment-visible', visible);
+      entry.fragments.forEach((fragment) => {
+        fragment.classList.toggle('qa-fragment-visible', visible);
+      });
     });
   }
 
@@ -211,11 +319,11 @@
 
   function revealNextNoteFragment(qa) {
     const bubble = qa ? qa.querySelector('.qa-note-bubble.note-active') : null;
-    const fragments = getNoteFragments(bubble);
-    if (!bubble || fragments.length === 0) return false;
+    const entries = getNoteFragmentEntries(bubble);
+    if (!bubble || entries.length === 0) return false;
 
     const state = getNoteFragmentState(bubble);
-    if (state.cursor >= fragments.length - 1) return false;
+    if (state.cursor >= entries.length - 1) return false;
 
     state.cursor += 1;
     state.visible.add(state.cursor);
@@ -245,8 +353,9 @@
     const ownerLinkId = getFragmentOwnerLinkId(fragment);
     const qa = fragment.closest('.quiz-annotation');
     const bubble = qa && ownerLinkId ? getBubbleByLink(qa, ownerLinkId) : null;
-    const fragments = getNoteFragments(bubble);
-    const index = fragments.indexOf(fragment);
+    const targetKey = getFragmentIdentityKey(fragment);
+    const entries = getNoteFragmentEntries(bubble);
+    const index = entries.findIndex((entry) => entry.key === targetKey);
     if (!bubble || index === -1) return false;
 
     const state = getNoteFragmentState(bubble);
@@ -2631,7 +2740,7 @@
           return;
         }
 
-        if ((inPassage || (linkingState && linkingState.direction === 'left')) && !isSentenceLikeSelection(range)) {
+        if (!linkingState && inPassage && !isSentenceLikeSelection(range)) {
           anchorToolbar.classList.remove('visible');
           return;
         }
@@ -2713,17 +2822,22 @@
     const wrapper = document.createElement('span');
     wrapper.className = 'qa-note-fragment';
     wrapper.setAttribute('data-fragment-step', 'true');
+    wrapper.setAttribute('data-fragment-group', resolveSelectedFragmentGroupId(qa, range, commonNode));
     wrapper.setAttribute('data-fragment-format', formatType);
 
     if (formatType === 'color') {
-      wrapper.style.color = value || 'var(--accent-blue)';
+      const fragmentColor = value || 'var(--accent-blue)';
+      wrapper.style.setProperty('--qa-fragment-color', fragmentColor);
+      wrapper.dataset.fragmentColor = fragmentColor;
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'highlight') {
-      wrapper.style.backgroundColor = value || 'rgba(88, 166, 255, 0.15)';
+      const fragmentHighlight = value || 'rgba(88, 166, 255, 0.15)';
+      wrapper.style.setProperty('--qa-fragment-highlight', fragmentHighlight);
+      wrapper.dataset.fragmentHighlight = fragmentHighlight;
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'strikethrough') {
-      wrapper.style.textDecoration = 'line-through';
-      wrapper.style.textDecorationColor = 'var(--accent-red)';
+      wrapper.style.setProperty('--qa-fragment-strike-color', 'var(--accent-red)');
+      wrapper.dataset.fragmentStrikeColor = 'var(--accent-red)';
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'ruby') {
       if (!value) return;
@@ -2903,7 +3017,6 @@
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
-    if (direction === 'left' && !isSentenceLikeSelection(range)) return;
 
     // 创建锚点
     const anchor = document.createElement('span');

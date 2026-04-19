@@ -8,7 +8,9 @@ import { JSDOM } from 'jsdom';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
+const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
+const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
 
 function dispatchSelectionChange(window) {
   window.document.dispatchEvent(new window.Event('selectionchange', { bubbles: true }));
@@ -615,6 +617,29 @@ describe('quiz annotation runtime', () => {
     assert.ok(anchor, 'expected selecting a left-side sentence to create the matching text anchor');
   });
 
+  it('allows left-side linking for arbitrary partial selections instead of enforcing whole-sentence matching', () => {
+    const dom = createLeftLinkEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    clickElement(window, qa.querySelector('.qa-note-bubble .action-link-left'));
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+
+    const toolbar = qa.querySelector('.qa-annotation-toolbar');
+    assert.ok(toolbar?.classList.contains('visible'), 'expected left-side linking to reuse the unrestricted selection behavior of right-side linking');
+
+    clickElement(window, toolbar.querySelector('.btn-underline'));
+    clickElement(window, toolbar.querySelector('.ul-colors .color-swatch'));
+
+    const anchor = qa.querySelector('.text-anchor[data-link="note-01"]');
+    assert.ok(anchor, 'expected partial left-side selections to create a matching text anchor');
+    assert.equal(anchor.childNodes[0]?.textContent, 'first', 'expected the linked anchor to preserve exactly the text selected by the user');
+  });
+
   it('shows the fragment toolbar for partial selection inside an existing source anchor instead of the note bubble', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
@@ -682,6 +707,35 @@ describe('quiz annotation runtime', () => {
     rightClickElement(window, fragment);
 
     assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected right click to reveal the authored source fragment immediately');
+  });
+
+  it('reveals all authored layers in the same fragment group with a single right click', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true" data-fragment-group="frag-01" data-fragment-format="highlight" style="background-color: rgba(255, 208, 0, 0.45);">others <span class="qa-note-fragment" data-fragment-step="true" data-fragment-group="frag-01" data-fragment-format="ruby"><ruby>has<rt>主语</rt></ruby></span></span> sample sentence.<sup class="note-badge">1</sup>';
+
+    const ruby = anchor.querySelector('ruby');
+    const groupedFragments = anchor.querySelectorAll('[data-fragment-group="frag-01"]');
+
+    rightClickElement(window, ruby);
+
+    assert.equal(Array.from(groupedFragments).filter((fragment) => fragment.classList.contains('qa-fragment-visible')).length, 2, 'expected one right click to reveal every authored layer that belongs to the same fragment group');
+  });
+
+  it('keeps hidden source fragments readable by neutralizing authored styles until reveal', () => {
+    assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*color:\s*inherit\s*!important;/, 'expected hidden source fragments to preserve readable base text color before reveal');
+    assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*background(?:-color)?:\s*transparent\s*!important;/, 'expected hidden source fragments to suppress authored highlight backgrounds before reveal');
+    assert.match(zoneCssSource, /data-fragment-format="ruby"\][\s\S]*rt\s*\{[\s\S]*display:\s*none;/, 'expected ruby annotations to stay hidden until the fragment is explicitly revealed');
+  });
+
+  it('uses the theme secondary color for linking-mode emphasis instead of the primary green', () => {
+    assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*brand-secondary-rgb/, 'expected left-side linking emphasis to use the theme secondary color token');
+    assert.match(zoneCssSource, /\.quiz-annotation\.linking-right \.qa-answer-panel[\s\S]*brand-secondary-rgb/, 'expected right-side linking emphasis to use the theme secondary color token');
   });
 
   it('keeps only one drag placeholder and removes it after drag end even after multiple note creations', () => {
