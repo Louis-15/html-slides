@@ -1549,6 +1549,14 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   opacity: 1;
 }
 
+html:not(.editor-mode) .text-anchor:hover [data-fragment-step="true"],
+html:not(.editor-mode) .answer-anchor:hover [data-fragment-step="true"],
+body:not(.editor-mode) .text-anchor:hover [data-fragment-step="true"],
+body:not(.editor-mode) .answer-anchor:hover [data-fragment-step="true"] {
+  background-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.24) !important;
+  box-shadow: inset 0 0 0 999px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08);
+}
+
 .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
 .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
 html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="color"],

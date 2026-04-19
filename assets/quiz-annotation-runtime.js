@@ -194,6 +194,32 @@
     return String(text || '').replace(/\s+/g, ' ').trim();
   }
 
+  function playBubbleFocusSound() {
+    if (window.AudioRuntime && typeof window.AudioRuntime.playGlobalCue === 'function') {
+      window.AudioRuntime.playGlobalCue('focus-shift');
+    }
+  }
+
+  function playFragmentStepSound(direction, reason) {
+    if (window.QuizAnnotationAudio && typeof window.QuizAnnotationAudio.playFragmentStep === 'function') {
+      window.QuizAnnotationAudio.playFragmentStep({ direction, reason: reason || 'step' });
+    }
+  }
+
+  function anchorHasAuthoredFragments(anchor) {
+    return !!(anchor && anchor.querySelector('[data-fragment-step="true"]'));
+  }
+
+  function playFragmentHoverSound(anchor) {
+    if (!anchor || !anchorHasAuthoredFragments(anchor)) return;
+    if (window.QuizAnnotationAudio && typeof window.QuizAnnotationAudio.playFragmentHover === 'function') {
+      window.QuizAnnotationAudio.playFragmentHover({
+        linkId: anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link') || '',
+        side: anchor.classList.contains('answer-anchor') ? 'right' : 'left'
+      });
+    }
+  }
+
   function getFragmentPlainText(fragment) {
     if (!fragment) return '';
     const clone = fragment.cloneNode(true);
@@ -361,6 +387,7 @@
     state.cursor += 1;
     state.visible.add(state.cursor);
     syncNoteFragments(bubble);
+    playFragmentStepSound('forward', 'step');
     return true;
   }
 
@@ -378,6 +405,7 @@
       state.cursor = hideIndex - 1;
     }
     syncNoteFragments(bubble);
+    playFragmentStepSound('backward', 'step');
     return true;
   }
 
@@ -394,6 +422,7 @@
     const state = getNoteFragmentState(bubble);
     state.visible.add(index);
     syncNoteFragments(bubble);
+    playFragmentStepSound('forward', 'immediate-reveal');
     return true;
   }
 
@@ -899,6 +928,7 @@
     syncNoteFragments(bubble);
     qa.classList.add('has-active-note');
     replayNoteActivationAnimation(bubble);
+    playBubbleFocusSound();
 
     // 激活左栏原文锚点
     const anchor = getAnchorByLink(qa, linkId);
@@ -2159,6 +2189,15 @@
         revealNoteFragmentImmediately(fragment);
       });
     }
+
+    qa.querySelectorAll('.text-anchor, .answer-anchor').forEach(anchor => {
+      if (anchor.dataset.fragmentHoverAudioBound === 'true') return;
+      anchor.dataset.fragmentHoverAudioBound = 'true';
+      anchor.addEventListener('mouseenter', () => {
+        if (isEditorMode()) return;
+        playFragmentHoverSound(anchor);
+      });
+    });
 
     // 角标点击 → 激活对应批注
     qa.querySelectorAll('.note-badge').forEach(badge => {

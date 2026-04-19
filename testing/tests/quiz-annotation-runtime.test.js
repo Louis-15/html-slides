@@ -907,6 +907,57 @@ describe('quiz annotation runtime', () => {
     assert.equal(qa.querySelectorAll('.qa-connector-canvas .connector-step').length, 2, 'expected activation to draw both left and right connector legs for the same linkId regardless of creation order');
   });
 
+  it('uses the theme secondary color token to temporarily fill fragment words on hover in presentation mode', () => {
+    assert.match(zoneCssSource, /:not\(\.editor-mode\) [\s\S]*\.text-anchor:hover \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected source fragment hover styling to use the theme secondary color variable outside editor mode');
+    assert.match(zoneCssSource, /:not\(\.editor-mode\) [\s\S]*\.answer-anchor:hover \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected answer-side fragment hover styling to stay aligned with the same theme secondary color variable outside editor mode');
+  });
+
+  it('plays one focus sound only when the active bubble actually changes', () => {
+    const dom = createTwoBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-02"]'));
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-02"]'));
+
+    assert.deepEqual(calls, ['focus-shift'], 'expected switching to a different bubble to play one global focus cue, but repeated clicks on the same active bubble to stay silent');
+  });
+
+  it('plays a fragment hover cue only in presentation mode when entering an anchor that contains authored fragments', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const hoverCalls = [];
+
+    window.QuizAnnotationAudio = {
+      playFragmentHover(payload) {
+        hoverCalls.push(payload?.linkId || 'unknown');
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+
+    anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
+    assert.deepEqual(hoverCalls, ['note-01'], 'expected presentation-mode hover on fragment-bearing source anchors to play one component hover cue');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+    anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
+    assert.deepEqual(hoverCalls, ['note-01'], 'expected editor mode to remain silent for fragment hover cues');
+  });
+
   it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;

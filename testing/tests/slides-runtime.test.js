@@ -443,6 +443,24 @@ describe('slides runtime', () => {
     assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected ArrowDown focus changes not to clear previously revealed fragment state');
   });
 
+  it('plays the quiz-annotation fragment step cue when ArrowLeft or ArrowRight reveals or hides a fragment', () => {
+    const dom = createQuizFragmentPersistenceDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.QuizAnnotationAudio = {
+      playFragmentStep(payload) {
+        calls.push(payload?.direction || 'unknown');
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowRight');
+    pressKey(window, 'ArrowLeft');
+
+    assert.deepEqual(calls, ['forward', 'backward'], 'expected fragment stepping to emit component-level swoosh cues for both reveal and hide');
+  });
+
   it('does not let ArrowDown or ArrowUp flip pages on quiz-annotation slides after stepping is exhausted', () => {
     const dom = createQuizAnnotationLockDom();
     const { window } = dom;
