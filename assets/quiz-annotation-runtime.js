@@ -51,12 +51,49 @@
 
   /** 获取右栏答题锚点元素 */
   function getAnswerAnchorByLink(qa, linkId) {
-    return qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"]`);
+    if (!qa || !linkId) return null;
+    return qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"], .answer-anchor[data-link="${linkId}"]`);
+  }
+
+  /** 获取同一批注在右栏的所有端点。旧数据可能残留 data-link，这里统一兼容。 */
+  function getAnswerAnchorsByLink(qa, linkId) {
+    if (!qa || !linkId) return [];
+    return Array.from(qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"], .answer-anchor[data-link="${linkId}"]`));
   }
 
   /** 获取批注气泡元素 */
   function getBubbleByLink(qa, linkId) {
     return qa.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
+  }
+
+  /**
+   * 统一把气泡同步到“一个 linkId，对应左右两个端点”的规范模型。
+   * data-link-answer 只保留为兼容旧结构的派生字段，不再决定运行时行为。
+   */
+  function normalizeBubbleEndpointState(qa, bubble) {
+    if (!qa || !bubble) {
+      return { linkId: '', hasLeft: false, hasRight: false };
+    }
+
+    const linkId = bubble.getAttribute('data-link') || '';
+    const hasLeft = !!getAnchorByLink(qa, linkId);
+    const hasRight = !!getAnswerAnchorByLink(qa, linkId);
+
+    if (hasRight) {
+      bubble.dataset.linkAnswer = linkId;
+    } else {
+      delete bubble.dataset.linkAnswer;
+      bubble.removeAttribute('data-link-answer');
+    }
+
+    return { linkId, hasLeft, hasRight };
+  }
+
+  function normalizeAllBubbleEndpointStates(qa) {
+    if (!qa) return;
+    qa.querySelectorAll('.qa-note-bubble[data-link]').forEach((bubble) => {
+      normalizeBubbleEndpointState(qa, bubble);
+    });
   }
 
   function isEditorMode() {
@@ -470,7 +507,7 @@
         parent.removeChild(anchor);
       }
       // 清除右栏锚点
-      qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`).forEach(aa => {
+      getAnswerAnchorsByLink(qa, linkId).forEach(aa => {
         aa.querySelectorAll('.note-badge').forEach(b => b.remove());
         const parent = aa.parentNode;
         while (aa.firstChild) parent.insertBefore(aa.firstChild, aa);
@@ -850,8 +887,7 @@
       return;
     }
 
-    const linkId = bubble.dataset.link;
-    const answerLinkId = bubble.dataset.linkAnswer; // 可选的右侧关联
+    const { linkId, hasRight } = normalizeBubbleEndpointState(qa, bubble);
 
     // 现有焦点降级为展开态，保留已展开批注
     clearAllActive(qa, true, false);
@@ -869,7 +905,7 @@
     if (anchor) anchor.classList.add('anchor-active');
 
     // 激活右栏答题锚点（如果有）
-    if (answerLinkId) {
+    if (hasRight) {
       const answerAnchor = getAnswerAnchorByLink(qa, linkId);
       if (answerAnchor) answerAnchor.classList.add('anchor-active');
     }
@@ -880,7 +916,7 @@
     // 三栏双向追视
     scrollIntoViewSmooth(bubble);
     if (anchor) scrollIntoViewSmooth(anchor);
-    if (answerLinkId) {
+    if (hasRight) {
       const ansAnchor = getAnswerAnchorByLink(qa, linkId);
       if (ansAnchor) scrollIntoViewSmooth(ansAnchor);
     }
@@ -955,8 +991,7 @@
     clearStepConnectors(qa);
     if (!bubble) return;
     const canvas = ensureCanvas(qa);
-    const linkId = bubble.dataset.link;
-    const hasAnswerLink = bubble.dataset.linkAnswer;
+    const { linkId, hasRight: hasAnswerLink } = normalizeBubbleEndpointState(qa, bubble);
 
     // 左侧连线：原文锚点 → 气泡
     const leftLine = createLeftConnectorLine(qa, linkId, 'connector-step');
@@ -984,8 +1019,7 @@
     clearHoverConnectors(qa);
     if (!bubble) return;
     const canvas = ensureCanvas(qa);
-    const linkId = bubble.dataset.link;
-    const hasAnswerLink = bubble.dataset.linkAnswer;
+    const { linkId, hasRight: hasAnswerLink } = normalizeBubbleEndpointState(qa, bubble);
 
     const leftLine = createLeftConnectorLine(qa, linkId, 'connector-hover');
     if (leftLine) canvas.appendChild(leftLine);
@@ -1083,7 +1117,7 @@
     if (!bubble) return null;
 
     // 查找右栏中与该批注关联的答题锚点
-    const answerAnchor = qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"]`);
+    const answerAnchor = getAnswerAnchorByLink(qa, linkId);
     if (!answerAnchor) return null;
 
     const step = bubble.querySelector('.qa-note-step') || bubble;
@@ -1294,7 +1328,7 @@
       }
 
       // 同步右栏答题锚点的角标
-      const answerAnchors = qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`);
+      const answerAnchors = getAnswerAnchorsByLink(qa, linkId);
       answerAnchors.forEach(aa => {
         const badge = aa.querySelector('.note-badge');
         if (badge) badge.textContent = newStep;
@@ -2151,9 +2185,7 @@
     // 气泡：点击切换激活 + Hover 连线 + 初始化按钮
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
       // 动态补全操作按钮（防止原本写死的HTML缺少关联按钮）
-      const linkId = bubble.dataset.link;
-      const hasLeftLink = !!qa.querySelector(`.text-anchor[data-link="${linkId}"]`);
-      const hasRightLink = !!qa.querySelector(`.answer-anchor[data-link-answer="${linkId}"]`);
+      const { linkId, hasLeft: hasLeftLink, hasRight: hasRightLink } = normalizeBubbleEndpointState(qa, bubble);
       // 按钮排列顺序：关联左侧 → 关联右侧 → 取消左侧 → 取消右侧 → 选中左侧原文 → 选中右侧原文 → 删除批注
       let actionsHTML = '';
       if (!hasLeftLink) actionsHTML += `<button class="qa-note-action-btn link-btn action-link-left" title="关联左侧"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cable-icon lucide-cable"><path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/><path d="M17 21v-2"/><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/><path d="M21 21v-2"/><path d="M3 5V3"/><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/><path d="M7 5V3"/></svg></button>`;
@@ -2306,7 +2338,7 @@
         let linkId = bubble.dataset.link;
         let rightLinkId = bubble.dataset.linkAnswer || linkId;
 
-        const anchor = qa.querySelector(`.answer-anchor[data-link-answer="${rightLinkId}"]`) || qa.querySelector(`.answer-anchor[data-link="${rightLinkId}"]`);
+        const anchor = getAnswerAnchorByLink(qa, rightLinkId);
         if (anchor) removeAnchorWrap(anchor);
 
         if (window.linkingState && window.linkingState.bubble === bubble && window.linkingState.direction === 'right') {
@@ -2362,7 +2394,7 @@
         if (!bubble) return;
         const linkId = bubble.dataset.link;
         const rightLinkId = bubble.dataset.linkAnswer || linkId;
-        const anchor = qa.querySelector(`.answer-anchor[data-link-answer="${rightLinkId}"]`) || qa.querySelector(`.answer-anchor[data-link="${rightLinkId}"]`);
+        const anchor = getAnswerAnchorByLink(qa, rightLinkId);
         if (!anchor) return;
 
         // 临时禁用拖拽以允许原生 Selection 高亮穿透
@@ -2431,7 +2463,7 @@
     }
 
     // 清除右栏答题锚点的关联角标
-    qa.querySelectorAll(`.answer-anchor[data-link-answer="${linkId}"]`).forEach(aa => {
+    getAnswerAnchorsByLink(qa, linkId).forEach(aa => {
       aa.querySelectorAll('.note-badge').forEach(b => b.remove());
       // 解包 answer-anchor span
       const parent = aa.parentNode;
@@ -3271,8 +3303,8 @@
       if (s > linkMap.get(linkId).step) linkMap.get(linkId).step = s;
     });
 
-    qa.querySelectorAll('.answer-anchor[data-link-answer]').forEach(anchor => {
-      const linkId = anchor.dataset.linkAnswer;
+    qa.querySelectorAll('.answer-anchor[data-link-answer], .answer-anchor[data-link]').forEach(anchor => {
+      const linkId = anchor.dataset.linkAnswer || anchor.dataset.link;
       if (!linkId) return;
       if (!linkMap.has(linkId)) {
         linkMap.set(linkId, { step: parseInt(anchor.dataset.step) || 0, hasLeft: false, hasRight: false });
@@ -3288,15 +3320,19 @@
     for (const [linkId, info] of sortedEntries) {
       // 检查是否已存在对应气泡
       const existingBubble = notesList.querySelector(`.qa-note-bubble[data-link="${linkId}"]`);
-      if (existingBubble) continue;
+      if (existingBubble) {
+        existingBubble.dataset.step = info.step;
+        const stepEl = existingBubble.querySelector('.qa-note-step');
+        if (stepEl) stepEl.textContent = info.step;
+        normalizeBubbleEndpointState(qa, existingBubble);
+        continue;
+      }
 
       // 创建空气泡
       const bubble = document.createElement('div');
       bubble.className = 'qa-note-bubble';
       bubble.dataset.link = linkId;
-      if (info.hasRight) {
-        bubble.dataset.linkAnswer = linkId;
-      }
+      if (info.hasRight) bubble.dataset.linkAnswer = linkId;
       bubble.dataset.step = info.step;
       bubble.setAttribute('draggable', 'false');
 
@@ -3341,6 +3377,8 @@
           if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
         });
       }
+
+      normalizeBubbleEndpointState(qa, bubble);
     }
   }
 
@@ -3400,6 +3438,9 @@
 
     // 扫描孤儿锚点：正文/答题区中存在锚点但批注面板中没有对应气泡 → 自动重建
     rebuildOrphanBubbles(qa);
+
+    // 统一把新旧 HTML 拉回到同一 linkId 双端点模型，避免“先左后右”和“先右后左”语义分裂。
+    normalizeAllBubbleEndpointStates(qa);
 
     // 初始化各子系统
     initNoteInteractions(qa);

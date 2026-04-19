@@ -308,6 +308,49 @@ function createTwoBubbleEditorDom() {
   return createRuntimeDom(html);
 }
 
+function createBiDirectionalAssociationDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active has-active-note">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">Passage anchor.<sup class="note-badge">1</sup></span></p>
+          </div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="single">
+                <div class="qa-option" data-option="A">
+                  <span class="qa-status-dot"></span>
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-01" data-step="1">Answer anchor.<sup class="note-badge">1</sup></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel">
+            <div class="qa-note-bubble" data-link="note-01" data-step="1" draggable="true">
+              <div class="qa-note-header">
+                <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+                <div class="qa-note-actions">
+                  <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                </div>
+              </div>
+              <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Bidirectional note.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
 function createLeftLinkEditorDom() {
   const html = `<!DOCTYPE html><html><body>
     <div class="slide active" data-slide="1">
@@ -835,6 +878,33 @@ describe('quiz annotation runtime', () => {
     clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-02"]'));
 
     assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected switching focus to another bubble not to hide the previous bubble fragments');
+  });
+
+  it('normalizes an existing bubble to the same bidirectional link model when a restored right anchor already exists', () => {
+    const dom = createBiDirectionalAssociationDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const bubble = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    assert.equal(bubble?.getAttribute('data-link-answer'), 'note-01', 'expected init to normalize existing bubbles so restored right anchors become first-class endpoints of the same linkId');
+    assert.equal(bubble.querySelector('.action-link-right'), null, 'expected normalized bubbles not to offer a second right-link creation button');
+    assert.ok(bubble.querySelector('.action-unlink-right'), 'expected normalized bubbles to expose the right unlink action just like notes originally created from the right side');
+    assert.ok(bubble.querySelector('.action-select-right'), 'expected normalized bubbles to expose the right select action just like notes originally created from the right side');
+  });
+
+  it('activates both endpoints and draws both connector legs even when the bubble was originally created from the left side', () => {
+    const dom = createBiDirectionalAssociationDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-01"]'));
+
+    assert.ok(qa.querySelector('.text-anchor[data-link="note-01"]')?.classList.contains('anchor-active'), 'expected activation to highlight the left endpoint of the shared linkId');
+    assert.ok(qa.querySelector('.answer-anchor[data-link-answer="note-01"]')?.classList.contains('anchor-active'), 'expected activation to highlight the right endpoint of the shared linkId');
+    assert.equal(qa.querySelectorAll('.qa-connector-canvas .connector-step').length, 2, 'expected activation to draw both left and right connector legs for the same linkId regardless of creation order');
   });
 
   it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {

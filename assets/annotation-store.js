@@ -281,8 +281,8 @@
 
       // 右侧关联：answer-anchor 在 .qa-option-text 中（没有 data-edit-id）
       // 格式: "{linkId}-right" → { qaIndex, option, innerHTML }
-      qa.querySelectorAll('.answer-anchor[data-link-answer]').forEach(function (anchor) {
-        var linkId = anchor.getAttribute('data-link-answer');
+      qa.querySelectorAll('.answer-anchor[data-link-answer], .answer-anchor[data-link]').forEach(function (anchor) {
+        var linkId = anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link');
         if (!linkId || data.deletedNotes.indexOf(linkId) !== -1) return;
         var option = anchor.closest('.qa-option');
         var optionText = anchor.closest('.qa-option-text');
@@ -358,7 +358,7 @@
         changed = true;
       });
       // 清除 answer-anchor
-      temp.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"]').forEach(function (anchor) {
+      temp.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
         anchor.querySelectorAll('.note-badge').forEach(function (b) { b.remove(); });
         var parent = anchor.parentNode;
         while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
