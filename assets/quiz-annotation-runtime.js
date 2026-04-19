@@ -107,6 +107,66 @@
       !!(window.DoodleManager && window.DoodleManager.isActive);
   }
 
+  function isDoodleDrawingActive() {
+    return !!(window.DoodleManager && window.DoodleManager.isDrawing);
+  }
+
+  function shouldSuppressFragmentDiscovery(qa) {
+    return !!(qa && qa.classList.contains('has-quiz') && !qa.classList.contains('submitted'));
+  }
+
+  function getActiveDoodleLayer() {
+    const activeSlide = document.querySelector('.slide.active');
+    if (!activeSlide) return null;
+    return activeSlide.querySelector('svg.doodle-layer');
+  }
+
+  function getElementBehindDoodleLayer(clientX, clientY) {
+    if (typeof document.elementFromPoint !== 'function') return null;
+
+    const doodleLayer = getActiveDoodleLayer();
+    if (!doodleLayer) {
+      return document.elementFromPoint(clientX, clientY);
+    }
+
+    document.documentElement.classList.add('qa-doodle-hit-test');
+    document.body.classList.add('qa-doodle-hit-test');
+    try {
+      return document.elementFromPoint(clientX, clientY);
+    } finally {
+      document.documentElement.classList.remove('qa-doodle-hit-test');
+      document.body.classList.remove('qa-doodle-hit-test');
+    }
+  }
+
+  function resolveDoodlePassthroughTarget(event) {
+    if (!event || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') return null;
+    return getElementBehindDoodleLayer(event.clientX, event.clientY);
+  }
+
+  let activeDoodleProxyAnchor = null;
+  let doodlePassthroughBound = false;
+  const DOODLE_PASSTHROUGH_BUTTON_SELECTOR = '.qa-divider-btn, .qa-notes-collapse-btn, .note-badge, .qa-note-bubble, .qa-submit-btn';
+
+  function setActiveDoodleProxyAnchor(anchor) {
+    if (activeDoodleProxyAnchor === anchor) return false;
+
+    if (activeDoodleProxyAnchor) {
+      activeDoodleProxyAnchor.classList.remove('qa-fragment-hover-proxy');
+    }
+
+    activeDoodleProxyAnchor = anchor || null;
+    if (activeDoodleProxyAnchor) {
+      activeDoodleProxyAnchor.classList.add('qa-fragment-hover-proxy');
+    }
+
+    return true;
+  }
+
+  function clearDoodleProxyAnchor() {
+    setActiveDoodleProxyAnchor(null);
+  }
+
   function expandAllBubbles(qa) {
     if (!qa) return;
     qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
@@ -210,8 +270,14 @@
     return !!(anchor && anchor.querySelector('[data-fragment-step="true"]'));
   }
 
+  function canTriggerFragmentDiscovery(anchor) {
+    if (!anchor || !anchorHasAuthoredFragments(anchor) || isEditorMode()) return false;
+    const qa = anchor.closest('.quiz-annotation');
+    return !shouldSuppressFragmentDiscovery(qa);
+  }
+
   function playFragmentHoverSound(anchor) {
-    if (!anchor || !anchorHasAuthoredFragments(anchor)) return;
+    if (!canTriggerFragmentDiscovery(anchor)) return;
     if (window.QuizAnnotationAudio && typeof window.QuizAnnotationAudio.playFragmentHover === 'function') {
       window.QuizAnnotationAudio.playFragmentHover({
         linkId: anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link') || '',
@@ -704,6 +770,45 @@
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
+  function hideDividerButton(qa) {
+    const dividerBtn = qa && qa.querySelector('.qa-divider-btn');
+    if (dividerBtn) {
+      dividerBtn.classList.remove('visible');
+    }
+  }
+
+  function updateDividerButtonHoverState(qa, clientX, clientY) {
+    if (!qa) return;
+
+    const body = qa.querySelector('.qa-body');
+    const dividerBtn = qa.querySelector('.qa-divider-btn');
+    const passage = qa.querySelector('.qa-passage');
+    if (!body || !dividerBtn || !passage) return;
+
+    if (qa.classList.contains('notes-active') || isDoodleDrawingActive()) {
+      hideDividerButton(qa);
+      return;
+    }
+
+    const bodyRect = body.getBoundingClientRect();
+    const passageRect = passage.getBoundingClientRect();
+    if (!bodyRect || !passageRect) {
+      hideDividerButton(qa);
+      return;
+    }
+
+    const dividerX = passageRect.right;
+    const HOVER_ZONE = 20;
+    if (Math.abs(clientX - dividerX) <= HOVER_ZONE) {
+      dividerBtn.style.left = (dividerX - bodyRect.left) + 'px';
+      dividerBtn.style.top = (clientY - bodyRect.top - 16) + 'px';
+      dividerBtn.classList.add('visible');
+      return;
+    }
+
+    hideDividerButton(qa);
+  }
+
 
   // =========================================
   // 1. 面板展开/收起 状态管理
@@ -712,10 +817,6 @@
   /** 切换批注面板 */
   function toggleNotesPanel(qa) {
     if (!qa) return;
-    // 涂鸦模式下不允许切换批注面板，避免两套浮层交叉干扰
-    if (isDoodleMode()) {
-      return;
-    }
     const isActive = qa.classList.toggle('notes-active');
 
     // 展开时更新分割线位置
@@ -774,49 +875,18 @@
       body.appendChild(dividerBtn);
     }
 
-    // 监听鼠标移动 — 检测是否在分割线 ±20px 范围内
-    const HOVER_ZONE = 20; // 分割线两侧的感应范围（像素）
-
     body.addEventListener('mousemove', (e) => {
-      // 批注已展开时不显示
-      if (qa.classList.contains('notes-active')) {
-        dividerBtn.classList.remove('visible');
-        return;
-      }
-      // 涂鸦模式下不显示
-      if (isDoodleMode()) {
-        dividerBtn.classList.remove('visible');
-        return;
-      }
-
-      const bodyRect = body.getBoundingClientRect();
-
-      // 获取第一条分割线的实际位置
-      const passage = qa.querySelector('.qa-passage');
-      if (!passage) return;
-      const dividerX = passage.getBoundingClientRect().right;
-
-      // 检测鼠标是否在分割线附近
-      const mouseX = e.clientX;
-      if (Math.abs(mouseX - dividerX) <= HOVER_ZONE) {
-        // 浮现按钮，Y 轴跟随鼠标
-        dividerBtn.style.left = (dividerX - bodyRect.left) + 'px';
-        dividerBtn.style.top = (e.clientY - bodyRect.top - 16) + 'px'; // 居中对齐
-        dividerBtn.classList.add('visible');
-      } else {
-        dividerBtn.classList.remove('visible');
-      }
+      updateDividerButtonHoverState(qa, e.clientX, e.clientY);
     });
 
     // 鼠标离开 body 时隐藏按钮
     body.addEventListener('mouseleave', () => {
-      dividerBtn.classList.remove('visible');
+      hideDividerButton(qa);
     });
 
     // 点击悬浮按钮 → 展开批注面板
     dividerBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isDoodleMode()) return;
       toggleNotesPanel(qa);
     });
   }
@@ -2177,13 +2247,94 @@
   // 9. 角标点击 + Hover 连线
   // =========================================
 
+  function syncDoodleDividerButtons(clientX, clientY, resolvedTarget) {
+    const activeSlide = document.querySelector('.slide.active');
+    if (!activeSlide) return;
+
+    const activeQa = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest('.quiz-annotation') : null;
+    activeSlide.querySelectorAll('.quiz-annotation').forEach((qa) => {
+      if (!activeQa || qa === activeQa) {
+        updateDividerButtonHoverState(qa, clientX, clientY);
+      } else {
+        hideDividerButton(qa);
+      }
+    });
+  }
+
+  function bindDoodleModePassthrough() {
+    if (doodlePassthroughBound) return;
+    doodlePassthroughBound = true;
+
+    document.addEventListener('pointermove', (e) => {
+      if (!isDoodleMode()) {
+        clearDoodleProxyAnchor();
+        document.querySelectorAll('.quiz-annotation').forEach((qa) => hideDividerButton(qa));
+        return;
+      }
+
+      if (isDoodleDrawingActive()) {
+        clearDoodleProxyAnchor();
+        document.querySelectorAll('.quiz-annotation').forEach((qa) => hideDividerButton(qa));
+        return;
+      }
+
+      const resolvedTarget = resolveDoodlePassthroughTarget(e) || (e.target && e.target.nodeType === 1 ? e.target : null);
+      syncDoodleDividerButtons(e.clientX, e.clientY, resolvedTarget);
+
+      const anchor = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest('.text-anchor, .answer-anchor') : null;
+      if (!canTriggerFragmentDiscovery(anchor)) {
+        clearDoodleProxyAnchor();
+        return;
+      }
+
+      const changed = setActiveDoodleProxyAnchor(anchor);
+      if (changed) {
+        playFragmentHoverSound(anchor);
+      }
+    }, true);
+
+    document.addEventListener('contextmenu', (e) => {
+      if (!isDoodleMode() || isEditorMode()) return;
+      if (!(e.target && e.target.closest && e.target.closest('svg.doodle-layer'))) return;
+
+      const resolvedTarget = resolveDoodlePassthroughTarget(e);
+      const fragment = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest('[data-fragment-step="true"]') : null;
+      const ownerAnchor = fragment && fragment.closest('.text-anchor, .answer-anchor');
+      if (!fragment || !ownerAnchor || !canTriggerFragmentDiscovery(ownerAnchor)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+      }
+      revealNoteFragmentImmediately(fragment);
+    }, true);
+
+    document.addEventListener('pointerdown', (e) => {
+      if (!isDoodleMode() || isEditorMode() || isDoodleDrawingActive() || e.button !== 0) return;
+      if (!(e.target && e.target.closest && e.target.closest('svg.doodle-layer'))) return;
+
+      const resolvedTarget = resolveDoodlePassthroughTarget(e);
+      const passthroughButton = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest(DOODLE_PASSTHROUGH_BUTTON_SELECTOR) : null;
+      if (!passthroughButton) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+      }
+
+      passthroughButton.click();
+    }, true);
+  }
+
   function initNoteInteractions(qa) {
     if (!qa.__qaSourceFragmentContextMenuBound) {
       qa.__qaSourceFragmentContextMenuBound = true;
       qa.addEventListener('contextmenu', (e) => {
         const fragment = e.target.closest('[data-fragment-step="true"]');
         const ownerAnchor = fragment && fragment.closest('.text-anchor, .answer-anchor');
-        if (!fragment || !ownerAnchor || isEditorMode()) return;
+        if (!fragment || !ownerAnchor || !canTriggerFragmentDiscovery(ownerAnchor)) return;
         e.preventDefault();
         e.stopPropagation();
         revealNoteFragmentImmediately(fragment);
@@ -3482,6 +3633,7 @@
     normalizeAllBubbleEndpointStates(qa);
 
     // 初始化各子系统
+    bindDoodleModePassthrough();
     initNoteInteractions(qa);
     initDragAndDrop(qa);
     initQuizSystem(qa);

@@ -9,8 +9,9 @@
   function registerCues() {
     if (!window.AudioRuntime || typeof window.AudioRuntime.registerComponentCue !== 'function') return;
 
-    window.AudioRuntime.registerComponentCue(COMPONENT_NAME, 'fragment-step', () => {
-      return window.AudioRuntime.playPreset('fragment-swoosh');
+    window.AudioRuntime.registerComponentCue(COMPONENT_NAME, 'fragment-step', (payload) => {
+      const direction = payload && payload.direction === 'backward' ? 'backward' : 'forward';
+      return window.AudioRuntime.playPreset(direction === 'backward' ? 'fragment-swoosh-back' : 'fragment-swoosh');
     });
 
     window.AudioRuntime.registerComponentCue(COMPONENT_NAME, 'fragment-hover', () => {

@@ -24,6 +24,12 @@ function rightClickElement(window, element) {
   element.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, button: 2 }));
 }
 
+function dispatchPointerEvent(window, element, type, init = {}) {
+  const event = new window.MouseEvent(type, { bubbles: true, cancelable: true, ...init });
+  element.dispatchEvent(event);
+  return event;
+}
+
 function dispatchDragEvent(window, element, type, init = {}) {
   const event = new window.Event(type, { bubbles: true, cancelable: true });
   Object.assign(event, init);
@@ -74,6 +80,14 @@ function selectText(window, container, text) {
 function ensureQaInitialized(window, qa) {
   qa.removeAttribute('data-qa-initialized');
   window.initQuizAnnotation(qa);
+}
+
+function addDoodleLayer(window) {
+  const slide = window.document.querySelector('.slide.active');
+  const layer = window.document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  layer.setAttribute('class', 'doodle-layer');
+  slide.appendChild(layer);
+  return layer;
 }
 
 function createRuntimeDom(html) {
@@ -783,12 +797,13 @@ describe('quiz annotation runtime', () => {
     );
   });
 
-  it('reveals an authored source fragment on right click in presentation mode', () => {
+  it('reveals an authored source fragment on right click in presentation mode after submission', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
 
     ensureQaInitialized(window, qa);
+    qa.classList.add('submitted');
 
     const anchor = qa.querySelector('.text-anchor');
     anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
@@ -799,12 +814,13 @@ describe('quiz annotation runtime', () => {
     assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected right click to reveal the authored source fragment immediately');
   });
 
-  it('reveals all authored layers in the same fragment group with a single right click', () => {
+  it('reveals all authored layers in the same fragment group with a single right click after submission', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
 
     ensureQaInitialized(window, qa);
+    qa.classList.add('submitted');
 
     const anchor = qa.querySelector('.text-anchor');
     anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true" data-fragment-group="frag-01" data-fragment-format="highlight" style="background-color: rgba(255, 208, 0, 0.45);">others <span class="qa-note-fragment" data-fragment-step="true" data-fragment-group="frag-01" data-fragment-format="ruby"><ruby>has<rt>主语</rt></ruby></span></span> sample sentence.<sup class="note-badge">1</sup>';
@@ -844,12 +860,13 @@ describe('quiz annotation runtime', () => {
     );
   });
 
-  it('keeps revealed source fragments visible when the active bubble is clicked again', () => {
+  it('keeps revealed source fragments visible when the active bubble is clicked again after submission', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
 
     ensureQaInitialized(window, qa);
+    qa.classList.add('submitted');
 
     const anchor = qa.querySelector('.text-anchor');
     anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
@@ -908,8 +925,9 @@ describe('quiz annotation runtime', () => {
   });
 
   it('uses the theme secondary color token to temporarily fill fragment words on hover in presentation mode', () => {
-    assert.match(zoneCssSource, /:not\(\.editor-mode\) [\s\S]*\.text-anchor:hover \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected source fragment hover styling to use the theme secondary color variable outside editor mode');
-    assert.match(zoneCssSource, /:not\(\.editor-mode\) [\s\S]*\.answer-anchor:hover \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected answer-side fragment hover styling to stay aligned with the same theme secondary color variable outside editor mode');
+    assert.match(zoneCssSource, /quiz-annotation\.submitted[\s\S]*\.text-anchor(?:\.qa-fragment-hover-proxy|:hover) \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected submitted quiz anchors to be allowed to show the fragment hover fill via the theme secondary color token');
+    assert.match(zoneCssSource, /quiz-annotation\.submitted[\s\S]*\.answer-anchor(?:\.qa-fragment-hover-proxy|:hover) \[data-fragment-step="true"\][\s\S]*brand-secondary-rgb/, 'expected submitted answer anchors to share the same fragment hover fill token');
+    assert.match(zoneCssSource, /qa-fragment-hover-proxy/, 'expected doodle-mode hover forwarding to have a proxy class for fragment discovery styling');
   });
 
   it('plays one focus sound only when the active bubble actually changes', () => {
@@ -932,7 +950,7 @@ describe('quiz annotation runtime', () => {
     assert.deepEqual(calls, ['focus-shift'], 'expected switching to a different bubble to play one global focus cue, but repeated clicks on the same active bubble to stay silent');
   });
 
-  it('plays a fragment hover cue only in presentation mode when entering an anchor that contains authored fragments', () => {
+  it('suppresses fragment hover cues before submit and only enables them after submit outside editor mode', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -950,12 +968,164 @@ describe('quiz annotation runtime', () => {
     anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
 
     anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
-    assert.deepEqual(hoverCalls, ['note-01'], 'expected presentation-mode hover on fragment-bearing source anchors to play one component hover cue');
+    assert.deepEqual(hoverCalls, [], 'expected unanswered quiz anchors to stay silent so fragment-bearing keywords are not leaked before submission');
+
+    qa.classList.add('submitted');
+    anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
+    assert.deepEqual(hoverCalls, ['note-01'], 'expected hover cues to become available after submission in presentation mode');
 
     window.document.documentElement.classList.add('editor-mode');
     window.document.body.classList.add('editor-mode');
     anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
     assert.deepEqual(hoverCalls, ['note-01'], 'expected editor mode to remain silent for fragment hover cues');
+  });
+
+  it('forwards doodle-mode pointer hover and right-click to underlying fragment anchors once the quiz is submitted', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const hoverCalls = [];
+
+    window.QuizAnnotationAudio = {
+      playFragmentHover(payload) {
+        hoverCalls.push(payload?.linkId || 'unknown');
+      }
+    };
+
+    qa.classList.add('submitted');
+    window.document.body.classList.add('doodle-mode');
+    window.DoodleManager = { isActive: true, isDrawing: false };
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+    const fragment = anchor.querySelector('[data-fragment-step="true"]');
+    const doodleLayer = addDoodleLayer(window);
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? fragment : doodleLayer;
+
+    dispatchPointerEvent(window, doodleLayer, 'pointermove', { clientX: 180, clientY: 160 });
+    assert.ok(anchor.classList.contains('qa-fragment-hover-proxy'), 'expected doodle-mode pointer tracking to mark the underlying anchor with the fragment hover proxy class');
+    assert.deepEqual(hoverCalls, ['note-01'], 'expected doodle-mode hover forwarding to play the fragment cue once for the underlying anchor');
+
+    rightClickElement(window, doodleLayer);
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected right-click in doodle mode to reveal the underlying fragment even though the doodle layer sits on top');
+  });
+
+  it('keeps right-click fragment reveal suppressed before the quiz is submitted', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.body.classList.add('doodle-mode');
+    window.DoodleManager = { isActive: true, isDrawing: false };
+
+    ensureQaInitialized(window, qa);
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+    const fragment = anchor.querySelector('[data-fragment-step="true"]');
+    const doodleLayer = addDoodleLayer(window);
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? fragment : doodleLayer;
+
+    rightClickElement(window, doodleLayer);
+
+    assert.equal(fragment.classList.contains('qa-fragment-visible'), false, 'expected unanswered quiz fragments to stay hidden even when right-clicking through the doodle layer');
+  });
+
+  it('shows the divider button in doodle mode and forwards clicks through the doodle layer without starting a stroke', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    qa.classList.remove('notes-active', 'has-active-note');
+    window.document.body.classList.add('doodle-mode');
+    window.DoodleManager = { isActive: true, isDrawing: false };
+
+    ensureQaInitialized(window, qa);
+
+    const body = qa.querySelector('.qa-body');
+    const passage = qa.querySelector('.qa-passage');
+    body.getBoundingClientRect = () => ({ left: 0, top: 0, right: 600, bottom: 400, width: 600, height: 400 });
+    passage.getBoundingClientRect = () => ({ left: 0, top: 0, right: 220, bottom: 400, width: 220, height: 400 });
+
+    const doodleLayer = addDoodleLayer(window);
+    const dividerBtn = qa.querySelector('.qa-divider-btn');
+    let drawingStarted = false;
+    window.document.addEventListener('pointerdown', () => {
+      drawingStarted = true;
+    });
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? passage : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointermove', { clientX: 220, clientY: 180 });
+
+    assert.ok(dividerBtn.classList.contains('visible'), 'expected doodle-mode hovering near the divider to still reveal the expand-notes button');
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? dividerBtn : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 220, clientY: 180, button: 0 });
+
+    assert.ok(qa.classList.contains('notes-active'), 'expected doodle-mode click forwarding to expand the notes panel via the divider button');
+    assert.equal(drawingStarted, false, 'expected clicking the divider button in doodle mode to be intercepted before any drawing stroke can begin');
+  });
+
+  it('lets the doodle-layer click pass through to the collapse button without drawing', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.body.classList.add('doodle-mode');
+    window.DoodleManager = { isActive: true, isDrawing: false };
+
+    ensureQaInitialized(window, qa);
+
+    const doodleLayer = addDoodleLayer(window);
+    const collapseBtn = qa.querySelector('.qa-notes-collapse-btn');
+    let drawingStarted = false;
+    window.document.addEventListener('pointerdown', () => {
+      drawingStarted = true;
+    });
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? collapseBtn : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 560, clientY: 80, button: 0 });
+
+    assert.equal(qa.classList.contains('notes-active'), false, 'expected the doodle-mode click passthrough to let the collapse button close the notes panel');
+    assert.equal(drawingStarted, false, 'expected clicking the collapse button in doodle mode to be intercepted before any drawing stroke can begin');
+  });
+
+  it('forwards doodle-mode clicks to note badges, note bubbles, and submit buttons', () => {
+    const dom = createTwoBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    qa.classList.remove('submitted');
+    window.document.body.classList.add('doodle-mode');
+    window.DoodleManager = { isActive: true, isDrawing: false };
+
+    ensureQaInitialized(window, qa);
+
+    const doodleLayer = addDoodleLayer(window);
+    const bubbleOne = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    const bubbleTwo = qa.querySelector('.qa-note-bubble[data-link="note-02"]');
+    const badgeTwo = qa.querySelector('.text-anchor[data-link="note-02"] .note-badge');
+    const submitBtn = qa.querySelector('.qa-submit-btn');
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? bubbleTwo : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 480, clientY: 210, button: 0 });
+    assert.ok(bubbleTwo.classList.contains('note-active'), 'expected doodle-mode click passthrough to activate the underlying note bubble');
+    assert.equal(bubbleOne.classList.contains('note-active'), false, 'expected bubble passthrough to switch focus away from the previously active bubble');
+
+    qa.classList.remove('notes-active');
+    bubbleTwo.classList.remove('note-active', 'note-expanded');
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? badgeTwo : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 180, clientY: 120, button: 0 });
+    assert.ok(qa.classList.contains('notes-active'), 'expected doodle-mode click passthrough to let a note badge reopen the notes panel');
+    assert.ok(bubbleTwo.classList.contains('note-active'), 'expected doodle-mode click passthrough on a note badge to activate its bubble');
+
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? submitBtn : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 420, clientY: 60, button: 0 });
+    assert.ok(qa.classList.contains('submitted'), 'expected doodle-mode click passthrough to let the submit button still submit the quiz');
   });
 
   it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {

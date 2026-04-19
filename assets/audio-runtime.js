@@ -30,10 +30,15 @@
       src: resolveSoundUrl('whoosh.mp3'),
       gain: 2
     }),
+    'fragment-swoosh-back': Object.freeze({
+      type: 'file',
+      src: resolveSoundUrl('whoosh_back.mp3'),
+      gain: 2
+    }),
     'ui-hover': Object.freeze({
       type: 'file',
       src: resolveSoundUrl('annotation_hover.flac'),
-      gain: 4
+      gain: 5
     })
   });
 

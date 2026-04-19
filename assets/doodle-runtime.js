@@ -46,6 +46,12 @@
                 /* 涂鸦画板状态控制 */
                 .doodle-mode .doodle-layer { pointer-events: auto !important; }
                 .doodle-layer { pointer-events: none; display: block; z-index: 400; }
+                html.qa-doodle-hit-test .doodle-layer,
+                html.qa-doodle-hit-test .doodle-layer *,
+                body.qa-doodle-hit-test .doodle-layer,
+                body.qa-doodle-hit-test .doodle-layer * {
+                    pointer-events: none !important;
+                }
                 
 
 
