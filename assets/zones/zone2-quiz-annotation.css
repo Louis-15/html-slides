@@ -1483,6 +1483,14 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   border-color: #d0d0d0;
 }
 
+.qa-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px 0 6px;
+  background: #dedede;
+  flex: 0 0 auto;
+}
+
 /* 浮动工具条内的下拉容器：保证与按钮同行居中 */
 .qa-annotation-toolbar .qa-format-dropdown,
 .qa-note-fragment-toolbar .qa-format-dropdown {

@@ -151,6 +151,7 @@
   const fragmentIdentityKeys = new WeakMap();
   let fragmentIdentitySeed = 0;
   let fragmentGroupSeed = 0;
+  const REMOVE_FORMAT_TOOL_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#7F8C8D;"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg>';
 
   function normalizeFragmentSelectionText(text) {
     return String(text || '').replace(/\s+/g, ' ').trim();
@@ -804,7 +805,7 @@
         if (annotationStepIndex >= 0 && annotationStepIndex < bubbles.length) {
           activateNote(qa, bubbles[annotationStepIndex]);
         } else {
-          clearAllActive(qa);
+          clearAllActive(qa, false, false);
           annotationStepIndex = -1;
         }
         return true;
@@ -853,7 +854,7 @@
     const answerLinkId = bubble.dataset.linkAnswer; // 可选的右侧关联
 
     // 现有焦点降级为展开态，保留已展开批注
-    clearAllActive(qa, true);
+    clearAllActive(qa, true, false);
 
     // 激活气泡
     bubble.classList.add('note-active');
@@ -901,7 +902,6 @@
     } else {
       bubble.classList.remove('note-expanded');
     }
-    resetNoteFragments(bubble);
     const linkId = bubble.dataset.link;
     const anchor = getAnchorByLink(qa, linkId);
     if (anchor) anchor.classList.remove('anchor-active');
@@ -911,11 +911,11 @@
   }
 
   /** 清除所有激活状态 */
-  function clearAllActive(qa, preserveExpanded) {
+  function clearAllActive(qa, preserveExpanded, resetFragments = true) {
     if (!qa) return;
     qa.querySelectorAll('.note-active').forEach(bubble => {
       bubble.classList.remove('note-active');
-      resetNoteFragments(bubble);
+      if (resetFragments) resetNoteFragments(bubble);
       if (preserveExpanded || isEditorMode()) {
         bubble.classList.add('note-expanded');
       } else {
@@ -925,7 +925,7 @@
     if (!preserveExpanded && !isEditorMode()) {
       qa.querySelectorAll('.qa-note-bubble').forEach(bubble => {
         bubble.classList.remove('note-expanded');
-        resetNoteFragments(bubble);
+        if (resetFragments) resetNoteFragments(bubble);
       });
     }
     qa.querySelectorAll('.anchor-active').forEach(a => a.classList.remove('anchor-active'));
@@ -2572,6 +2572,8 @@
         </div>
         <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>
         <button class="qa-toolbar-btn btn-ruby" data-format="ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>
+        <div class="qa-toolbar-divider" aria-hidden="true"></div>
+        <button class="qa-toolbar-btn btn-remove-format" data-format="remove-format" title="清除格式">${REMOVE_FORMAT_TOOL_ICON}</button>
       `;
       qa.appendChild(fragmentToolbar);
 
@@ -2659,6 +2661,11 @@
           if (rubyText && rubyText.trim()) {
             applyNoteFragmentFormat('ruby', rubyText.trim());
           }
+          hideQASelectionToolbars(getActiveQA());
+          return false;
+        }
+        if (format === 'remove-format') {
+          clearNoteFragmentFormat();
           hideQASelectionToolbars(getActiveQA());
           return false;
         }
@@ -2765,6 +2772,71 @@
   function getSelectionRootNode(node) {
     if (!node) return null;
     return node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+  }
+
+  function getNodeDepth(node) {
+    let depth = 0;
+    let current = node;
+    while (current && current.parentNode) {
+      depth += 1;
+      current = current.parentNode;
+    }
+    return depth;
+  }
+
+  function selectionIntersectsNode(range, node) {
+    if (!range || !node) return false;
+    if (typeof range.intersectsNode === 'function') {
+      try {
+        return range.intersectsNode(node);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    const nodeRange = document.createRange();
+    nodeRange.selectNodeContents(node);
+    return range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+      range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0;
+  }
+
+  function unwrapFragmentNode(fragment) {
+    if (!fragment || !fragment.parentNode) return;
+    const parent = fragment.parentNode;
+    while (fragment.firstChild) {
+      parent.insertBefore(fragment.firstChild, fragment);
+    }
+    parent.removeChild(fragment);
+    parent.normalize();
+  }
+
+  function clearNoteFragmentFormat() {
+    const qa = getActiveQA();
+    const sel = window.getSelection();
+    if (!qa || !sel || sel.isCollapsed || sel.rangeCount === 0) return;
+
+    const range = sel.getRangeAt(0);
+    const commonNode = getSelectionRootNode(range.commonAncestorContainer);
+    const anchor = getFragmentOwnerAnchor(commonNode);
+    if (!anchor) return;
+
+    const fragments = Array.from(anchor.querySelectorAll('[data-fragment-step="true"]')).filter((fragment) => selectionIntersectsNode(range, fragment));
+    if (fragments.length === 0) return;
+
+    fragments.sort((left, right) => getNodeDepth(right) - getNodeDepth(left));
+    fragments.forEach((fragment) => unwrapFragmentNode(fragment));
+
+    const ownerLinkId = anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link') || '';
+    const bubble = ownerLinkId ? getBubbleByLink(qa, ownerLinkId) : null;
+    if (bubble) {
+      const state = getNoteFragmentState(bubble);
+      state.cursor = -1;
+      state.visible.clear();
+      syncNoteFragments(bubble);
+    }
+
+    sel.removeAllRanges();
+    persistQuizAuthoringChange();
   }
 
   function hideQASelectionToolbars(qa) {
@@ -3495,7 +3567,7 @@
       exitLinkingMode();
       const qa = getActiveQA();
       if (qa) {
-        clearAllActive(qa);
+        clearAllActive(qa, false, true);
         updateProgressCounter(qa);
         requestAnimationFrame(() => updateDividerPositions(qa));
       }

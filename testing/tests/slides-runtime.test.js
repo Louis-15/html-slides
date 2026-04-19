@@ -9,8 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'slides-runtime.js');
 const componentsPath = path.join(projectRoot, 'assets', 'components.css');
+const quizRuntimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const componentsSource = fs.readFileSync(componentsPath, 'utf-8');
+const quizRuntimeSource = fs.readFileSync(quizRuntimePath, 'utf-8');
 
 function pressKey(window, key) {
   window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
@@ -260,6 +262,89 @@ function createManualActivationSyncDom() {
   return dom;
 }
 
+function createQuizFragmentPersistenceDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation has-quiz notes-active" data-steppable="annotation">
+          <div class="qa-body">
+            <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+            <div class="qa-passage">
+              <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">First <span class="qa-note-fragment" data-fragment-step="true">fragment</span> anchor.<sup class="note-badge">1</sup></span></p>
+              <p data-edit-id="passage-02"><span class="text-anchor" data-link="note-02" data-step="2">Second anchor.<sup class="note-badge">2</sup></span></p>
+            </div>
+            <div class="qa-answer-panel">
+              <div class="qa-answer-header">
+                <div class="qa-answer-title">Question</div>
+                <button class="qa-submit-btn">Submit</button>
+              </div>
+              <div class="qa-answer-content">
+                <div class="qa-question" data-type="single">
+                  <div class="qa-option" data-option="A">
+                    <span class="qa-status-dot"></span>
+                    <span class="qa-option-label">A</span>
+                    <span class="qa-option-text">Option</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="qa-notes-panel">
+              <div class="qa-note-bubble" data-link="note-01" data-step="1">
+                <div class="qa-note-header"><div class="qa-note-handle"><span class="qa-note-step">1</span></div></div>
+                <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Note 1</div>
+              </div>
+              <div class="qa-note-bubble" data-link="note-02" data-step="2">
+                <div class="qa-note-header"><div class="qa-note-handle"><span class="qa-note-step">2</span></div></div>
+                <div class="qa-note-content" contenteditable="true" data-edit-id="note-02">Note 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+  window.requestAnimationFrame = (callback) => {
+    callback();
+    return 1;
+  };
+  window.cancelAnimationFrame = () => {};
+  window.matchMedia = () => ({
+    matches: false,
+    media: '',
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false; }
+  });
+  window.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.MutationObserver = class { observe() {} disconnect() {} takeRecords() { return []; } };
+  window.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+
+  window.eval(runtimeSource);
+  window.eval(quizRuntimeSource);
+
+  return dom;
+}
+
 describe('slides runtime', () => {
   it('finishes animations on the newly active slide while editor mode is enabled', () => {
     const dom = createSlidesDom();
@@ -342,6 +427,20 @@ describe('slides runtime', () => {
 
     assert.equal(didSync, true, 'expected slides runtime to accept manual interaction sync for the current steppable component');
     assert.equal(host.dataset.visibleFragments, 'frag-01', 'expected ArrowRight to route into fragment stepping after manual activation sync');
+  });
+
+  it('keeps revealed quiz fragments visible when ArrowDown moves focus to the next bubble', () => {
+    const dom = createQuizFragmentPersistenceDom();
+    const { window } = dom;
+    const fragment = window.document.querySelector('.text-anchor[data-link="note-01"] [data-fragment-step="true"]');
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowRight');
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected ArrowRight to reveal the current bubble fragment before switching focus');
+
+    pressKey(window, 'ArrowDown');
+
+    assert.ok(fragment.classList.contains('qa-fragment-visible'), 'expected ArrowDown focus changes not to clear previously revealed fragment state');
   });
 
   it('does not let ArrowDown or ArrowUp flip pages on quiz-annotation slides after stepping is exhausted', () => {
