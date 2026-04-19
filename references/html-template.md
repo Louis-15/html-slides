@@ -123,6 +123,12 @@ Every generated HTML file **must** comply with these rules:
     <!-- JS: All via external <script src> references -->
     <script src="./assets/slides-runtime.js"></script>
 
+    <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
+    <script src="./assets/audio-runtime.js"></script>
+    <script src="./assets/annotation-store.js"></script>
+    <script src="./assets/quiz-annotation-audio.js"></script>
+    <script src="./assets/quiz-annotation-runtime.js"></script>
+
     <!-- Editor modules (always included): strict dependency order -->
     <script src="./assets/editor-utils.js"></script>
     <script src="./assets/editor-persistence.js"></script>
@@ -195,9 +201,19 @@ Every text element that should be editable MUST have a unique `data-edit-id` att
 
 All elements get **unified drag/delete controls** (📍✖) via `BoxManager._injectControls()` at runtime. No separate CSS wrappers needed for native elements.
 
-### 4. JS Reference (6 Modular Files)
+### 4. JS Reference
 
-Reference 6 editor JS files at the **end of `<body>`**, AFTER `slides-runtime.js`, in **strict dependency order**:
+If the courseware contains `.quiz-annotation`, reference the quiz runtime stack at the **end of `<body>`**, AFTER `slides-runtime.js` and BEFORE the editor modules, in this order:
+
+```html
+<script src="./assets/audio-runtime.js"></script>
+<script src="./assets/annotation-store.js"></script>
+<script src="./assets/quiz-annotation-audio.js"></script>
+<script src="./assets/quiz-annotation-runtime.js"></script>
+```
+
+Then reference the 6 editor JS files plus `doodle-runtime.js` in **strict dependency order**:
+
 ```html
 <script src="./assets/editor-utils.js"></script>
 <script src="./assets/editor-persistence.js"></script>
@@ -337,6 +353,10 @@ assets/                        # CSS, JS modules, themes, images
 │   └── zone3-summary.css      # Zone 3 summary panel
 ├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
+├── audio-runtime.js           # Global audio cue bus (when quiz-annotation is used)
+├── annotation-store.js        # Quiz annotation sidecar persistence (when quiz-annotation is used)
+├── quiz-annotation-audio.js   # Quiz annotation audio adapter (when quiz-annotation is used)
+├── quiz-annotation-runtime.js # Quiz annotation runtime (when quiz-annotation is used)
 ├── editor-utils.js            # Editor base utilities
 ├── editor-persistence.js      # localStorage + export
 ├── editor-history.js          # Undo/redo

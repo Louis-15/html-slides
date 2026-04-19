@@ -216,6 +216,7 @@ Do NOT include summary for:
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone3-summary.css`
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
+- If any slide contains `.quiz-annotation`, also reference `audio-runtime.js → annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `slides-runtime.js` and before the editor modules
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
@@ -230,6 +231,7 @@ Do NOT include summary for:
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
 - **Always generate speaker notes** — see Speaker Notes below
+- If `.quiz-annotation` is present, its runtime stack must load in this order: `audio-runtime.js → annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js`
 - **Editor modules** (always included): reference 6 JS files in strict order: `editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js`
 
 ### Speaker Notes (Mandatory)
@@ -360,6 +362,10 @@ If the user declines, stop here.
 | [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |
 | [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
 | [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 4 (generation) |
+| [audio-runtime.js](assets/audio-runtime.js) | 全局音效总线；quiz-annotation 存在时先于组件音效脚本加载 | Phase 4 (when quiz-annotation is used) |
+| [annotation-store.js](assets/annotation-store.js) | quiz-annotation sidecar 持久化与 `.annotations.js` 读写 | Phase 4 (when quiz-annotation is used) |
+| [quiz-annotation-audio.js](assets/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
+| [quiz-annotation-runtime.js](assets/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
 | [editor-*.js](assets/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
 | [editor.css](assets/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |
 | [doodle-runtime.js](assets/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 4 (always included) |

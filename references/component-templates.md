@@ -48,7 +48,7 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 ## Components (13 Core + 1 Summary + 1 Quiz/Annotation)
 
-Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires `quiz-annotation-runtime.js`.
+Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`.
 
 ### 1. Card / 普通卡片 (`.card`)
 
@@ -466,7 +466,7 @@ Rotate through blue → purple → green → orange → yellow → red across sl
 
 ### 14. 答题与批注 / Quiz & Annotation (`.quiz-annotation`)
 
-Full-page composite component for reading comprehension, cloze tests, and annotated reading. Uses `layout-single` exclusively. **Must load `zone2-quiz-annotation.css` and `quiz-annotation-runtime.js`.**
+Full-page composite component for reading comprehension, cloze tests, and annotated reading. Uses `layout-single` exclusively. **Must load `zone2-quiz-annotation.css` plus `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`.**
 
 **Current layout**: `qa-body` manages the current three-column state. The passage always stays in column 1. When `has-quiz` is present, the answer panel appears on the right. When `notes-active` is present, the notes panel occupies the middle column and the answer panel shifts to column 3. The floating divider button and notes header are injected by the runtime.
 
@@ -528,7 +528,7 @@ Full-page composite component for reading comprehension, cloze tests, and annota
 
 **Key rules:**
 - `data-link` is the immutable note ID (never changes, never re-used after deletion)
-- `data-step` is the visual sequence number (auto-recalculated on drag-sort)
+- `data-step` is the visual sequence number; when a note has a left-side passage anchor, the runtime will first realign bubble order to the passage DOM order before recalculating steps. Right-only notes keep their relative order and remain after the passage-linked group.
 - Use `has-quiz` to show the answer panel; add `notes-active` when the notes panel should start expanded
 - `qa-note-header` wraps `qa-note-handle` and `qa-note-actions`; write the current structure directly instead of relying on runtime migration
 - `qa-note-handle` contains `qa-note-step` — the number circle doubles as drag handle
