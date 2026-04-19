@@ -38,6 +38,10 @@ function dispatchPointerEvent(window, element, type, init = {}) {
   return event;
 }
 
+function getAnnotationToolbar(qa) {
+  return qa?.ownerDocument?.querySelector('.qa-annotation-toolbar') || null;
+}
+
 function dispatchDragEvent(window, element, type, init = {}) {
   const event = new window.Event(type, { bubbles: true, cancelable: true });
   Object.assign(event, init);
@@ -702,7 +706,7 @@ describe('quiz annotation runtime', () => {
     assert.ok(!firstSlot.querySelector('.qa-answer-key-chip[data-option="C"]').classList.contains('is-correct'), 'expected the old slot UI to clear the duplicated selection');
   });
 
-  it('shows only underline color controls when creating a note in editor mode', () => {
+  it('opens the reused underline dropdown directly when creating a note in editor mode', () => {
     const dom = createSelectionEditorDom('single');
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -713,15 +717,51 @@ describe('quiz annotation runtime', () => {
     ensureQaInitialized(window, qa);
     selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence.');
 
-    const toolbar = qa.querySelector('.qa-annotation-toolbar');
-    assert.ok(toolbar?.classList.contains('visible'), 'expected sentence selection to show the note toolbar');
-    assert.ok(toolbar.querySelector('.btn-underline'), 'expected underline entry to stay available');
-    assert.equal(toolbar.querySelector('.btn-color'), null, 'expected note creation toolbar to remove plain text color entry');
-    assert.equal(toolbar.querySelector('.btn-highlight'), null, 'expected note creation toolbar to remove highlight entry');
-    assert.equal(toolbar.querySelector('.btn-strikethrough'), null, 'expected note creation toolbar to remove strikethrough entry');
+    const toolbar = getAnnotationToolbar(qa);
+    assert.ok(toolbar?.classList.contains('visible'), 'expected selection to show the direct underline dropdown');
+    assert.ok(toolbar.querySelector('.qa-format-dropdown'), 'expected note creation to reuse the existing dropdown container instead of a custom mini palette');
+    assert.ok(toolbar.querySelector('.rt-dropdown-menu.show .color-swatch'), 'expected note creation to open the underline color dropdown immediately');
   });
 
-  it('requires a full sentence selection before creating a note anchor', () => {
+  it('waits until pointerup before showing the underline dropdown for drag selections in editor mode', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    dispatchPointerEvent(window, qa.querySelector('.qa-passage p'), 'pointerdown', { button: 0 });
+    selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence.');
+
+    const toolbar = getAnnotationToolbar(qa);
+    assert.equal(toolbar?.classList.contains('visible'), false, 'expected drag selection to stay quiet before the left mouse button is released');
+
+    dispatchPointerEvent(window, window.document, 'pointerup', { button: 0 });
+
+    assert.ok(toolbar?.classList.contains('visible'), 'expected the underline dropdown to appear only after pointerup finalizes the selection');
+    assert.ok(toolbar.querySelector('.rt-dropdown-menu.show'), 'expected pointerup to open the underline dropdown immediately after the selection is finalized');
+  });
+
+  it('renders the underline dropdown beside the selection from a body-level host so it is not clipped by quiz containers', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence.');
+
+    const toolbar = getAnnotationToolbar(qa);
+    assert.equal(toolbar?.parentNode, window.document.body, 'expected the underline dropdown host to be attached to document.body so quiz overflow clipping cannot cut it off');
+    assert.equal(toolbar?.style.position, 'fixed', 'expected the underline dropdown host to use viewport positioning instead of being trapped inside the quiz container');
+    assert.ok(Number.parseFloat(toolbar?.style.left || '0') > 260, 'expected the underline dropdown to sit beside the selected text instead of covering it from above');
+  });
+
+  it('allows arbitrary partial selections when creating a new note anchor', () => {
     const dom = createSelectionEditorDom('single');
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -732,14 +772,17 @@ describe('quiz annotation runtime', () => {
     ensureQaInitialized(window, qa);
     selectText(window, qa.querySelector('.qa-passage p'), 'first');
 
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .btn-underline'));
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .ul-colors .color-swatch'));
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
 
-    assert.equal(qa.querySelectorAll('.qa-note-bubble').length, 0, 'expected partial sentence selection not to create a new note bubble');
-    assert.equal(qa.querySelectorAll('.text-anchor').length, 0, 'expected partial sentence selection not to create a text anchor');
+    const bubble = qa.querySelector('.qa-note-bubble');
+    const anchor = qa.querySelector('.text-anchor');
+
+    assert.ok(bubble, 'expected partial passage selection to create a new note bubble');
+    assert.ok(anchor, 'expected partial passage selection to create a text anchor');
+    assert.equal(anchor.childNodes[0]?.textContent, 'first', 'expected the created anchor to preserve exactly the selected text fragment');
   });
 
-  it('reuses the underline-only toolbar while linking an existing note to the answer panel', () => {
+  it('opens the same reused underline dropdown while linking an existing note to the answer panel', () => {
     const dom = createQuizDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -752,15 +795,32 @@ describe('quiz annotation runtime', () => {
     clickElement(window, qa.querySelector('.qa-note-bubble .action-link-right'));
     selectText(window, qa.querySelector('.qa-option-text'), 'Option');
 
-    const toolbar = qa.querySelector('.qa-annotation-toolbar');
-    assert.equal(toolbar.querySelector('.qa-toolbar-label')?.textContent, '建立关联', 'expected linking mode to switch the toolbar label');
-    assert.ok(toolbar.querySelector('.btn-underline'), 'expected linking mode to keep the underline color entry');
-    assert.equal(toolbar.querySelector('.btn-color'), null, 'expected linking mode to remove plain text color entry');
-    assert.equal(toolbar.querySelector('.btn-highlight'), null, 'expected linking mode to remove highlight entry');
-    assert.equal(toolbar.querySelector('.btn-strikethrough'), null, 'expected linking mode to remove strikethrough entry');
+    const toolbar = getAnnotationToolbar(qa);
+    assert.ok(toolbar?.classList.contains('visible'), 'expected linking mode to show the direct underline dropdown');
+    assert.ok(toolbar.querySelector('.qa-format-dropdown'), 'expected linking mode to reuse the existing dropdown container instead of a custom mini palette');
+    assert.ok(toolbar.querySelector('.rt-dropdown-menu.show .color-swatch'), 'expected linking mode to open the underline color dropdown immediately');
   });
 
-  it('allows left-side linking to open the underline palette when the selected sentence omits terminal punctuation', () => {
+  it('creates a note directly from pointerdown on an opened underline swatch', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+
+    const swatch = getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch');
+    dispatchPointerEvent(window, swatch, 'pointerdown', { button: 0 });
+
+    const anchor = qa.querySelector('.text-anchor');
+    assert.ok(anchor, 'expected pointerdown on the opened underline swatch to create a text anchor immediately');
+    assert.equal(anchor.childNodes[0]?.textContent, 'first', 'expected pointerdown creation to preserve the original selected text');
+  });
+
+  it('opens the direct underline palette for left-side linking even when terminal punctuation is omitted', () => {
     const dom = createLeftLinkEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -772,10 +832,9 @@ describe('quiz annotation runtime', () => {
     clickElement(window, qa.querySelector('.qa-note-bubble .action-link-left'));
     selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence');
 
-    const toolbar = qa.querySelector('.qa-annotation-toolbar');
-    assert.ok(toolbar?.classList.contains('visible'), 'expected left-side linking to show the underline palette for a full sentence selection');
+    const toolbar = getAnnotationToolbar(qa);
+    assert.ok(toolbar?.classList.contains('visible'), 'expected left-side linking to show the direct underline palette without requiring terminal punctuation');
 
-    clickElement(window, toolbar.querySelector('.btn-underline'));
     clickElement(window, toolbar.querySelector('.ul-colors .color-swatch'));
 
     const anchor = qa.querySelector('.text-anchor[data-link="note-01"]');
@@ -794,10 +853,9 @@ describe('quiz annotation runtime', () => {
     clickElement(window, qa.querySelector('.qa-note-bubble .action-link-left'));
     selectText(window, qa.querySelector('.qa-passage p'), 'first');
 
-    const toolbar = qa.querySelector('.qa-annotation-toolbar');
+    const toolbar = getAnnotationToolbar(qa);
     assert.ok(toolbar?.classList.contains('visible'), 'expected left-side linking to reuse the unrestricted selection behavior of right-side linking');
 
-    clickElement(window, toolbar.querySelector('.btn-underline'));
     clickElement(window, toolbar.querySelector('.ul-colors .color-swatch'));
 
     const anchor = qa.querySelector('.text-anchor[data-link="note-01"]');
@@ -818,7 +876,7 @@ describe('quiz annotation runtime', () => {
 
     const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
     assert.ok(fragmentToolbar?.classList.contains('visible'), 'expected selecting anchored source text to show the fragment toolbar');
-    assert.equal(qa.querySelector('.qa-annotation-toolbar')?.classList.contains('visible'), false, 'expected anchored source fragments not to reuse the anchor-creation toolbar');
+    assert.equal(getAnnotationToolbar(qa)?.classList.contains('visible'), false, 'expected anchored source fragments not to reuse the anchor-creation toolbar');
   });
 
   it('applies fragment markup inside the linked source anchor instead of the note bubble', () => {
@@ -1039,6 +1097,30 @@ describe('quiz annotation runtime', () => {
     window.document.body.classList.add('editor-mode');
     anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
     assert.deepEqual(hoverCalls, ['note-01'], 'expected editor mode to remain silent for fragment hover cues');
+  });
+
+  it('still plays fragment hover cues when restored anchors contain old hover-bound marker attributes', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const hoverCalls = [];
+
+    window.QuizAnnotationAudio = {
+      playFragmentHover(payload) {
+        hoverCalls.push(payload?.linkId || 'unknown');
+      }
+    };
+
+    const anchor = qa.querySelector('.text-anchor');
+    anchor.setAttribute('data-fragment-hover-audio-bound', 'true');
+
+    ensureQaInitialized(window, qa);
+
+    anchor.innerHTML = 'Anchor <span class="qa-note-fragment" data-fragment-step="true">fragment</span> sample sentence.<sup class="note-badge">1</sup>';
+    qa.classList.add('submitted');
+    anchor.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }));
+
+    assert.deepEqual(hoverCalls, ['note-01'], 'expected restored anchors with stale hover-bound marker attributes to still play hover cues in presentation mode');
   });
 
   it('forwards doodle-mode pointer hover and right-click to underlying fragment anchors once the quiz is submitted', () => {
@@ -1280,12 +1362,11 @@ describe('quiz annotation runtime', () => {
     ensureQaInitialized(window, qa);
 
     selectText(window, qa.querySelector('.qa-passage p'), 'The first sentence.');
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .btn-underline'));
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .ul-colors .color-swatch'));
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
 
     selectText(window, qa.querySelector('.qa-passage p'), 'The second sentence.');
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .btn-underline'));
-    clickElement(window, qa.querySelector('.qa-annotation-toolbar .ul-colors .color-swatch'));
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
 
     const notesList = qa.querySelector('.qa-notes-list');
     const bubble = qa.querySelector('.qa-note-bubble');

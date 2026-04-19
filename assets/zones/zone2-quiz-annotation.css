@@ -1427,7 +1427,6 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 /* --- 14.15 编辑模式浮动工具条 --- */
 .qa-annotation-toolbar,
 .qa-note-fragment-toolbar {
-  position: absolute;
   z-index: 10005;
   display: none;
   align-items: center;
@@ -1439,9 +1438,45 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
+.qa-annotation-toolbar {
+  position: fixed;
+}
+
+.qa-note-fragment-toolbar {
+  position: absolute;
+}
+
 .qa-annotation-toolbar.visible,
 .qa-note-fragment-toolbar.visible {
   display: flex;
+}
+
+.qa-annotation-toolbar.qa-annotation-palette {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.qa-annotation-toolbar.qa-annotation-palette .qa-format-dropdown {
+  position: static;
+  width: 0;
+  height: 0;
+}
+
+.qa-annotation-toolbar.qa-annotation-palette .btn-underline {
+  display: none;
+}
+
+.qa-annotation-toolbar.qa-annotation-palette .rt-dropdown-menu {
+  top: 0;
+  left: 0;
+  transform: none;
+  min-width: 220px;
+}
+
+.qa-annotation-toolbar.qa-annotation-palette .rt-dropdown-menu::before {
+  display: none;
 }
 
 .qa-toolbar-label {

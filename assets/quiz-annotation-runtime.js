@@ -660,6 +660,64 @@
     return true;
   }
 
+  function positionAnchorToolbarBesideSelection(toolbar, range) {
+    if (!toolbar || !range) return false;
+
+    const rects = getSelectionRects(range);
+    if (rects.length === 0) return false;
+
+    const menu = toolbar.querySelector('.rt-dropdown-menu');
+    const viewportW = window.innerWidth || document.documentElement.clientWidth || 1280;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 720;
+    const gap = 12;
+    const inset = 8;
+
+    const selectionLeft = Math.min(...rects.map((rect) => rect.left));
+    const selectionRight = Math.max(...rects.map((rect) => rect.right));
+    const selectionTop = Math.min(...rects.map((rect) => rect.top));
+    const selectionBottom = Math.max(...rects.map((rect) => rect.bottom));
+
+    const menuRect = menu && typeof menu.getBoundingClientRect === 'function'
+      ? menu.getBoundingClientRect()
+      : { width: 0, height: 0 };
+    const menuWidth = Math.max(menuRect.width || 0, 220);
+    const menuHeight = Math.max(menuRect.height || 0, 140);
+
+    let left = selectionRight + gap;
+    if (left + menuWidth > viewportW - inset) {
+      left = selectionLeft - menuWidth - gap;
+    }
+    if (left < inset) {
+      left = Math.max(inset, Math.min(selectionRight + gap, viewportW - menuWidth - inset));
+    }
+
+    let top = ((selectionTop + selectionBottom) / 2) - (menuHeight / 2);
+    const maxTop = Math.max(inset, viewportH - menuHeight - inset);
+    top = Math.min(Math.max(inset, top), maxTop);
+
+    toolbar.style.position = 'fixed';
+    toolbar.style.left = `${Math.round(left)}px`;
+    toolbar.style.top = `${Math.round(top)}px`;
+    return true;
+  }
+
+  function clearToolbarDropdownMenus(toolbar) {
+    if (!toolbar) return;
+    toolbar.querySelectorAll('.rt-dropdown-menu').forEach((menu) => {
+      menu.classList.remove('show');
+      menu.classList.remove('drop-up');
+    });
+  }
+
+  function openAnchorToolbarDropdown(toolbar) {
+    if (!toolbar) return;
+    const menu = toolbar.querySelector('.rt-dropdown-menu');
+    if (!menu) return;
+
+    clearToolbarDropdownMenus(toolbar);
+    menu.classList.add('show');
+  }
+
   function isSentenceLikeSelection(range) {
     if (!range) return false;
     const selectedText = normalizeSentenceText(range.toString());
@@ -2496,8 +2554,11 @@
     }
 
     qa.querySelectorAll('.text-anchor, .answer-anchor').forEach(anchor => {
-      if (anchor.dataset.fragmentHoverAudioBound === 'true') return;
-      anchor.dataset.fragmentHoverAudioBound = 'true';
+      if (anchor.hasAttribute('data-fragment-hover-audio-bound')) {
+        anchor.removeAttribute('data-fragment-hover-audio-bound');
+      }
+      if (anchor.__qaFragmentHoverAudioBound === true) return;
+      anchor.__qaFragmentHoverAudioBound = true;
       anchor.addEventListener('mouseenter', () => {
         if (isEditorMode()) return;
         playFragmentHoverSound(anchor);
@@ -2840,6 +2901,103 @@
   // =========================================
 
   let linkingState = null; // { qa, bubble, direction: 'left'|'right' }
+  let qaSelectionPointerActive = false;
+  let qaSelectionPointerOwner = null;
+  let qaToolbarOwnerSeq = 0;
+
+  function ensureQAToolbarOwnerId(qa) {
+    if (!qa) return '';
+    if (!qa.dataset.qaToolbarOwner) {
+      qaToolbarOwnerSeq += 1;
+      qa.dataset.qaToolbarOwner = `qa-toolbar-${qaToolbarOwnerSeq}`;
+    }
+    return qa.dataset.qaToolbarOwner;
+  }
+
+  function getAnnotationToolbar(qa) {
+    if (!qa) return null;
+    const ownerId = ensureQAToolbarOwnerId(qa);
+    return document.body.querySelector(`.qa-annotation-toolbar[data-qa-toolbar-owner="${ownerId}"]`);
+  }
+
+  function getNoteFragmentToolbar(qa) {
+    if (!qa) return null;
+    return qa.querySelector('.qa-note-fragment-toolbar');
+  }
+
+  function removeAnnotationToolbar(qa) {
+    const toolbar = getAnnotationToolbar(qa);
+    if (toolbar) toolbar.remove();
+  }
+
+  function updateSelectionToolbars(qa) {
+    if (!qa) return;
+
+    const anchorToolbar = getAnnotationToolbar(qa);
+    const noteToolbar = getNoteFragmentToolbar(qa);
+    if (!anchorToolbar || !noteToolbar) return;
+
+    clearToolbarDropdownMenus(anchorToolbar);
+    clearToolbarDropdownMenus(noteToolbar);
+
+    if (!isEditorMode()) {
+      hideQASelectionToolbars(qa);
+      return;
+    }
+
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+      hideQASelectionToolbars(qa);
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const commonNode = getSelectionRootNode(range.commonAncestorContainer);
+    const fragmentOwnerAnchor = getFragmentOwnerAnchor(commonNode);
+    if (fragmentOwnerAnchor && !linkingState) {
+      anchorToolbar.classList.remove('visible');
+      if (!positionFloatingToolbar(noteToolbar, qa, range, 45)) {
+        noteToolbar.classList.remove('visible');
+        return;
+      }
+      noteToolbar.classList.add('visible');
+      return;
+    }
+
+    noteToolbar.classList.remove('visible');
+
+    const psg = qa.querySelector('.qa-passage');
+    const ans = qa.querySelector('.qa-answer-panel');
+    const inPassage = psg && psg.contains(range.commonAncestorContainer);
+    const inAnswer = ans && ans.contains(range.commonAncestorContainer);
+
+    if (!inPassage && !inAnswer) {
+      anchorToolbar.classList.remove('visible');
+      return;
+    }
+
+    if (linkingState) {
+      const targetOk = (linkingState.direction === 'left' && inPassage) ||
+        (linkingState.direction === 'right' && inAnswer);
+      if (!targetOk) {
+        anchorToolbar.classList.remove('visible');
+        return;
+      }
+    }
+
+    const parentAnchor = commonNode && commonNode.closest ? commonNode.closest('.text-anchor, .answer-anchor') : null;
+    if (parentAnchor && !linkingState) {
+      anchorToolbar.classList.remove('visible');
+      return;
+    }
+
+    anchorToolbar.classList.add('visible');
+    openAnchorToolbarDropdown(anchorToolbar);
+    if (!positionAnchorToolbarBesideSelection(anchorToolbar, range)) {
+      anchorToolbar.classList.remove('visible');
+      clearToolbarDropdownMenus(anchorToolbar);
+    }
+  }
 
   /** 进入关联模式 */
   function enterLinkingMode(qa, bubble, direction) {
@@ -2864,7 +3022,7 @@
     linkingState = null;
     document.removeEventListener('keydown', linkingEscHandler);
     // 隐藏关联工具条
-    const toolbar = qa.querySelector('.qa-annotation-toolbar');
+    const toolbar = getAnnotationToolbar(qa);
     if (toolbar) toolbar.classList.remove('visible');
   }
 
@@ -2880,18 +3038,22 @@
   // =========================================
 
   function initAnnotationToolbar(qa) {
-    let toolbar = qa.querySelector('.qa-annotation-toolbar');
+    const ownerId = ensureQAToolbarOwnerId(qa);
+    let toolbar = getAnnotationToolbar(qa);
     if (!toolbar) {
       toolbar = document.createElement('div');
-      toolbar.className = 'qa-annotation-toolbar';
+      toolbar.className = 'qa-annotation-toolbar qa-annotation-palette';
+      toolbar.dataset.qaToolbarOwner = ownerId;
+      toolbar.style.position = 'fixed';
+      toolbar.style.left = '0px';
+      toolbar.style.top = '0px';
       toolbar.innerHTML = `
-        <span class="qa-toolbar-label">添加批注</span>
-        <div class="rt-dropdown qa-format-dropdown" title="选择下划线颜色">
-          <button class="qa-toolbar-btn btn-underline" data-format="underline"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
+        <div class="rt-dropdown qa-format-dropdown qa-direct-underline-dropdown" title="选择下划线颜色">
+          <button class="qa-toolbar-btn btn-underline" data-format="underline" tabindex="-1" aria-hidden="true"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>
           <div class="rt-dropdown-menu"><div class="palette-grid ul-colors"></div></div>
         </div>
       `;
-      qa.appendChild(toolbar);
+      document.body.appendChild(toolbar);
 
       const underlineColors = ['#2C3E50', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6', '#FD79A8'];
       const ulGrid = toolbar.querySelector('.ul-colors');
@@ -3052,13 +3214,46 @@
     if (!document._qaToolbarPointerdownBound) {
       document._qaToolbarPointerdownBound = true;
       document.addEventListener('pointerdown', e => {
-        if (e.target.closest('.qa-format-dropdown')) return;
+        const target = e.target && typeof e.target.closest === 'function' ? e.target : null;
+        if (target && target.closest('.qa-format-dropdown')) return;
         const activeQA = getActiveQA();
-        if (!activeQA) return;
-        activeQA.querySelectorAll('.qa-annotation-toolbar .rt-dropdown-menu, .qa-note-fragment-toolbar .rt-dropdown-menu').forEach(menu => {
-          menu.classList.remove('show');
-          menu.classList.remove('drop-up');
-        });
+        if (activeQA) {
+          clearToolbarDropdownMenus(getAnnotationToolbar(activeQA));
+          clearToolbarDropdownMenus(getNoteFragmentToolbar(activeQA));
+        }
+
+        if (e.button !== 0 || !target || !isEditorMode()) {
+          qaSelectionPointerActive = false;
+          qaSelectionPointerOwner = null;
+          return;
+        }
+
+        const selectionSurface = target.closest('.qa-passage, .qa-answer-panel');
+        qaSelectionPointerOwner = selectionSurface ? selectionSurface.closest('.quiz-annotation') : null;
+        qaSelectionPointerActive = !!qaSelectionPointerOwner;
+
+        if (qaSelectionPointerOwner) {
+          hideQASelectionToolbars(qaSelectionPointerOwner);
+        }
+      });
+    }
+
+    if (!document._qaSelectionPointerupBound) {
+      document._qaSelectionPointerupBound = true;
+      document.addEventListener('pointerup', (e) => {
+        if (typeof e.button === 'number' && e.button !== 0) return;
+        const targetQA = qaSelectionPointerOwner;
+        const shouldRefresh = qaSelectionPointerActive && !!targetQA;
+        qaSelectionPointerActive = false;
+        qaSelectionPointerOwner = null;
+        if (shouldRefresh) {
+          updateSelectionToolbars(targetQA);
+        }
+      });
+
+      document.addEventListener('pointercancel', () => {
+        qaSelectionPointerActive = false;
+        qaSelectionPointerOwner = null;
       });
     }
 
@@ -3068,79 +3263,12 @@
         const activeQA = getActiveQA();
         if (!activeQA) return;
 
-        const anchorToolbar = activeQA.querySelector('.qa-annotation-toolbar');
-        const noteToolbar = activeQA.querySelector('.qa-note-fragment-toolbar');
-        if (!anchorToolbar || !noteToolbar) return;
-
-        anchorToolbar.querySelectorAll('.rt-dropdown-menu').forEach(menu => menu.classList.remove('show'));
-        noteToolbar.querySelectorAll('.rt-dropdown-menu').forEach(menu => menu.classList.remove('show'));
-
-        if (!isEditorMode()) {
+        if (qaSelectionPointerActive) {
           hideQASelectionToolbars(activeQA);
           return;
         }
 
-        const sel = window.getSelection();
-        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-          hideQASelectionToolbars(activeQA);
-          return;
-        }
-
-        const range = sel.getRangeAt(0);
-        const commonNode = getSelectionRootNode(range.commonAncestorContainer);
-        const fragmentOwnerAnchor = getFragmentOwnerAnchor(commonNode);
-        if (fragmentOwnerAnchor && !linkingState) {
-          anchorToolbar.classList.remove('visible');
-          if (!positionFloatingToolbar(noteToolbar, activeQA, range, 45)) {
-            noteToolbar.classList.remove('visible');
-            return;
-          }
-          noteToolbar.classList.add('visible');
-          return;
-        }
-
-        noteToolbar.classList.remove('visible');
-
-        const psg = activeQA.querySelector('.qa-passage');
-        const ans = activeQA.querySelector('.qa-answer-panel');
-        const inPassage = psg && psg.contains(range.commonAncestorContainer);
-        const inAnswer = ans && ans.contains(range.commonAncestorContainer);
-
-        if (!inPassage && !inAnswer) {
-          anchorToolbar.classList.remove('visible');
-          return;
-        }
-
-        if (linkingState) {
-          const targetOk = (linkingState.direction === 'left' && inPassage) ||
-            (linkingState.direction === 'right' && inAnswer);
-          if (!targetOk) {
-            anchorToolbar.classList.remove('visible');
-            return;
-          }
-          const label = anchorToolbar.querySelector('.qa-toolbar-label');
-          if (label) label.textContent = '建立关联';
-        } else {
-          const label = anchorToolbar.querySelector('.qa-toolbar-label');
-          if (label) label.textContent = '添加批注';
-        }
-
-        const parentAnchor = commonNode && commonNode.closest ? commonNode.closest('.text-anchor, .answer-anchor') : null;
-        if (parentAnchor && !linkingState) {
-          anchorToolbar.classList.remove('visible');
-          return;
-        }
-
-        if (!linkingState && inPassage && !isSentenceLikeSelection(range)) {
-          anchorToolbar.classList.remove('visible');
-          return;
-        }
-
-        if (!positionFloatingToolbar(anchorToolbar, activeQA, range, 45)) {
-          anchorToolbar.classList.remove('visible');
-          return;
-        }
-        anchorToolbar.classList.add('visible');
+        updateSelectionToolbars(activeQA);
       });
     }
   }
@@ -3217,12 +3345,9 @@
 
   function hideQASelectionToolbars(qa) {
     if (!qa) return;
-    qa.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar').forEach(toolbar => {
+    [getAnnotationToolbar(qa), getNoteFragmentToolbar(qa)].filter(Boolean).forEach((toolbar) => {
       toolbar.classList.remove('visible');
-      toolbar.querySelectorAll('.rt-dropdown-menu').forEach(menu => {
-        menu.classList.remove('show');
-        menu.classList.remove('drop-up');
-      });
+      clearToolbarDropdownMenus(toolbar);
     });
   }
 
@@ -3345,7 +3470,6 @@
     const inAnswer = answerPanel && answerPanel.contains(range.commonAncestorContainer);
 
     if (!inPassage && !inAnswer) return;
-    if (inPassage && !isSentenceLikeSelection(range)) return;
 
     // 生成新的 data-link ID
     const allLinks = qa.querySelectorAll('[data-link]');
@@ -3881,6 +4005,7 @@
     qa.querySelectorAll('.qa-divider-btn').forEach(b => b.remove());
 
     // 5. 剥离浮动批注工具条（initAnnotationToolbar 会重建）
+    removeAnnotationToolbar(qa);
     qa.querySelectorAll('.qa-annotation-toolbar').forEach(t => t.remove());
     qa.querySelectorAll('.qa-note-fragment-toolbar').forEach(t => t.remove());
     qa.querySelectorAll('.qa-note-placeholder').forEach(p => p.remove());
