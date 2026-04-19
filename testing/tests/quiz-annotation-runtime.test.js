@@ -8,11 +8,13 @@ import { JSDOM } from 'jsdom';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
+const annotationStorePath = path.join(projectRoot, 'assets', 'annotation-store.js');
 const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 const editorCorePath = path.join(projectRoot, 'assets', 'editor-core.js');
 const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
+const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
 const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
 const editorCoreSource = fs.readFileSync(editorCorePath, 'utf-8');
 const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
@@ -601,6 +603,59 @@ describe('quiz annotation runtime', () => {
     assert.ok(!chipA.classList.contains('is-correct'), 'expected toggled-off chip to clear its active state');
   });
 
+  it('starts annotation-store authorization from the first page gesture instead of showing a persistent header icon', async () => {
+    const dom = createQuizDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const authorizeCalls = [];
+
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      authorizeAndSave() {
+        authorizeCalls.push('authorize');
+        return Promise.resolve(true);
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    const statusEl = qa.querySelector('.annotation-store-status');
+    assert.ok(statusEl, 'expected quiz annotation headers to still mount a status element for fallback prompts');
+    assert.equal(statusEl.style.display, 'none', 'expected the status prompt to stay hidden until authorization actually needs user attention');
+
+    clickElement(window, qa.querySelector('.qa-note-content'));
+    await Promise.resolve();
+
+    assert.equal(authorizeCalls.length, 1, 'expected the first page gesture to trigger annotation-store authorization automatically');
+    assert.equal(statusEl.style.display, 'none', 'expected successful first-gesture authorization to keep the status prompt hidden');
+  });
+
+  it('reveals a manual authorization prompt only after the first-gesture flow is declined', async () => {
+    const dom = createQuizDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      authorizeAndSave() {
+        return Promise.resolve(false);
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    const statusEl = qa.querySelector('.annotation-store-status');
+    clickElement(window, qa.querySelector('.qa-note-content'));
+    await Promise.resolve();
+
+    assert.equal(statusEl.textContent, '📁 点击授权保存', 'expected the header prompt to appear only after the automatic first-gesture authorization is declined');
+    assert.notEqual(statusEl.style.display, 'none', 'expected a declined automatic authorization to surface the fallback prompt');
+  });
+
   it('renders matching answer-key slots in editor mode and syncs the selected correct answer', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;
@@ -1143,14 +1198,16 @@ describe('quiz annotation runtime', () => {
     assert.ok(qa.classList.contains('submitted'), 'expected doodle-mode click passthrough to let the submit button still submit the quiz');
   });
 
-  it('uses a 40% alpha red for both global and annotation strikethrough styling', () => {
-    assert.match(editorCoreSource, /data-cmd="strikethrough"[\s\S]*rgba\(231,\s*76,\s*60,\s*0\.4\)/, 'expected the global editor toolbar strikethrough icon to use the 40% alpha red token');
-    assert.match(editorRichTextSource, /_toggleDecoration\('line-through',\s*'rgba\(231,\s*76,\s*60,\s*0\.4\)'\)/, 'expected global rich-text strikethrough commands to write the 40% alpha red decoration color');
-    assert.match(editorCssSource, /text-decoration-color:\s*rgba\(231,\s*76,\s*60,\s*0\.4\)\s*!important/, 'expected exported editor strikethrough styling to keep the same 40% alpha red');
-    assert.match(runtimeSource, /btn-strikethrough[\s\S]*rgba\(231,\s*76,\s*60,\s*0\.4\)/, 'expected the annotation fragment toolbar strikethrough icon to use the same 40% alpha red');
-    assert.match(runtimeSource, /--qa-fragment-strike-color',\s*'rgba\(231,\s*76,\s*60,\s*0\.4\)'/, 'expected annotation fragment strikethrough wrappers to persist the same 40% alpha red');
-    assert.match(runtimeSource, /strikethrough:\s*'text-decoration: line-through; text-decoration-color: rgba\(231,\s*76,\s*60,\s*0\.4\);'/, 'expected linked-anchor export styles to keep the 40% alpha red strikethrough');
-    assert.match(zoneCssSource, /text-decoration-color:\s*var\(--qa-fragment-strike-color,\s*rgba\(231,\s*76,\s*60,\s*0\.4\)\)\s*!important/, 'expected fragment reveal css to fall back to the same 40% alpha red');
+  it('uses a deeper translucent red and a 3x-thicker strike line across editor and annotation flows', () => {
+    assert.match(editorCoreSource, /data-cmd="strikethrough"[\s\S]*rgba\(186,\s*26,\s*26,\s*0\.4\)[\s\S]*text-decoration-thickness:\s*0\.12em/, 'expected the global editor toolbar strikethrough icon to preview the deeper translucent red with the thicker strike line');
+    assert.match(editorRichTextSource, /_toggleDecoration\('line-through',\s*'rgba\(186,\s*26,\s*26,\s*0\.4\)'\s*,\s*'0\.12em'\)/, 'expected global rich-text strikethrough commands to write the deeper translucent red and thicker strike line');
+    assert.match(editorCssSource, /text-decoration-color:\s*rgba\(186,\s*26,\s*26,\s*0\.4\)\s*!important[\s\S]*text-decoration-thickness:\s*0\.12em\s*!important/, 'expected exported editor strikethrough styling to keep the deeper translucent red and thicker strike line');
+    assert.match(runtimeSource, /btn-strikethrough[\s\S]*rgba\(186,\s*26,\s*26,\s*0\.4\)[\s\S]*text-decoration-thickness:\s*0\.12em/, 'expected the annotation fragment toolbar strikethrough icon to use the same deeper translucent red preview and thickness');
+    assert.match(runtimeSource, /--qa-fragment-strike-color',\s*'rgba\(186,\s*26,\s*26,\s*0\.4\)'[\s\S]*--qa-fragment-strike-thickness',\s*'0\.12em'/, 'expected annotation fragment strikethrough wrappers to persist both the deeper translucent red and thicker strike line');
+    assert.match(runtimeSource, /strikethrough:\s*'text-decoration: line-through; text-decoration-color: rgba\(186,\s*26,\s*26,\s*0\.4\); text-decoration-thickness: 0\.12em;'/, 'expected linked-anchor export styles to keep the deeper translucent red strikethrough and thicker line');
+    assert.match(zoneCssSource, /text-decoration-color:\s*var\(--qa-fragment-strike-color,\s*rgba\(186,\s*26,\s*26,\s*0\.4\)\)\s*!important[\s\S]*text-decoration-thickness:\s*var\(--qa-fragment-strike-thickness,\s*0\.12em\)\s*!important/, 'expected fragment reveal css to fall back to the same deeper translucent red and thicker strike line');
+    assert.doesNotMatch(runtimeSource, /📁 自动保存/, 'expected quiz-annotation runtime to stop showing a persistent auto-save label in the notes header');
+    assert.doesNotMatch(annotationStoreSource, /📁 自动保存/, 'expected annotation-store status rendering to stop advertising a persistent auto-save label');
   });
 
   it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {

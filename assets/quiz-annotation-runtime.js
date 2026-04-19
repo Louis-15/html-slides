@@ -144,19 +144,32 @@
     return getElementBehindDoodleLayer(event.clientX, event.clientY);
   }
 
-  // 旧模板里可能残留纯红删除线，这里统一归一到 40% 透明度，保证新旧内容视觉一致。
+  // 旧模板里可能残留纯红或上一版偏橙的删除线，这里统一归一到新的更深红规格。
   function normalizeStrikethroughColor(colorValue) {
     const rawColor = String(colorValue || '').trim();
     const normalizedColor = rawColor.toLowerCase();
     if (!normalizedColor ||
       normalizedColor === 'var(--accent-red)' ||
+      normalizedColor === '#ba1a1a' ||
       normalizedColor === '#e74c3c' ||
+      normalizedColor === 'rgb(186, 26, 26)' ||
+      normalizedColor === 'rgba(186, 26, 26, 1)' ||
+      normalizedColor === 'rgba(186,26,26,1)' ||
       normalizedColor === 'rgb(231, 76, 60)' ||
       normalizedColor === 'rgba(231, 76, 60, 1)' ||
-      normalizedColor === 'rgba(231,76,60,1)') {
-      return 'rgba(231, 76, 60, 0.4)';
+      normalizedColor === 'rgba(231,76,60,1)' ||
+      normalizedColor === 'rgba(231, 76, 60, 0.4)' ||
+      normalizedColor === 'rgba(231,76,60,0.4)') {
+      return 'rgba(186, 26, 26, 0.4)';
     }
     return rawColor;
+  }
+
+  // 旧数据没有显式 thickness 时，统一补到新的 3 倍粗删除线规格。
+  function normalizeStrikethroughThickness(thicknessValue) {
+    const rawThickness = String(thicknessValue || '').trim();
+    if (!rawThickness) return '0.12em';
+    return rawThickness;
   }
 
   let activeDoodleProxyAnchor = null;
@@ -263,6 +276,105 @@
   /** 统一检查 AnnotationStore 是否暴露了写入能力查询接口 */
   function canUseAnnotationStoreWriteAPI() {
     return !!(window.AnnotationStore && typeof window.AnnotationStore.hasWriteAccess === 'function');
+  }
+
+  /** 首次授权与后续补救都统一走这里，避免多个批注头部分别触发重复授权。 */
+  let annotationStoreAuthorizePromise = null;
+  let annotationStoreFirstGestureInstalled = false;
+  let annotationStoreFirstGestureAttempted = false;
+
+  function hasAnnotationStoreWriteAccess() {
+    return canUseAnnotationStoreWriteAPI() && window.AnnotationStore.hasWriteAccess();
+  }
+
+  function hideAnnotationStoreStatus(statusEl) {
+    if (!statusEl) return;
+    clearTimeout(statusEl._qaStatusTimer);
+    statusEl.textContent = '';
+    statusEl.title = '';
+    statusEl.style.display = 'none';
+    statusEl.style.opacity = '0';
+  }
+
+  function showAnnotationStoreStatus(statusEl, status) {
+    if (!statusEl) return;
+    clearTimeout(statusEl._qaStatusTimer);
+    statusEl.style.display = 'inline-flex';
+    statusEl.style.alignItems = 'center';
+    statusEl.style.gap = '4px';
+    statusEl.style.opacity = '1';
+
+    if (status === 'error') {
+      statusEl.textContent = '保存失败';
+      statusEl.style.color = 'var(--accent-red, #f85149)';
+      statusEl.title = '写入批注存档失败，点击后重新请求授权';
+      return;
+    }
+
+    statusEl.textContent = '📁 点击授权保存';
+    statusEl.style.color = 'var(--text-dim, #8b949e)';
+    statusEl.title = '首次保存需要授权创建 JSON 存档文件';
+  }
+
+  function syncAnnotationStoreStatus(status) {
+    document.querySelectorAll('.annotation-store-status').forEach((statusEl) => {
+      if (status === 'ready') {
+        hideAnnotationStoreStatus(statusEl);
+      } else {
+        showAnnotationStoreStatus(statusEl, status);
+      }
+    });
+  }
+
+  function requestAnnotationStoreAuthorization(showFallbackOnFailure) {
+    if (!window.AnnotationStore || typeof window.AnnotationStore.authorizeAndSave !== 'function') {
+      return Promise.resolve(false);
+    }
+    if (hasAnnotationStoreWriteAccess()) {
+      syncAnnotationStoreStatus('ready');
+      return Promise.resolve(true);
+    }
+    if (annotationStoreAuthorizePromise) return annotationStoreAuthorizePromise;
+
+    annotationStoreAuthorizePromise = window.AnnotationStore.authorizeAndSave().then((ok) => {
+      if (ok) {
+        syncAnnotationStoreStatus('ready');
+        return true;
+      }
+      if (showFallbackOnFailure) syncAnnotationStoreStatus('needs-auth');
+      return false;
+    }).catch(() => {
+      if (showFallbackOnFailure) syncAnnotationStoreStatus('error');
+      return false;
+    }).finally(() => {
+      annotationStoreAuthorizePromise = null;
+    });
+
+    return annotationStoreAuthorizePromise;
+  }
+
+  function installAnnotationStoreFirstGestureAuth() {
+    if (annotationStoreFirstGestureInstalled || annotationStoreFirstGestureAttempted) return;
+    if (!window.AnnotationStore || typeof window.AnnotationStore.authorizeAndSave !== 'function') return;
+    if (hasAnnotationStoreWriteAccess()) return;
+
+    annotationStoreFirstGestureInstalled = true;
+
+    function removeListeners() {
+      if (!annotationStoreFirstGestureInstalled) return;
+      annotationStoreFirstGestureInstalled = false;
+      document.removeEventListener('click', handleFirstGesture, true);
+      document.removeEventListener('keydown', handleFirstGesture, true);
+    }
+
+    function handleFirstGesture() {
+      removeListeners();
+      annotationStoreFirstGestureAttempted = true;
+      requestAnnotationStoreAuthorization(true);
+    }
+
+    document.addEventListener('click', handleFirstGesture, true);
+    document.addEventListener('keydown', handleFirstGesture, true);
   }
 
   /** 正确答案等结构化编辑要进入历史栈，保证撤销/重做可用 */
@@ -386,10 +498,14 @@
       fragment.style.backgroundColor = '';
     } else if (formatType === 'strikethrough') {
       const authoredStrikeColor = normalizeStrikethroughColor(fragment.style.getPropertyValue('--qa-fragment-strike-color') || fragment.style.textDecorationColor || fragment.dataset.fragmentStrikeColor);
+      const authoredStrikeThickness = normalizeStrikethroughThickness(fragment.style.getPropertyValue('--qa-fragment-strike-thickness') || fragment.style.textDecorationThickness || fragment.dataset.fragmentStrikeThickness);
       fragment.style.setProperty('--qa-fragment-strike-color', authoredStrikeColor);
+      fragment.style.setProperty('--qa-fragment-strike-thickness', authoredStrikeThickness);
       fragment.dataset.fragmentStrikeColor = authoredStrikeColor;
+      fragment.dataset.fragmentStrikeThickness = authoredStrikeThickness;
       fragment.style.textDecoration = '';
       fragment.style.textDecorationColor = '';
+      fragment.style.textDecorationThickness = '';
     }
 
     fragment.dataset.fragmentPresentationReady = 'true';
@@ -2830,7 +2946,7 @@
           <button class="qa-toolbar-btn btn-highlight" data-format="highlight"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
           <div class="rt-dropdown-menu"><div class="palette-grid bg-colors"></div></div>
         </div>
-        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:rgba(231, 76, 60, 0.4);">S</s></button>
+        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:rgba(186, 26, 26, 0.4);text-decoration-thickness:0.12em;">S</s></button>
         <button class="qa-toolbar-btn btn-ruby" data-format="ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>
         <div class="qa-toolbar-divider" aria-hidden="true"></div>
         <button class="qa-toolbar-btn btn-remove-format" data-format="remove-format" title="清除格式">${REMOVE_FORMAT_TOOL_ICON}</button>
@@ -3176,8 +3292,10 @@
       wrapper.dataset.fragmentHighlight = fragmentHighlight;
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'strikethrough') {
-      wrapper.style.setProperty('--qa-fragment-strike-color', 'rgba(231, 76, 60, 0.4)');
-      wrapper.dataset.fragmentStrikeColor = 'rgba(231, 76, 60, 0.4)';
+      wrapper.style.setProperty('--qa-fragment-strike-color', 'rgba(186, 26, 26, 0.4)');
+      wrapper.style.setProperty('--qa-fragment-strike-thickness', '0.12em');
+      wrapper.dataset.fragmentStrikeColor = 'rgba(186, 26, 26, 0.4)';
+      wrapper.dataset.fragmentStrikeThickness = '0.12em';
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'ruby') {
       if (!value) return;
@@ -3253,7 +3371,7 @@
       color: `color: ${colorStr || 'var(--accent-blue)'};`,
       highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
       underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
-      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(231, 76, 60, 0.4);'
+      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(186, 26, 26, 0.4); text-decoration-thickness: 0.12em;'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 
@@ -3380,7 +3498,7 @@
       color: `color: ${colorStr || 'var(--accent-blue)'};`,
       highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
       underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
-      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(231, 76, 60, 0.4);'
+      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(186, 26, 26, 0.4); text-decoration-thickness: 0.12em;'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 
@@ -3703,7 +3821,10 @@
     _initStoreUI(qa);
   }
 
-  /** 创建 AnnotationStore 状态指示器（自动授权模式） */
+  /**
+   * 创建 AnnotationStore 状态指示器。
+   * 这里不再长期暴露“自动保存”角标，只在首次授权失败或写入异常时提供补救入口。
+   */
   function _initStoreUI(qa) {
     if (!window.AnnotationStore) return;
     const header = qa.querySelector('.qa-notes-header');
@@ -3712,43 +3833,21 @@
 
     const statusEl = document.createElement('span');
     statusEl.className = 'annotation-store-status';
-    statusEl.style.cssText = 'font-size:12px; cursor:pointer; margin-left:8px; transition:opacity 0.3s;';
+    statusEl.style.cssText = 'font-size:12px; cursor:pointer; margin-left:8px; transition:opacity 0.3s; display:none; opacity:0;';
 
-    const hasWriteAccess = () => canUseAnnotationStoreWriteAPI() && window.AnnotationStore.hasWriteAccess();
-
-    // 根据当前状态显示
-    if (hasWriteAccess()) {
-      statusEl.textContent = '📁 自动保存';
-      statusEl.style.color = 'var(--accent-blue, #58a6ff)';
-      statusEl.style.opacity = '0.5';
+    if (hasAnnotationStoreWriteAccess()) {
+      hideAnnotationStoreStatus(statusEl);
+    } else if (annotationStoreFirstGestureAttempted) {
+      showAnnotationStoreStatus(statusEl, 'needs-auth');
     } else {
-      statusEl.textContent = '📁 点击授权保存';
-      statusEl.style.color = 'var(--text-dim, #8b949e)';
-      statusEl.title = '首次保存需要授权创建 JSON 存档文件';
+      hideAnnotationStoreStatus(statusEl);
+      installAnnotationStoreFirstGestureAuth();
     }
 
     statusEl.addEventListener('click', () => {
-      if (hasWriteAccess() && typeof window.AnnotationStore.saveNow === 'function') {
-        window.AnnotationStore.saveNow().then(() => {
-          statusEl.textContent = '✅ 已保存';
-          statusEl.style.color = 'var(--accent-green, #3fb950)';
-          statusEl.style.opacity = '1';
-          setTimeout(() => {
-            statusEl.textContent = '📁 自动保存';
-            statusEl.style.color = 'var(--accent-blue, #58a6ff)';
-            statusEl.style.opacity = '0.5';
-          }, 2000);
-        });
-      } else if (typeof window.AnnotationStore.authorizeAndSave === 'function') {
-        window.AnnotationStore.authorizeAndSave().then(ok => {
-          if (ok) {
-            statusEl.textContent = '📁 自动保存';
-            statusEl.style.color = 'var(--accent-blue, #58a6ff)';
-            statusEl.style.opacity = '0.5';
-            statusEl.title = '';
-          }
-        });
-      }
+      requestAnnotationStoreAuthorization(true).then((ok) => {
+        if (ok) hideAnnotationStoreStatus(statusEl);
+      });
     });
 
     header.appendChild(statusEl);

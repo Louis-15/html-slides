@@ -21,8 +21,24 @@
         return Math.abs(h).toString(36);
     }
 
-    var FILE_HASH = hashTitle(document.title || 'untitled');
+    /**
+     * localStorage 以“文件路径优先、标题兜底”生成命名空间。
+     * 旧实现只看 document.title，不同课件同标题时会出现串缓存风险。
+     */
+    function getStorageIdentity() {
+        var pathname = '';
+        try {
+            pathname = decodeURIComponent(location.pathname || '');
+        } catch (e) {
+            pathname = location.pathname || '';
+        }
+        return pathname || document.title || 'untitled';
+    }
+
+    var LEGACY_FILE_HASH = hashTitle(document.title || 'untitled');
+    var FILE_HASH = hashTitle(getStorageIdentity());
     function storageKey(suffix) { return 'hslides:' + FILE_HASH + ':' + suffix; }
+    function legacyStorageKey(suffix) { return 'hslides:' + LEGACY_FILE_HASH + ':' + suffix; }
 
     /** 从光标位置向上查找最近的 [data-edit-id] 容器
      *  修复：工具栏按钮点击后焦点转移导致 selection 丢失，
@@ -112,8 +128,11 @@
     window.EditorHooks = EditorHooks;
     window._editorUtils = {
         hashTitle: hashTitle,
+        getStorageIdentity: getStorageIdentity,
         FILE_HASH: FILE_HASH,
+        LEGACY_FILE_HASH: LEGACY_FILE_HASH,
         storageKey: storageKey,
+        legacyStorageKey: legacyStorageKey,
         getActiveEditContainer: getActiveEditContainer,
         getCurrentSlideIndex: getCurrentSlideIndex,
         getAllSlides: getAllSlides

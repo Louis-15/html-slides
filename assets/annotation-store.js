@@ -2,7 +2,7 @@
    ANNOTATION-STORE.JS
    批注数据持久化 — JS 文件自动读写
 
-   读取：动态 <script> 标签加载同名 .annotations.js（file:// 下可靠工作）
+  读取：file:// 下走脚本注入恢复，HTTP(S) 下走沙箱 iframe 加载同名 .annotations.js
    写入：File System Access API（首次需用户确认，之后自动）
 
    数据格式：
@@ -68,9 +68,9 @@
     }).catch(function () { });
   }
 
-  // === 读取：动态 <script> 标签（file:// 下可靠） ===
+  // === 读取：本地 file:// 走可靠脚本注入，HTTP(S) 走沙箱 iframe ===
 
-  function _loadDataFile() {
+  function _loadDataFileViaScriptTag() {
     return new Promise(function (resolve) {
       window.__annotationData = undefined;
       var script = document.createElement('script');
@@ -92,6 +92,63 @@
     });
   }
 
+  function _escapeHTML(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function _loadDataFile() {
+    if (location.protocol === 'file:') {
+      // 本地独立课件以 file:// 打开时，Chrome 对 sandbox iframe 里的相对脚本加载并不稳定。
+      // 这里回退到原先可靠的脚本注入方案，优先保证用户的本地批注能恢复出来。
+      return _loadDataFileViaScriptTag();
+    }
+
+    return new Promise(function (resolve) {
+      var token = 'ann-sandbox:' + Date.now() + ':' + Math.random().toString(36).slice(2);
+      var iframe = document.createElement('iframe');
+      var host = document.body || document.documentElement;
+      var settled = false;
+      var timeoutId = null;
+
+      function cleanup(result) {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        window.removeEventListener('message', onMessage);
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        resolve(result || null);
+      }
+
+      function onMessage(event) {
+        var payload = event && event.data;
+        if (!payload || payload.source !== 'AnnotationStoreSandbox' || payload.token !== token) return;
+        cleanup(payload.payload || null);
+      }
+
+      window.addEventListener('message', onMessage);
+      iframe.setAttribute('sandbox', 'allow-scripts');
+      iframe.style.display = 'none';
+      iframe.srcdoc =
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + _escapeHTML(location.href) + '"></head><body><script>' +
+        'window.__annotationData = null;' +
+        'function notify(payload){ parent.postMessage({ source: "AnnotationStoreSandbox", token: ' + JSON.stringify(token) + ', payload: payload }, "*"); }' +
+        'window.addEventListener("error", function(){ notify(null); });' +
+        'var script = document.createElement("script");' +
+        'script.src = ' + JSON.stringify('./' + _getDataFilename()) + ';' +
+        'script.onload = function(){ notify(window.__annotationData || null); };' +
+        'script.onerror = function(){ notify(null); };' +
+        'document.head.appendChild(script);' +
+        '<\/script></body></html>';
+
+      host.appendChild(iframe);
+      timeoutId = setTimeout(function () { cleanup(null); }, 3000);
+    });
+  }
+
   // === 写入：File System Access API ===
 
   function _tryRestoreHandle() {
@@ -105,49 +162,10 @@
         }
         _fileHandle = handle;
         _permissionGranted = false;
-        // 注册一次性用户手势监听器，在第一次交互时自动重新获取权限
-        _installAutoReauth();
+        // 首次用户手势上的授权尝试交由 quiz-annotation 运行时统一触发，避免重复弹窗。
         return 'needs-reauth';
       });
     }).catch(function () { return false; });
-  }
-
-  /**
-   * 安装一次性自动重授权监听器
-   * File System Access API 的 requestPermission 需要用户手势上下文，
-   * 所以我们在全局 click/keydown 中透明地完成重授权
-   */
-  var _autoReauthInstalled = false;
-  function _installAutoReauth() {
-    if (_autoReauthInstalled) return;
-    _autoReauthInstalled = true;
-
-    function doReauth() {
-      if (!_fileHandle || _permissionGranted) {
-        _removeListeners();
-        return;
-      }
-      _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
-        if (perm === 'granted') {
-          _permissionGranted = true;
-          _updateStatus('ready');
-          // 如果有挂起的保存需求，立即执行
-          var data = _collectData();
-          _writeToFile(data);
-        }
-      }).catch(function () { /* 用户拒绝或浏览器不支持，静默忽略 */ });
-      _removeListeners();
-    }
-
-    function _removeListeners() {
-      _autoReauthInstalled = false;
-      document.removeEventListener('click', doReauth, { capture: true });
-      document.removeEventListener('keydown', doReauth, { capture: true });
-    }
-
-    // capture: true 确保在任何 stopPropagation 之前触发
-    document.addEventListener('click', doReauth, { capture: true, once: true });
-    document.addEventListener('keydown', doReauth, { capture: true, once: true });
   }
 
   function _requestWritePermission() {
@@ -435,27 +453,34 @@
 
   function _updateStatus(status) {
     document.querySelectorAll('.annotation-store-status').forEach(function (el) {
+      clearTimeout(el._t);
       switch (status) {
         case 'saved':
-          el.textContent = '✅ 已保存';
+          el.textContent = '已保存';
           el.style.color = 'var(--accent-green, #3fb950)';
+          el.style.display = 'inline-flex';
           el.style.opacity = '1';
-          clearTimeout(el._t);
-          el._t = setTimeout(function () { el.style.opacity = '0.3'; }, 2000);
+          el._t = setTimeout(function () {
+            el.textContent = '';
+            el.style.display = 'none';
+            el.style.opacity = '0';
+          }, 1600);
           break;
         case 'error':
-          el.textContent = '⚠️ 保存失败';
+          el.textContent = '保存失败';
           el.style.color = 'var(--accent-red, #f85149)';
+          el.style.display = 'inline-flex';
           el.style.opacity = '1';
           break;
         case 'ready':
-          el.textContent = '📁 自动保存';
-          el.style.color = 'var(--accent-blue, #58a6ff)';
-          el.style.opacity = '0.5';
+          el.textContent = '';
+          el.style.display = 'none';
+          el.style.opacity = '0';
           break;
         case 'needs-auth':
           el.textContent = '📁 点击授权保存';
           el.style.color = 'var(--text-dim, #8b949e)';
+          el.style.display = 'inline-flex';
           el.style.opacity = '1';
           break;
       }

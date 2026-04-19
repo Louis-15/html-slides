@@ -97,7 +97,8 @@
         /** 执行 execCommand 并记录历史（删除线使用自定义实现） */
         execAndRecord: function (cmd, val) {
             if (cmd === 'strikethrough') {
-                this._toggleDecoration('line-through', 'rgba(231, 76, 60, 0.4)');
+                // 删除线显式写入颜色与粗细，避免不同浏览器回退到不同的默认线宽。
+                this._toggleDecoration('line-through', 'rgba(186, 26, 26, 0.4)', '0.12em');
                 return;
             }
             this.restoreSelection();
@@ -127,8 +128,9 @@
                         s.style.removeProperty('text-decoration-thickness');
                         s.style.removeProperty('text-decoration-skip-ink');
                     } else if (decorationType === 'line-through') {
-                        // 如果有独立的删除线颜色（目前系统共用 text-decoration-color，所以也需择机移除，但稳妥起见只有当完全无样式时才移除）
-                        if (parts.length === 0) s.style.removeProperty('text-decoration-color');
+                        // 删除线颜色/粗细都属于显式规格；移除删除线时要一并清掉，避免残留到其他装饰。
+                        s.style.removeProperty('text-decoration-color');
+                        s.style.removeProperty('text-decoration-thickness');
                     }
                     
                     if (!s.getAttribute('style') || s.getAttribute('style').trim() === '') {
@@ -242,7 +244,7 @@
         },
 
         /** 切换装饰（删除线等） */
-        _toggleDecoration: function (decorationType, decoColor) {
+        _toggleDecoration: function (decorationType, decoColor, decoThickness) {
             this.restoreSelection();
             var sel = window.getSelection();
             if (!sel.rangeCount || sel.isCollapsed) return;
@@ -275,6 +277,8 @@
                     span.style.textUnderlineOffset = '4px';
                     span.style.textDecorationThickness = '2px';
                     span.style.textDecorationSkipInk = 'none';
+                } else if (decorationType === 'line-through' && decoThickness) {
+                    span.style.textDecorationThickness = decoThickness;
                 }
                 span.appendChild(fragment);
                 range.insertNode(span);

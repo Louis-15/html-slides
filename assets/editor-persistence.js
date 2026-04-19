@@ -11,6 +11,7 @@
 
     var utils = window._editorUtils;
     var storageKey = utils.storageKey;
+    var legacyStorageKey = utils.legacyStorageKey;
     var getAllSlides = utils.getAllSlides;
     var EditorHooks = window.EditorHooks;
 
@@ -31,6 +32,34 @@
         return temp.innerHTML;
     }
 
+    /**
+     * 读取缓存时优先命中新 key；如果只存在旧版“按标题隔离”的 key，
+     * 则自动迁移到新的“按路径隔离”命名空间，避免同标题课件互串。
+     */
+    function readStoredValue(suffix) {
+        var primaryKey = storageKey(suffix);
+        try {
+            var saved = localStorage.getItem(primaryKey);
+            if (saved !== null) return saved;
+
+            if (typeof legacyStorageKey !== 'function') return null;
+            var fallbackKey = legacyStorageKey(suffix);
+            if (!fallbackKey || fallbackKey === primaryKey) return null;
+
+            var legacySaved = localStorage.getItem(fallbackKey);
+            if (legacySaved === null) return null;
+
+            try {
+                localStorage.setItem(primaryKey, legacySaved);
+                localStorage.removeItem(fallbackKey);
+            } catch (e) { }
+
+            return legacySaved;
+        } catch (e) {
+            return null;
+        }
+    }
+
     var PersistenceLayer = {
         /** 保存单个可编辑元素的内容 */
         saveElement: function (el) {
@@ -44,7 +73,7 @@
             document.querySelectorAll('[data-edit-id]').forEach(function (el) {
                 var id = el.getAttribute('data-edit-id');
                 try {
-                    var saved = localStorage.getItem(storageKey('e:' + id));
+                    var saved = readStoredValue('e:' + id);
                     if (saved !== null) el.innerHTML = stripTransientEditableHTML(saved);
                 } catch (e) { }
             });
@@ -84,7 +113,7 @@
         /** 从 localStorage 加载自定义图元 */
         loadCustomBoxes: function () {
             try {
-                var saved = localStorage.getItem(storageKey('boxes'));
+                var saved = readStoredValue('boxes');
                 if (!saved) return;
                 var boxes = JSON.parse(saved);
                 var slides = getAllSlides();
@@ -120,7 +149,7 @@
         /** 恢复原生元素的位移和隐藏状态 */
         restoreNativeMods: function () {
             try {
-                var saved = localStorage.getItem(storageKey('nmods'));
+                var saved = readStoredValue('nmods');
                 if (!saved) return;
                 var mods = JSON.parse(saved);
                 Object.keys(mods).forEach(function (id) {

@@ -1590,12 +1590,14 @@ html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format
 body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
 body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"] {
   text-decoration: line-through !important;
-  text-decoration-color: var(--qa-fragment-strike-color, rgba(231, 76, 60, 0.4)) !important;
+  text-decoration-color: var(--qa-fragment-strike-color, rgba(186, 26, 26, 0.4)) !important;
+  text-decoration-thickness: var(--qa-fragment-strike-thickness, 0.12em) !important;
 }
 
 .text-anchor[style*="line-through"],
 .answer-anchor[style*="line-through"] {
-  text-decoration-color: rgba(231, 76, 60, 0.4) !important;
+  text-decoration-color: rgba(186, 26, 26, 0.4) !important;
+  text-decoration-thickness: 0.12em !important;
 }
 
 .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,

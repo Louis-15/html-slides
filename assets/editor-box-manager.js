@@ -11,6 +11,7 @@
 
   var utils = window._editorUtils;
   var storageKey = utils.storageKey;
+  var legacyStorageKey = utils.legacyStorageKey;
 
   var BoxManager = {
     /**
@@ -277,6 +278,9 @@
           wrap.remove();
           try {
             localStorage.removeItem(storageKey("e:" + id));
+            if (typeof legacyStorageKey === "function") {
+              localStorage.removeItem(legacyStorageKey("e:" + id));
+            }
           } catch (e) {}
           window.PersistenceLayer.saveCustomBoxes();
         } else {
