@@ -144,9 +144,44 @@
     return getElementBehindDoodleLayer(event.clientX, event.clientY);
   }
 
+  // 旧模板里可能残留纯红删除线，这里统一归一到 40% 透明度，保证新旧内容视觉一致。
+  function normalizeStrikethroughColor(colorValue) {
+    const rawColor = String(colorValue || '').trim();
+    const normalizedColor = rawColor.toLowerCase();
+    if (!normalizedColor ||
+      normalizedColor === 'var(--accent-red)' ||
+      normalizedColor === '#e74c3c' ||
+      normalizedColor === 'rgb(231, 76, 60)' ||
+      normalizedColor === 'rgba(231, 76, 60, 1)' ||
+      normalizedColor === 'rgba(231,76,60,1)') {
+      return 'rgba(231, 76, 60, 0.4)';
+    }
+    return rawColor;
+  }
+
   let activeDoodleProxyAnchor = null;
   let doodlePassthroughBound = false;
-  const DOODLE_PASSTHROUGH_BUTTON_SELECTOR = '.qa-divider-btn, .qa-notes-collapse-btn, .note-badge, .qa-note-bubble, .qa-submit-btn';
+  const DOODLE_PASSTHROUGH_BUTTON_SELECTOR = '.qa-divider-btn, .qa-notes-collapse-btn, .note-badge, .qa-note-handle, .qa-note-action-btn, .qa-submit-btn';
+
+  // doodle 层盖在顶上时，用数据属性把“底下其实是可点击控件”传给 doodle 光标逻辑。
+  function syncDoodlePassthroughCursor(target) {
+    const passthroughButton = target && target.closest ? target.closest(DOODLE_PASSTHROUGH_BUTTON_SELECTOR) : null;
+    let cursorMode = '';
+
+    if (passthroughButton) {
+      cursorMode = passthroughButton.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    if (cursorMode) {
+      document.documentElement.dataset.qaDoodleCursor = cursorMode;
+      document.body.dataset.qaDoodleCursor = cursorMode;
+    } else {
+      delete document.documentElement.dataset.qaDoodleCursor;
+      delete document.body.dataset.qaDoodleCursor;
+    }
+
+    return passthroughButton;
+  }
 
   function setActiveDoodleProxyAnchor(anchor) {
     if (activeDoodleProxyAnchor === anchor) return false;
@@ -350,7 +385,7 @@
       }
       fragment.style.backgroundColor = '';
     } else if (formatType === 'strikethrough') {
-      const authoredStrikeColor = fragment.style.getPropertyValue('--qa-fragment-strike-color') || fragment.style.textDecorationColor || fragment.dataset.fragmentStrikeColor || 'var(--accent-red)';
+      const authoredStrikeColor = normalizeStrikethroughColor(fragment.style.getPropertyValue('--qa-fragment-strike-color') || fragment.style.textDecorationColor || fragment.dataset.fragmentStrikeColor);
       fragment.style.setProperty('--qa-fragment-strike-color', authoredStrikeColor);
       fragment.dataset.fragmentStrikeColor = authoredStrikeColor;
       fragment.style.textDecoration = '';
@@ -2268,17 +2303,20 @@
     document.addEventListener('pointermove', (e) => {
       if (!isDoodleMode()) {
         clearDoodleProxyAnchor();
+        syncDoodlePassthroughCursor(null);
         document.querySelectorAll('.quiz-annotation').forEach((qa) => hideDividerButton(qa));
         return;
       }
 
       if (isDoodleDrawingActive()) {
         clearDoodleProxyAnchor();
+        syncDoodlePassthroughCursor(null);
         document.querySelectorAll('.quiz-annotation').forEach((qa) => hideDividerButton(qa));
         return;
       }
 
       const resolvedTarget = resolveDoodlePassthroughTarget(e) || (e.target && e.target.nodeType === 1 ? e.target : null);
+      syncDoodlePassthroughCursor(resolvedTarget);
       syncDoodleDividerButtons(e.clientX, e.clientY, resolvedTarget);
 
       const anchor = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest('.text-anchor, .answer-anchor') : null;
@@ -2315,7 +2353,7 @@
       if (!(e.target && e.target.closest && e.target.closest('svg.doodle-layer'))) return;
 
       const resolvedTarget = resolveDoodlePassthroughTarget(e);
-      const passthroughButton = resolvedTarget && resolvedTarget.closest ? resolvedTarget.closest(DOODLE_PASSTHROUGH_BUTTON_SELECTOR) : null;
+      const passthroughButton = syncDoodlePassthroughCursor(resolvedTarget);
       if (!passthroughButton) return;
 
       e.preventDefault();
@@ -2792,7 +2830,7 @@
           <button class="qa-toolbar-btn btn-highlight" data-format="highlight"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>
           <div class="rt-dropdown-menu"><div class="palette-grid bg-colors"></div></div>
         </div>
-        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>
+        <button class="qa-toolbar-btn btn-strikethrough" data-format="strikethrough" title="删除线"><s style="text-decoration-color:rgba(231, 76, 60, 0.4);">S</s></button>
         <button class="qa-toolbar-btn btn-ruby" data-format="ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>
         <div class="qa-toolbar-divider" aria-hidden="true"></div>
         <button class="qa-toolbar-btn btn-remove-format" data-format="remove-format" title="清除格式">${REMOVE_FORMAT_TOOL_ICON}</button>
@@ -3138,8 +3176,8 @@
       wrapper.dataset.fragmentHighlight = fragmentHighlight;
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'strikethrough') {
-      wrapper.style.setProperty('--qa-fragment-strike-color', 'var(--accent-red)');
-      wrapper.dataset.fragmentStrikeColor = 'var(--accent-red)';
+      wrapper.style.setProperty('--qa-fragment-strike-color', 'rgba(231, 76, 60, 0.4)');
+      wrapper.dataset.fragmentStrikeColor = 'rgba(231, 76, 60, 0.4)';
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'ruby') {
       if (!value) return;
@@ -3215,7 +3253,7 @@
       color: `color: ${colorStr || 'var(--accent-blue)'};`,
       highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
       underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
-      strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
+      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(231, 76, 60, 0.4);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 
@@ -3342,7 +3380,7 @@
       color: `color: ${colorStr || 'var(--accent-blue)'};`,
       highlight: `background-color: ${colorStr || 'rgba(88, 166, 255, 0.15)'};`,
       underline: `text-decoration: underline; text-decoration-color: ${colorStr || 'var(--accent-blue)'}; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;`,
-      strikethrough: 'text-decoration: line-through; text-decoration-color: var(--accent-red);'
+      strikethrough: 'text-decoration: line-through; text-decoration-color: rgba(231, 76, 60, 0.4);'
     };
     anchor.setAttribute('style', formatStyles[format] || '');
 

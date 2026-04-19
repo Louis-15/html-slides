@@ -97,7 +97,7 @@
         /** 执行 execCommand 并记录历史（删除线使用自定义实现） */
         execAndRecord: function (cmd, val) {
             if (cmd === 'strikethrough') {
-                this._toggleDecoration('line-through', '#e74c3c');
+                this._toggleDecoration('line-through', 'rgba(231, 76, 60, 0.4)');
                 return;
             }
             this.restoreSelection();

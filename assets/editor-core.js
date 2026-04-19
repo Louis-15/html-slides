@@ -50,7 +50,7 @@
       '<button class="rt-btn" id="ulColorToggle"><span style="text-decoration:underline;text-decoration-color:#3498db;font-weight:bold;">U</span></button>' +
       '<div class="rt-dropdown-menu" id="ulColorDropdown"><div class="palette-grid ul-colors"></div></div>' +
       "</div>" +
-      '<button class="rt-btn" data-cmd="strikethrough" title="删除线"><s style="text-decoration-color:#e74c3c;">S</s></button>' +
+      '<button class="rt-btn" data-cmd="strikethrough" title="删除线"><s style="text-decoration-color:rgba(231, 76, 60, 0.4);">S</s></button>' +
       '<div class="rt-divider"></div>' +
       '<div class="rt-dropdown" title="英文字体（受影响：字母/数字）"><button class="rt-btn wide" id="engFontToggle" style="padding:4px 8px;">\ud83c\uddec\ud83c\udde7 英文字体</button><div class="rt-dropdown-menu font-menu" id="engFontDropdown"></div></div>' +
       '<div class="rt-dropdown" title="中文字体（受影响：汉字）"><button class="rt-btn wide" id="zhFontToggle" style="padding:4px 8px;">\ud83c\udde8\ud83c\uddf3 中文字体</button><div class="rt-dropdown-menu font-menu" id="zhFontDropdown"></div></div>' +

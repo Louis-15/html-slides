@@ -242,9 +242,15 @@
                 self.laserCursor.style.left = e.clientX + 'px';
                 self.laserCursor.style.top = e.clientY + 'px';
 
+                // quiz-annotation 透传层会把“底下其实是按钮”写到 data-qa-doodle-cursor，这里统一转成系统光标。
+                var qaDoodleCursor = document.documentElement.dataset.qaDoodleCursor || document.body.dataset.qaDoodleCursor || '';
+
                 if (e.target.closest && e.target.closest('.doodle-toolbar, .doodle-entry-btn, .slide-nav, .slide-nav-dot, .slide-pager, .slide-pager-btn, .rich-toolbar')) {
                     self.laserCursor.style.opacity = '0';
                     document.documentElement.style.cursor = 'auto'; // 在 UI 上恢复系统光标
+                } else if (qaDoodleCursor) {
+                    self.laserCursor.style.opacity = '0';
+                    document.documentElement.style.cursor = qaDoodleCursor;
                 } else {
                     self.laserCursor.style.opacity = (self.currentTool === 'highlighter') ? '0.4' : '1';
                     document.documentElement.style.cursor = 'none'; // 在画板上隐藏系统光标

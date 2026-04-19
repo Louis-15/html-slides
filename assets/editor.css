@@ -527,11 +527,11 @@ ruby rt::selection {
    =========================================== */
 s,
 strike {
-    text-decoration-color: var(--editor-danger) !important;
+    text-decoration-color: rgba(231, 76, 60, 0.4) !important;
 }
 
 [style*="line-through"] {
-    text-decoration-color: var(--editor-danger) !important;
+    text-decoration-color: rgba(231, 76, 60, 0.4) !important;
 }
 
 /* ===========================================

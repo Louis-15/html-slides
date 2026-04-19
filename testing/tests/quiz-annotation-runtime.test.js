@@ -9,8 +9,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
 const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
+const editorCorePath = path.join(projectRoot, 'assets', 'editor-core.js');
+const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
+const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
+const editorCoreSource = fs.readFileSync(editorCorePath, 'utf-8');
+const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
+const editorRichTextSource = fs.readFileSync(editorRichTextPath, 'utf-8');
 
 function dispatchSelectionChange(window) {
   window.document.dispatchEvent(new window.Event('selectionchange', { bubbles: true }));
@@ -1094,7 +1100,7 @@ describe('quiz annotation runtime', () => {
     assert.equal(drawingStarted, false, 'expected clicking the collapse button in doodle mode to be intercepted before any drawing stroke can begin');
   });
 
-  it('forwards doodle-mode clicks to note badges, note bubbles, and submit buttons', () => {
+  it('forwards doodle-mode clicks to note badges, note handles, and submit buttons, while leaving bubble content drawable', () => {
     const dom = createTwoBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -1108,13 +1114,22 @@ describe('quiz annotation runtime', () => {
     const doodleLayer = addDoodleLayer(window);
     const bubbleOne = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
     const bubbleTwo = qa.querySelector('.qa-note-bubble[data-link="note-02"]');
+    const bubbleTwoHandle = bubbleTwo.querySelector('.qa-note-handle');
+    const bubbleTwoContent = bubbleTwo.querySelector('.qa-note-content');
     const badgeTwo = qa.querySelector('.text-anchor[data-link="note-02"] .note-badge');
     const submitBtn = qa.querySelector('.qa-submit-btn');
 
-    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? bubbleTwo : doodleLayer;
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? bubbleTwoHandle : doodleLayer;
     dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 480, clientY: 210, button: 0 });
     assert.ok(bubbleTwo.classList.contains('note-active'), 'expected doodle-mode click passthrough to activate the underlying note bubble');
     assert.equal(bubbleOne.classList.contains('note-active'), false, 'expected bubble passthrough to switch focus away from the previously active bubble');
+
+    bubbleOne.classList.add('note-active');
+    bubbleTwo.classList.remove('note-active');
+    window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? bubbleTwoContent : doodleLayer;
+    dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 495, clientY: 246, button: 0 });
+    assert.equal(bubbleTwo.classList.contains('note-active'), false, 'expected doodle-mode clicks on bubble content to stay drawable instead of switching focus');
+    assert.equal(bubbleOne.classList.contains('note-active'), true, 'expected clicking non-focused bubble content in doodle mode to keep the old active bubble unchanged');
 
     qa.classList.remove('notes-active');
     bubbleTwo.classList.remove('note-active', 'note-expanded');
@@ -1126,6 +1141,16 @@ describe('quiz annotation runtime', () => {
     window.document.elementFromPoint = () => window.document.documentElement.classList.contains('qa-doodle-hit-test') ? submitBtn : doodleLayer;
     dispatchPointerEvent(window, doodleLayer, 'pointerdown', { clientX: 420, clientY: 60, button: 0 });
     assert.ok(qa.classList.contains('submitted'), 'expected doodle-mode click passthrough to let the submit button still submit the quiz');
+  });
+
+  it('uses a 40% alpha red for both global and annotation strikethrough styling', () => {
+    assert.match(editorCoreSource, /data-cmd="strikethrough"[\s\S]*rgba\(231,\s*76,\s*60,\s*0\.4\)/, 'expected the global editor toolbar strikethrough icon to use the 40% alpha red token');
+    assert.match(editorRichTextSource, /_toggleDecoration\('line-through',\s*'rgba\(231,\s*76,\s*60,\s*0\.4\)'\)/, 'expected global rich-text strikethrough commands to write the 40% alpha red decoration color');
+    assert.match(editorCssSource, /text-decoration-color:\s*rgba\(231,\s*76,\s*60,\s*0\.4\)\s*!important/, 'expected exported editor strikethrough styling to keep the same 40% alpha red');
+    assert.match(runtimeSource, /btn-strikethrough[\s\S]*rgba\(231,\s*76,\s*60,\s*0\.4\)/, 'expected the annotation fragment toolbar strikethrough icon to use the same 40% alpha red');
+    assert.match(runtimeSource, /--qa-fragment-strike-color',\s*'rgba\(231,\s*76,\s*60,\s*0\.4\)'/, 'expected annotation fragment strikethrough wrappers to persist the same 40% alpha red');
+    assert.match(runtimeSource, /strikethrough:\s*'text-decoration: line-through; text-decoration-color: rgba\(231,\s*76,\s*60,\s*0\.4\);'/, 'expected linked-anchor export styles to keep the 40% alpha red strikethrough');
+    assert.match(zoneCssSource, /text-decoration-color:\s*var\(--qa-fragment-strike-color,\s*rgba\(231,\s*76,\s*60,\s*0\.4\)\)\s*!important/, 'expected fragment reveal css to fall back to the same 40% alpha red');
   });
 
   it('notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments', () => {
