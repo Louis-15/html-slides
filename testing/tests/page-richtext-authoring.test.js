@@ -9,9 +9,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const editorUtilsPath = path.join(projectRoot, 'assets', 'editor-utils.js');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
+const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
+const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 
 const editorUtilsSource = fs.readFileSync(editorUtilsPath, 'utf-8');
 const editorRichTextSource = fs.readFileSync(editorRichTextPath, 'utf-8');
+const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
+const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
 
 function dispatchSelectionChange(window) {
   window.document.dispatchEvent(new window.Event('selectionchange', { bubbles: true }));
@@ -203,6 +207,43 @@ describe('page richtext authoring', () => {
     assert.ok(buttonLabels.some((label) => label.includes('清除格式')), 'expected the ordinary toolbar to expose a clear-format control');
   });
 
+  it('reuses the compact quiz-fragment toolbar structure while keeping the original multicolor buttons and palettes', () => {
+    const { window } = createAuthoringDom();
+    const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
+
+    selectText(window, titleRoot, 'fragment sample');
+
+    const toolbar = requireVisiblePageFragmentToolbar(window.document);
+    const colorBtnLabel = toolbar.querySelector('.btn-color span');
+    const highlightBtn = toolbar.querySelector('.btn-highlight');
+    const textSwatchColors = Array.from(toolbar.querySelectorAll('.page-fragment-text-colors .color-swatch')).map((swatch) => swatch.style.background);
+    const highlightSwatchColors = Array.from(toolbar.querySelectorAll('.page-fragment-highlight-colors .color-swatch')).map((swatch) => swatch.style.background);
+
+    assert.ok(toolbar.querySelector('.qa-toolbar-label'), 'expected the ordinary toolbar to reuse the shared floating-toolbar label shell');
+    assert.equal(toolbar.querySelectorAll('.qa-toolbar-btn').length, 5, 'expected the ordinary toolbar to reuse the same compact button set as the quiz fragment toolbar');
+    assert.equal(toolbar.querySelectorAll('.page-fragment-text-colors .color-swatch').length, 11, 'expected ordinary-page text colors to offer the same number of choices as the quiz fragment toolbar');
+    assert.equal(toolbar.querySelectorAll('.page-fragment-highlight-colors .color-swatch').length, 9, 'expected ordinary-page highlight colors to offer the same number of choices as the quiz fragment toolbar');
+    assert.match(colorBtnLabel?.getAttribute('style') || '', /#e74c3c/i, 'expected the ordinary toolbar text-color button to keep the original multicolor-toolbar red accent instead of turning green');
+    assert.match(highlightBtn?.innerHTML || '', /#f1c40f/i, 'expected the ordinary toolbar highlight button to keep the original amber highlighter accent instead of turning green');
+    assert.ok(textSwatchColors.some((color) => /231, 76, 60|#e74c3c/i.test(color)), 'expected the ordinary toolbar text palette to restore the original red swatch');
+    assert.ok(textSwatchColors.some((color) => /52, 152, 219|#3498db/i.test(color)), 'expected the ordinary toolbar text palette to restore the original blue swatch');
+    assert.ok(highlightSwatchColors.some((color) => /231, 76, 60, 0\.4|rgba\(231, 76, 60, 0\.4\)/i.test(color)), 'expected the ordinary toolbar highlight palette to restore the original red highlight swatch');
+    assert.ok(highlightSwatchColors.some((color) => /52, 152, 219, 0\.4|rgba\(52, 152, 219, 0\.4\)/i.test(color)), 'expected the ordinary toolbar highlight palette to restore the original blue highlight swatch');
+  });
+
+  it('hides the ordinary-page fragment toolbar immediately when edit mode exits', () => {
+    const { window } = createAuthoringDom();
+    const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
+
+    selectText(window, titleRoot, 'fragment sample');
+
+    const toolbar = requireVisiblePageFragmentToolbar(window.document);
+    window.editorCore.isActive = false;
+    window.EditorHooks.fire('onEditModeExit');
+
+    assert.equal(toolbar.classList.contains('visible'), false, 'expected ordinary-page floating fragment toolbar to disappear as soon as edit mode exits');
+  });
+
   it('positions the ordinary-page fragment toolbar in viewport coordinates even when scroll offsets are non-zero', () => {
     const { window } = createAuthoringDom();
     const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
@@ -317,5 +358,12 @@ describe('page richtext authoring', () => {
 
     assert.deepEqual(persistenceCalls, [titleRoot], 'expected ordinary fragment authoring to persist the owning root immediately after DOM changes');
     assert.deepEqual(historyCalls, [true], 'expected ordinary fragment authoring to record a force-snapshot history state after DOM changes');
+  });
+
+  it('shares the same compact white floating-toolbar visual contract as the quiz fragment toolbar', () => {
+    const combinedCss = `${zoneCssSource}\n${editorCssSource}`;
+
+    assert.match(combinedCss, /\.qa-note-fragment-toolbar,\s*\.page-richtext-fragment-toolbar[\s\S]*padding:\s*5px 10px;[\s\S]*background-color:\s*#ffffff;/, 'expected ordinary-page and quiz fragment toolbars to share the same compact white toolbar shell instead of keeping a separate larger translucent page-toolbar shell');
+    assert.match(combinedCss, /\.qa-note-fragment-toolbar \.rt-dropdown-menu,\s*\.page-richtext-fragment-toolbar \.rt-dropdown-menu[\s\S]*background:\s*#ffffff;[\s\S]*box-shadow:\s*0 8px 24px rgba\(0, 0, 0, 0\.15\);/, 'expected ordinary-page and quiz fragment dropdown menus to share the same opaque white menu surface so highlight colors stay readable');
   });
 });

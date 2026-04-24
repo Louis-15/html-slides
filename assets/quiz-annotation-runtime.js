@@ -1014,7 +1014,12 @@
     if (editorModeSyncBound) return;
     editorModeSyncBound = true;
 
-    const sync = () => syncAllNotesPanelsForCurrentMode();
+    const sync = () => {
+      document.querySelectorAll('.quiz-annotation').forEach((qa) => {
+        hideQASelectionToolbars(qa);
+      });
+      syncAllNotesPanelsForCurrentMode();
+    };
     let lastEditorMode = isEditorMode();
 
     if (window.EditorHooks && typeof window.EditorHooks.register === 'function') {
@@ -3168,6 +3173,8 @@
       fragmentToolbar = document.createElement('div');
       fragmentToolbar.className = 'qa-note-fragment-toolbar';
       fragmentToolbar.innerHTML = `
+        <div class="qa-toolbar-label fragment-toolbar-label">隐藏型标注</div>
+        <div class="qa-toolbar-divider" aria-hidden="true"></div>
         <div class="rt-dropdown qa-format-dropdown" title="文字颜色">
           <button class="qa-toolbar-btn btn-color" data-format="color"><span style="font-weight:bold;color:#e74c3c;">A</span></button>
           <div class="rt-dropdown-menu"><div class="palette-grid text-colors"></div></div>
@@ -3183,6 +3190,8 @@
       `;
       qa.appendChild(fragmentToolbar);
 
+      /* fragment toolbar 左侧标签单独走主题绿色，但按钮和调色板继续保留答题批注组件原有的多色语义。
+         这样普通页与 quiz 的浮动工具条能保持同一视觉壳，同时不会把作者已经习惯的颜色编码误改成“主题色优先”。 */
       const textColors = ['#000000', '#2C3E50', '#7F8C8D', '#FD79A8', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6'];
       const highlightColors = [
         'rgba(231, 76, 60, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(46, 204, 113, 0.4)',
@@ -3954,7 +3963,14 @@
   // =========================================
 
   function initQuizAnnotation(qa) {
-    if (!qa || qa.dataset.qaInitialized) return;
+    if (!qa) return;
+
+    /* editor mode 的工具条/面板同步不能只靠 autoInit 首次批量初始化。
+       撤销恢复、局部重建和测试桩都会直接调用 initQuizAnnotation(qa)；
+       这里幂等地补绑一次 editor-mode sync，才能保证 onEditModeExit 一定能把浮动工具条收掉。 */
+    bindEditorModeSync();
+
+    if (qa.dataset.qaInitialized) return;
     qa.dataset.qaInitialized = 'true';
 
     // 标记可滚动区域

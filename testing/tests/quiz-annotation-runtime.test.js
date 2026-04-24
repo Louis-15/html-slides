@@ -147,7 +147,18 @@ function createRuntimeDom(html) {
       addRange() {}
     });
   }
-  window.EditorHooks = { register() {} };
+  window.EditorHooks = {
+    onEditModeEnter: [],
+    onEditModeExit: [],
+    register(hookName, fn) {
+      if (!Array.isArray(this[hookName])) return;
+      this[hookName].push(fn);
+    },
+    fire(hookName, arg) {
+      if (!Array.isArray(this[hookName])) return;
+      this[hookName].forEach((fn) => fn(arg));
+    }
+  };
   window.alert = () => {};
   window.confirm = () => true;
   window.prompt = () => '顶标';
@@ -1044,6 +1055,57 @@ describe('quiz annotation runtime', () => {
     assert.equal(getAnnotationToolbar(qa)?.classList.contains('visible'), false, 'expected anchored source fragments not to reuse the anchor-creation toolbar');
   });
 
+  it('adds the hidden-annotation label while keeping the original multicolor buttons and palettes', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment');
+
+    const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
+    const colorBtnLabel = fragmentToolbar.querySelector('.btn-color span');
+    const highlightBtn = fragmentToolbar.querySelector('.btn-highlight');
+    const textSwatchColors = Array.from(fragmentToolbar.querySelectorAll('.text-colors .color-swatch')).map((swatch) => swatch.style.background);
+    const highlightSwatchColors = Array.from(fragmentToolbar.querySelectorAll('.bg-colors .color-swatch')).map((swatch) => swatch.style.background);
+
+    assert.match(fragmentToolbar?.textContent || '', /隐藏型标注/, 'expected the quiz fragment toolbar to show the same explicit hidden-annotation label as the ordinary-page toolbar');
+    assert.ok(fragmentToolbar.querySelector('.qa-toolbar-label'), 'expected the quiz fragment toolbar to carry the shared left-side label shell');
+    assert.equal(fragmentToolbar.querySelectorAll('.qa-toolbar-btn').length, 5, 'expected the quiz fragment toolbar to keep the same compact button count as the ordinary-page toolbar');
+    assert.equal(fragmentToolbar.querySelectorAll('.text-colors .color-swatch').length, 11, 'expected the quiz fragment toolbar to keep the same expanded text palette size as the ordinary-page toolbar');
+    assert.equal(fragmentToolbar.querySelectorAll('.bg-colors .color-swatch').length, 9, 'expected the quiz fragment toolbar to keep the same expanded highlight palette size as the ordinary-page toolbar');
+    assert.match(colorBtnLabel?.getAttribute('style') || '', /#e74c3c/i, 'expected the quiz fragment toolbar text-color button to keep the original red accent instead of turning green');
+    assert.match(highlightBtn?.innerHTML || '', /#f1c40f/i, 'expected the quiz fragment toolbar highlight button to keep the original amber accent instead of turning green');
+    assert.ok(textSwatchColors.some((color) => /231, 76, 60|#e74c3c/i.test(color)), 'expected the quiz fragment toolbar text palette to keep the original red swatch');
+    assert.ok(textSwatchColors.some((color) => /52, 152, 219|#3498db/i.test(color)), 'expected the quiz fragment toolbar text palette to keep the original blue swatch');
+    assert.ok(highlightSwatchColors.some((color) => /231, 76, 60, 0\.4|rgba\(231, 76, 60, 0\.4\)/i.test(color)), 'expected the quiz fragment toolbar highlight palette to keep the original red highlight swatch');
+    assert.ok(highlightSwatchColors.some((color) => /52, 152, 219, 0\.4|rgba\(52, 152, 219, 0\.4\)/i.test(color)), 'expected the quiz fragment toolbar highlight palette to keep the original blue highlight swatch');
+  });
+
+  it('hides the quiz fragment toolbar immediately when edit mode exits', () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment');
+
+    const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
+    assert.ok(fragmentToolbar?.classList.contains('visible'), 'expected the quiz fragment toolbar to be visible before exiting edit mode');
+
+    window.document.documentElement.classList.remove('editor-mode');
+    window.document.body.classList.remove('editor-mode');
+    window.EditorHooks.fire('onEditModeExit');
+
+    assert.equal(fragmentToolbar.classList.contains('visible'), false, 'expected quiz fragment toolbar to disappear immediately when edit mode exits');
+  });
+
   it('applies fragment markup inside the linked source anchor instead of the note bubble', () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
@@ -1508,6 +1570,11 @@ describe('quiz annotation runtime', () => {
     assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*color:\s*inherit\s*!important;/, 'expected hidden source fragments to preserve readable base text color before reveal');
     assert.match(zoneCssSource, /\.text-anchor \[data-fragment-step="true"\],[\s\S]*background(?:-color)?:\s*transparent\s*!important;/, 'expected hidden source fragments to suppress authored highlight backgrounds before reveal');
     assert.match(zoneCssSource, /data-fragment-format="ruby"\][\s\S]*rt\s*\{[\s\S]*display:\s*none;/, 'expected ruby annotations to stay hidden until the fragment is explicitly revealed');
+  });
+
+  it('shares one compact white floating-toolbar shell between quiz fragments and ordinary-page fragments', () => {
+    assert.match(zoneCssSource, /\.qa-note-fragment-toolbar,\s*\.page-richtext-fragment-toolbar[\s\S]*padding:\s*5px 10px;[\s\S]*background-color:\s*#ffffff;/, 'expected quiz and ordinary-page fragment toolbars to share the same compact white toolbar shell');
+    assert.match(zoneCssSource, /\.qa-note-fragment-toolbar \.rt-dropdown-menu,\s*\.page-richtext-fragment-toolbar \.rt-dropdown-menu[\s\S]*background:\s*#ffffff;[\s\S]*box-shadow:\s*0 8px 24px rgba\(0, 0, 0, 0\.15\);/, 'expected quiz and ordinary-page fragment dropdown menus to share the same opaque white menu surface');
   });
 
   it('uses the theme secondary color for linking-mode emphasis instead of the primary green', () => {

@@ -89,6 +89,14 @@
             this._initFontMenu('engFontDropdown', this.FONTS_ENG, 'eng');
             this._initFontMenu('zhFontDropdown', this.FONTS_ZH, 'zh');
             this._ensurePageFragmentToolbar();
+
+            if (window.EditorHooks && typeof window.EditorHooks.register === 'function' && !this._pageFragmentExitHookBound) {
+                this._pageFragmentExitHookBound = true;
+                window.EditorHooks.register('onEditModeExit', function () {
+                    self.savedRange = null;
+                    self._hidePageFragmentToolbar();
+                });
+            }
         },
 
         restoreSelection: function () {
@@ -136,24 +144,24 @@
 
             var toolbar = document.createElement('div');
             toolbar.className = 'page-richtext-fragment-toolbar';
-            /* 普通页面作者态工具条不能复用 quiz 的 .qa-note-fragment-toolbar。
-               quiz 工具条绑定的是批注气泡 / anchor / 提交流程这套专属上下文；普通页面这里只有 data-edit-id
-               根块，没有 note bubble，也不应该让“隐藏型标注”在 DOM 和视觉语义上伪装成 quiz 子系统。 */
+            /* 普通页面作者态工具条继续保留 page-richtext 自己的宿主与持久化逻辑，
+               但视觉壳、按钮尺寸、分隔线和下拉菜单全部与 quiz fragment toolbar 对齐。
+               这样普通页面和答题批注组件能看到完全一致的浮动工具条，同时又不把两套业务状态混在一起。 */
             toolbar.innerHTML =
-                '<div class="page-fragment-toolbar-label">隐藏型标注</div>' +
-                '<div class="rt-divider"></div>' +
-                '<div class="rt-dropdown">' +
-                    '<button class="rt-btn btn-color" title="文字颜色"><span style="font-weight:bold;color:#2563eb;font-size:1.05em;">A</span></button>' +
-                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid page-fragment-text-colors"></div></div>' +
+                '<div class="qa-toolbar-label fragment-toolbar-label">隐藏型标注</div>' +
+                '<div class="qa-toolbar-divider" aria-hidden="true"></div>' +
+                '<div class="rt-dropdown qa-format-dropdown">' +
+                    '<button class="qa-toolbar-btn btn-color" title="文字颜色"><span style="font-weight:bold;color:#e74c3c;">A</span></button>' +
+                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid text-colors page-fragment-text-colors"></div></div>' +
                 '</div>' +
-                '<div class="rt-dropdown">' +
-                    '<button class="rt-btn btn-highlight" title="背景高光"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f59e0b" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>' +
-                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid page-fragment-highlight-colors"></div></div>' +
+                '<div class="rt-dropdown qa-format-dropdown">' +
+                    '<button class="qa-toolbar-btn btn-highlight" title="背景高光"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f1c40f" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>' +
+                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid bg-colors page-fragment-highlight-colors"></div></div>' +
                 '</div>' +
-                '<button class="rt-btn btn-strikethrough" title="删除线"><s style="text-decoration-color:rgba(186, 26, 26, 0.4);text-decoration-thickness:0.12em;">S</s></button>' +
-                '<button class="rt-btn btn-ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>' +
-                '<div class="rt-divider"></div>' +
-                '<button class="rt-btn btn-remove-format" title="清除格式"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg></button>';
+                '<button class="qa-toolbar-btn btn-strikethrough" title="删除线"><s style="text-decoration-color:rgba(186, 26, 26, 0.4);text-decoration-thickness:0.12em;">S</s></button>' +
+                '<button class="qa-toolbar-btn btn-ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>' +
+                '<div class="qa-toolbar-divider" aria-hidden="true"></div>' +
+                '<button class="qa-toolbar-btn btn-remove-format" title="清除格式"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg></button>';
 
             document.body.appendChild(toolbar);
             this.pageFragmentToolbar = toolbar;
@@ -219,8 +227,11 @@
 
         _initPageFragmentPalettes: function (toolbar) {
             var self = this;
-            var textColors = ['#111827', '#2563eb', '#0f766e', '#b91c1c', '#7c3aed', '#f59e0b'];
-            var highlightColors = ['rgba(245, 158, 11, 0.28)', 'rgba(59, 130, 246, 0.22)', 'rgba(16, 185, 129, 0.22)', 'rgba(244, 63, 94, 0.2)', 'transparent'];
+            /* 这里刻意复用答题批注组件 fragment toolbar 原有的多色语义色板。
+               “隐藏型标注”这个左侧标签需要走新东方绿色系，但文字色/高光色本身承载的是作者对内容的标记语义，
+               不能被主题绿色吞掉，否则就会把原来已经形成习惯的颜色含义一起改掉。 */
+            var textColors = ['#000000', '#2C3E50', '#7F8C8D', '#FD79A8', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6'];
+            var highlightColors = ['rgba(231, 76, 60, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(46, 204, 113, 0.4)', 'rgba(52, 152, 219, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(253, 121, 168, 0.4)', 'rgba(255, 255, 255, 0.4)', 'rgba(0,0,0,0)'];
             var textGrid = toolbar.querySelector('.page-fragment-text-colors');
             var highlightGrid = toolbar.querySelector('.page-fragment-highlight-colors');
 
@@ -243,7 +254,7 @@
                 highlightColors.forEach(function (color) {
                     var swatch = document.createElement('div');
                     swatch.className = 'color-swatch';
-                    if (color === 'transparent') {
+                    if (color === 'transparent' || color === 'rgba(0,0,0,0)') {
                         swatch.style.background = '#fff';
                         swatch.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%),linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,4px 4px;border-radius:3px;"></div>';
                     } else {
@@ -252,7 +263,7 @@
                     swatch.addEventListener('pointerdown', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        self._applyPageFragmentFormat('highlight', color === 'transparent' ? 'rgba(0,0,0,0)' : color);
+                        self._applyPageFragmentFormat('highlight', (color === 'transparent' || color === 'rgba(0,0,0,0)') ? 'rgba(0,0,0,0)' : color);
                         self._closePageFragmentDropdowns();
                     });
                     highlightGrid.appendChild(swatch);
