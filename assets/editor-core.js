@@ -12,6 +12,8 @@
   var utils = window._editorUtils;
   var getCurrentSlideIndex = utils.getCurrentSlideIndex;
   var getAllSlides = utils.getAllSlides;
+  var getEditableCandidates = utils.getEditableCandidates;
+  var ensureStableEditableIds = utils.ensureStableEditableIds;
   var EditorHooks = window.EditorHooks;
   var PersistenceLayer = window.PersistenceLayer;
   var HistoryManager = window.HistoryManager;
@@ -102,6 +104,11 @@
     this.editableSet = new Set();
     this._navLocked = false;
 
+    // 在恢复 localStorage / side车数据前，先为普通正文根块补稳定 data-edit-id。
+    // 否则像 header-title 这类源码里没有显式 id 的元素，会在 restore 阶段彻底命不中，
+    // 导致普通富文本和后续全局隐藏标注都无法可靠回放。
+    ensureStableEditableIds();
+
     // 恢复持久化内容
     PersistenceLayer.restoreAllElements();
     PersistenceLayer.restoreNativeMods();
@@ -109,105 +116,9 @@
     this._bindInputListener();
   }
 
-  /* 全量可编辑选择器：覆盖幻灯片内所有承载文本的叶子容器 */
-  var EDITABLE_SELECTOR = [
-    /* 带有显式编辑标记的元素（向后兼容） */
-    "[data-edit-id]",
-    /* Zone 1 标题栏 */
-    ".header-module",
-    ".header-title",
-    /* 卡片系 */
-    ".card-icon",
-    ".card-title",
-    ".card-desc",
-    ".card-label",
-    ".card-text",
-    /* 翻转卡片 */
-    ".flip-icon",
-    ".flip-icon-big",
-    ".flip-title",
-    ".flip-subtitle",
-    ".flip-detail",
-    /* 数字强调卡片 */
-    ".stat-number",
-    ".stat-label",
-    ".stat-desc",
-    /* 高亮卡片 */
-    ".highlight-label",
-    ".highlight-title",
-    ".highlight-text",
-    /* 时间线 */
-    ".timeline-text",
-    /* 表格单元格 */
-    ".table-wrap td",
-    ".table-wrap th",
-    /* 内容块与排版元素 */
-    ".content-block",
-    ".text",
-    /* 封面标题组 */
-    ".title-hero-subject",
-    ".title-hero-heading",
-    ".title-hero-author",
-    /* 通用排版 */
-    ".slide-tag",
-    ".subtitle",
-    "h1",
-    "h2",
-    "h3",
-    /* 总结面板 */
-    ".summary-content h3",
-    ".summary-content li",
-    /* 代码窗口文件名 */
-    ".code-filename",
-    /* 折叠卡片展开区 */
-    ".card-expand-inner",
-    /* 答题与批注：正文与答题选项系统 */
-    ".qa-passage p",
-    ".qa-answer-title",
-    ".qa-question p",
-    ".qa-question-text",
-    ".qa-option-text",
-    ".qa-option-label",
-    ".qa-drag-option",
-    ".qa-note-content",
-  ].join(", ");
-
-  /* 不允许被编辑的元素黑名单（防止误伤控件） */
-  var EDITABLE_BLACKLIST = [
-    ".rich-toolbar",
-    ".edit-toggle",
-    ".edit-hotzone",
-    ".slide-nav",
-    ".slide-counter",
-    ".progress-bar",
-    ".branding",
-    ".summary-trigger",
-    ".nav-hints",
-    ".flip-action-btn",
-    ".collapse-action-btn",
-    "#doodleToolbar",
-    "#doodleToggleBtn",
-    "script",
-    "style",
-    "button",
-  ].join(", ");
-
   EditorCore.prototype = {
     refreshEditables: function () {
-      var allCandidates = document.querySelectorAll(
-        ".slide " + EDITABLE_SELECTOR.split(", ").join(", .slide "),
-      );
-      /* 过滤掉黑名单元素和它们的子元素 */
-      var filtered = [];
-      allCandidates.forEach(function (el) {
-        if (
-          !el.closest(EDITABLE_BLACKLIST) &&
-          !el.matches(EDITABLE_BLACKLIST)
-        ) {
-          filtered.push(el);
-        }
-      });
-      this.editableSet = new Set(filtered);
+      this.editableSet = new Set(getEditableCandidates());
       if (this.isActive) {
         this.editableSet.forEach(function (el) {
           el.setAttribute("contenteditable", "true");
@@ -293,14 +204,11 @@
       if (this._wrappersReady) return;
       this._wrappersReady = true;
 
-      var autoIdCounter = 0;
+      ensureStableEditableIds();
       this.editableSet.forEach(function (el) {
-        if (el.getAttribute("data-edit-id")) return;
         if (el.tagName === "TD" || el.tagName === "TH" || el.tagName === "IMG")
           return;
         if (el.closest(".editable-wrap")) return;
-        var tempId = "_auto_" + Date.now() + "_" + autoIdCounter++;
-        el.setAttribute("data-edit-id", tempId);
         BoxManager._injectControls(el);
       });
     },

@@ -194,7 +194,7 @@
             var safetyStyle = clone.ownerDocument ? clone.ownerDocument.createElement('style') : document.createElement('style');
             safetyStyle.textContent =
                 '/* Portable Safety Net */\n' +
-                '.rich-toolbar, .box-controls, .rt-dropdown-menu,\n' +
+                '.rich-toolbar, .page-richtext-fragment-toolbar, .box-controls, .rt-dropdown-menu,\n' +
                 '#editToggle, .edit-toggle, #doodleToolbar, .doodle-layer,\n' +
                 '.floating-controls, .rs-handle {\n' +
                 '    display: none !important;\n' +
@@ -218,7 +218,7 @@
 
             // 移除浮动控件及编辑器专有图元挂载节点
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
-            clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar').forEach(function (el) { el.remove(); });
+            clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
             clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) { el.classList.remove('qa-fragment-visible'); });
             clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) { el.removeAttribute('data-fragment-manual-reveal'); });
 

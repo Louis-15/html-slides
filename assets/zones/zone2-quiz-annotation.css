@@ -1568,8 +1568,11 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   transition: color 0.24s ease, background-color 0.24s ease, text-decoration-color 0.24s ease;
 }
 
+/* 普通页面隐藏型富文本标注的第一刀只复用“隐藏/显隐”协议，
+  不复用 quiz 专属 hover 提示，因此这里只把基础 fragment 样式开放给普通 [data-edit-id] 根块。 */
 .text-anchor [data-fragment-step="true"],
-.answer-anchor [data-fragment-step="true"] {
+.answer-anchor [data-fragment-step="true"],
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"] {
   color: inherit !important;
   background: transparent !important;
   background-color: transparent !important;
@@ -1602,28 +1605,37 @@ body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragmen
 
 .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
 .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
 html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="color"],
 html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="color"],
+html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="color"],
 body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="color"],
-body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="color"] {
+body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="color"],
+body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="color"] {
   color: var(--qa-fragment-color, inherit) !important;
 }
 
 .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
 .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
 html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
 html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="highlight"],
 body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
-body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="highlight"] {
+body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="highlight"] {
   background-color: var(--qa-fragment-highlight, transparent) !important;
 }
 
 .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
 .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
 html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
 html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="strikethrough"],
 body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
-body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"] {
+body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="strikethrough"] {
   text-decoration: line-through !important;
   text-decoration-color: var(--qa-fragment-strike-color, rgba(186, 26, 26, 0.4)) !important;
   text-decoration-thickness: var(--qa-fragment-strike-thickness, 0.12em) !important;
@@ -1636,16 +1648,20 @@ body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format
 }
 
 .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
-.answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt {
+.answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt {
   display: none;
 }
 
 .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
 .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
+.page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
 html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
 html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt,
 body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
-body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt {
+body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt {
   display: ruby-text;
 }
 

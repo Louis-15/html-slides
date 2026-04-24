@@ -109,6 +109,60 @@
     top: 4px; /* 从 8px 上移至 4px，压榨顶部边缘空间 */
 }
 
+.page-richtext-fragment-toolbar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, calc(-100% - 6px)) scale(0.98);
+    opacity: 0;
+    pointer-events: none;
+    background: var(--editor-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--editor-border);
+    border-radius: 14px;
+    box-shadow: 0 10px 36px var(--editor-shadow);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    z-index: 10003;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    user-select: none;
+}
+
+.page-richtext-fragment-toolbar.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, calc(-100% - 10px)) scale(1);
+}
+
+.page-fragment-toolbar-label {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.page-richtext-fragment-toolbar .btn-remove-format {
+    color: var(--editor-danger);
+}
+
+.page-richtext-fragment-toolbar .page-fragment-dropdown-menu {
+    width: 180px;
+}
+
+.page-richtext-fragment-toolbar .rt-divider {
+    height: 18px;
+}
+
 /* 工具栏按钮 */
 .rt-btn {
     background: transparent;

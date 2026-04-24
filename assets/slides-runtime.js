@@ -299,7 +299,11 @@ function runTopLevelBackward(strategy, el) {
   return false;
 }
 
-/* 构建指定页的交互队列，并恢复记忆的步进位置 */
+/* 构建指定页的交互队列，并恢复记忆的步进位置。
+   这里故意只收真正的 data-steppable 组件。
+   普通页面富文本标注宿主不进入一级队列，因为它只负责“当前页已经停住以后”的二级 reveal，
+   不应该抢占上下键的一页内主交互顺序；否则普通标题、卡片正文这类 [data-edit-id] 根块会被误当成
+   顶层交互项，破坏现有的翻页器节奏。 */
 function buildInteractionQueue(slideIndex) {
   interactionQueue = Array.from(
     slides[slideIndex].querySelectorAll('[data-steppable]')
@@ -361,16 +365,35 @@ function stepBackward() {
 }
 
 function stepFragment(direction) {
-  if (stepIndex < 0 || stepIndex >= interactionQueue.length) return false;
-  const el = interactionQueue[stepIndex];
-  const strategy = getStrategyByElement(el);
-  if (!strategy || typeof strategy.stepFragment !== 'function') return false;
-  const didStep = strategy.stepFragment(el, direction);
-  if (didStep) {
-    updateStepActiveClass();
-    saveStepState();
+  if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
+    const el = interactionQueue[stepIndex];
+    const strategy = getStrategyByElement(el);
+    if (strategy && typeof strategy.stepFragment === 'function') {
+      const didStep = strategy.stepFragment(el, direction);
+      if (didStep) {
+        updateStepActiveClass();
+        saveStepState();
+        return true;
+      }
+    }
   }
-  return !!didStep;
+
+  const currentSlide = slides[current];
+  const pageRichTextRuntime = window.PageRichTextAnnotationRuntime;
+
+  /* quiz 页已经有自己的二级步进、右键即时 reveal 与答题态门禁。
+     这里只在“当前组件没有消费左右键”且“整页不含 quiz-annotation”时，
+     才把二级 reveal fallback 给普通页面宿主，避免两个运行时同时争抢同一组左右键/右键语义。 */
+  if (
+    currentSlide &&
+    !isQuizAnnotationSlide(current) &&
+    pageRichTextRuntime &&
+    typeof pageRichTextRuntime.stepFragment === 'function'
+  ) {
+    return !!pageRichTextRuntime.stepFragment(direction, currentSlide);
+  }
+
+  return false;
 }
 
 window.activateInteractionStepForElement = function(el) {

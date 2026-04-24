@@ -258,6 +258,31 @@
     return temp.innerHTML;
   }
 
+  function _collectOrdinaryFragmentElements(data) {
+    document.querySelectorAll('.slide').forEach(function (slide) {
+      if (!slide || slide.querySelector('.quiz-annotation')) return;
+
+      var collectedOrdinaryRoots = Object.create(null);
+
+      slide.querySelectorAll('[data-fragment-step="true"]').forEach(function (fragment) {
+        var root = fragment.closest('[data-edit-id]');
+        if (!root || !slide.contains(root) || root.closest('.quiz-annotation')) return;
+
+        var editId = root.getAttribute('data-edit-id');
+        if (!editId) return;
+        if (collectedOrdinaryRoots[editId]) return;
+        collectedOrdinaryRoots[editId] = true;
+
+        /* 普通页面隐藏型标注沿用 AnnotationStore 的 elements[editId] = innerHTML 结构，
+           这里保存的是“拥有 fragment 的最近 ordinary 根块”，而不是祖先根块或单独抽 fragment patch。
+           这样可以和作者态、运行时都统一到同一个 owning root：嵌套 ordinary roots 时，fragment
+           必须归属于最近的 data-edit-id 根块，才能避免 sidecar 粒度漂移到外层祖先，导致恢复结果
+           与页面实际编辑 / 播放链路不一致。 */
+        data.elements[editId] = _stripTransientQuizState(root.innerHTML);
+      });
+    });
+  }
+
   function _collectData() {
     var data = {
       version: 1,
@@ -351,6 +376,8 @@
         });
       });
     });
+
+    _collectOrdinaryFragmentElements(data);
 
     // deletedNotes 仅用于清洗 HTML，清洗完毕后置空（不写入文件）
     data.deletedNotes = [];
@@ -492,12 +519,48 @@
   var _readyResolve;
   var _readyPromise = new Promise(function (resolve) { _readyResolve = resolve; });
 
+  function _applyDataWhenStableIdsReady(data) {
+    if (!data) return Promise.resolve();
+
+    if (window._editorUtils && typeof window._editorUtils.ensureStableEditableIds === 'function') {
+      window._editorUtils.ensureStableEditableIds();
+      _applyData(data);
+      return Promise.resolve();
+    }
+
+    return new Promise(function (resolve) {
+      var settled = false;
+
+      function finalizeApply() {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener('editor-utils-ready', finalizeApply);
+        document.removeEventListener('DOMContentLoaded', finalizeApply);
+        window.removeEventListener('load', finalizeApply);
+        if (window._editorUtils && typeof window._editorUtils.ensureStableEditableIds === 'function') {
+          window._editorUtils.ensureStableEditableIds();
+        }
+        _applyData(data);
+        resolve();
+      }
+
+      // annotation-store 在 mixed / quiz deck 中通常先于 editor-utils 加载。
+      // 这里不能因为 helper 当下还没注册就直接放弃普通元素恢复，而是要等到 editor-utils
+      // 广播“已就绪”或页面完成后再做一次稳定 id 准备，然后才回放通用 data-edit-id 数据。
+      document.addEventListener('editor-utils-ready', finalizeApply, { once: true });
+      document.addEventListener('DOMContentLoaded', finalizeApply, { once: true });
+      window.addEventListener('load', finalizeApply, { once: true });
+    });
+  }
+
   function _init() {
     _loadDataFile().then(function (data) {
       if (data) {
         _initData = data;
-        _applyData(data);
+        return _applyDataWhenStableIdsReady(data);
       }
+      return null;
+    }).then(function () {
       return _tryRestoreHandle();
     }).then(function (handleStatus) {
       if (handleStatus === true) {

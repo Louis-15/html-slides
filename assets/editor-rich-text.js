@@ -14,6 +14,8 @@
 
     var RichTextToolbar = {
         savedRange: null,
+        pageFragmentToolbar: null,
+        pageFragmentGroupSeed: 0,
 
         /** 可选字体列表（英文框） */
         FONTS_ENG: [
@@ -70,7 +72,7 @@
                         // 修复：如果焦点转移到了工具栏/下拉面板上，保留 savedRange 不清空
                         // 否则点击下划线色板等工具栏按钮时选区会丢失
                         var activeEl = document.activeElement;
-                        var inToolbar = activeEl && activeEl.closest && activeEl.closest('.rich-toolbar, .rt-dropdown-menu');
+                        var inToolbar = activeEl && activeEl.closest && activeEl.closest('.rich-toolbar, .rt-dropdown-menu, .page-richtext-fragment-toolbar');
                         if (!inToolbar) {
                             self.savedRange = null;
                         }
@@ -80,11 +82,13 @@
                 }
                 self.syncFontIndicators();
                 if (typeof self.syncFormatButtons === 'function') self.syncFormatButtons();
+                if (typeof self.syncPageFragmentToolbar === 'function') self.syncPageFragmentToolbar();
             });
 
             this._initPalettes();
             this._initFontMenu('engFontDropdown', this.FONTS_ENG, 'eng');
             this._initFontMenu('zhFontDropdown', this.FONTS_ZH, 'zh');
+            this._ensurePageFragmentToolbar();
         },
 
         restoreSelection: function () {
@@ -92,6 +96,418 @@
             var sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(this.savedRange);
+        },
+
+        _getSelectionRootNode: function (node) {
+            return node && node.nodeType === 3 ? node.parentNode : node;
+        },
+
+        _getOrdinaryPageEditRoot: function (node) {
+            var el = this._getSelectionRootNode(node);
+            if (!el || !el.closest) return null;
+            var root = el.closest('[data-edit-id]');
+            if (!root) return null;
+            if (root.closest('.quiz-annotation')) return null;
+            return root;
+        },
+
+        _resolvePageFragmentSelection: function (range) {
+            if (!range || range.collapsed || !range.toString || !range.toString().trim()) return null;
+
+            var startRoot = this._getOrdinaryPageEditRoot(range.startContainer);
+            var endRoot = this._getOrdinaryPageEditRoot(range.endContainer);
+            if (!startRoot || !endRoot) return null;
+
+            /* 普通页面隐藏型标注的 authored DOM 是按“单个普通 data-edit-id 根块整体持久化”的。
+               一旦允许跨根块选区，写入时就必须同时改多个持久化单元，清除格式和后续 reveal 顺序
+               也会失去稳定归属，最终把一个局部格式操作放大成跨块事务。本切片因此在 UI 层就直接拒绝。 */
+            if (startRoot !== endRoot) return null;
+
+            return {
+                root: startRoot,
+                range: range,
+                commonNode: this._getSelectionRootNode(range.commonAncestorContainer)
+            };
+        },
+
+        _ensurePageFragmentToolbar: function () {
+            var self = this;
+            if (this.pageFragmentToolbar && this.pageFragmentToolbar.isConnected) return this.pageFragmentToolbar;
+
+            var toolbar = document.createElement('div');
+            toolbar.className = 'page-richtext-fragment-toolbar';
+            /* 普通页面作者态工具条不能复用 quiz 的 .qa-note-fragment-toolbar。
+               quiz 工具条绑定的是批注气泡 / anchor / 提交流程这套专属上下文；普通页面这里只有 data-edit-id
+               根块，没有 note bubble，也不应该让“隐藏型标注”在 DOM 和视觉语义上伪装成 quiz 子系统。 */
+            toolbar.innerHTML =
+                '<div class="page-fragment-toolbar-label">隐藏型标注</div>' +
+                '<div class="rt-divider"></div>' +
+                '<div class="rt-dropdown">' +
+                    '<button class="rt-btn btn-color" title="文字颜色"><span style="font-weight:bold;color:#2563eb;font-size:1.05em;">A</span></button>' +
+                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid page-fragment-text-colors"></div></div>' +
+                '</div>' +
+                '<div class="rt-dropdown">' +
+                    '<button class="rt-btn btn-highlight" title="背景高光"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16" stroke="#f59e0b" stroke-width="6" opacity="0.5"/><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>' +
+                    '<div class="rt-dropdown-menu page-fragment-dropdown-menu"><div class="palette-grid page-fragment-highlight-colors"></div></div>' +
+                '</div>' +
+                '<button class="rt-btn btn-strikethrough" title="删除线"><s style="text-decoration-color:rgba(186, 26, 26, 0.4);text-decoration-thickness:0.12em;">S</s></button>' +
+                '<button class="rt-btn btn-ruby" title="顶标"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="m12 15 4-8 4 8"/><path d="M14 11h4"/><path d="M4 9h5"/><path d="M6 5h1"/></svg></button>' +
+                '<div class="rt-divider"></div>' +
+                '<button class="rt-btn btn-remove-format" title="清除格式"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg></button>';
+
+            document.body.appendChild(toolbar);
+            this.pageFragmentToolbar = toolbar;
+            this._initPageFragmentPalettes(toolbar);
+
+            toolbar.querySelectorAll('button').forEach(function (button) {
+                button.addEventListener('pointerdown', function (e) {
+                    e.preventDefault();
+                });
+            });
+
+            var colorBtn = toolbar.querySelector('.btn-color');
+            var highlightBtn = toolbar.querySelector('.btn-highlight');
+            var strikeBtn = toolbar.querySelector('.btn-strikethrough');
+            var rubyBtn = toolbar.querySelector('.btn-ruby');
+            var clearBtn = toolbar.querySelector('.btn-remove-format');
+
+            if (colorBtn) {
+                colorBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    self._togglePageFragmentDropdown(colorBtn.nextElementSibling);
+                });
+            }
+
+            if (highlightBtn) {
+                highlightBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    self._togglePageFragmentDropdown(highlightBtn.nextElementSibling);
+                });
+            }
+
+            if (strikeBtn) {
+                strikeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    self._applyPageFragmentFormat('strikethrough');
+                });
+            }
+
+            if (rubyBtn) {
+                rubyBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var rubyText = window.prompt('请输入顶标内容', '批注');
+                    if (!rubyText) return;
+                    self._applyPageFragmentFormat('ruby', rubyText);
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    self._clearPageFragmentFormat();
+                });
+            }
+
+            document.addEventListener('pointerdown', function (e) {
+                if (!e.target.closest || !e.target.closest('.page-richtext-fragment-toolbar')) {
+                    self._closePageFragmentDropdowns();
+                }
+            });
+
+            return toolbar;
+        },
+
+        _initPageFragmentPalettes: function (toolbar) {
+            var self = this;
+            var textColors = ['#111827', '#2563eb', '#0f766e', '#b91c1c', '#7c3aed', '#f59e0b'];
+            var highlightColors = ['rgba(245, 158, 11, 0.28)', 'rgba(59, 130, 246, 0.22)', 'rgba(16, 185, 129, 0.22)', 'rgba(244, 63, 94, 0.2)', 'transparent'];
+            var textGrid = toolbar.querySelector('.page-fragment-text-colors');
+            var highlightGrid = toolbar.querySelector('.page-fragment-highlight-colors');
+
+            if (textGrid) {
+                textColors.forEach(function (color) {
+                    var swatch = document.createElement('div');
+                    swatch.className = 'color-swatch';
+                    swatch.style.background = color;
+                    swatch.addEventListener('pointerdown', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self._applyPageFragmentFormat('color', color);
+                        self._closePageFragmentDropdowns();
+                    });
+                    textGrid.appendChild(swatch);
+                });
+            }
+
+            if (highlightGrid) {
+                highlightColors.forEach(function (color) {
+                    var swatch = document.createElement('div');
+                    swatch.className = 'color-swatch';
+                    if (color === 'transparent') {
+                        swatch.style.background = '#fff';
+                        swatch.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%),linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,4px 4px;border-radius:3px;"></div>';
+                    } else {
+                        swatch.style.background = color;
+                    }
+                    swatch.addEventListener('pointerdown', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        self._applyPageFragmentFormat('highlight', color === 'transparent' ? 'rgba(0,0,0,0)' : color);
+                        self._closePageFragmentDropdowns();
+                    });
+                    highlightGrid.appendChild(swatch);
+                });
+            }
+        },
+
+        _togglePageFragmentDropdown: function (menu) {
+            if (!menu) return;
+            var shouldShow = !menu.classList.contains('show');
+            this._closePageFragmentDropdowns();
+            if (shouldShow) menu.classList.add('show');
+        },
+
+        _closePageFragmentDropdowns: function () {
+            var toolbar = this.pageFragmentToolbar;
+            if (!toolbar) return;
+            toolbar.querySelectorAll('.rt-dropdown-menu.show').forEach(function (menu) {
+                menu.classList.remove('show');
+            });
+        },
+
+        _showPageFragmentToolbar: function (range) {
+            var toolbar = this._ensurePageFragmentToolbar();
+            if (!toolbar || !range) return;
+
+            var rect = range.getBoundingClientRect ? range.getBoundingClientRect() : null;
+            var width = rect && rect.width ? rect.width : (rect ? rect.right - rect.left : 0);
+            var left = rect ? rect.left + width / 2 : window.innerWidth / 2;
+            var top = rect ? rect.top : 80;
+
+            /* page-richtext-fragment-toolbar 是 fixed 定位，坐标系已经和 range.getBoundingClientRect()
+               一样都基于当前视口。这里如果再叠加 scrollX / scrollY，就等于把页面滚动偏移重复算了两次，
+               工具条会在页面滚动后持续向右下漂移。 */
+            toolbar.style.left = left + 'px';
+            toolbar.style.top = top + 'px';
+            toolbar.classList.add('visible');
+        },
+
+        _hidePageFragmentToolbar: function () {
+            if (!this.pageFragmentToolbar) return;
+            this.pageFragmentToolbar.classList.remove('visible');
+            this._closePageFragmentDropdowns();
+        },
+
+        syncPageFragmentToolbar: function () {
+            if (!window.editorCore || !window.editorCore.isActive) {
+                this._hidePageFragmentToolbar();
+                return;
+            }
+
+            var sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+                this._hidePageFragmentToolbar();
+                return;
+            }
+
+            var context = this._resolvePageFragmentSelection(sel.getRangeAt(0));
+            if (!context) {
+                this._hidePageFragmentToolbar();
+                return;
+            }
+
+            this._showPageFragmentToolbar(context.range);
+        },
+
+        _getNodeDepth: function (node) {
+            var depth = 0;
+            var current = node;
+            while (current && current.parentNode) {
+                depth += 1;
+                current = current.parentNode;
+            }
+            return depth;
+        },
+
+        _selectionIntersectsNode: function (range, node) {
+            if (!range || !node) return false;
+            if (typeof range.intersectsNode === 'function') {
+                try {
+                    return range.intersectsNode(node);
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            var nodeRange = document.createRange();
+            nodeRange.selectNodeContents(node);
+            return range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+                range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0;
+        },
+
+        _unwrapPageFragmentNode: function (fragment) {
+            if (!fragment || !fragment.parentNode) return;
+            var parent = fragment.parentNode;
+            while (fragment.firstChild) {
+                parent.insertBefore(fragment.firstChild, fragment);
+            }
+            parent.removeChild(fragment);
+        },
+
+        _wrapRangeInFragment: function (range, wrapper) {
+            try {
+                range.surroundContents(wrapper);
+            } catch (e) {
+                var fragment = range.extractContents();
+                wrapper.appendChild(fragment);
+                range.insertNode(wrapper);
+            }
+        },
+
+        _getNextPageFragmentGroupId: function () {
+            var self = this;
+            document.querySelectorAll('[data-fragment-group]').forEach(function (fragment) {
+                var match = String(fragment.getAttribute('data-fragment-group') || '').match(/^frag-group-(\d+)$/);
+                if (match) self.pageFragmentGroupSeed = Math.max(self.pageFragmentGroupSeed, Number(match[1]));
+            });
+            this.pageFragmentGroupSeed += 1;
+            return 'frag-group-' + this.pageFragmentGroupSeed;
+        },
+
+        _ensurePageFragmentGroup: function (fragment) {
+            if (!fragment) return this._getNextPageFragmentGroupId();
+            var groupId = fragment.getAttribute('data-fragment-group');
+            if (!groupId) {
+                groupId = this._getNextPageFragmentGroupId();
+                fragment.setAttribute('data-fragment-group', groupId);
+            }
+            return groupId;
+        },
+
+        _resolveSelectedPageFragmentGroupId: function (range) {
+            var commonNode = this._getSelectionRootNode(range.commonAncestorContainer);
+            var fragmentRoot = commonNode && commonNode.closest ? commonNode.closest('[data-fragment-step="true"]') : null;
+            if (fragmentRoot) return this._ensurePageFragmentGroup(fragmentRoot);
+            return this._getNextPageFragmentGroupId();
+        },
+
+        _persistPageFragmentChange: function (root) {
+            if (root && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
+                window.PersistenceLayer.saveElement(root);
+            }
+            if (window.historyMgr && typeof window.historyMgr.recordState === 'function') {
+                window.historyMgr.recordState(true);
+            }
+            /* 普通页面隐藏型标注既要让本地编辑态立刻可恢复，也要进入 AnnotationStore 的 sidecar 链路。
+               仅写 localStorage 会让导出的 .annotations.js 缺少普通 fragment 根块；仅写 sidecar 又会让
+               当前编辑会话里的普通富文本恢复链路落后，因此这里必须双写并行调度。 */
+            if (window.AnnotationStore && typeof window.AnnotationStore.scheduleSave === 'function') {
+                window.AnnotationStore.scheduleSave();
+            }
+
+            var slide = root && root.closest ? root.closest('.slide') : null;
+            if (slide && window.PageRichTextAnnotationRuntime && typeof window.PageRichTextAnnotationRuntime.refreshSlide === 'function') {
+                /* 作者态改写 fragment 结构后，放映态缓存里的 visible index 已经不再可信。
+                   如果不立刻重置，旧 reveal 顺序会直接套到新的 authored DOM 上，造成“上一轮已显示的序号”
+                   串到新片段顺序里。refreshSlide 同时负责清空运行时 reveal cache，并同步 slide 的宿主 class。 */
+                window.PageRichTextAnnotationRuntime.refreshSlide(slide);
+            }
+        },
+
+        _applyPageFragmentFormat: function (formatType, value) {
+            this.restoreSelection();
+            var sel = window.getSelection();
+            if (!sel || !sel.rangeCount || sel.isCollapsed) return;
+
+            var range = sel.getRangeAt(0);
+            var context = this._resolvePageFragmentSelection(range);
+            if (!context) {
+                this._hidePageFragmentToolbar();
+                return;
+            }
+
+            var wrapper = document.createElement('span');
+            wrapper.className = 'page-richtext-fragment';
+            wrapper.setAttribute('data-fragment-step', 'true');
+            wrapper.setAttribute('data-fragment-format', formatType);
+            wrapper.setAttribute('data-fragment-group', this._resolveSelectedPageFragmentGroupId(range));
+
+            /* 这里写入的只是 authored 结构：data-fragment-step / format / group 以及对应样式变量。
+               放映态 reveal 何时可见、是否加 qa-fragment-visible，属于运行时宿主的瞬时职责。
+               两者分离后，作者保存下来的 DOM 才不会被一次课堂播放过程里的临时显隐状态污染。 */
+            if (formatType === 'color') {
+                var fragmentColor = value || 'var(--accent-blue)';
+                wrapper.style.setProperty('--qa-fragment-color', fragmentColor);
+                wrapper.dataset.fragmentColor = fragmentColor;
+                this._wrapRangeInFragment(range, wrapper);
+            } else if (formatType === 'highlight') {
+                var fragmentHighlight = value || 'rgba(245, 158, 11, 0.28)';
+                wrapper.style.setProperty('--qa-fragment-highlight', fragmentHighlight);
+                wrapper.dataset.fragmentHighlight = fragmentHighlight;
+                this._wrapRangeInFragment(range, wrapper);
+            } else if (formatType === 'strikethrough') {
+                wrapper.style.setProperty('--qa-fragment-strike-color', 'rgba(186, 26, 26, 0.4)');
+                wrapper.style.setProperty('--qa-fragment-strike-thickness', '0.12em');
+                wrapper.dataset.fragmentStrikeColor = 'rgba(186, 26, 26, 0.4)';
+                wrapper.dataset.fragmentStrikeThickness = '0.12em';
+                this._wrapRangeInFragment(range, wrapper);
+            } else if (formatType === 'ruby') {
+                if (!value) return;
+                var ruby = document.createElement('ruby');
+                var rt = document.createElement('rt');
+                rt.textContent = value;
+                var fragment = range.extractContents();
+                ruby.appendChild(fragment);
+                ruby.appendChild(rt);
+                wrapper.appendChild(ruby);
+                range.insertNode(wrapper);
+            } else {
+                return;
+            }
+
+            context.root.normalize();
+
+            var newRange = document.createRange();
+            newRange.selectNodeContents(wrapper);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            this.savedRange = newRange;
+
+            this._persistPageFragmentChange(context.root);
+            this.syncPageFragmentToolbar();
+        },
+
+        _clearPageFragmentFormat: function () {
+            this.restoreSelection();
+            var sel = window.getSelection();
+            if (!sel || !sel.rangeCount || sel.isCollapsed) return;
+
+            var range = sel.getRangeAt(0);
+            var context = this._resolvePageFragmentSelection(range);
+            if (!context) {
+                this._hidePageFragmentToolbar();
+                return;
+            }
+
+            var self = this;
+            var fragments = Array.from(context.root.querySelectorAll('[data-fragment-step="true"]')).filter(function (fragment) {
+                return self._selectionIntersectsNode(range, fragment);
+            });
+
+            if (fragments.length === 0) return;
+
+            fragments.sort(function (left, right) {
+                return self._getNodeDepth(right) - self._getNodeDepth(left);
+            });
+            fragments.forEach(function (fragment) {
+                self._unwrapPageFragmentNode(fragment);
+            });
+
+            context.root.normalize();
+            sel.removeAllRanges();
+            this.savedRange = null;
+            this._persistPageFragmentChange(context.root);
+            this._hidePageFragmentToolbar();
         },
 
         /** 执行 execCommand 并记录历史（删除线使用自定义实现） */

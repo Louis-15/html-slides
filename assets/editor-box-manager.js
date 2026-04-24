@@ -21,6 +21,10 @@
     init: function () {
       var self = this;
       document.querySelectorAll("[data-edit-id]").forEach(function (el) {
+        // 自动补出来的稳定 id 只是为了让恢复链路在进入编辑模式前也能命中普通正文根块。
+        // 它们原本没有源码级 id，如果现在就注入 wrapper，会把“首次进入编辑模式才套壳”的旧行为提前到页面初始加载，
+        // 进而放大 DOM 抖动与动画重播风险。因此这里继续只处理显式 id 元素，自动 id 交给 _ensureWrappersReady 接管。
+        if (el.hasAttribute("data-edit-id-auto")) return;
         self._injectControls(el);
       });
     },
