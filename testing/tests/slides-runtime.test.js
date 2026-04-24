@@ -262,6 +262,84 @@ function createManualActivationSyncDom() {
   return dom;
 }
 
+function createClickFocusSyncDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="focus-card focus-card-a" data-steppable="manual-focus">
+          <button class="focus-card-inner focus-card-a-inner">A</button>
+        </div>
+        <div class="focus-card focus-card-b" data-steppable="manual-focus">
+          <button class="focus-card-inner focus-card-b-inner">B</button>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  const hostA = window.document.querySelector('.focus-card-a');
+  const hostB = window.document.querySelector('.focus-card-b');
+  const fragmentState = new Map([
+    [hostA, []],
+    [hostB, []]
+  ]);
+
+  function syncHost(host) {
+    host.dataset.visibleFragments = fragmentState.get(host).join(',');
+  }
+
+  window.registerStepStrategy('manual-focus', {
+    canStepTopLevelForward() {
+      return false;
+    },
+    canStepTopLevelBackward() {
+      return false;
+    },
+    forwardTopLevel() {
+      return false;
+    },
+    backwardTopLevel() {
+      return false;
+    },
+    stepFragment(host, direction) {
+      const current = fragmentState.get(host);
+      if (!current) return false;
+      if (direction === 'forward') {
+        if (current.length >= 1) return false;
+        current.push(host === hostA ? 'frag-a-01' : 'frag-b-01');
+        syncHost(host);
+        return true;
+      }
+      if (current.length === 0) return false;
+      current.pop();
+      syncHost(host);
+      return true;
+    }
+  });
+
+  syncHost(hostA);
+  syncHost(hostB);
+  return { dom, hostA, hostB };
+}
+
 function createLateSteppableDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -461,6 +539,23 @@ describe('slides runtime', () => {
 
     assert.equal(didSync, true, 'expected slides runtime to accept manual interaction sync for the current steppable component');
     assert.equal(host.dataset.visibleFragments, 'frag-01', 'expected ArrowRight to route into fragment stepping after manual activation sync');
+  });
+
+  it('switches the focused component when a steppable component is clicked, then scopes fragment stepping to that clicked component', () => {
+    const { dom, hostA, hostB } = createClickFocusSyncDom();
+    const { window } = dom;
+
+    const firstSync = window.activateInteractionStepForElement(hostA);
+    assert.equal(firstSync, true, 'expected the first steppable component to be manually focusable before testing click-based switching');
+    assert.ok(hostA.classList.contains('step-active'), 'expected the first steppable component to start as the focused step host');
+
+    clickElement(window, hostB.querySelector('.focus-card-b-inner'));
+    pressKey(window, 'ArrowRight');
+
+    assert.equal(hostA.dataset.visibleFragments, '', 'expected clicking another component to move fragment stepping away from the previously focused host');
+    assert.equal(hostB.dataset.visibleFragments, 'frag-b-01', 'expected ArrowRight to step fragments inside the clicked component');
+    assert.equal(hostA.classList.contains('step-active'), false, 'expected the previously focused component to lose step-active after clicking another steppable component');
+    assert.equal(hostB.classList.contains('step-active'), true, 'expected the clicked component to become the current step-active focus host');
   });
 
   it('exposes a focused queue refresh hook for modules that auto-tag steppables after slides-runtime has already initialized', () => {

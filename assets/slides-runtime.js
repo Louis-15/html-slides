@@ -433,6 +433,25 @@ window.activateInteractionStepForElement = function(el) {
   return true;
 };
 
+/* 统一处理“鼠标点击组件就切换一级焦点”的运行时入口。
+   这里故意只做焦点同步，不额外触发组件的一级 forward：
+   - 用户点击组件的意图是把左右键后续的二级步进作用域切到这个组件；
+   - 如果顺手再帮它走一步一级 reveal，就会把“切换焦点”和“执行下一步”混成一次操作，导致行为过重。
+   因此点击命中当前 active slide 内任意 data-steppable 宿主时，只复用现有 activateInteractionStepForElement。
+   这样 quiz、普通页富文本和其他可步进组件都能共享同一套手动切焦点合同。 */
+document.addEventListener('click', (e) => {
+  const target = e.target;
+  if (!target || !target.closest) return;
+
+  const currentSlide = slides[current];
+  if (!currentSlide) return;
+
+  const steppable = target.closest('[data-steppable]');
+  if (!steppable || !currentSlide.contains(steppable)) return;
+
+  window.activateInteractionStepForElement(steppable);
+}, true);
+
 
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
    焦点始终跟着“最后一个已触发的组件”，全部撤销后无焦点。 */
