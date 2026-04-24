@@ -1,5 +1,6 @@
 testing/node_modules/
 html-slides-workspace/
+.worktrees/
 .claude/
 eval/outputs/
 eval/screenshots/
