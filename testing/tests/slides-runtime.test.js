@@ -344,6 +344,89 @@ function createClickFocusSyncDom() {
   return { dom, hostA, hostB };
 }
 
+function createSummarySteppingDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">Summary</button>
+        <div class="summary-panel"></div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="anim-1">Slide 2</div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  const summaryTrigger = window.document.querySelector('.summary-trigger');
+  const summaryPanel = window.document.querySelector('.summary-panel');
+  summaryTrigger.addEventListener('click', () => {
+    summaryPanel.classList.toggle('visible');
+  });
+
+  return dom;
+}
+
+function createSummaryFocusTransitionDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="flip-card">Flip</div>
+        <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">Summary</button>
+        <div class="summary-panel"></div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="anim-1">Slide 2</div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  const summaryTrigger = window.document.querySelector('.summary-trigger');
+  const summaryPanel = window.document.querySelector('.summary-panel');
+  summaryTrigger.addEventListener('click', () => {
+    summaryPanel.classList.toggle('visible');
+  });
+
+  return dom;
+}
+
 function createLateSteppableDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -565,6 +648,109 @@ describe('slides runtime', () => {
     assert.equal(hostB.dataset.visibleFragments, 'frag-b-01', 'expected ArrowRight to step fragments inside the clicked component');
     assert.equal(hostA.classList.contains('step-active'), false, 'expected the previously focused component to lose step-active after clicking another steppable component');
     assert.equal(hostB.classList.contains('step-active'), true, 'expected the clicked component to become the current step-active focus host');
+  });
+
+  it('plays the focus-shift cue only when the focused top-level host changes via ArrowDown or click', () => {
+    const { dom, hostA, hostB } = createClickFocusSyncDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    window.activateInteractionStepForElement(hostA);
+    calls.length = 0;
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowRight');
+    clickElement(window, hostA.querySelector('.focus-card-a-inner'));
+    clickElement(window, hostA.querySelector('.focus-card-a-inner'));
+
+    assert.deepEqual(calls, ['focus-shift', 'focus-shift'], 'expected only true host switches to emit pop.mp3, while fragment stepping and repeated clicks on the same host stay silent');
+    assert.equal(hostA.classList.contains('step-active'), true, 'expected the last click-based host switch to move focus back onto hostA');
+    assert.equal(hostB.classList.contains('step-active'), false, 'expected the previously focused host to lose step-active after the click-based focus switch');
+  });
+
+  it('plays the page-turn cue only when goTo actually changes slides', () => {
+    const dom = createSlidesDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    pressKey(window, 'PageDown');
+    pressKey(window, 'PageDown');
+    clickElement(window, window.document.querySelector('.slide-pager-prev'));
+
+    assert.deepEqual(calls, ['page-turn', 'page-turn'], 'expected actual slide transitions to emit turn_page.mp3 once per successful page change, while exhausted navigation stays silent');
+  });
+
+  it('plays the summary-open cue only when the summary component actually pops open', () => {
+    const dom = createSummarySteppingDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowRight');
+    pressKey(window, 'ArrowDown');
+
+    assert.deepEqual(calls, ['summary-open', 'page-turn'], 'expected summary popup to use cash_register.mp3 exactly when the summary panel opens, then fall back to the normal page-turn cue on the later slide transition');
+    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the first ArrowDown to open the summary panel before the later page turn');
+  });
+
+  it('suppresses the generic focus-shift cue when ArrowDown lands on summary and opens it', () => {
+    const dom = createSummaryFocusTransitionDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+    calls.length = 0;
+
+    pressKey(window, 'ArrowDown');
+
+    assert.deepEqual(calls, ['summary-open'], 'expected entering summary via ArrowDown to replace the generic pop cue with the dedicated cash_register cue');
+    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the second ArrowDown to open the summary panel');
+  });
+
+  it('plays the summary-open cue when clicking the summary trigger to open the panel', () => {
+    const dom = createSummarySteppingDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    clickElement(window, window.document.querySelector('.summary-trigger'));
+
+    assert.deepEqual(calls, ['summary-open'], 'expected mouse-opening the summary component to play only the dedicated cash_register cue');
+    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected clicking the summary trigger to open the summary panel');
   });
 
   it('exposes a focused queue refresh hook for modules that auto-tag steppables after slides-runtime has already initialized', () => {

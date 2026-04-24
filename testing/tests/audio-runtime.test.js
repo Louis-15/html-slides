@@ -89,16 +89,22 @@ function createAudioRuntimeDom(options = {}) {
 }
 
 describe('audio runtime cues', () => {
-  it('maps quiz-annotation cues to the provided files and requested gain multipliers', () => {
+  it('maps focus, page-turn, summary, and fragment cues to the provided files and requested gain multipliers', () => {
     const { window, createdAudios, createdGains } = createAudioRuntimeDom();
 
     const focusCue = window.AudioRuntime.getCueDefinition('focus-shift');
+    const pageTurnCue = window.AudioRuntime.getCueDefinition('page-turn');
+    const summaryCue = window.AudioRuntime.getCueDefinition('summary-open');
     const stepCue = window.AudioRuntime.getCueDefinition('fragment-swoosh');
     const backwardStepCue = window.AudioRuntime.getCueDefinition('fragment-swoosh-back');
     const hoverCue = window.AudioRuntime.getCueDefinition('ui-hover');
 
     assert.match(focusCue.src, /\/sound\/pop\.mp3$/, 'expected bubble focus cue to use pop.mp3');
     assert.equal(focusCue.gain, 2, 'expected bubble focus cue to amplify the provided pop.mp3 by 2x');
+    assert.match(pageTurnCue.src, /\/sound\/turn_page\.mp3$/, 'expected page-turn cue to use turn_page.mp3');
+    assert.equal(pageTurnCue.gain, 1, 'expected page-turn cue to keep the source file volume unless a stronger gain is explicitly requested');
+    assert.match(summaryCue.src, /\/sound\/cash_register\.mp3$/, 'expected summary popup cue to use cash_register.mp3');
+    assert.equal(summaryCue.gain, 1, 'expected summary popup cue to keep the source file volume unless a stronger gain is explicitly requested');
     assert.match(stepCue.src, /\/sound\/whoosh\.mp3$/, 'expected fragment step cue to use whoosh.mp3');
     assert.equal(stepCue.gain, 2, 'expected fragment step cue to amplify the provided whoosh.mp3 by 2x');
     assert.match(backwardStepCue.src, /\/sound\/whoosh_back\.mp3$/, 'expected fragment backward-step cue to use whoosh_back.mp3');
@@ -107,16 +113,20 @@ describe('audio runtime cues', () => {
     assert.equal(hoverCue.gain, 5, 'expected fragment hover cue to amplify the provided annotation_hover.flac by 5x');
 
     assert.equal(window.AudioRuntime.playGlobalCue('focus-shift'), true, 'expected global focus cue playback to succeed');
+    assert.equal(window.AudioRuntime.playGlobalCue('page-turn'), true, 'expected global page-turn cue playback to succeed');
+    assert.equal(window.AudioRuntime.playGlobalCue('summary-open'), true, 'expected global summary-popup cue playback to succeed');
     assert.equal(window.AudioRuntime.playPreset('fragment-swoosh'), true, 'expected fragment step cue playback to succeed');
     assert.equal(window.AudioRuntime.playPreset('fragment-swoosh-back'), true, 'expected fragment backward-step cue playback to succeed');
     assert.equal(window.AudioRuntime.playPreset('ui-hover'), true, 'expected fragment hover cue playback to succeed');
 
-    assert.equal(createdAudios.length, 4, 'expected each cue to create a media-backed audio instance on first playback');
+    assert.equal(createdAudios.length, 6, 'expected each cue to create a media-backed audio instance on first playback');
     assert.match(createdAudios[0].src, /\/sound\/pop\.mp3$/, 'expected focus playback to instantiate pop.mp3');
-    assert.match(createdAudios[1].src, /\/sound\/whoosh\.mp3$/, 'expected fragment step playback to instantiate whoosh.mp3');
-    assert.match(createdAudios[2].src, /\/sound\/whoosh_back\.mp3$/, 'expected fragment backward-step playback to instantiate whoosh_back.mp3');
-    assert.match(createdAudios[3].src, /\/sound\/annotation_hover\.flac$/, 'expected fragment hover playback to instantiate annotation_hover.flac');
-    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 2, 2, 5], 'expected playback gain nodes to use the requested amplification values');
+    assert.match(createdAudios[1].src, /\/sound\/turn_page\.mp3$/, 'expected page-turn playback to instantiate turn_page.mp3');
+    assert.match(createdAudios[2].src, /\/sound\/cash_register\.mp3$/, 'expected summary-popup playback to instantiate cash_register.mp3');
+    assert.match(createdAudios[3].src, /\/sound\/whoosh\.mp3$/, 'expected fragment step playback to instantiate whoosh.mp3');
+    assert.match(createdAudios[4].src, /\/sound\/whoosh_back\.mp3$/, 'expected fragment backward-step playback to instantiate whoosh_back.mp3');
+    assert.match(createdAudios[5].src, /\/sound\/annotation_hover\.flac$/, 'expected fragment hover playback to instantiate annotation_hover.flac');
+    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 1, 1, 2, 2, 5], 'expected playback gain nodes to use the requested amplification values');
   });
 
   it('falls back to parallel plain-audio playback when Web Audio routing is unavailable for local files', () => {

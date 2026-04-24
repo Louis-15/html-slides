@@ -25,6 +25,20 @@
       src: resolveSoundUrl('pop.mp3'),
       gain: 2
     }),
+    'page-turn': Object.freeze({
+      type: 'file',
+      /* 翻页音效这轮明确指定使用 turn_page.mp3。
+         用户没有要求额外放大量，因此保持源文件 1x 音量，避免把翻页声做得比焦点切换更抢前景。 */
+      src: resolveSoundUrl('turn_page.mp3'),
+      gain: 1
+    }),
+    'summary-open': Object.freeze({
+      type: 'file',
+      /* 总结组件弹出时单独使用收银机音效，和翻页、焦点切换彻底分开。
+         这里同样保持 1x 源音量，避免在 summary reveal 时把其它交互 cue 全部盖住。 */
+      src: resolveSoundUrl('cash_register.mp3'),
+      gain: 1
+    }),
     'fragment-swoosh': Object.freeze({
       type: 'file',
       src: resolveSoundUrl('whoosh.mp3'),

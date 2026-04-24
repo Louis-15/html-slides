@@ -85,6 +85,11 @@ function updateUI() {
   if (nextBtn) nextBtn.disabled = current >= total - 1;
 }
 
+function playGlobalCue(name) {
+  if (!name || !window.AudioRuntime || typeof window.AudioRuntime.playGlobalCue !== 'function') return false;
+  return window.AudioRuntime.playGlobalCue(name) === true;
+}
+
 function finishSlideAnimationsForEditorMode(slide) {
   if (!slide) return;
 
@@ -132,6 +137,11 @@ function goTo(index) {
 
   // 步进队列管理：构建新页的交互队列（自动恢复记忆状态）
   buildInteractionQueue(current);
+
+  /* 翻页音效统一收口在 goTo 成功切页之后。
+     这样键盘、右下角分页按钮、导航圆点等所有导航入口都会自然复用同一 cue，
+     同时 goTo 自己已经拦住了“同页点击”和越界翻页，所以不会误播空响。 */
+  playGlobalCue('page-turn');
 
   // 触发页面切换钩子（供外部模块监听）
   _slideChangeListeners.forEach(fn => fn(current, prev));
@@ -225,7 +235,15 @@ const StepStrategies = {
   summary: {
     forward(el) {
       const panel = el.closest('.slide').querySelector('.summary-panel');
-      if (panel) panel.classList.add('visible');
+      if (!panel) return;
+      const wasVisible = panel.classList.contains('visible');
+      panel.classList.add('visible');
+
+      /* summary 的“弹出”音效只绑定在真正从隐藏切到显示这一瞬间。
+         如果面板本来就是 visible，或者后续只是停留在这个宿主上继续做别的交互，不应该重复播收银机音。 */
+      if (!wasVisible) {
+        playGlobalCue('summary-open');
+      }
     },
     backward(el) {
       const panel = el.closest('.slide').querySelector('.summary-panel');
@@ -312,6 +330,41 @@ function buildInteractionQueue(slideIndex) {
   updateStepActiveClass();
 }
 
+function getFocusedInteractionElement() {
+  return (stepIndex >= 0 && stepIndex < interactionQueue.length)
+    ? interactionQueue[stepIndex]
+    : null;
+}
+
+function setInteractionFocusIndex(nextIndex, options) {
+  const previousFocusedElement = getFocusedInteractionElement();
+  const shouldMuteFocusCue = !!(options && options.silentFocusCue === true);
+
+  stepIndex = nextIndex;
+  updateStepActiveClass();
+
+  const nextFocusedElement = getFocusedInteractionElement();
+
+  /* 这里的 cue 只服务“一级焦点组件真的换了”这一件事：
+     - 上下键从一个宿主跳到另一个宿主时播；
+     - 鼠标点击把当前焦点切到另一个宿主时播；
+     - 同一宿主内部的翻转、抽拉、fragment reveal 这类组件自带互动不播。
+     因此必须要求前后宿主都存在且不是同一个元素，才能命中 focus-shift。 */
+  if (!shouldMuteFocusCue && previousFocusedElement && nextFocusedElement && previousFocusedElement !== nextFocusedElement) {
+    playGlobalCue('focus-shift');
+  }
+
+  return nextFocusedElement;
+}
+
+function shouldSilenceFocusCueForSummaryOpen(el) {
+  if (!el || el.getAttribute('data-steppable') !== 'summary') return false;
+  const panel = el.closest('.slide') && el.closest('.slide').querySelector('.summary-panel');
+  return !!(panel && !panel.classList.contains('visible'));
+}
+
+let pendingSummaryClickAudio = null;
+
 /* 保存当前页的步进位置 */
 function saveStepState() {
   slideStepState[current] = stepIndex;
@@ -334,11 +387,17 @@ function stepForward() {
   }
   // 当前组件步骤耗尽，切到下一个组件
   if (interactionQueue.length === 0 || stepIndex >= interactionQueue.length - 1) return false;
-  stepIndex++;
+  const nextIndex = stepIndex + 1;
+  const nextElement = interactionQueue[nextIndex];
+  setInteractionFocusIndex(nextIndex, {
+    /* summary 这一步的主语是“弹出总结面板”，不是“切到另一个普通宿主”。
+       如果这里先播通用 focus-shift，再由 summary.forward 播专属收银机音，
+       实际听感就会变成双响。因此只要下一步会打开 summary-panel，就静音掉通用 pop。 */
+    silentFocusCue: shouldSilenceFocusCueForSummaryOpen(nextElement)
+  });
   const el = interactionQueue[stepIndex];
   const strategy = getStrategyByElement(el);
   runTopLevelForward(strategy, el);
-  updateStepActiveClass();
   saveStepState();
   return true;
 }
@@ -358,8 +417,7 @@ function stepBackward() {
     saveStepState();
     return true;
   }
-  stepIndex--;
-  updateStepActiveClass();
+  setInteractionFocusIndex(stepIndex - 1);
   saveStepState();
   return true;
 }
@@ -413,7 +471,7 @@ window.refreshInteractionQueueForCurrentSlide = function(options) {
   return interactionQueue.length;
 };
 
-window.activateInteractionStepForElement = function(el) {
+window.activateInteractionStepForElement = function(el, options) {
   if (!el) return false;
   const currentSlide = slides[current];
   if (!currentSlide) return false;
@@ -427,8 +485,7 @@ window.activateInteractionStepForElement = function(el) {
   const nextIndex = interactionQueue.indexOf(target);
   if (nextIndex === -1) return false;
 
-  stepIndex = nextIndex;
-  updateStepActiveClass();
+  setInteractionFocusIndex(nextIndex, options);
   saveStepState();
   return true;
 };
@@ -449,8 +506,41 @@ document.addEventListener('click', (e) => {
   const steppable = target.closest('[data-steppable]');
   if (!steppable || !currentSlide.contains(steppable)) return;
 
-  window.activateInteractionStepForElement(steppable);
+  /* quiz 气泡点击本来就有自己的“气泡焦点切换”提示音。
+     这里如果再把组件级 focus-shift 也一并播掉，会把一次点击放大成双响。
+     因此命中 qa-note-bubble 时只同步 slides-runtime 的一级焦点，不重复播组件级 cue。 */
+  const summaryOpensOnClick = shouldSilenceFocusCueForSummaryOpen(steppable);
+  const silentFocusCue = !!target.closest('.qa-note-bubble') || summaryOpensOnClick;
+  window.activateInteractionStepForElement(steppable, { silentFocusCue });
+
+  /* 真实课件里的 summary-trigger 目前大量通过 inline onclick / 局部监听自己去 toggle .summary-panel。
+     如果这里在 capture 阶段就直接调用 summary.forward，后面的 toggle 会把面板再关回去，
+     最终变成“先开后关”的回归。因此鼠标路径在 capture 阶段只记录一次待确认状态：
+     等同一次 click 冒泡完全结束后，再按面板最终是否真的变成 visible 来决定要不要播 summary-open。 */
+  if (summaryOpensOnClick) {
+    pendingSummaryClickAudio = {
+      trigger: steppable,
+      panel: steppable.closest('.slide') && steppable.closest('.slide').querySelector('.summary-panel')
+    };
+  }
 }, true);
+
+document.addEventListener('click', (e) => {
+  if (!pendingSummaryClickAudio) return;
+
+  const target = e.target;
+  const summaryState = pendingSummaryClickAudio;
+  pendingSummaryClickAudio = null;
+
+  if (!target || !target.closest) return;
+  if (!summaryState.trigger || !summaryState.panel) return;
+  if (!target.closest('.summary-trigger')) return;
+  if (target.closest('.summary-trigger') !== summaryState.trigger) return;
+
+  if (summaryState.panel.classList.contains('visible')) {
+    playGlobalCue('summary-open');
+  }
+});
 
 
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
