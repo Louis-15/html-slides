@@ -20,7 +20,9 @@
 .slide-header {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1100px;
+  /* 普通页标准内容轨道从 1100 扩到 1300，目的是在宽屏下把左右自动留白各收回约 100px，
+     让标题栏与下方 Zone2 内容区继续保持同轴对齐，而不是只放宽正文导致头身错位。 */
+  max-width: 1300px;
   margin: 0 auto;
   /* 与下方画布保持同轴居中 */
   margin-top: clamp(8px, 1.5vh, 16px);

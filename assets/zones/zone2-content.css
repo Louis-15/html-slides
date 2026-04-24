@@ -36,7 +36,10 @@
 .slide-content {
   width: 100%;
   box-sizing: border-box;
-  max-width: 1100px;
+  /* 这里同步扩到 1300，而不是去压缩内部 padding。
+     用户诉求是减少外侧大留白、给 Zone2 更多真实可用宽度；
+     直接放宽标准内容轨道，才能让桌面端左右边距各减少约 100px，同时保留原来的内部呼吸感。 */
+  max-width: 1300px;
   margin: 0 auto;
   padding: clamp(24px, 4vw, 48px);
   background: transparent;
