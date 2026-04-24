@@ -262,6 +262,40 @@ function createManualActivationSyncDom() {
   return dom;
 }
 
+function createLateSteppableDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="header-title">Plain text only.</div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="anim-1">Slide 2</div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  return dom;
+}
+
 function createQuizFragmentPersistenceDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -427,6 +461,41 @@ describe('slides runtime', () => {
 
     assert.equal(didSync, true, 'expected slides runtime to accept manual interaction sync for the current steppable component');
     assert.equal(host.dataset.visibleFragments, 'frag-01', 'expected ArrowRight to route into fragment stepping after manual activation sync');
+  });
+
+  it('exposes a focused queue refresh hook for modules that auto-tag steppables after slides-runtime has already initialized', () => {
+    const dom = createLateSteppableDom();
+    const { window } = dom;
+    const activeSlide = window.document.querySelector('.slide.active');
+    const lateRoot = window.document.createElement('div');
+
+    lateRoot.className = 'late-root';
+    lateRoot.setAttribute('data-steppable', 'late-test');
+    activeSlide.appendChild(lateRoot);
+
+    window.registerStepStrategy('late-test', {
+      canStepTopLevelForward() {
+        return false;
+      },
+      canStepTopLevelBackward() {
+        return false;
+      },
+      forwardTopLevel() {
+        lateRoot.dataset.focused = 'true';
+        return true;
+      },
+      backwardTopLevel() {
+        delete lateRoot.dataset.focused;
+        return true;
+      }
+    });
+
+    assert.equal(typeof window.refreshInteractionQueueForCurrentSlide, 'function', 'expected slides runtime to expose a focused queue refresh hook for late steppable tagging');
+
+    window.refreshInteractionQueueForCurrentSlide();
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(lateRoot.dataset.focused, 'true', 'expected a freshly tagged steppable to enter the current slide interaction queue after an explicit refresh');
   });
 
   it('keeps revealed quiz fragments visible when ArrowDown moves focus to the next bubble', () => {

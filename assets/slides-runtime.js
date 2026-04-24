@@ -300,10 +300,10 @@ function runTopLevelBackward(strategy, el) {
 }
 
 /* 构建指定页的交互队列，并恢复记忆的步进位置。
-   这里故意只收真正的 data-steppable 组件。
-   普通页面富文本标注宿主不进入一级队列，因为它只负责“当前页已经停住以后”的二级 reveal，
-   不应该抢占上下键的一页内主交互顺序；否则普通标题、卡片正文这类 [data-edit-id] 根块会被误当成
-   顶层交互项，破坏现有的翻页器节奏。 */
+  这里只收显式 data-steppable。
+  普通页富文本运行时会把“真正 owning fragment 的 ordinary [data-edit-id] 根块”晚一点自动打上
+  data-steppable，再通过下面暴露的 refresh hook 把这些 root 刷进当前页队列。
+  这样上下键的一级步进单位终于能落到组件根块，而不是错误地把整张 slide 当成二级 reveal 宿主。 */
 function buildInteractionQueue(slideIndex) {
   interactionQueue = Array.from(
     slides[slideIndex].querySelectorAll('[data-steppable]')
@@ -365,6 +365,10 @@ function stepBackward() {
 }
 
 function stepFragment(direction) {
+  const currentFocusedElement = (stepIndex >= 0 && stepIndex < interactionQueue.length)
+    ? interactionQueue[stepIndex]
+    : null;
+
   if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
     const el = interactionQueue[stepIndex];
     const strategy = getStrategyByElement(el);
@@ -382,19 +386,32 @@ function stepFragment(direction) {
   const pageRichTextRuntime = window.PageRichTextAnnotationRuntime;
 
   /* quiz 页已经有自己的二级步进、右键即时 reveal 与答题态门禁。
-     这里只在“当前组件没有消费左右键”且“整页不含 quiz-annotation”时，
-     才把二级 reveal fallback 给普通页面宿主，避免两个运行时同时争抢同一组左右键/右键语义。 */
+     普通页 fallback 现在还要拿到“当前一级焦点元素”，
+     这样普通页 runtime 才能把 ← → 严格限定到当前焦点 ordinary root，
+     不会因为某个 root 之前被右键 reveal 过，就在焦点已经切走后继续误吃左右键。 */
   if (
     currentSlide &&
     !isQuizAnnotationSlide(current) &&
     pageRichTextRuntime &&
     typeof pageRichTextRuntime.stepFragment === 'function'
   ) {
-    return !!pageRichTextRuntime.stepFragment(direction, currentSlide);
+    return !!pageRichTextRuntime.stepFragment(direction, currentSlide, currentFocusedElement);
   }
 
   return false;
 }
+
+/* page-richtext 这类后加载运行时会在 slides-runtime 初始化之后，
+   才给当前页的 ordinary root 自动补 data-steppable。
+   这里暴露一个最小 refresh hook，让它们只重建当前页 interaction queue，
+   不需要知道 slides-runtime 的内部数组与索引细节。 */
+window.refreshInteractionQueueForCurrentSlide = function(options) {
+  if (options && options.resetFocus === true) {
+    slideStepState[current] = -1;
+  }
+  buildInteractionQueue(current);
+  return interactionQueue.length;
+};
 
 window.activateInteractionStepForElement = function(el) {
   if (!el) return false;

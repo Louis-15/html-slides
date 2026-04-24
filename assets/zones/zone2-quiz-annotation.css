@@ -1583,22 +1583,19 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   opacity: 1;
 }
 
-html:not(.editor-mode) .quiz-annotation.submitted .text-anchor:hover [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation.submitted .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation.submitted .answer-anchor:hover [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation.submitted .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor:hover [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor:hover [data-fragment-step="true"],
-html:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation.submitted .text-anchor:hover [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation.submitted .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor:hover [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor:hover [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor:hover [data-fragment-step="true"],
-body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"] {
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .text-anchor:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+/* 普通页 hover / doodle proxy 现在按 text root 命中，而不是只看 leaf fragment。
+   这样鼠标落在文本框留白、inline 子元素或 doodle 透传命中的任意位置时，
+   同一个 text root 下的普通页 fragment 都会一起亮起橙色高光。 */
+html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-edit-id]:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-edit-id].page-fragment-hover-proxy [data-fragment-step="true"] {
   background-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.24) !important;
   box-shadow: inset 0 0 0 999px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08);
 }
