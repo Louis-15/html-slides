@@ -162,8 +162,31 @@
     return getOrdinaryEditRoots(slide).filter((root) => rootOwnsOrdinaryFragments(root));
   }
 
+  function getSummaryTriggerHost(root, slide) {
+    if (!root || !slide || !slide.contains(root)) return null;
+
+    const summaryContainer = root.closest('.summary-content, .summary-panel');
+    if (!summaryContainer || !slide.contains(summaryContainer)) return null;
+
+    /* zone3 summary 的 trigger 与 panel / content 是兄弟节点，不存在可复用的祖先链。
+       如果这里只靠 closest('[data-steppable], ...') 向上找，summary-panel 里的 ordinary root
+       会被误判成 standalone host，结果就是 ← → 无法挂到 summary-trigger 当前焦点上，
+       同时 ↑ ↓ 队列里还会额外塞进一个空的 ordinary root 步骤。 */
+    const summaryTrigger = slide.querySelector('.summary-trigger');
+    if (!summaryTrigger || !slide.contains(summaryTrigger) || summaryTrigger.closest('.quiz-annotation')) {
+      return null;
+    }
+
+    return summaryTrigger;
+  }
+
   function getOrdinaryFragmentHost(root, slide) {
     if (!root || !slide || !slide.contains(root)) return null;
+
+    const summaryHost = getSummaryTriggerHost(root, slide);
+    if (summaryHost) {
+      return summaryHost;
+    }
 
     /* 普通页二级 fragment 现在要挂到“当前一级焦点组件”上，而不是让每个 ordinary text root 都自己挤进一级队列。
        这样像 collapse-card、card 这类已有组件在第一次 ArrowDown 进入后，左右键就能立刻控制内部普通页 fragment，

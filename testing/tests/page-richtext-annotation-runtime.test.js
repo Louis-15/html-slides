@@ -114,6 +114,31 @@ function createCollapseCardOrdinaryPageDom() {
   `);
 }
 
+function createSummaryOrdinaryPageDom() {
+  // zone3 summary 的真实结构里，summary-trigger 与 summary-panel 是同一 slide 下的兄弟节点，
+  // 不是祖先链关系；回归用例必须保留这个 sibling 关系，才能锁住本次宿主归属 bug。
+  return createRuntimeDom(`
+    <div class="slide active" data-slide="1">
+      <div class="slide-content layout-single">
+        <div class="content-block">Lead-in content.</div>
+      </div>
+      <button class="summary-trigger">Summary</button>
+      <div class="summary-panel">
+        <div class="summary-content">
+          <ul>
+            <li data-edit-id="summary-root">
+              Key point <span class="page-fragment summary-fragment-one" data-fragment-step="true">first</span> cue.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide" data-slide="2">
+      <div class="header-title">Slide 2</div>
+    </div>
+  `);
+}
+
 function createCardHostOrdinaryPageDom() {
   return createRuntimeDom(`
     <div class="slide active" data-slide="1">
@@ -251,6 +276,29 @@ describe('page richtext annotation runtime', () => {
     pressKey(window, 'ArrowRight');
     assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected ArrowRight to reveal the collapse-card ordinary fragment as soon as the component itself is focused');
     assert.equal(secondFragment.classList.contains('qa-fragment-visible'), false, 'expected later collapse-card fragments to remain hidden until their own ArrowRight turn');
+  });
+
+  it('uses the zone3 summary-trigger as the owning host for summary-panel ordinary fragments', () => {
+    const dom = createSummaryOrdinaryPageDom();
+    const { window } = dom;
+    const firstSlide = window.document.querySelector('.slide[data-slide="1"]');
+    const secondSlide = window.document.querySelector('.slide[data-slide="2"]');
+    const summaryTrigger = window.document.querySelector('.summary-trigger');
+    const summaryPanel = window.document.querySelector('.summary-panel');
+    const summaryRoot = window.document.querySelector('[data-edit-id="summary-root"]');
+    const firstFragment = window.document.querySelector('.summary-fragment-one');
+
+    pressKey(window, 'ArrowDown');
+    assert.ok(summaryTrigger.classList.contains('step-active'), 'expected the first ArrowDown to enter the summary-trigger top-level host');
+    assert.equal(summaryRoot.classList.contains('step-active'), false, 'expected the summary-panel ordinary root not to become its own top-level step item');
+    assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary top-level step to open the summary panel on first ArrowDown');
+
+    pressKey(window, 'ArrowRight');
+    assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected ArrowRight to reveal the summary-panel ordinary fragment immediately after summary-trigger takes focus');
+
+    pressKey(window, 'ArrowDown');
+    assert.ok(secondSlide.classList.contains('active'), 'expected the next ArrowDown to flip to the next slide once the summary top-level step is exhausted');
+    assert.equal(firstSlide.classList.contains('active'), false, 'expected the current slide not to consume ArrowDown with an erroneous standalone summary text root');
   });
 
   it('uses card shells as the top-level ordinary fragment hosts instead of each internal text root', () => {
