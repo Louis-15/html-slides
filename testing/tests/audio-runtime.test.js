@@ -89,6 +89,16 @@ function createAudioRuntimeDom(options = {}) {
 }
 
 describe('audio runtime cues', () => {
+  it('prewarms the hot global cues so first focus, page-turn, and summary playback do not wait for player creation', () => {
+    const { createdAudios, createdGains } = createAudioRuntimeDom();
+
+    assert.equal(createdAudios.length, 3, 'expected the three hot global cues to precreate their media-backed audio elements during runtime startup');
+    assert.match(createdAudios[0].src, /\/sound\/pop\.mp3$/, 'expected startup prewarm to include the focus-shift pop cue');
+    assert.match(createdAudios[1].src, /\/sound\/turn_page\.mp3$/, 'expected startup prewarm to include the page-turn cue');
+    assert.match(createdAudios[2].src, /\/sound\/cash_register\.mp3$/, 'expected startup prewarm to include the summary-open cue');
+    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 1, 1.5], 'expected hot cue prewarm to preserve the intended gain values for focus, page-turn, and the louder summary-open cue');
+  });
+
   it('maps focus, page-turn, summary, and fragment cues to the provided files and requested gain multipliers', () => {
     const { window, createdAudios, createdGains } = createAudioRuntimeDom();
 
@@ -104,7 +114,7 @@ describe('audio runtime cues', () => {
     assert.match(pageTurnCue.src, /\/sound\/turn_page\.mp3$/, 'expected page-turn cue to use turn_page.mp3');
     assert.equal(pageTurnCue.gain, 1, 'expected page-turn cue to keep the source file volume unless a stronger gain is explicitly requested');
     assert.match(summaryCue.src, /\/sound\/cash_register\.mp3$/, 'expected summary popup cue to use cash_register.mp3');
-    assert.equal(summaryCue.gain, 1, 'expected summary popup cue to keep the source file volume unless a stronger gain is explicitly requested');
+    assert.equal(summaryCue.gain, 1.5, 'expected summary popup cue to amplify the provided cash_register.mp3 by 1.5x');
     assert.match(stepCue.src, /\/sound\/whoosh\.mp3$/, 'expected fragment step cue to use whoosh.mp3');
     assert.equal(stepCue.gain, 2, 'expected fragment step cue to amplify the provided whoosh.mp3 by 2x');
     assert.match(backwardStepCue.src, /\/sound\/whoosh_back\.mp3$/, 'expected fragment backward-step cue to use whoosh_back.mp3');
@@ -126,7 +136,18 @@ describe('audio runtime cues', () => {
     assert.match(createdAudios[3].src, /\/sound\/whoosh\.mp3$/, 'expected fragment step playback to instantiate whoosh.mp3');
     assert.match(createdAudios[4].src, /\/sound\/whoosh_back\.mp3$/, 'expected fragment backward-step playback to instantiate whoosh_back.mp3');
     assert.match(createdAudios[5].src, /\/sound\/annotation_hover\.flac$/, 'expected fragment hover playback to instantiate annotation_hover.flac');
-    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 1, 1, 2, 2, 5], 'expected playback gain nodes to use the requested amplification values');
+    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 1, 1.5, 2, 2, 5], 'expected playback gain nodes to use the requested amplification values');
+  });
+
+  it('starts the summary-open cue from a trimmed-in offset so leading silence is skipped', () => {
+    const { window, createdAudios } = createAudioRuntimeDom();
+    const summaryCue = window.AudioRuntime.getCueDefinition('summary-open');
+
+    assert.equal(summaryCue.startTime, 0.471, 'expected summary-open to declare a measured start offset so playback can skip the file head instead of waiting through it');
+
+    window.AudioRuntime.playGlobalCue('summary-open');
+
+    assert.equal(createdAudios[2].currentTime, 0.471, 'expected summary-open playback to seek past the measured leading silent segment before playing');
   });
 
   it('falls back to parallel plain-audio playback when Web Audio routing is unavailable for local files', () => {
@@ -138,10 +159,13 @@ describe('audio runtime cues', () => {
     assert.equal(window.AudioRuntime.playGlobalCue('focus-shift'), true, 'expected local-file playback to succeed even when createMediaElementSource is blocked');
 
     assert.equal(createdGains.length, 0, 'expected the local-file fallback path to avoid gain nodes when Web Audio routing is unavailable');
-    assert.equal(createdAudios.length, 2, 'expected a 2x cue to fan out into two plain audio instances so local playback is still louder than the source file');
+    assert.equal(createdAudios.length, 5, 'expected local-file startup to prewarm focus/page-turn/summary players, with the 2x focus cue and the 1.5x summary cue both using plain-audio fan-out');
     assert.match(createdAudios[0].src, /\/sound\/pop\.mp3$/, 'expected fallback playback to keep using pop.mp3');
-    assert.deepEqual(createdAudios.map((audio) => audio.playCalls), [1, 1], 'expected each fallback audio instance to be played once');
-    assert.deepEqual(createdAudios.map((audio) => audio.volume), [1, 1], 'expected fallback fan-out to keep each plain audio instance at full volume');
+    assert.match(createdAudios[2].src, /\/sound\/turn_page\.mp3$/, 'expected local-file prewarm to include the page-turn cue');
+    assert.match(createdAudios[3].src, /\/sound\/cash_register\.mp3$/, 'expected local-file prewarm to include the summary-open cue');
+    assert.match(createdAudios[4].src, /\/sound\/cash_register\.mp3$/, 'expected the louder summary-open cue to fan out into a second plain-audio player on local files');
+    assert.deepEqual(createdAudios.map((audio) => audio.playCalls), [1, 1, 0, 0, 0], 'expected first local-file playback to hit only the two prewarmed focus-shift fan-out players, while page-turn and summary stay primed but idle');
+    assert.deepEqual(createdAudios.map((audio) => audio.volume), [1, 1, 1, 1, 0.5], 'expected local-file prewarm to split the 1.5x summary gain across two plain-audio players');
     assert.equal(window.AudioRuntime.getDebugState().lastPlayerType, 'fan-out', 'expected debug state to record that local-file playback used the fan-out fallback');
   });
 

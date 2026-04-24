@@ -714,6 +714,25 @@ describe('slides runtime', () => {
     assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the first ArrowDown to open the summary panel before the later page turn');
   });
 
+  it('plays summary-open before ArrowDown makes the summary panel visible', () => {
+    const dom = createSummarySteppingDom();
+    const { window } = dom;
+    const summaryPanel = window.document.querySelector('.summary-panel');
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push({ name, visibleAtCueTime: summaryPanel.classList.contains('visible') });
+        return true;
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+
+    assert.deepEqual(calls, [{ name: 'summary-open', visibleAtCueTime: false }], 'expected ArrowDown to fire cash_register before the summary panel is visually shown');
+    assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary panel to become visible after the cue has been emitted');
+  });
+
   it('suppresses the generic focus-shift cue when ArrowDown lands on summary and opens it', () => {
     const dom = createSummaryFocusTransitionDom();
     const { window } = dom;
@@ -751,6 +770,25 @@ describe('slides runtime', () => {
 
     assert.deepEqual(calls, ['summary-open'], 'expected mouse-opening the summary component to play only the dedicated cash_register cue');
     assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected clicking the summary trigger to open the summary panel');
+  });
+
+  it('plays summary-open before a mouse click makes the summary panel visible', () => {
+    const dom = createSummarySteppingDom();
+    const { window } = dom;
+    const summaryPanel = window.document.querySelector('.summary-panel');
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push({ name, visibleAtCueTime: summaryPanel.classList.contains('visible') });
+        return true;
+      }
+    };
+
+    clickElement(window, window.document.querySelector('.summary-trigger'));
+
+    assert.deepEqual(calls, [{ name: 'summary-open', visibleAtCueTime: false }], 'expected mouse-opening summary to emit cash_register before the panel becomes visible');
+    assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary panel to become visible after the click cue fires');
   });
 
   it('exposes a focused queue refresh hook for modules that auto-tag steppables after slides-runtime has already initialized', () => {

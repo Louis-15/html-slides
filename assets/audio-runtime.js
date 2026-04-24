@@ -35,9 +35,13 @@
     'summary-open': Object.freeze({
       type: 'file',
       /* 总结组件弹出时单独使用收银机音效，和翻页、焦点切换彻底分开。
-         这里同样保持 1x 源音量，避免在 summary reveal 时把其它交互 cue 全部盖住。 */
+        用户手测觉得 1x 偏小，因此这里提升到 1.5x，
+        让 summary 弹出提示能明显被听见，但又不至于压过 2x 的焦点切换与 fragment swoosh。
+         另外这份素材前面实测约有 471ms 的前导静音，因此直接在播放层跳过文件头，
+         用等效“裁剪起点”的方式把真正有声的瞬间提前到组件 reveal 之前。 */
       src: resolveSoundUrl('cash_register.mp3'),
-      gain: 1
+      gain: 1.5,
+      startTime: 0.471
     }),
     'fragment-swoosh': Object.freeze({
       type: 'file',
@@ -123,7 +127,7 @@
     return volumes;
   }
 
-  function playAudioElement(audio) {
+  function playAudioElement(audio, startTime) {
     if (!audio) return false;
     if (typeof audio.pause === 'function') {
       try {
@@ -134,7 +138,7 @@
     }
 
     try {
-      audio.currentTime = 0;
+      audio.currentTime = Math.max(0, Number(startTime) || 0);
     } catch (_) {
       // 流媒体或尚未 ready 的媒体元素可能暂时不允许改 currentTime，不影响下一次 play。
     }
@@ -228,7 +232,7 @@
 
     if (player.type === 'fan-out') {
       player.audios.forEach((audio) => {
-        playAudioElement(audio);
+        playAudioElement(audio, definition.startTime);
       });
       return true;
     }
@@ -239,7 +243,7 @@
       player.audio.volume = Math.max(0, Math.min(1, Number(definition.gain) || 1));
     }
 
-    return playAudioElement(player.audio);
+    return playAudioElement(player.audio, definition.startTime);
   }
 
   function playPreset(name) {
@@ -257,6 +261,22 @@
   function cueKey(componentName, cueName) {
     return `${componentName || 'global'}::${cueName || 'unknown'}`;
   }
+
+  function prewarmHotGlobalCues() {
+    /* 这三个 cue 是当前最容易在“第一次互动”就被听见的热路径：
+       - focus-shift：切换一级焦点组件
+       - page-turn：翻页
+       - summary-open：总结组件弹出
+       如果继续等到第一次 play 时才创建 audio / media graph，真实浏览器会把创建与加载开销暴露成明显延迟。
+       这里在 runtime 启动时就把 player 建好，后续第一次真正播放时就只剩下 play 动作本身。 */
+    ['focus-shift', 'page-turn', 'summary-open'].forEach((name) => {
+      const definition = cueDefinitions[name];
+      if (!definition || definition.type !== 'file') return;
+      getCuePlayer(name, definition);
+    });
+  }
+
+  prewarmHotGlobalCues();
 
   window.AudioRuntime = {
     isEnabled,

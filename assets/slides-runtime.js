@@ -237,13 +237,14 @@ const StepStrategies = {
       const panel = el.closest('.slide').querySelector('.summary-panel');
       if (!panel) return;
       const wasVisible = panel.classList.contains('visible');
-      panel.classList.add('visible');
 
-      /* summary 的“弹出”音效只绑定在真正从隐藏切到显示这一瞬间。
-         如果面板本来就是 visible，或者后续只是停留在这个宿主上继续做别的交互，不应该重复播收银机音。 */
+      /* 用户这轮明确要求“先出音，再出现组件”。
+         因此 summary 的专属 cue 必须在面板真正 visible 之前先发出，
+         让听感成为一次“开场提示”，而不是面板已经弹出来后才补一个拖尾音。 */
       if (!wasVisible) {
         playGlobalCue('summary-open');
       }
+      panel.classList.add('visible');
     },
     backward(el) {
       const panel = el.closest('.slide').querySelector('.summary-panel');
@@ -362,8 +363,6 @@ function shouldSilenceFocusCueForSummaryOpen(el) {
   const panel = el.closest('.slide') && el.closest('.slide').querySelector('.summary-panel');
   return !!(panel && !panel.classList.contains('visible'));
 }
-
-let pendingSummaryClickAudio = null;
 
 /* 保存当前页的步进位置 */
 function saveStepState() {
@@ -513,34 +512,22 @@ document.addEventListener('click', (e) => {
   const silentFocusCue = !!target.closest('.qa-note-bubble') || summaryOpensOnClick;
   window.activateInteractionStepForElement(steppable, { silentFocusCue });
 
-  /* 真实课件里的 summary-trigger 目前大量通过 inline onclick / 局部监听自己去 toggle .summary-panel。
-     如果这里在 capture 阶段就直接调用 summary.forward，后面的 toggle 会把面板再关回去，
-     最终变成“先开后关”的回归。因此鼠标路径在 capture 阶段只记录一次待确认状态：
-     等同一次 click 冒泡完全结束后，再按面板最终是否真的变成 visible 来决定要不要播 summary-open。 */
+  /* summary-trigger 在“面板当前隐藏”的前提下，鼠标点击的意图就是打开它。
+     用户又要求这次必须“先放音，再出现组件”，所以这里改成在 capture 阶段直接接管这一下：
+     - 静默切一级焦点，避免通用 pop 干扰；
+     - 阻断后续 inline toggle，避免再把面板关回去；
+     - 直接复用 summary.forward，让 cash_register 先响，再把 panel 设为 visible。 */
   if (summaryOpensOnClick) {
-    pendingSummaryClickAudio = {
-      trigger: steppable,
-      panel: steppable.closest('.slide') && steppable.closest('.slide').querySelector('.summary-panel')
-    };
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const strategy = getStrategyByElement(steppable);
+    if (strategy) {
+      runTopLevelForward(strategy, steppable);
+      saveStepState();
+    }
   }
 }, true);
-
-document.addEventListener('click', (e) => {
-  if (!pendingSummaryClickAudio) return;
-
-  const target = e.target;
-  const summaryState = pendingSummaryClickAudio;
-  pendingSummaryClickAudio = null;
-
-  if (!target || !target.closest) return;
-  if (!summaryState.trigger || !summaryState.panel) return;
-  if (!target.closest('.summary-trigger')) return;
-  if (target.closest('.summary-trigger') !== summaryState.trigger) return;
-
-  if (summaryState.panel.classList.contains('visible')) {
-    playGlobalCue('summary-open');
-  }
-});
 
 
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
