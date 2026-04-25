@@ -48,7 +48,9 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 ## Components (13 Core + 1 Summary + 1 Quiz/Annotation)
 
-Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`.
+Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires the runtime stack `slides-runtime.js` → `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`.
+
+> **ORDINARY PAGE INTERACTION CONTRACT (2026-04-25)**: On ordinary pages, `↑/↓` move the top-level focus across component roots before turning pages. Passive components such as `.card`, `.stat-card`, `.timeline-card`, `.chart-container`, `.table-wrap`, `.code-window`, `.image-block`, `.dual-bar`, and `.content-block` still participate in this top-level focus order and show `.step-active`, but they have no own forward action. Interactive hosts such as `.flip-card`, `.collapse-card`, and `.summary-trigger` use a focus-first model: first `ArrowDown` focuses the host, second `ArrowDown` performs the interaction, and `ArrowUp` first rolls the interaction back before leaving. `←/→` are reserved for fragment stepping inside the currently focused host.
 
 ### 1. Card / 普通卡片 (`.card`)
 
@@ -86,19 +88,19 @@ Front/back card that flips 180° on button click. **No wrapper needed** — each
     <div class="flip-icon">[EMOJI]</div>
     <div class="flip-title">[FRONT_TITLE]</div>
     <div class="flip-subtitle">[FRONT_SUBTITLE]</div>
-    <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="flip-action-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
   </div>
   <div class="flip-back">
     <div class="flip-icon-big">[EMOJI]</div>
     <div class="flip-detail">[BACK_TEXT with <strong>bold keywords</strong>]</div>
-    <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="flip-action-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
   </div>
 </div>
 ```
 
 > **IMPORTANT**: The old `.flip-grid`, `.flip-bounce-wrap`, and `.card-action-btn` are **deleted**. Use `.flip-action-btn` on a `<button>` element. Each flip card stands alone — place multiple in a `layout-grid-2x2` or `layout-3col` using `.cell` / `.col` slots.
 
-> **KEYBOARD STEP-THROUGH**: Flip cards are automatically registered for the keyboard step-through system. Pressing `→` (ArrowRight) flips cards one by one in DOM order; pressing `←` (ArrowLeft) reverses the flip. No `data-steppable` attribute needed in HTML — the runtime auto-detects `.flip-card` elements.
+> **KEYBOARD STEP-THROUGH**: Flip cards are automatically registered for the top-level interaction queue. On ordinary pages, the first `ArrowDown` focuses the card, the second `ArrowDown` flips it, and `ArrowUp` flips it back before the focus leaves. Direct button clicks still flip immediately because the runtime silently lands focus on the card first, then performs the action. Do not wire inline `onclick` handlers for flip state.
 
 **When to use**: Concept reveals, vocabulary, problem → solution reveals. Place in `layout-grid-2x2` for 4 cards or `layout-3col` for 3 cards.
 
@@ -113,13 +115,13 @@ Card that expands on button click to reveal hidden content. Shares base styles w
   <div class="card-expand">
     <div class="card-expand-inner">[EXPANDED_DETAIL with <code>code_terms</code>]</div>
   </div>
-  <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+  <button class="collapse-action-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
 </div>
 ```
 
 > **IMPORTANT**: The old `.use-case-grid`, `.card-v2`, `.glow-orange` wrappers are **deleted**. Use `.collapse-action-btn` (not `.card-action-btn`). Arrow auto-rotates on expand.
 
-> **KEYBOARD STEP-THROUGH**: Collapse cards are automatically registered for the keyboard step-through system. Pressing `→` expands cards one by one; pressing `←` collapses them in reverse. No `data-steppable` attribute needed — auto-detected.
+> **KEYBOARD STEP-THROUGH**: Collapse cards are automatically registered for the top-level interaction queue. On ordinary pages, the first `ArrowDown` focuses the card, the second `ArrowDown` expands it, and `ArrowUp` collapses it before the focus leaves. Direct button clicks still expand/collapse immediately, but the runtime owns that state change. Do not add inline `onclick` for expand/collapse.
 
 **When to use**: Knowledge points with expandable details, tips, FAQ. Place in `layout-grid-2x2` or `layout-2col`.
 
@@ -335,7 +337,7 @@ Plain text container. Title is handled by Zone 1 header.
 A floating panel triggered by a bottom button. **NOT placed inside a layout slot** — sits directly inside `<div class="slide">`, after the content area.
 
 ```html
-<button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')"></button>
+<button class="summary-trigger"></button>
 <div class="summary-panel">
   <div class="summary-content">
     <h3>本页要点</h3>
@@ -346,6 +348,8 @@ A floating panel triggered by a bottom button. **NOT placed inside a layout slot
   </div>
 </div>
 ```
+
+> **KEYBOARD STEP-THROUGH**: Summary buttons are first-class top-level hosts. On ordinary pages, the first `ArrowDown` lands focus on `.summary-trigger`, the second `ArrowDown` opens `.summary-panel`, and `ArrowUp` closes it before the focus moves away. Do not add inline `onclick` handlers — the runtime synchronizes focus state, opening/closing, and summary audio cues.
 
 **When to use**: At the end of a knowledge point page when there are key takeaways worth summarizing.
 
@@ -383,7 +387,7 @@ These go directly inside `<body>`, BEFORE the `<div class="deck">`. They provide
 <div class="slide-nav" id="slideNav"></div>
 <div class="progress-bar" id="progress"></div>
 <div class="slide-counter" id="counter"></div>
-<div class="nav-hints"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> 翻页 <kbd>&larr;</kbd><kbd>&rarr;</kbd> 步进</span></div>
+<div class="nav-hints"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> 顶层焦点 / 翻页 <kbd>&larr;</kbd><kbd>&rarr;</kbd> 当前焦点片段</span></div>
 ```
 
 ---

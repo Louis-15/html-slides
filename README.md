@@ -20,6 +20,7 @@ It also offers a **Vibe mode** with 12 creative themes for non-technical present
 - **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
 - **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
+- **Host-Aware Stepping & Hidden Annotations** — Ordinary components, summary panels, and authored rich-text fragments share a top-level focus model with scoped left/right fragment stepping and dedicated audio cues.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides exports, articles, generic pages) into HTMLSlides format.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
@@ -239,9 +240,11 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (all modes) |
 | `assets/components.css` | Shared component CSS for all Pro themes | Phase 3 (Pro) |
 | `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
-| `assets/slides-runtime.js` | Navigation JS + Chart.js integration | Phase 3 (Pro) |
-| `assets/editor-*.js` | 6 modular editor JS files | Phase 3 (if editing) |
-| `assets/editor.css` | Editor toolbar and controls CSS | Phase 3 (if editing) |
+| `assets/slides-runtime.js` | Navigation JS + top-level focus / stepping integration | Phase 3 (Pro) |
+| `assets/audio-runtime.js` | Global audio cue bus for page turns, focus, and interaction cues | Phase 3 (Pro) |
+| `assets/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping and hover runtime | Phase 3 (Pro) |
+| `assets/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
+| `assets/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 | `scripts/deploy.sh` | Deploy to Vercel | Phase 7 (sharing) |

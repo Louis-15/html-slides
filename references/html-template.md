@@ -99,7 +99,7 @@ Every generated HTML file **must** comply with these rules:
             </div>
 
             <!-- ZONE 3: Summary Component (optional, AI decides) -->
-            <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">
+            <button class="summary-trigger">
                 📋 本页总结
             </button>
             <div class="summary-panel">
@@ -123,8 +123,10 @@ Every generated HTML file **must** comply with these rules:
     <!-- JS: All via external <script src> references -->
     <script src="./assets/slides-runtime.js"></script>
 
-    <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
+    <!-- Global audio runtime (always include for page-turn / focus / interaction cues) -->
     <script src="./assets/audio-runtime.js"></script>
+
+    <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
     <script src="./assets/annotation-store.js"></script>
     <script src="./assets/quiz-annotation-audio.js"></script>
     <script src="./assets/quiz-annotation-runtime.js"></script>
@@ -136,6 +138,7 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/editor-box-manager.js"></script>
     <script src="./assets/editor-rich-text.js"></script>
     <script src="./assets/editor-core.js"></script>
+    <script src="./assets/page-richtext-annotation-runtime.js"></script>
     <script src="./assets/doodle-runtime.js"></script>
 
     <script>
@@ -157,7 +160,7 @@ Every presentation must include these **global functions**:
 These must be plain functions on `window`, not inside an IIFE, class, or module.
 
 Input bindings required:
-- Keyboard: Arrow keys, Space, PageUp/PageDown, Home, End
+- Keyboard: `ArrowDown` / `ArrowUp` for top-level focus and page turns, `ArrowLeft` / `ArrowRight` for fragment stepping inside the currently focused host, plus Space, PageUp/PageDown, Home, End
 - Mouse wheel: With 600ms cooldown
 
 Optional enhancements (match to chosen style):
@@ -203,16 +206,21 @@ All elements get **unified drag/delete controls** (📍✖) via `BoxManager._inj
 
 ### 4. JS Reference
 
-If the courseware contains `.quiz-annotation`, reference the quiz runtime stack at the **end of `<body>`**, AFTER `slides-runtime.js` and BEFORE the editor modules, in this order:
+Reference `audio-runtime.js` at the **end of `<body>`**, immediately AFTER `slides-runtime.js`:
 
 ```html
 <script src="./assets/audio-runtime.js"></script>
+```
+
+If the courseware contains `.quiz-annotation`, reference the quiz runtime stack AFTER `audio-runtime.js` and BEFORE the editor modules, in this order:
+
+```html
 <script src="./assets/annotation-store.js"></script>
 <script src="./assets/quiz-annotation-audio.js"></script>
 <script src="./assets/quiz-annotation-runtime.js"></script>
 ```
 
-Then reference the 6 editor JS files plus `doodle-runtime.js` in **strict dependency order**:
+Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js` in **strict dependency order**:
 
 ```html
 <script src="./assets/editor-utils.js"></script>
@@ -221,10 +229,11 @@ Then reference the 6 editor JS files plus `doodle-runtime.js` in **strict depend
 <script src="./assets/editor-box-manager.js"></script>
 <script src="./assets/editor-rich-text.js"></script>
 <script src="./assets/editor-core.js"></script>
+<script src="./assets/page-richtext-annotation-runtime.js"></script>
 <script src="./assets/doodle-runtime.js"></script>
 ```
 
-> **WARNING:** Loading order is critical. `editor-utils.js` must be first (base utilities), `editor-core.js` must be last (orchestrates all others).
+> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor-utils.js` must be first in the editor chain; `editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks.
 
 ### 5. Plugin Hook System (for future extensions)
 
@@ -353,7 +362,7 @@ assets/                        # CSS, JS modules, themes, images
 │   └── zone3-summary.css      # Zone 3 summary panel
 ├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
-├── audio-runtime.js           # Global audio cue bus (when quiz-annotation is used)
+├── audio-runtime.js           # Global audio cue bus (always included)
 ├── annotation-store.js        # Quiz annotation sidecar persistence (when quiz-annotation is used)
 ├── quiz-annotation-audio.js   # Quiz annotation audio adapter (when quiz-annotation is used)
 ├── quiz-annotation-runtime.js # Quiz annotation runtime (when quiz-annotation is used)
@@ -363,6 +372,7 @@ assets/                        # CSS, JS modules, themes, images
 ├── editor-box-manager.js      # Text/image box management
 ├── editor-rich-text.js        # Rich text toolbar logic
 ├── editor-core.js             # Editor orchestrator + dynamic toolbar injection
+├── page-richtext-annotation-runtime.js # Ordinary-page hidden rich-text runtime
 ├── doodle-runtime.js          # Doodle overlay
 ├── slide-animations.css       # Custom animations for this courseware
 └── [images]                   # Any courseware images

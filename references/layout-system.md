@@ -29,7 +29,7 @@ Every teaching courseware slide is divided into **three physically separated zon
 
   <!-- === ZONE 3: SUMMARY COMPONENT (总结组件, OPTIONAL) === -->
   <!-- AI decides whether to include this per-slide -->
-  <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')">
+  <button class="summary-trigger">
     📋 本页总结
   </button>
   <div class="summary-panel">
@@ -58,6 +58,8 @@ Every teaching courseware slide is divided into **three physically separated zon
 | Content Area | Yes | Yes — uses `layout-*` classes | AI chooses layout mode; all content goes here |
 | Summary Component | No — AI decides | No — floats at bottom | Button triggers a panel overlay |
 | Speaker Notes | Yes | No — hidden JSON block | Must be the last child element |
+
+> **Interaction note (2026-04-25)**: The summary button is now runtime-managed. Do not generate inline `onclick` handlers for `.summary-trigger`; `slides-runtime.js` owns the focus-first / open-second behavior, panel visibility, and audio cues.
 
 ---
 
@@ -311,16 +313,18 @@ These rules **replace** the old fixed content limits from `presentation-layer.md
         <div class="flip-icon">💡</div>
         <div class="flip-title">卡片标题</div>
         <div class="flip-subtitle">点击翻转查看</div>
-        <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')">↻</button>
+        <button class="flip-action-btn">↻</button>
       </div>
       <div class="flip-back">
         <div class="flip-detail">卡片背面内容</div>
-        <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')">↻</button>
+        <button class="flip-action-btn">↻</button>
       </div>
     </div>
   </div>
 </div>
 ```
+
+> **Interaction note**: Like the summary button, flip-card state is runtime-managed. On ordinary pages, first `ArrowDown` focuses the `.flip-card`, second `ArrowDown` flips it, and direct button clicks are intercepted by the runtime. Do not add inline `onclick` state toggles in layout examples.
 
 **示例 — 全宽图片填充单列布局：**
 
