@@ -519,6 +519,93 @@ function createCollapseComponentQueueDom() {
   };
 }
 
+function createPassiveComponentAuditDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="slide-content layout-single">
+          <div class="stat-card audit-stat-card">
+            <div class="stat-number green">42</div>
+            <div class="stat-label">Stat</div>
+            <div class="stat-desc">Numbers still need top-level focus.</div>
+          </div>
+          <div class="timeline-card audit-timeline-card">
+            <span class="timeline-dot green"></span>
+            <div class="timeline-text"><strong>Timeline</strong> keeps its own host.</div>
+          </div>
+          <div class="highlight-card audit-highlight-card">
+            <div class="highlight-label">Key Idea</div>
+            <div class="highlight-title">Highlight</div>
+            <div class="highlight-text">Emphasis block.</div>
+          </div>
+          <div class="code-window audit-code-window">
+            <div class="code-titlebar">
+              <span class="code-dot red"></span>
+              <span class="code-dot yellow"></span>
+              <span class="code-dot green"></span>
+              <span class="code-filename">demo.js</span>
+            </div>
+            <div class="code-body">console.log('focus');</div>
+          </div>
+          <div class="chart-container audit-chart-container">
+            <canvas id="audit-chart"></canvas>
+          </div>
+          <div class="table-wrap audit-table-wrap">
+            <table>
+              <thead><tr><th>Col</th></tr></thead>
+              <tbody><tr><td>Value</td></tr></tbody>
+            </table>
+          </div>
+          <div class="image-block audit-image-block">
+            <img class="slide-image" alt="audit" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">
+          </div>
+          <div class="dual-bar audit-dual-bar">
+            <div class="dual-bar-half left">Before</div>
+            <div class="dual-bar-half right">After</div>
+          </div>
+          <div class="content-block audit-content-block">
+            <p>Lead-in text host.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  return {
+    dom,
+    roots: [
+      { label: 'stat-card', element: window.document.querySelector('.audit-stat-card') },
+      { label: 'timeline-card', element: window.document.querySelector('.audit-timeline-card') },
+      { label: 'highlight-card', element: window.document.querySelector('.audit-highlight-card') },
+      { label: 'code-window', element: window.document.querySelector('.audit-code-window') },
+      { label: 'chart-container', element: window.document.querySelector('.audit-chart-container') },
+      { label: 'table-wrap', element: window.document.querySelector('.audit-table-wrap') },
+      { label: 'image-block', element: window.document.querySelector('.audit-image-block') },
+      { label: 'dual-bar', element: window.document.querySelector('.audit-dual-bar') },
+      { label: 'content-block', element: window.document.querySelector('.audit-content-block') }
+    ]
+  };
+}
+
 function createLateSteppableDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -716,6 +803,27 @@ describe('slides runtime', () => {
   it('widens the standard Zone1 and ordinary-page Zone2 content rails to 1300px', () => {
     assert.match(zone1HeaderSource, /\.slide-header\s*\{[\s\S]*max-width:\s*1300px;/, 'expected the standard Zone1 header rail to widen to 1300px so it stays aligned with the wider ordinary-page content rail');
     assert.match(zone2ContentSource, /\.slide-content\s*\{[\s\S]*max-width:\s*1300px;/, 'expected the ordinary-page Zone2 base container to widen to 1300px so desktop side margins each shrink by about 100px');
+  });
+
+  it('gives passive ordinary component variants a visible base step-active focus style', () => {
+    assert.match(zone2ContentSource, /\.highlight-card\.step-active[\s\S]*transform:\s*translateY\(-2px\)\s*scale\(1\.02\);/, 'expected highlight-card to share the same focus lift once it becomes the current top-level host');
+    assert.match(zone2ContentSource, /\.stat-card\.step-active[\s\S]*transform:\s*translateY\(-2px\)\s*scale\(1\.02\);/, 'expected stat-card to expose the same visible focus lift as its hover state');
+    assert.match(zone2ContentSource, /\.timeline-card\.step-active[\s\S]*transform:\s*translateY\(-2px\)\s*scale\(1\.02\);/, 'expected timeline-card to keep a visible step-active state instead of only reacting on hover');
+    assert.match(zone2ContentSource, /\.code-window\.step-active[\s\S]*transform:\s*translateY\(-2px\);/, 'expected code-window to keep a visible top-level focus lift when keyboard stepping lands on it');
+    assert.match(zone2ContentSource, /\.chart-container\.step-active[\s\S]*box-shadow:\s*0 12px 40px rgba\(0, 0, 0, 0\.3\);/, 'expected chart-container to expose a visible step-active shell instead of hover-only chrome');
+    assert.match(zone2ContentSource, /\.table-wrap\.step-active[\s\S]*box-shadow:\s*0 12px 40px rgba\(0, 0, 0, 0\.3\);/, 'expected table-wrap to keep a visible focus shell when it becomes the active top-level host');
+    assert.match(zone2ContentSource, /\.image-block\.step-active\s+\.slide-image[\s\S]*transform:\s*scale\(1\.01\);/, 'expected image-block to project its focus state onto the slide image itself so keyboard focus remains visible');
+    assert.match(zone2ContentSource, /\.dual-bar\.step-active[\s\S]*box-shadow:/, 'expected dual-bar to expose its own visible focus shell instead of only letting the halves react on hover');
+    assert.match(zone2ContentSource, /\.content-block\.step-active[\s\S]*(box-shadow:|background:|background-color:)/, 'expected content-block to keep a visible keyboard focus treatment because it also participates in the top-level queue');
+  });
+
+  it('extends the xindongfang-green focus halo to passive ordinary component hosts too', () => {
+    assert.match(xindongfangThemeSource, /\.stat-card\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to give stat-card the same radial halo as other focused hosts');
+    assert.match(xindongfangThemeSource, /\.chart-container\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to extend the same halo to chart-container when keyboard focus lands there');
+    assert.match(xindongfangThemeSource, /\.table-wrap\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to extend the same halo to table-wrap too');
+    assert.match(xindongfangThemeSource, /\.highlight-card\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to keep highlight-card visually in the focus system');
+    assert.match(xindongfangThemeSource, /\.timeline-card\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to keep timeline-card visually in the focus system');
+    assert.match(xindongfangThemeSource, /\.code-window\.step-active[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)/, 'expected xindongfang-green to extend the same halo to code-window as well');
   });
 
   it('gives the summary trigger a dedicated step-active lift and green halo before the panel opens', () => {
@@ -933,6 +1041,23 @@ describe('slides runtime', () => {
 
     assert.equal(ordinaryCard.classList.contains('step-active'), true, 'expected clicking inside the passive ordinary component to move top-level focus onto its root');
     assert.equal(interactiveCard.classList.contains('step-active'), false, 'expected the previously focused interactive component to lose top-level focus after the passive click');
+  });
+
+  it('keeps all passive ordinary component variants in the top-level focus queue by DOM order', () => {
+    const { dom, roots } = createPassiveComponentAuditDom();
+    const { window } = dom;
+
+    roots.forEach(({ label, element }, index) => {
+      pressKey(window, 'ArrowDown');
+
+      roots.forEach(({ label: currentLabel, element: currentElement }, currentIndex) => {
+        assert.equal(
+          currentElement.classList.contains('step-active'),
+          currentIndex === index,
+          `expected ${label} focus turn ${index + 1} to leave only ${currentLabel} as the visible top-level host`
+        );
+      });
+    });
   });
 
   it('plays pop only when focus lands on an interactive component root', () => {

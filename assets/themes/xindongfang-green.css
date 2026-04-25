@@ -238,10 +238,15 @@ body {
 
 /* Hover: 所有配套卡片及容器统一发光放射效果 */
 .stat-card:hover,
+.stat-card.step-active,
 .chart-container:hover,
+.chart-container.step-active,
 .table-wrap:hover,
+.table-wrap.step-active,
 .highlight-card:hover,
-.timeline-card:hover {
+.highlight-card.step-active,
+.timeline-card:hover,
+.timeline-card.step-active {
   border-color: rgba(0, 163, 85, 0.12) !important;
   box-shadow:
     0 0 16px  6px rgba(0, 163, 85, 0.28),
@@ -419,6 +424,17 @@ body {
 
 .code-window:hover {
   box-shadow: 0 12px 56px rgba(0, 163, 85, 0.14) !important;
+  transform: translateY(-2px);
+}
+
+/* 代码窗同样会成为普通页一级焦点宿主。
+   主题层要补上与其他玻璃卡一致的放射光晕，否则深色代码窗会继续吞掉基础 step-active 的弱阴影。 */
+.code-window.step-active {
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
   transform: translateY(-2px);
 }
 
