@@ -63,6 +63,16 @@
   color: var(--accent-blue);
 }
 
+/* 一级步进现在会先把焦点落到灯泡按钮本体，再执行总结面板展开。
+   这里必须给 .step-active 单独视觉态，避免键盘用户在“先聚焦、后展开”这一步里看不到当前焦点。 */
+.summary-trigger.step-active {
+  transform: translateX(-50%) translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15),
+    0 0 16px rgba(var(--brand-primary-rgb, 76, 175, 80), 0.25);
+  border-color: var(--border-hover);
+  color: var(--context-color, var(--brand-primary, var(--accent-blue)));
+}
+
 .summary-trigger:active {
   transform: translateX(-50%) translateY(0);
 }

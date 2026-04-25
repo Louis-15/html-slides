@@ -264,6 +264,18 @@ body {
     0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
 }
 
+/* 总结按钮在“先聚焦、后展开”的第一步也要继承同一套绿色放射焦点语言，
+   否则用户会只听到 pop 音效，却看不到灯泡按钮已成为当前一级焦点。 */
+.summary-trigger.step-active {
+  transform: translateX(-50%) translateY(-3px) scale(1.02) !important;
+  color: rgb(0, 163, 85) !important;
+  border-color: rgba(0, 163, 85, 0.12) !important;
+  box-shadow:
+    0 0 16px  6px rgba(0, 163, 85, 0.28),
+    0 0 44px 16px rgba(0, 163, 85, 0.16),
+    0 0 96px 32px rgba(0, 163, 85, 0.08) !important;
+}
+
 .flip-card.step-active .flip-front,
 .flip-card.step-active .flip-back {
   border-color: rgba(0, 163, 85, 0.12) !important;

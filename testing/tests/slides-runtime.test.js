@@ -12,11 +12,15 @@ const componentsPath = path.join(projectRoot, 'assets', 'components.css');
 const quizRuntimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
 const zone1HeaderPath = path.join(projectRoot, 'assets', 'zones', 'zone1-header.css');
 const zone2ContentPath = path.join(projectRoot, 'assets', 'zones', 'zone2-content.css');
+const zone3SummaryPath = path.join(projectRoot, 'assets', 'zones', 'zone3-summary.css');
+const xindongfangThemePath = path.join(projectRoot, 'assets', 'themes', 'xindongfang-green.css');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const componentsSource = fs.readFileSync(componentsPath, 'utf-8');
 const quizRuntimeSource = fs.readFileSync(quizRuntimePath, 'utf-8');
 const zone1HeaderSource = fs.readFileSync(zone1HeaderPath, 'utf-8');
 const zone2ContentSource = fs.readFileSync(zone2ContentPath, 'utf-8');
+const zone3SummarySource = fs.readFileSync(zone3SummaryPath, 'utf-8');
+const xindongfangThemeSource = fs.readFileSync(xindongfangThemePath, 'utf-8');
 
 function pressKey(window, key) {
   window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
@@ -712,6 +716,11 @@ describe('slides runtime', () => {
   it('widens the standard Zone1 and ordinary-page Zone2 content rails to 1300px', () => {
     assert.match(zone1HeaderSource, /\.slide-header\s*\{[\s\S]*max-width:\s*1300px;/, 'expected the standard Zone1 header rail to widen to 1300px so it stays aligned with the wider ordinary-page content rail');
     assert.match(zone2ContentSource, /\.slide-content\s*\{[\s\S]*max-width:\s*1300px;/, 'expected the ordinary-page Zone2 base container to widen to 1300px so desktop side margins each shrink by about 100px');
+  });
+
+  it('gives the summary trigger a dedicated step-active lift and green halo before the panel opens', () => {
+    assert.match(zone3SummarySource, /\.summary-trigger\.step-active\s*\{[\s\S]*transform:\s*translateX\(-50%\)\s*translateY\(-3px\)\s*scale\(1\.02\);/, 'expected the summary trigger to gain its own top-level focus lift state before the summary panel opens');
+    assert.match(xindongfangThemeSource, /\.summary-trigger\.step-active\s*\{[\s\S]*box-shadow:\s*[\s\S]*0 0 16px\s+6px rgba\(0, 163, 85, 0\.28\)[\s\S]*0 0 44px 16px rgba\(0, 163, 85, 0\.16\)[\s\S]*0 0 96px 32px rgba\(0, 163, 85, 0\.08\)\s*!important;/, 'expected the summary trigger focus state to reuse the same green radial halo as other steppable interactive hosts');
   });
 
   it('exposes a way to sync manual component activation before fragment stepping', () => {
