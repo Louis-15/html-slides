@@ -199,4 +199,23 @@ describe('audio runtime cues', () => {
 
     assert.deepEqual(presetCalls, ['fragment-swoosh', 'fragment-swoosh-back'], 'expected fragment step audio to use whoosh.mp3 for forward and whoosh_back.mp3 for backward');
   });
+
+  it('maps flip and collapse forward actions to the dedicated interaction cue files', () => {
+    const { window, createdAudios, createdGains } = createAudioRuntimeDom();
+
+    const flipCue = window.AudioRuntime.getCueDefinition('flip-forward');
+    const collapseCue = window.AudioRuntime.getCueDefinition('collapse-expand');
+
+    assert.match(flipCue.src, /\/sound\/flip\.mp3$/, 'expected flip-card forward interaction to use flip.mp3');
+    assert.equal(flipCue.gain, 1, 'expected flip-card forward interaction to keep the authored source volume unless the user later requests extra gain');
+    assert.match(collapseCue.src, /\/sound\/drawer\.mp3$/, 'expected collapse-card expand interaction to use drawer.mp3');
+    assert.equal(collapseCue.gain, 1, 'expected collapse-card expand interaction to keep the authored source volume unless the user later requests extra gain');
+
+    assert.equal(window.AudioRuntime.playGlobalCue('flip-forward'), true, 'expected the flip-card forward interaction cue to be playable through the global cue bus');
+    assert.equal(window.AudioRuntime.playGlobalCue('collapse-expand'), true, 'expected the collapse-card expand cue to be playable through the global cue bus');
+
+    assert.match(createdAudios[3].src, /\/sound\/flip\.mp3$/, 'expected first flip interaction playback to instantiate flip.mp3');
+    assert.match(createdAudios[4].src, /\/sound\/drawer\.mp3$/, 'expected first collapse expand playback to instantiate drawer.mp3');
+    assert.deepEqual(createdGains.map((gainNode) => gainNode.gain.value), [2, 1, 1.5, 1, 1], 'expected the new interaction cues to use neutral 1x gain while preserving the existing hot cue gains');
+  });
 });

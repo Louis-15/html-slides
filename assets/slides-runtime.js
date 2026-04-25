@@ -223,12 +223,27 @@ function autoTagSteppables() {
      hasNextStep() — 该组件是否还有下一步（预留给"一个组件多步"场景，如长文批注） */
 const StepStrategies = {
   flip: {
-    forward(el) { el.classList.add('flipped'); },
+    forward(el) {
+      /* flip 的正向互动这轮已经从通用 pop 中拆出来，
+         只有真正把卡片翻到背面时才播放专属 flip-forward；
+         反向撤销保持静音，因此不要在 backward 里补声。 */
+      if (!el.classList.contains('flipped')) {
+        playGlobalCue('flip-forward');
+      }
+      el.classList.add('flipped');
+    },
     backward(el) { el.classList.remove('flipped'); },
     hasNextStep(el) { return !el.classList.contains('flipped'); }
   },
   collapse: {
-    forward(el) { el.classList.add('expanded'); },
+    forward(el) {
+      /* drawer cue 只服务“正向展开”这一步。
+         收起属于反向撤销，这轮已明确要求静音，因此 backward 不补声。 */
+      if (!el.classList.contains('expanded')) {
+        playGlobalCue('collapse-expand');
+      }
+      el.classList.add('expanded');
+    },
     backward(el) { el.classList.remove('expanded'); },
     hasNextStep(el) { return !el.classList.contains('expanded'); }
   },
@@ -318,15 +333,81 @@ function runTopLevelBackward(strategy, el) {
   return false;
 }
 
+function isOrdinarySlotContainer(el) {
+  return !!(el && el.classList && (
+    el.classList.contains('col') ||
+    el.classList.contains('cell') ||
+    el.classList.contains('row')
+  ));
+}
+
+function isOrdinaryComponentRoot(el) {
+  if (!el || el.nodeType !== 1) return false;
+
+  /* 这里刻意采用“结构约定”而不是组件白名单：
+     - 未来 Zone2 继续新增组件时，只要作者仍然把“组件根元素”直接放进 slide-content 插槽，
+       一级焦点队列就会自动纳入它；
+     - 同时又按本轮设计采用严格模式，裸原生标签默认不算组件根，
+       因此至少要求它是一个带 class 的显式包装块。 */
+  if (!el.classList || el.classList.length === 0) return false;
+  if (isOrdinarySlotContainer(el)) return false;
+  if (el.classList.contains('summary-panel')) return false;
+  return true;
+}
+
+function collectOrdinaryFocusableRoots(slide) {
+  if (!slide) return [];
+
+  const roots = [];
+
+  slide.querySelectorAll('.slide-content').forEach((slideContent) => {
+    Array.from(slideContent.children).forEach((child) => {
+      if (isOrdinarySlotContainer(child)) {
+        Array.from(child.children).forEach((slotChild) => {
+          if (isOrdinaryComponentRoot(slotChild)) roots.push(slotChild);
+        });
+        return;
+      }
+
+      if (isOrdinaryComponentRoot(child)) {
+        roots.push(child);
+      }
+    });
+  });
+
+  return roots;
+}
+
+function sortElementsByDocumentOrder(elements) {
+  return elements.sort((a, b) => {
+    if (a === b) return 0;
+    const position = a.compareDocumentPosition(b);
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
+  });
+}
+
 /* 构建指定页的交互队列，并恢复记忆的步进位置。
-  这里只收显式 data-steppable。
-  普通页富文本运行时会把“真正 owning fragment 的 ordinary [data-edit-id] 根块”晚一点自动打上
-  data-steppable，再通过下面暴露的 refresh hook 把这些 root 刷进当前页队列。
-  这样上下键的一级步进单位终于能落到组件根块，而不是错误地把整张 slide 当成二级 reveal 宿主。 */
+  新合同把一级焦点单位改成“组件根”，而不是“只有声明了 data-steppable 的少数互动体”。
+  因此这里要同时兼容两类来源：
+  1. 普通页 Zone2 里按插槽结构自动发现的组件根；
+  2. quiz / page-richtext / 未来扩展显式注册的 data-steppable 宿主。
+  最后再按文档顺序去重合并，避免同一个互动组件既被结构发现、又被 data-steppable 重复入队。 */
 function buildInteractionQueue(slideIndex) {
-  interactionQueue = Array.from(
-    slides[slideIndex].querySelectorAll('[data-steppable]')
-  );
+  const slide = slides[slideIndex];
+  const seen = new Set();
+  const queueCandidates = [
+    ...collectOrdinaryFocusableRoots(slide),
+    ...Array.from(slide.querySelectorAll('[data-steppable]'))
+  ];
+
+  interactionQueue = sortElementsByDocumentOrder(queueCandidates).filter((el) => {
+    if (!el || seen.has(el)) return false;
+    seen.add(el);
+    return true;
+  });
+
   stepIndex = (slideIndex in slideStepState) ? slideStepState[slideIndex] : -1;
   updateStepActiveClass();
 }
@@ -335,6 +416,43 @@ function getFocusedInteractionElement() {
   return (stepIndex >= 0 && stepIndex < interactionQueue.length)
     ? interactionQueue[stepIndex]
     : null;
+}
+
+function findInteractionQueueElement(target, currentSlide) {
+  if (!target) return null;
+
+  /* 键盘路径已经改成“所有组件根共用一级队列”，
+     因此鼠标路径也不能继续只靠 data-steppable 向上找。
+     这里统一改成：只要点击命中了当前页 interactionQueue 中任一组件根的后代，
+     就把那一个队列元素解析出来，保证 passive / interactive / fragment 宿主都走同一套焦点合同。 */
+  let cursor = (target.nodeType === 1) ? target : target.parentElement;
+  while (cursor && cursor !== currentSlide) {
+    if (interactionQueue.includes(cursor)) {
+      return cursor;
+    }
+    cursor = cursor.parentElement;
+  }
+
+  return null;
+}
+
+function isInteractiveQueueElement(el) {
+  if (!el) return false;
+
+  /* pop 的新语义是“提醒当前组件可互动”，不是“所有一级焦点切换的通用提示音”。
+     因此这里只看目标宿主是否属于互动体：
+     - 显式 data-steppable 的宿主，包括 flip / collapse / summary / page-richtext host；
+     - 以及未来通过 strategy 扩展出来的互动组件。 */
+  if (el.hasAttribute && el.hasAttribute('data-steppable')) return true;
+
+  const strategy = getStrategyByElement(el);
+  return !!(strategy && (
+    typeof strategy.forwardTopLevel === 'function' ||
+    typeof strategy.forward === 'function' ||
+    typeof strategy.stepFragment === 'function' ||
+    typeof strategy.canStepTopLevelForward === 'function' ||
+    typeof strategy.hasNextStep === 'function'
+  ));
 }
 
 function setInteractionFocusIndex(nextIndex, options) {
@@ -349,9 +467,16 @@ function setInteractionFocusIndex(nextIndex, options) {
   /* 这里的 cue 只服务“一级焦点组件真的换了”这一件事：
      - 上下键从一个宿主跳到另一个宿主时播；
      - 鼠标点击把当前焦点切到另一个宿主时播；
-     - 同一宿主内部的翻转、抽拉、fragment reveal 这类组件自带互动不播。
-     因此必须要求前后宿主都存在且不是同一个元素，才能命中 focus-shift。 */
-  if (!shouldMuteFocusCue && previousFocusedElement && nextFocusedElement && previousFocusedElement !== nextFocusedElement) {
+     - 同一宿主内部的翻转、抽拉、fragment reveal 这类组件自带互动不播；
+     - passive 组件只负责承载焦点，不再发出 pop，避免把“可互动提示音”误播成普通浏览音。
+     因此除了前后宿主真的发生切换，还必须要求目标宿主本身是互动体。 */
+  if (
+    !shouldMuteFocusCue &&
+    previousFocusedElement &&
+    nextFocusedElement &&
+    previousFocusedElement !== nextFocusedElement &&
+    isInteractiveQueueElement(nextFocusedElement)
+  ) {
     playGlobalCue('focus-shift');
   }
 
@@ -362,6 +487,40 @@ function shouldSilenceFocusCueForSummaryOpen(el) {
   if (!el || el.getAttribute('data-steppable') !== 'summary') return false;
   const panel = el.closest('.slide') && el.closest('.slide').querySelector('.summary-panel');
   return !!(panel && !panel.classList.contains('visible'));
+}
+
+function getDirectInteractionClickAction(target, steppable) {
+  if (!target || !steppable || !target.closest) return null;
+
+  const stepType = steppable.getAttribute('data-steppable');
+
+  if (stepType === 'flip' && target.closest('.flip-action-btn')) {
+    return steppable.classList.contains('flipped') ? 'backward' : 'forward';
+  }
+
+  if (stepType === 'collapse' && target.closest('.collapse-action-btn')) {
+    return steppable.classList.contains('expanded') ? 'backward' : 'forward';
+  }
+
+  if (stepType === 'summary' && target.closest('.summary-trigger')) {
+    return shouldSilenceFocusCueForSummaryOpen(steppable) ? 'forward' : 'backward';
+  }
+
+  return null;
+}
+
+function shouldAutoRunForwardOnFirstFocus(el) {
+  if (!el) return false;
+
+  /* 这轮 redesign 明确排除了 quiz 页面。
+     因此 quiz-annotation 继续保留旧语义：
+     第一次 ArrowDown 落到宿主时就立刻推进到第一个 bubble，
+     不能套用普通页“先聚焦、后互动”的两步模型。 */
+  return isQuizAnnotationSlide(current) && !!(el.closest && el.closest('.quiz-annotation'));
+}
+
+function usesFocusLandingModel(el) {
+  return !!el && !shouldAutoRunForwardOnFirstFocus(el);
 }
 
 /* 保存当前页的步进位置 */
@@ -387,16 +546,20 @@ function stepForward() {
   // 当前组件步骤耗尽，切到下一个组件
   if (interactionQueue.length === 0 || stepIndex >= interactionQueue.length - 1) return false;
   const nextIndex = stepIndex + 1;
-  const nextElement = interactionQueue[nextIndex];
-  setInteractionFocusIndex(nextIndex, {
-    /* summary 这一步的主语是“弹出总结面板”，不是“切到另一个普通宿主”。
-       如果这里先播通用 focus-shift，再由 summary.forward 播专属收银机音，
-       实际听感就会变成双响。因此只要下一步会打开 summary-panel，就静音掉通用 pop。 */
-    silentFocusCue: shouldSilenceFocusCueForSummaryOpen(nextElement)
-  });
-  const el = interactionQueue[stepIndex];
-  const strategy = getStrategyByElement(el);
-  runTopLevelForward(strategy, el);
+
+  /* 这轮 redesign 把“切到组件根”和“执行组件动作”严格拆成两步：
+     - ArrowDown 第一次只负责把一级焦点落到下一个组件；
+     - 只有当当前组件已经持有焦点时，再次 ArrowDown 才交给该组件自己的 forward。
+     这样普通组件、互动组件和只带隐藏式标注的宿主终于共用同一条一级步进语义。
+     例外只有 quiz 页面：它不在本轮 redesign 范围内，仍保留旧的一步推进。 */
+  setInteractionFocusIndex(nextIndex);
+
+  if (shouldAutoRunForwardOnFirstFocus(interactionQueue[stepIndex])) {
+    const el = interactionQueue[stepIndex];
+    const strategy = getStrategyByElement(el);
+    runTopLevelForward(strategy, el);
+  }
+
   saveStepState();
   return true;
 }
@@ -405,17 +568,38 @@ function stepForward() {
    多步组件在所有内部步骤回退完毕后才切回上一个组件。 */
 function stepBackward() {
   if (stepIndex < 0) return false;
+
   const el = interactionQueue[stepIndex];
   const strategy = getStrategyByElement(el);
-  if (!runTopLevelBackward(strategy, el)) return false;
-  // 检查当前组件是否已经完全回退（无更多内部步骤可回退）
-  // 对于多步组件，backward 会逐步回退，只有全部回退完才减 stepIndex
-  if (hasExplicitBackwardState(strategy) ? canStepTopLevelBackward(strategy, el) : false) {
-    // 还有内部步骤（backward 后仍有状态），保持在当前组件
-    updateStepActiveClass();
+  const hadBackwardState = hasExplicitBackwardState(strategy) ? canStepTopLevelBackward(strategy, el) : false;
+
+  /* 新合同下，普通页 interactive host 的 ArrowUp 要分成两步：
+     1. 先撤销当前宿主的互动状态，但焦点仍留在当前宿主；
+     2. 再下一次 ArrowUp 才离开该宿主。
+     只有 quiz 页面保留旧语义，因此这里先看“回退前是否真的有互动状态”，
+     再决定是留在当前宿主，还是按旧规则直接退到前一个宿主。 */
+  if (hadBackwardState) {
+    if (!runTopLevelBackward(strategy, el)) return false;
+
+    if (usesFocusLandingModel(el)) {
+      updateStepActiveClass();
+      saveStepState();
+      return true;
+    }
+
+    if (hasExplicitBackwardState(strategy) ? canStepTopLevelBackward(strategy, el) : false) {
+      updateStepActiveClass();
+      saveStepState();
+      return true;
+    }
+
+    setInteractionFocusIndex(stepIndex - 1);
     saveStepState();
     return true;
   }
+
+  if (stepIndex <= 0) return false;
+
   setInteractionFocusIndex(stepIndex - 1);
   saveStepState();
   return true;
@@ -475,9 +659,7 @@ window.activateInteractionStepForElement = function(el, options) {
   const currentSlide = slides[current];
   if (!currentSlide) return false;
 
-  const target = el.matches && el.matches('[data-steppable]')
-    ? el
-    : (el.closest ? el.closest('[data-steppable]') : null);
+  const target = findInteractionQueueElement(el, currentSlide);
 
   if (!target || !currentSlide.contains(target)) return false;
 
@@ -489,12 +671,10 @@ window.activateInteractionStepForElement = function(el, options) {
   return true;
 };
 
-/* 统一处理“鼠标点击组件就切换一级焦点”的运行时入口。
-   这里故意只做焦点同步，不额外触发组件的一级 forward：
-   - 用户点击组件的意图是把左右键后续的二级步进作用域切到这个组件；
-   - 如果顺手再帮它走一步一级 reveal，就会把“切换焦点”和“执行下一步”混成一次操作，导致行为过重。
-   因此点击命中当前 active slide 内任意 data-steppable 宿主时，只复用现有 activateInteractionStepForElement。
-   这样 quiz、普通页富文本和其他可步进组件都能共享同一套手动切焦点合同。 */
+/* 统一处理鼠标点击时的一级焦点与按钮互动。
+  普通组件主体点击仍然只负责切焦点；
+  但 flip / collapse / summary 的互动按钮要走“静默切焦点 + 立即执行 forward/backward”的路径，
+  这样才能满足“直接点按钮可立即互动、且不额外夹一个 pop”的新合同。 */
 document.addEventListener('click', (e) => {
   const target = e.target;
   if (!target || !target.closest) return;
@@ -502,30 +682,32 @@ document.addEventListener('click', (e) => {
   const currentSlide = slides[current];
   if (!currentSlide) return;
 
-  const steppable = target.closest('[data-steppable]');
+  const steppable = findInteractionQueueElement(target, currentSlide);
   if (!steppable || !currentSlide.contains(steppable)) return;
+
+  const directInteractionAction = getDirectInteractionClickAction(target, steppable);
 
   /* quiz 气泡点击本来就有自己的“气泡焦点切换”提示音。
      这里如果再把组件级 focus-shift 也一并播掉，会把一次点击放大成双响。
-     因此命中 qa-note-bubble 时只同步 slides-runtime 的一级焦点，不重复播组件级 cue。 */
-  const summaryOpensOnClick = shouldSilenceFocusCueForSummaryOpen(steppable);
-  const silentFocusCue = !!target.closest('.qa-note-bubble') || summaryOpensOnClick;
+     互动按钮点击也要静默切焦点，因为它们自己会在后续 forward/backward 中发专属音效。 */
+  const silentFocusCue = !!target.closest('.qa-note-bubble') || !!directInteractionAction;
   window.activateInteractionStepForElement(steppable, { silentFocusCue });
 
-  /* summary-trigger 在“面板当前隐藏”的前提下，鼠标点击的意图就是打开它。
-     用户又要求这次必须“先放音，再出现组件”，所以这里改成在 capture 阶段直接接管这一下：
-     - 静默切一级焦点，避免通用 pop 干扰；
-     - 阻断后续 inline toggle，避免再把面板关回去；
-     - 直接复用 summary.forward，让 cash_register 先响，再把 panel 设为 visible。 */
-  if (summaryOpensOnClick) {
+  if (directInteractionAction) {
     e.preventDefault();
     e.stopImmediatePropagation();
 
     const strategy = getStrategyByElement(steppable);
     if (strategy) {
-      runTopLevelForward(strategy, steppable);
+      if (directInteractionAction === 'forward') {
+        runTopLevelForward(strategy, steppable);
+      } else {
+        runTopLevelBackward(strategy, steppable);
+      }
       saveStepState();
     }
+
+    return;
   }
 }, true);
 

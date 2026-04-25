@@ -283,18 +283,25 @@ describe('page richtext annotation runtime', () => {
     const { window } = dom;
     const firstSlide = window.document.querySelector('.slide[data-slide="1"]');
     const secondSlide = window.document.querySelector('.slide[data-slide="2"]');
+    const leadInBlock = window.document.querySelector('.content-block');
     const summaryTrigger = window.document.querySelector('.summary-trigger');
     const summaryPanel = window.document.querySelector('.summary-panel');
     const summaryRoot = window.document.querySelector('[data-edit-id="summary-root"]');
     const firstFragment = window.document.querySelector('.summary-fragment-one');
 
     pressKey(window, 'ArrowDown');
-    assert.ok(summaryTrigger.classList.contains('step-active'), 'expected the first ArrowDown to enter the summary-trigger top-level host');
+    assert.ok(leadInBlock.classList.contains('step-active'), 'expected the lead-in content block to remain the first ordinary top-level focus item by DOM order');
+
+    pressKey(window, 'ArrowDown');
+    assert.ok(summaryTrigger.classList.contains('step-active'), 'expected the next ArrowDown to move focus onto the summary-trigger top-level host');
     assert.equal(summaryRoot.classList.contains('step-active'), false, 'expected the summary-panel ordinary root not to become its own top-level step item');
-    assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary top-level step to open the summary panel on first ArrowDown');
+    assert.equal(summaryPanel.classList.contains('visible'), false, 'expected the focus step onto summary-trigger not to open the summary panel yet');
+
+    pressKey(window, 'ArrowDown');
+    assert.ok(summaryPanel.classList.contains('visible'), 'expected the following ArrowDown to open the summary panel after summary-trigger is already focused');
 
     pressKey(window, 'ArrowRight');
-    assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected ArrowRight to reveal the summary-panel ordinary fragment immediately after summary-trigger takes focus');
+    assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected ArrowRight to reveal the summary-panel ordinary fragment after the summary trigger has already opened the panel');
 
     pressKey(window, 'ArrowDown');
     assert.ok(secondSlide.classList.contains('active'), 'expected the next ArrowDown to flip to the next slide once the summary top-level step is exhausted');

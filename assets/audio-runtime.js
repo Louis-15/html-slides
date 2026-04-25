@@ -43,6 +43,22 @@
       gain: 1.5,
       startTime: 0.471
     }),
+    'flip-forward': Object.freeze({
+      type: 'file',
+      /* 这轮把翻转卡片的正向互动从通用 pop 中拆出来，
+         单独走 flip.mp3。当前用户只指定了素材，没有要求额外增益，
+         因此先保持 1x，避免在未实测前把翻转声做得过重。 */
+      src: resolveSoundUrl('flip.mp3'),
+      gain: 1
+    }),
+    'collapse-expand': Object.freeze({
+      type: 'file',
+      /* 折叠卡片的“展开”动作单独走 drawer.mp3。
+         反向收起这轮明确要求静音，因此 cue 名称直接按 expand 命名，
+         避免后续调用方误把它当成双向 toggle 音效。 */
+      src: resolveSoundUrl('drawer.mp3'),
+      gain: 1
+    }),
     'fragment-swoosh': Object.freeze({
       type: 'file',
       src: resolveSoundUrl('whoosh.mp3'),

@@ -427,6 +427,94 @@ function createSummaryFocusTransitionDom() {
   return dom;
 }
 
+function createOrdinaryComponentQueueDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="slide-content layout-single">
+          <div class="card ordinary-card">
+            <div class="card-title">Passive card</div>
+          </div>
+          <div class="flip-card interactive-card">
+            <div class="flip-front">Front</div>
+            <div class="flip-back">Back</div>
+            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')">Flip</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  return {
+    dom,
+    ordinaryCard: window.document.querySelector('.ordinary-card'),
+    interactiveCard: window.document.querySelector('.interactive-card')
+  };
+}
+
+function createCollapseComponentQueueDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="slide-content layout-single">
+          <div class="card ordinary-card">
+            <div class="card-title">Passive card</div>
+          </div>
+          <div class="collapse-card interactive-card">
+            <div class="collapse-header">Header</div>
+            <div class="collapse-body">Body</div>
+            <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')">Toggle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  return {
+    dom,
+    ordinaryCard: window.document.querySelector('.ordinary-card'),
+    interactiveCard: window.document.querySelector('.interactive-card')
+  };
+}
+
 function createLateSteppableDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -565,8 +653,12 @@ describe('slides runtime', () => {
     const { window } = dom;
 
     pressKey(window, 'ArrowDown');
-    assert.equal(host.dataset.focusBubble, 'note-01', 'expected ArrowDown to activate the first top-level step');
-    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected top-level stepping not to flip the slide early');
+    assert.equal(host.classList.contains('step-active'), true, 'expected the first ArrowDown to move top-level focus onto the interactive host before executing its own steps');
+    assert.equal(host.dataset.focusBubble, undefined, 'expected the focus-only landing step not to consume the host\'s first internal top-level step yet');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected the focus-only landing step not to flip the slide early');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(host.dataset.focusBubble, 'note-01', 'expected the second ArrowDown to activate the host\'s first internal top-level step after focus has landed');
 
     pressKey(window, 'ArrowDown');
     assert.equal(host.dataset.focusBubble, 'note-02', 'expected ArrowDown to continue top-level stepping inside the current slide');
@@ -579,6 +671,7 @@ describe('slides runtime', () => {
     const { dom, host } = createSteppingDom();
     const { window } = dom;
 
+    pressKey(window, 'ArrowDown');
     pressKey(window, 'ArrowDown');
     pressKey(window, 'ArrowRight');
     assert.equal(host.dataset.visibleFragments, 'frag-01', 'expected ArrowRight to reveal the first fragment of the focused item');
@@ -707,11 +800,11 @@ describe('slides runtime', () => {
     };
 
     pressKey(window, 'ArrowDown');
-    pressKey(window, 'ArrowRight');
+    pressKey(window, 'ArrowDown');
     pressKey(window, 'ArrowDown');
 
     assert.deepEqual(calls, ['summary-open', 'page-turn'], 'expected summary popup to use cash_register.mp3 exactly when the summary panel opens, then fall back to the normal page-turn cue on the later slide transition');
-    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the first ArrowDown to open the summary panel before the later page turn');
+    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the second ArrowDown to open the summary panel before the later page turn');
   });
 
   it('plays summary-open before ArrowDown makes the summary panel visible', () => {
@@ -728,13 +821,14 @@ describe('slides runtime', () => {
     };
 
     pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
 
     assert.deepEqual(calls, [{ name: 'summary-open', visibleAtCueTime: false }], 'expected ArrowDown to fire cash_register before the summary panel is visually shown');
     assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary panel to become visible after the cue has been emitted');
   });
 
-  it('suppresses the generic focus-shift cue when ArrowDown lands on summary and opens it', () => {
-    const dom = createSummaryFocusTransitionDom();
+  it('plays only summary-open when ArrowDown opens an already focused summary component', () => {
+    const dom = createSummarySteppingDom();
     const { window } = dom;
     const calls = [];
 
@@ -750,8 +844,8 @@ describe('slides runtime', () => {
 
     pressKey(window, 'ArrowDown');
 
-    assert.deepEqual(calls, ['summary-open'], 'expected entering summary via ArrowDown to replace the generic pop cue with the dedicated cash_register cue');
-    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the second ArrowDown to open the summary panel');
+    assert.deepEqual(calls, ['summary-open'], 'expected the open step on an already focused summary host to emit only the dedicated cash_register cue');
+    assert.ok(window.document.querySelector('.summary-panel').classList.contains('visible'), 'expected the second ArrowDown to open the summary panel after the earlier focus-only step');
   });
 
   it('plays the summary-open cue when clicking the summary trigger to open the panel', () => {
@@ -791,11 +885,190 @@ describe('slides runtime', () => {
     assert.ok(summaryPanel.classList.contains('visible'), 'expected the summary panel to become visible after the click cue fires');
   });
 
+  it('moves focus across ordinary component roots before triggering flip-card interaction', () => {
+    const { dom, ordinaryCard, interactiveCard } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+
+    /* 这个夹具故意把“纯展示组件”和“带按钮的互动组件”放在同一条一级队列里，
+       用来锁定新合同：ArrowDown 先走组件根焦点，再在后续一步里执行互动。 */
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(ordinaryCard.classList.contains('step-active'), true, 'expected the first ArrowDown to focus the passive ordinary component root');
+    assert.equal(interactiveCard.classList.contains('step-active'), false, 'expected the interactive component to stay unfocused until the next top-level step');
+    assert.equal(interactiveCard.classList.contains('flipped'), false, 'expected focusing the passive component not to pre-trigger the later flip-card interaction');
+
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(ordinaryCard.classList.contains('step-active'), false, 'expected the passive component to relinquish focus when ArrowDown moves to the next component root');
+    assert.equal(interactiveCard.classList.contains('step-active'), true, 'expected the second ArrowDown to move focus onto the flip-card root');
+    assert.equal(interactiveCard.classList.contains('flipped'), false, 'expected the first focus step onto the flip-card to stay in focus-only state');
+
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(interactiveCard.classList.contains('flipped'), true, 'expected the later ArrowDown to execute the flip-card interaction only after focus is already on that component');
+  });
+
+  it('lets a mouse click move focus onto a passive ordinary component root', () => {
+    const { dom, ordinaryCard, interactiveCard } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+
+    /* 这里专门覆盖“普通组件也可用左键切焦点”的合同。
+       先用键盘把焦点移到互动组件，再点击纯展示卡片，
+       这样可以明确证明点击命中 passive root 时也会回写一级焦点。 */
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(interactiveCard.classList.contains('step-active'), true, 'expected the keyboard path to place focus on the interactive component before the click handoff');
+
+    clickElement(window, ordinaryCard.querySelector('.card-title'));
+
+    assert.equal(ordinaryCard.classList.contains('step-active'), true, 'expected clicking inside the passive ordinary component to move top-level focus onto its root');
+    assert.equal(interactiveCard.classList.contains('step-active'), false, 'expected the previously focused interactive component to lose top-level focus after the passive click');
+  });
+
+  it('plays pop only when focus lands on an interactive component root', () => {
+    const { dom } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    /* 这个合同把 pop 的语义从“所有一级焦点切换”收紧成“提醒当前组件可互动”。
+       因此 passive 组件的落焦与回焦都应保持静音，只有落到 interactive root 时才发 pop。 */
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowUp');
+
+    assert.deepEqual(calls, ['focus-shift'], 'expected pop.mp3 to fire only when focus lands on the interactive component, while passive focus transitions stay silent');
+  });
+
+  it('plays the dedicated flip cue only when ArrowDown executes the flip-card forward action', () => {
+    const { dom, interactiveCard } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    /* 这条合同专门区分“落焦提示”和“正向互动音”：
+       - 第一次落到 flip-card 时只播 pop；
+       - 真正执行翻转的那一步才播 flip-forward；
+       - 两者不能合并成同一声。 */
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+
+    assert.deepEqual(calls, ['focus-shift', 'flip-forward'], 'expected ArrowDown to emit pop on interactive focus and flip-forward only on the later flip action step');
+    assert.equal(interactiveCard.classList.contains('flipped'), true, 'expected the third ArrowDown to actually flip the card after the earlier focus-only step');
+  });
+
+  it('uses a silent two-step ArrowUp path for flip-card rollback before leaving focus', () => {
+    const { dom, ordinaryCard, interactiveCard } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+    calls.length = 0;
+
+    /* 反向语义按已确认的合同走对称两步：
+       第一次 ArrowUp 只撤销翻转且保持焦点；
+       第二次 ArrowUp 才离开当前组件，而且 reverse 全程静音。 */
+    pressKey(window, 'ArrowUp');
+
+    assert.equal(interactiveCard.classList.contains('flipped'), false, 'expected the first ArrowUp to roll back the flip state');
+    assert.equal(interactiveCard.classList.contains('step-active'), true, 'expected the first ArrowUp to keep top-level focus on the current flip-card after rollback');
+    assert.equal(ordinaryCard.classList.contains('step-active'), false, 'expected the previous passive component to stay unfocused until the second ArrowUp');
+    assert.deepEqual(calls, [], 'expected reverse rollback to stay silent instead of replaying pop or flip audio');
+
+    pressKey(window, 'ArrowUp');
+
+    assert.equal(interactiveCard.classList.contains('step-active'), false, 'expected the second ArrowUp to finally leave the flip-card focus');
+    assert.equal(ordinaryCard.classList.contains('step-active'), true, 'expected the second ArrowUp to move focus back to the previous passive component');
+    assert.deepEqual(calls, [], 'expected the backward focus handoff to remain silent when it lands on a passive component');
+  });
+
+  it('plays the dedicated drawer cue only when ArrowDown executes the collapse-card expand action', () => {
+    const { dom, interactiveCard } = createCollapseComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+
+    assert.deepEqual(calls, ['focus-shift', 'collapse-expand'], 'expected ArrowDown to emit pop on collapse-card focus and collapse-expand only on the later expand action step');
+    assert.equal(interactiveCard.classList.contains('expanded'), true, 'expected the third ArrowDown to expand the collapse-card after the earlier focus-only step');
+  });
+
+  it('lets clicking the flip action button focus and interact immediately without a pop cue', () => {
+    const { dom, interactiveCard } = createOrdinaryComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    clickElement(window, interactiveCard.querySelector('.flip-action-btn'));
+
+    assert.equal(interactiveCard.classList.contains('step-active'), true, 'expected clicking the flip button to move top-level focus onto the flip-card root');
+    assert.equal(interactiveCard.classList.contains('flipped'), true, 'expected clicking the flip button to execute the flip interaction immediately even when the card was previously unfocused');
+    assert.deepEqual(calls, ['flip-forward'], 'expected direct button interaction to skip pop and play only the dedicated flip-forward cue');
+  });
+
+  it('lets clicking the collapse action button focus and expand immediately without a pop cue', () => {
+    const { dom, interactiveCard } = createCollapseComponentQueueDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    clickElement(window, interactiveCard.querySelector('.collapse-action-btn'));
+
+    assert.equal(interactiveCard.classList.contains('step-active'), true, 'expected clicking the collapse button to move top-level focus onto the collapse-card root');
+    assert.equal(interactiveCard.classList.contains('expanded'), true, 'expected clicking the collapse button to execute the expand interaction immediately even when the card was previously unfocused');
+    assert.deepEqual(calls, ['collapse-expand'], 'expected direct collapse button interaction to skip pop and play only the dedicated drawer cue');
+  });
+
   it('exposes a focused queue refresh hook for modules that auto-tag steppables after slides-runtime has already initialized', () => {
     const dom = createLateSteppableDom();
     const { window } = dom;
     const activeSlide = window.document.querySelector('.slide.active');
     const lateRoot = window.document.createElement('div');
+    let stepped = false;
 
     lateRoot.className = 'late-root';
     lateRoot.setAttribute('data-steppable', 'late-test');
@@ -803,16 +1076,20 @@ describe('slides runtime', () => {
 
     window.registerStepStrategy('late-test', {
       canStepTopLevelForward() {
-        return false;
+        return !stepped;
       },
       canStepTopLevelBackward() {
-        return false;
+        return stepped;
       },
       forwardTopLevel() {
+        if (stepped) return false;
+        stepped = true;
         lateRoot.dataset.focused = 'true';
         return true;
       },
       backwardTopLevel() {
+        if (!stepped) return false;
+        stepped = false;
         delete lateRoot.dataset.focused;
         return true;
       }
@@ -821,6 +1098,9 @@ describe('slides runtime', () => {
     assert.equal(typeof window.refreshInteractionQueueForCurrentSlide, 'function', 'expected slides runtime to expose a focused queue refresh hook for late steppable tagging');
 
     window.refreshInteractionQueueForCurrentSlide();
+    pressKey(window, 'ArrowDown');
+    assert.equal(lateRoot.classList.contains('step-active'), true, 'expected the first ArrowDown after refresh to focus the newly tagged host before it executes its own forward step');
+
     pressKey(window, 'ArrowDown');
 
     assert.equal(lateRoot.dataset.focused, 'true', 'expected a freshly tagged steppable to enter the current slide interaction queue after an explicit refresh');
