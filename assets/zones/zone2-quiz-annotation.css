@@ -636,11 +636,13 @@
   transform: scale(0.97);
 }
 
-/* 连线题提交后需要恢复右栏已占用选项的点击命中。
-   否则 option 内部的批注角标、答案锚点等都会被 .qa-option.used 的 pointer-events: none 一起封死，
-   用户提交后无法点开讲解，也会误以为整个选项永久锁定。 */
+/* 连线题提交后进入“可讲解、不可改答案”的只读态。
+   这里要把 used 选项恢复成普通选项的清晰视觉，方便老师讲解；
+   同时保留 pointer-events，让内部批注角标和答案锚点还能继续接收点击。 */
 .quiz-annotation.submitted .qa-question[data-type="matching"] .qa-option.used {
+  opacity: 1;
   pointer-events: auto;
+  transform: none;
 }
 
 /* 正在被拖拽的选项 */

@@ -1778,7 +1778,23 @@
 
     if (qa.querySelector('.qa-question[data-type="matching"]')) {
       resetMatchingQuestionState(qa);
+      syncMatchingOptionDragState(qa);
     }
+  }
+
+  /**
+   * 连线题的拖拽能力只在“未提交 + 非编辑态”时开放。
+   * 提交后我们仍然允许用户点击右栏里的批注角标与答案锚点做讲解，
+   * 但不允许再通过拖拽去改动答案，所以这里把 draggable 作为真正的交互总闸统一收口。
+   */
+  function syncMatchingOptionDragState(qa) {
+    if (!qa) return;
+
+    const allowDrag = !isEditorMode() && !qa.classList.contains('submitted');
+    qa.querySelectorAll('.qa-question[data-type="matching"] .qa-option').forEach(option => {
+      option.setAttribute('draggable', allowDrag ? 'true' : 'false');
+      if (!allowDrag) option.classList.remove('dragging');
+    });
   }
 
   function syncChoiceAnswerKeyEditors(qa) {
@@ -1913,12 +1929,8 @@
       if (!opt.dataset.qaMatchingDragBound) {
         opt.addEventListener('dragstart', (e) => {
           if (isEditorMode()) { e.preventDefault(); return; }
-          /* 连线题提交后，用户常常会立刻继续拖拽未占用项重新作答。
-             这里不能像之前那样直接拦掉 submitted，否则右栏看起来“全部锁死”；
-             改成在第一次拖拽交互时只解除提交锁，并保留其它空位当前答案，随后继续本次拖拽。 */
-          if (qa.classList.contains('submitted')) {
-            unlockMatchingSubmissionState(qa);
-          }
+          /* 提交后进入讲解态：右栏内部角标仍可点击，但答案本身不再允许拖拽改动。 */
+          if (qa.classList.contains('submitted')) { e.preventDefault(); return; }
           if (opt.classList.contains('used')) { e.preventDefault(); return; }
           e.dataTransfer.setData('text/plain', opt.dataset.option);
           e.dataTransfer.effectAllowed = 'copy';
@@ -1931,8 +1943,9 @@
         opt.dataset.qaMatchingDragBound = 'true';
       }
 
-      opt.setAttribute('draggable', isEditorMode() ? 'false' : 'true');
     });
+
+    syncMatchingOptionDragState(qa);
 
     passageSlots.forEach(pSlot => {
       if (pSlot.dataset.qaMatchingClickBound === 'true') return;
@@ -1947,9 +1960,8 @@
         const currentPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
         if (!currentPassageSlot || !currentPassageSlot.classList.contains('filled')) return;
 
-        if (qa.classList.contains('submitted')) {
-          unlockMatchingSubmissionState(qa);
-        }
+        /* 提交后的 matching 进入只读讲解态：正文空位角标能继续点批注，但不能再点击清空答案。 */
+        if (qa.classList.contains('submitted')) return;
 
         clearMatchingAnswerByBlankId(qa, blankId);
       });
@@ -2084,9 +2096,8 @@
         const currentSlot = qa.querySelector('.qa-answer-slot[data-blank-id="' + blankId + '"]');
         if (!currentSlot || !currentSlot.classList.contains('filled')) return;
 
-        if (qa.classList.contains('submitted')) {
-          unlockMatchingSubmissionState(qa);
-        }
+        /* 上方槽位在提交后只保留展示，不再承担“撤销答案”的入口。 */
+        if (qa.classList.contains('submitted')) return;
 
         clearMatchingAnswerByBlankId(qa, blankId);
       });
@@ -2524,6 +2535,7 @@
 
     const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
     if (hasMatchingQ) {
+      syncMatchingOptionDragState(qa);
       qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
         renderMatchingPassageSlot(slot, true);
       });
@@ -2990,22 +3002,6 @@
 
   /** 删除批注 */
   function deleteNote(qa, linkId) {
-    // 删除气泡
-    const bubble = getBubbleByLink(qa, linkId);
-    if (bubble) bubble.remove();
-
-    // 清除左栏原文锚点格式并解包
-    const anchor = getAnchorByLink(qa, linkId);
-    if (anchor) {
-      anchor.querySelectorAll('.note-badge').forEach(b => b.remove());
-      anchor.removeAttribute('style');
-      const parent = anchor.parentNode;
-      while (anchor.firstChild) {
-        parent.insertBefore(anchor.firstChild, anchor);
-      }
-      parent.removeChild(anchor);
-    }
-
     // 清除右栏答题锚点的关联角标
     getAnswerAnchorsByLink(qa, linkId).forEach(aa => {
       aa.querySelectorAll('.note-badge').forEach(b => b.remove());

@@ -892,7 +892,7 @@ describe('quiz annotation runtime', () => {
     assert.ok(!firstSlot.querySelector('.qa-answer-key-chip[data-option="C"]').classList.contains('is-correct'), 'expected the old slot UI to clear the duplicated selection');
   });
 
-  it('allows a submitted matching answer slot to unlock the quiz and clear its filled answer', () => {
+  it('keeps a submitted matching answer slot locked and preserves its filled answer', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -907,14 +907,14 @@ describe('quiz annotation runtime', () => {
     const refreshedPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="36"]');
     const optionA = qa.querySelector('.qa-option[data-option="A"]');
 
-    assert.equal(qa.classList.contains('submitted'), false, 'expected clicking a submitted matching answer slot to unlock the quiz again');
-    assert.equal(refreshedSlot.classList.contains('filled'), false, 'expected clicking the submitted slot to clear the chosen answer from the answer panel');
-    assert.equal(refreshedSlot.dataset.userAnswer || '', '', 'expected the submitted slot to drop its userAnswer payload after being cleared');
-    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', '', 'expected clearing the submitted slot to clear the mirrored passage blank too');
-    assert.equal(optionA.classList.contains('used'), false, 'expected the cleared matching option to become selectable again after unlocking');
+    assert.equal(qa.classList.contains('submitted'), true, 'expected clicking a submitted matching answer slot to keep the quiz locked in graded state');
+    assert.equal(refreshedSlot.classList.contains('filled'), true, 'expected clicking a submitted slot to keep the chosen answer visible in the answer panel');
+    assert.equal(refreshedSlot.dataset.userAnswer || '', 'A', 'expected clicking a submitted slot to preserve its userAnswer payload');
+    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', 'A', 'expected the submitted slot click to keep the mirrored passage blank answer intact');
+    assert.equal(optionA.classList.contains('used'), true, 'expected the matched option ownership to stay intact after clicking a submitted slot');
   });
 
-  it('allows a submitted matching passage blank badge to unlock the quiz and clear its filled answer', () => {
+  it('keeps a submitted matching passage blank badge locked and preserves its filled answer', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -929,13 +929,13 @@ describe('quiz annotation runtime', () => {
     const refreshedPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="37"]');
     const optionB = qa.querySelector('.qa-option[data-option="B"]');
 
-    assert.equal(qa.classList.contains('submitted'), false, 'expected clicking a submitted matching passage badge to unlock the quiz again');
-    assert.equal(refreshedSlot.classList.contains('filled'), false, 'expected clicking the submitted passage badge to clear the mirrored answer slot');
-    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', '', 'expected clicking the submitted passage badge to clear the passage blank answer payload');
-    assert.equal(optionB.classList.contains('used'), false, 'expected the option released from the submitted passage badge to become selectable again');
+    assert.equal(qa.classList.contains('submitted'), true, 'expected clicking a submitted matching passage badge to keep the quiz locked in graded state');
+    assert.equal(refreshedSlot.classList.contains('filled'), true, 'expected clicking the submitted passage badge to keep the mirrored answer slot intact');
+    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', 'B', 'expected clicking the submitted passage badge to preserve the passage blank answer payload');
+    assert.equal(optionB.classList.contains('used'), true, 'expected the option bound to the submitted passage badge to stay associated with that blank');
   });
 
-  it('allows dragging an unused matching option immediately after submit by auto-unlocking the quiz', () => {
+  it('prevents dragging matching options after submit and keeps the graded state intact', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -944,8 +944,21 @@ describe('quiz annotation runtime', () => {
     dropMatchingOption(window, qa, '36', 'A');
     clickElement(window, qa.querySelector('.qa-submit-btn'));
 
+    const optionA = qa.querySelector('.qa-option[data-option="A"]');
     const optionC = qa.querySelector('.qa-option[data-option="C"]');
-    const dragData = {
+    const dragDataUsed = {
+      effectAllowed: '',
+      lastType: '',
+      lastValue: '',
+      setData(type, value) {
+        this.lastType = type;
+        this.lastValue = value;
+      },
+      getData() {
+        return '';
+      }
+    };
+    const dragDataUnused = {
       effectAllowed: '',
       lastType: '',
       lastValue: '',
@@ -958,13 +971,19 @@ describe('quiz annotation runtime', () => {
       }
     };
 
-    dispatchDragEvent(window, optionC, 'dragstart', { dataTransfer: dragData });
+    dispatchDragEvent(window, optionA, 'dragstart', { dataTransfer: dragDataUsed });
+    dispatchDragEvent(window, optionC, 'dragstart', { dataTransfer: dragDataUnused });
 
-    assert.equal(qa.classList.contains('submitted'), false, 'expected dragging a matching option after submit to release the submission lock immediately');
-    assert.equal(dragData.effectAllowed, 'copy', 'expected the unlocked dragstart to keep exposing the matching option as a copy source');
-    assert.equal(dragData.lastType, 'text/plain', 'expected the unlocked dragstart to publish the matching option id');
-    assert.equal(dragData.lastValue, 'C', 'expected the unlocked dragstart payload to carry the dragged option id');
-    assert.ok(optionC.classList.contains('dragging'), 'expected the unlocked matching option to enter dragging state once submit lock is removed');
+    assert.equal(qa.classList.contains('submitted'), true, 'expected dragging a matching option after submit to keep the quiz in graded state');
+    assert.equal(optionA.getAttribute('draggable'), 'false', 'expected a submitted used matching option to expose itself as non-draggable');
+    assert.equal(optionC.getAttribute('draggable'), 'false', 'expected a submitted unused matching option to expose itself as non-draggable');
+    assert.equal(dragDataUsed.effectAllowed, '', 'expected a submitted used option dragstart to stay blocked before any drag payload is published');
+    assert.equal(dragDataUnused.effectAllowed, '', 'expected a submitted unused option dragstart to stay blocked before any drag payload is published');
+    assert.equal(dragDataUsed.lastType, '', 'expected a submitted used option to avoid publishing any drag payload');
+    assert.equal(dragDataUnused.lastType, '', 'expected a submitted unused option to avoid publishing any drag payload');
+    assert.equal(dragDataUnused.lastValue, '', 'expected a submitted unused option to avoid carrying a drag value');
+    assert.ok(!optionA.classList.contains('dragging'), 'expected a submitted used option to avoid entering dragging state');
+    assert.ok(!optionC.classList.contains('dragging'), 'expected a submitted unused option to avoid entering dragging state');
   });
 
   it('opens the reused underline dropdown directly when creating a note in editor mode', () => {
@@ -1727,11 +1746,11 @@ describe('quiz annotation runtime', () => {
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*inset 0 0 0 12px/, 'expected the left-side linking frame to be much thicker than the earlier thin outline');
   });
 
-  it('keeps submitted matching options pointer-interactive so used option badges remain clickable', () => {
+  it('keeps submitted matching used options visually clear while still allowing inner badges to receive clicks', () => {
     assert.match(
       zoneCssSource,
-      /\.quiz-annotation\.submitted[\s\S]*\.qa-question\[data-type="matching"\][\s\S]*\.qa-option\.used[\s\S]*pointer-events:\s*auto;/,
-      'expected submitted matching options to restore pointer events so used option cards and badges are no longer locked'
+      /\.quiz-annotation\.submitted\s+\.qa-question\[data-type="matching"\]\s+\.qa-option\.used\s*\{[\s\S]*opacity:\s*1;[\s\S]*pointer-events:\s*auto;[\s\S]*transform:\s*none;[\s\S]*\}/,
+      'expected submitted matching used options to look like regular options again while keeping inner badges clickable'
     );
   });
 
