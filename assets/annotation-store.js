@@ -379,8 +379,10 @@
 
     _collectOrdinaryFragmentElements(data);
 
-    // deletedNotes 仅用于清洗 HTML，清洗完毕后置空（不写入文件）
-    data.deletedNotes = [];
+     /* deletedNotes 不能在导出前清空。
+       删除批注时，源码 HTML 里的 text-anchor / answer-anchor / qa-note-bubble 仍然存在；
+       如果 sidecar 不把这份“墓碑列表”写回去，刷新后运行时就不知道哪些源码节点该继续 purge，
+       结果就是当前会话里删掉的批注在重新加载后又从原始 HTML 里复活。 */
 
     return data;
   }

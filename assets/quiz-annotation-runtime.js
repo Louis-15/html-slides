@@ -1913,7 +1913,12 @@
       if (!opt.dataset.qaMatchingDragBound) {
         opt.addEventListener('dragstart', (e) => {
           if (isEditorMode()) { e.preventDefault(); return; }
-          if (qa.classList.contains('submitted')) { e.preventDefault(); return; }
+          /* 连线题提交后，用户常常会立刻继续拖拽未占用项重新作答。
+             这里不能像之前那样直接拦掉 submitted，否则右栏看起来“全部锁死”；
+             改成在第一次拖拽交互时只解除提交锁，并保留其它空位当前答案，随后继续本次拖拽。 */
+          if (qa.classList.contains('submitted')) {
+            unlockMatchingSubmissionState(qa);
+          }
           if (opt.classList.contains('used')) { e.preventDefault(); return; }
           e.dataTransfer.setData('text/plain', opt.dataset.option);
           e.dataTransfer.effectAllowed = 'copy';
@@ -1927,6 +1932,27 @@
       }
 
       opt.setAttribute('draggable', isEditorMode() ? 'false' : 'true');
+    });
+
+    passageSlots.forEach(pSlot => {
+      if (pSlot.dataset.qaMatchingClickBound === 'true') return;
+      pSlot.dataset.qaMatchingClickBound = 'true';
+
+      pSlot.addEventListener('click', () => {
+        if (isEditorMode()) return;
+
+        const blankId = pSlot.dataset.blankId || '';
+        if (!blankId) return;
+
+        const currentPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
+        if (!currentPassageSlot || !currentPassageSlot.classList.contains('filled')) return;
+
+        if (qa.classList.contains('submitted')) {
+          unlockMatchingSubmissionState(qa);
+        }
+
+        clearMatchingAnswerByBlankId(qa, blankId);
+      });
     });
 
     passageSlots.forEach(pSlot => {
@@ -2051,16 +2077,18 @@
 
       slot.addEventListener('click', () => {
         if (isEditorMode()) return;
-        if (qa.classList.contains('submitted') || !slot.classList.contains('filled')) return;
 
-        const usedOption = slot.dataset.userAnswer;
-        if (usedOption) {
-          const dragOpt = matchingQuestion.querySelector('.qa-option[data-option="' + usedOption + '"]');
-          if (dragOpt) dragOpt.classList.remove('used');
+        const blankId = slot.dataset.blankId || '';
+        if (!blankId) return;
+
+        const currentSlot = qa.querySelector('.qa-answer-slot[data-blank-id="' + blankId + '"]');
+        if (!currentSlot || !currentSlot.classList.contains('filled')) return;
+
+        if (qa.classList.contains('submitted')) {
+          unlockMatchingSubmissionState(qa);
         }
 
-        setMatchingAnswerSlotValue(slot, '');
-        clearPassageSlot(qa, slot.dataset.blankId);
+        clearMatchingAnswerByBlankId(qa, blankId);
       });
     });
 
@@ -2255,6 +2283,44 @@
         slot.appendChild(correctEl);
       }
     });
+  }
+
+  /**
+   * 连线题提交后仍允许用户点击已填写槽位重新作答。
+   * 这里不能直接走 resetQuizSubmissionState()，因为那个入口会把所有 blank 的答案全部清空；
+   * 用户通常只是要修正其中一个空位，所以这里只解除 submitted 锁，并保留其它空位现有的 userAnswer。
+   */
+  function unlockMatchingSubmissionState(qa) {
+    if (!qa || !qa.classList.contains('submitted')) return;
+
+    qa.classList.remove('submitted');
+
+    const submitBtn = qa.querySelector('.qa-submit-btn');
+    if (submitBtn) submitBtn.disabled = false;
+
+    syncMatchingAnswerUI(qa, { resetTransientState: false });
+  }
+
+  /**
+   * 统一清空某个 blankId 对应的连线答案。
+   * 右栏答题槽位与左栏正文空位/角标都共用这条路径，避免提交后两边的释放逻辑再次分叉。
+   */
+  function clearMatchingAnswerByBlankId(qa, blankId) {
+    if (!qa || !blankId) return false;
+
+    const answerSlot = qa.querySelector('.qa-answer-slot[data-blank-id="' + blankId + '"]');
+    const passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
+    const usedOption = (answerSlot && answerSlot.dataset.userAnswer) || (passageSlot && passageSlot.dataset.userAnswer) || '';
+    if (!usedOption) return false;
+
+    const dragOpt = qa.querySelector('.qa-question[data-type="matching"] .qa-option[data-option="' + usedOption + '"]');
+    if (dragOpt) dragOpt.classList.remove('used');
+
+    if (answerSlot) {
+      setMatchingAnswerSlotValue(answerSlot, '');
+    }
+    clearPassageSlot(qa, blankId);
+    return true;
   }
 
   function resetMatchingQuestionState(qa) {

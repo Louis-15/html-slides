@@ -15,6 +15,7 @@ const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
+const annotationStoreTestSource = annotationStoreSource.replace(/\n\s*_init\(\);\s*\n\s*\}\)\(\);\s*$/, '\n\n})();\n');
 const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
 const editorCoreSource = fs.readFileSync(editorCorePath, 'utf-8');
 const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
@@ -167,6 +168,50 @@ function createRuntimeDom(html) {
   window.eval(runtimeSource);
 
   return dom;
+}
+
+function installAnnotationStoreForTest(window) {
+  window.eval(annotationStoreTestSource);
+}
+
+function parseAnnotationStorePayload(jsContent) {
+  return JSON.parse(String(jsContent).replace(/^window\.__annotationData\s*=\s*/, '').replace(/;\s*$/, ''));
+}
+
+async function captureAnnotationStoreSave(window) {
+  let writtenContent = '';
+
+  window.showSaveFilePicker = async () => ({
+    async createWritable() {
+      return {
+        async write(content) {
+          writtenContent = String(content);
+        },
+        async close() {}
+      };
+    }
+  });
+
+  installAnnotationStoreForTest(window);
+  const saved = await window.AnnotationStore.authorizeAndSave();
+  assert.equal(saved, true, 'expected the annotation store test stub to accept the save request');
+  return parseAnnotationStorePayload(writtenContent);
+}
+
+function dropMatchingOption(window, qa, blankId, optionId) {
+  const slot = qa.querySelector(`.qa-answer-slot[data-blank-id="${blankId}"]`);
+  assert.ok(slot, `expected matching slot ${blankId} to exist before simulating drag-drop`);
+
+  dispatchDragEvent(window, slot, 'drop', {
+    dataTransfer: {
+      effectAllowed: 'copy',
+      dropEffect: 'copy',
+      setData() {},
+      getData(type) {
+        return type === 'text/plain' ? optionId : '';
+      }
+    }
+  });
 }
 
 function createQuizDom() {
@@ -777,6 +822,30 @@ describe('quiz annotation runtime', () => {
     assert.notEqual(statusEl.style.display, 'none', 'expected a declined automatic authorization to surface the fallback prompt');
   });
 
+  it('persists deleted note tombstones so a refresh can still purge source-side quiz annotations', async () => {
+    const dom = createBiDirectionalAssociationDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+    clickElement(window, qa.querySelector('.qa-note-action-btn.action-delete'));
+
+    const savedPayload = await captureAnnotationStoreSave(window);
+
+    assert.deepEqual(savedPayload.deletedNotes, ['note-01'], 'expected the sidecar payload to keep a deleted note tombstone so refresh can still purge source HTML');
+
+    const reloadedDom = createBiDirectionalAssociationDom();
+    const reloadWindow = reloadedDom.window;
+    const reloadQa = reloadWindow.document.querySelector('.quiz-annotation');
+
+    reloadQa.dataset.deletedNotes = JSON.stringify(savedPayload.deletedNotes || []);
+    ensureQaInitialized(reloadWindow, reloadQa);
+
+    assert.equal(reloadQa.querySelector('.qa-note-bubble[data-link="note-01"]'), null, 'expected re-init to keep the deleted bubble purged after refresh');
+    assert.equal(reloadQa.querySelector('.text-anchor[data-link="note-01"]'), null, 'expected re-init to keep the deleted passage anchor purged after refresh');
+    assert.equal(reloadQa.querySelector('.answer-anchor[data-link-answer="note-01"]'), null, 'expected re-init to keep the deleted answer anchor purged after refresh');
+  });
+
   it('renders matching answer-key slots in editor mode and syncs the selected correct answer', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;
@@ -821,6 +890,81 @@ describe('quiz annotation runtime', () => {
     assert.equal(firstSlot.getAttribute('data-correct-answer'), '', 'expected the previous slot to stay present but clear its duplicated correct answer');
     assert.equal(secondSlot.getAttribute('data-correct-answer'), 'C', 'expected the latest slot to take ownership of the reassigned correct answer');
     assert.ok(!firstSlot.querySelector('.qa-answer-key-chip[data-option="C"]').classList.contains('is-correct'), 'expected the old slot UI to clear the duplicated selection');
+  });
+
+  it('allows a submitted matching answer slot to unlock the quiz and clear its filled answer', () => {
+    const dom = createMatchingEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+    dropMatchingOption(window, qa, '36', 'A');
+    clickElement(window, qa.querySelector('.qa-submit-btn'));
+
+    clickElement(window, qa.querySelector('.qa-answer-slot[data-blank-id="36"]'));
+
+    const refreshedSlot = qa.querySelector('.qa-answer-slot[data-blank-id="36"]');
+    const refreshedPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="36"]');
+    const optionA = qa.querySelector('.qa-option[data-option="A"]');
+
+    assert.equal(qa.classList.contains('submitted'), false, 'expected clicking a submitted matching answer slot to unlock the quiz again');
+    assert.equal(refreshedSlot.classList.contains('filled'), false, 'expected clicking the submitted slot to clear the chosen answer from the answer panel');
+    assert.equal(refreshedSlot.dataset.userAnswer || '', '', 'expected the submitted slot to drop its userAnswer payload after being cleared');
+    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', '', 'expected clearing the submitted slot to clear the mirrored passage blank too');
+    assert.equal(optionA.classList.contains('used'), false, 'expected the cleared matching option to become selectable again after unlocking');
+  });
+
+  it('allows a submitted matching passage blank badge to unlock the quiz and clear its filled answer', () => {
+    const dom = createMatchingEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+    dropMatchingOption(window, qa, '37', 'B');
+    clickElement(window, qa.querySelector('.qa-submit-btn'));
+
+    clickElement(window, qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="37"] sup'));
+
+    const refreshedSlot = qa.querySelector('.qa-answer-slot[data-blank-id="37"]');
+    const refreshedPassageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="37"]');
+    const optionB = qa.querySelector('.qa-option[data-option="B"]');
+
+    assert.equal(qa.classList.contains('submitted'), false, 'expected clicking a submitted matching passage badge to unlock the quiz again');
+    assert.equal(refreshedSlot.classList.contains('filled'), false, 'expected clicking the submitted passage badge to clear the mirrored answer slot');
+    assert.equal(refreshedPassageSlot.dataset.userAnswer || '', '', 'expected clicking the submitted passage badge to clear the passage blank answer payload');
+    assert.equal(optionB.classList.contains('used'), false, 'expected the option released from the submitted passage badge to become selectable again');
+  });
+
+  it('allows dragging an unused matching option immediately after submit by auto-unlocking the quiz', () => {
+    const dom = createMatchingEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+    dropMatchingOption(window, qa, '36', 'A');
+    clickElement(window, qa.querySelector('.qa-submit-btn'));
+
+    const optionC = qa.querySelector('.qa-option[data-option="C"]');
+    const dragData = {
+      effectAllowed: '',
+      lastType: '',
+      lastValue: '',
+      setData(type, value) {
+        this.lastType = type;
+        this.lastValue = value;
+      },
+      getData() {
+        return '';
+      }
+    };
+
+    dispatchDragEvent(window, optionC, 'dragstart', { dataTransfer: dragData });
+
+    assert.equal(qa.classList.contains('submitted'), false, 'expected dragging a matching option after submit to release the submission lock immediately');
+    assert.equal(dragData.effectAllowed, 'copy', 'expected the unlocked dragstart to keep exposing the matching option as a copy source');
+    assert.equal(dragData.lastType, 'text/plain', 'expected the unlocked dragstart to publish the matching option id');
+    assert.equal(dragData.lastValue, 'C', 'expected the unlocked dragstart payload to carry the dragged option id');
+    assert.ok(optionC.classList.contains('dragging'), 'expected the unlocked matching option to enter dragging state once submit lock is removed');
   });
 
   it('opens the reused underline dropdown directly when creating a note in editor mode', () => {
@@ -1581,6 +1725,14 @@ describe('quiz annotation runtime', () => {
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*brand-secondary-rgb/, 'expected left-side linking emphasis to use the theme secondary color token');
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-right \.qa-answer-panel[\s\S]*brand-secondary-rgb/, 'expected right-side linking emphasis to use the theme secondary color token');
     assert.match(zoneCssSource, /\.quiz-annotation\.linking-left \.qa-passage[\s\S]*inset 0 0 0 12px/, 'expected the left-side linking frame to be much thicker than the earlier thin outline');
+  });
+
+  it('keeps submitted matching options pointer-interactive so used option badges remain clickable', () => {
+    assert.match(
+      zoneCssSource,
+      /\.quiz-annotation\.submitted[\s\S]*\.qa-question\[data-type="matching"\][\s\S]*\.qa-option\.used[\s\S]*pointer-events:\s*auto;/,
+      'expected submitted matching options to restore pointer events so used option cards and badges are no longer locked'
+    );
   });
 
   it('keeps only one drag placeholder and removes it after drag end even after multiple note creations', () => {
