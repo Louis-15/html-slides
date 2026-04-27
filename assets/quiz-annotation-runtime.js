@@ -945,6 +945,40 @@
     }
   }
 
+  /**
+   * 为锚点补一个只承载“正文文字层”的包裹节点。
+   * 真实课件里不少锚点会直接把 underline 写进内联 style，且角标 sup 也挂在同一个 anchor 里；
+   * 如果把渐变焦点线画在整个 anchor 盒子上，线的位置就会被角标抬高，视觉上像删除线。
+   * 这里把除 note-badge 之外的内容都收进 qa-anchor-text，让焦点下划线只跟正文文字对齐。 
+   */
+  function ensureAnchorTextVisualLayer(anchor) {
+    if (!anchor) return null;
+
+    let textLayer = Array.from(anchor.children).find((child) => child.classList && child.classList.contains('qa-anchor-text')) || null;
+    if (!textLayer) {
+      textLayer = document.createElement('span');
+      textLayer.className = 'qa-anchor-text';
+    }
+
+    const directBadge = Array.from(anchor.children).find((child) => child.classList && child.classList.contains('note-badge')) || null;
+    if (textLayer.parentNode !== anchor) {
+      anchor.insertBefore(textLayer, directBadge || anchor.firstChild);
+    }
+
+    Array.from(anchor.childNodes).forEach((node) => {
+      if (node === textLayer) return;
+      if (node.nodeType === 1 && node.classList && node.classList.contains('note-badge')) return;
+      textLayer.appendChild(node);
+    });
+
+    if (!textLayer.childNodes.length) {
+      textLayer.remove();
+      return null;
+    }
+
+    return textLayer;
+  }
+
   function hasMeaningfulSibling(node, direction) {
     let current = node ? node[direction] : null;
     while (current) {
@@ -1286,7 +1320,8 @@
       if (answerAnchor) answerAnchor.classList.add('anchor-active');
     }
 
-    // 绘制双向步进连线（持久）
+    // 焦点定位现在改由左右端点与气泡头条的联动样式承担；
+    // 旧的常驻橙色步进连线不再展示，但保留统一入口方便其它路径继续复用清理逻辑。
     drawStepConnectors(qa, bubble);
 
     // 三栏双向追视
@@ -1362,22 +1397,14 @@
     return canvas;
   }
 
-  /** 绘制步进连线（双向，持久） */
+  /**
+   * 绘制步进连线（旧版持久橙线）。
+   * 2026-04 的焦点视觉改版后，这层持久连线已被更克制的端点联动高亮取代，
+   * 因此这里仅保留“清空旧 DOM”的职责，避免激活/滚动链路继续残留历史 connector-step 节点。
+   */
   function drawStepConnectors(qa, bubble) {
     clearStepConnectors(qa);
     if (!bubble) return;
-    const canvas = ensureCanvas(qa);
-    const { linkId, hasRight: hasAnswerLink } = normalizeBubbleEndpointState(qa, bubble);
-
-    // 左侧连线：原文锚点 → 气泡
-    const leftLine = createLeftConnectorLine(qa, linkId, 'connector-step');
-    if (leftLine) canvas.appendChild(leftLine);
-
-    // 右侧连线：气泡 → 答题锚点（如果有关联）
-    if (hasAnswerLink) {
-      const rightLine = createRightConnectorLine(qa, linkId, 'connector-step');
-      if (rightLine) canvas.appendChild(rightLine);
-    }
   }
 
   /** 清除步进连线 */
@@ -2689,6 +2716,10 @@
   }
 
   function initNoteInteractions(qa) {
+    qa.querySelectorAll('.text-anchor, .answer-anchor').forEach(anchor => {
+      ensureAnchorTextVisualLayer(anchor);
+    });
+
     if (!qa.__qaSourceFragmentContextMenuBound) {
       qa.__qaSourceFragmentContextMenuBound = true;
       qa.addEventListener('contextmenu', (e) => {
@@ -4043,6 +4074,7 @@
     // 清洗已存在锚点的首尾不当空格
     qa.querySelectorAll('.text-anchor, .answer-anchor').forEach(anchor => {
       trimAnchorWhitespaces(anchor);
+      ensureAnchorTextVisualLayer(anchor);
     });
 
     qa.querySelectorAll('.qa-passage .qa-blank-slot[data-blank-id]').forEach(slot => {

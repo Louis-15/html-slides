@@ -66,6 +66,20 @@
   min-height: 0;
   /* 组件内部四方向外围 padding 全部清零，由 .slide / .slide-content 统管 */
   padding: 0;
+  /* 焦点态使用组件级极光令牌统一驱动左右端点、角标与中间批注头条，
+     这样后续若要整体调弱/调慢，只需要在这里改一组变量即可。 */
+    --qa-focus-aurora: linear-gradient(120deg,
+      rgba(0, 210, 255, 0.98) 0%,
+      rgba(45, 116, 255, 0.98) 34%,
+      rgba(255, 201, 58, 0.98) 68%,
+      rgba(151, 91, 255, 0.96) 100%);
+    --qa-focus-aurora-soft: linear-gradient(120deg,
+      rgba(0, 210, 255, 0.58) 0%,
+      rgba(45, 116, 255, 0.5) 34%,
+      rgba(255, 201, 58, 0.46) 68%,
+      rgba(151, 91, 255, 0.42) 100%);
+  --qa-focus-aurora-size: 220% 220%;
+  --qa-focus-aurora-duration: 9s;
 }
 
 
@@ -882,6 +896,37 @@
   border-radius: 2px;
 }
 
+.qa-anchor-text {
+  display: inline;
+}
+
+/* 当前焦点批注不再依赖常驻橙线，而是把原本那根下划线本体改成高对比渐变，并同步带亮角标。 */
+.text-anchor.anchor-active,
+.answer-anchor.anchor-active {
+  color: inherit;
+  border-radius: 0.22em;
+  text-decoration-color: transparent !important;
+  text-decoration-thickness: 0.12em !important;
+  text-decoration-skip-ink: none !important;
+  text-underline-offset: 0.08em !important;
+  background-image: none;
+}
+
+.text-anchor.anchor-active .qa-anchor-text,
+.answer-anchor.anchor-active .qa-anchor-text {
+  /* 改用真正的底边框承载焦点线，而不是继续在文字盒子里铺背景条。
+     这样线的位置由 border box 决定，和字体基线、行盒高度解耦，
+    在真实课件里更不容易重新抬回“像删除线”的高度。
+    本轮再把线条显著加粗，同时略微收回底部留白，避免线离正文显得过远。 */
+  padding-bottom: 0.14em;
+  border-bottom: 0.162em solid transparent;
+  border-image-source: var(--qa-focus-aurora);
+  border-image-slice: 1;
+  border-image-repeat: stretch;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 .note-badge {
   display: inline-flex;
   align-items: center;
@@ -916,9 +961,27 @@
 
 .text-anchor.anchor-active .note-badge,
 .answer-anchor.anchor-active .note-badge {
-  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
-  box-shadow: 0 0 12px rgba(243, 152, 0, 0.5);
-  animation: qaBadgePulseOrange 1.5s ease infinite;
+  color: #fff;
+  background-image: var(--qa-focus-aurora);
+  background-size: var(--qa-focus-aurora-size);
+  background-position: 0% 50%;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 0 12px rgba(45, 116, 255, 0.28),
+    0 0 22px rgba(255, 201, 58, 0.22);
+  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
+}
+
+@keyframes qaAuroraShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 @keyframes qaBadgePulse {
@@ -977,6 +1040,7 @@
   cursor: pointer;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  isolation: isolate;
 }
 
 .quiz-annotation.notes-active .qa-note-bubble:not(.note-expanded):not(.note-active) {
@@ -1003,23 +1067,32 @@ body.editor-mode .qa-option {
   /* 保证内部打字时光标闪动的竖线也是纯黑色 */
 }
 
-/* 气泡激活态 — 仅 scale 缩放，不改变字号 + 焦点外扩 */
+/* 气泡激活态：收敛到轻微抬升，并把旧橙色外扩改成克制的极光头条与柔光。 */
 .qa-note-bubble.note-active {
-  background-color: rgba(255, 255, 255, 0.15);
-  /* 将原本绿色的边框改为半透明的橙色，与外面的 box-shadow 完美融合，消除空隙 */
-  border-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.5);
-  /* 【光晕重构】：为了防止光晕过大导致撞击滚动容器边缘（26px白边）而被切成生硬的直角方块，
-     现改为「贴合轮廓」的紧凑型三层物理光晕：最大物理晕染距离缩减至 18px 以内，保证在边界前柔和消散 */
+  background-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(79, 145, 255, 0.46);
   box-shadow:
-    0 0 8px 1px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.35),
-    0 0 16px 4px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.15),
-    0 0 28px 8px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.05);
-  /* 移除带鱼屏下极易引起裁切越界的 scale 缩放，仅仅保留 translateY 的悬浮感 */
-  transform: translateY(-2px);
+    0 10px 26px rgba(18, 34, 60, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  transform: translateY(-1px);
   z-index: 10;
-  /* 焦点外扩：以物理负边距完美吃满 18px 的突破空间，实现霸屏 */
-  margin-left: -18px;
-  margin-right: -18px;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+.qa-note-bubble.note-active::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 16px;
+  background: var(--qa-focus-aurora-soft);
+  background-size: var(--qa-focus-aurora-size);
+  background-position: 0% 50%;
+  filter: blur(24px);
+  opacity: 0.48;
+  pointer-events: none;
+  z-index: -1;
+  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
 }
 
 .qa-note-bubble.note-active.note-activating {
@@ -1078,9 +1151,13 @@ body.editor-mode .qa-option {
   cursor: grabbing;
 }
 
-/* 激活态下头部变为实心主要色（改用橙色） */
+/* 激活态下头部升级为组件级极光渐变，成为三处联动里最强的视觉锚点。 */
 .qa-note-bubble.note-active .qa-note-header {
-  background-color: var(--brand-secondary, var(--accent-orange, #f39800));
+  color: #fff;
+  background-image: var(--qa-focus-aurora);
+  background-size: var(--qa-focus-aurora-size);
+  background-position: 0% 50%;
+  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
   border-bottom: none;
 }
 
@@ -1110,8 +1187,9 @@ body.editor-mode .qa-option {
 
 /* 激活态序号反色 */
 .qa-note-bubble.note-active .qa-note-step {
-  background-color: #fff;
-  color: var(--brand-secondary, var(--accent-orange, #f39800));
+  background-color: rgba(255, 255, 255, 0.92);
+  color: rgba(76, 122, 173, 0.96);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
 }
 
 /* 气泡内容区 */
@@ -1699,9 +1777,13 @@ body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step
   .qa-answer-panel,
   .qa-notes-panel,
   .qa-note-bubble,
+  .qa-note-header,
   .qa-question,
   .qa-question-feedback,
   .text-anchor,
+  .qa-anchor-text,
+  .text-anchor.anchor-active,
+  .answer-anchor.anchor-active,
   .note-badge,
   .qa-option,
   .qa-status-dot,

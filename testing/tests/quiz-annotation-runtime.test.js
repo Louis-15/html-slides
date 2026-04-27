@@ -503,7 +503,7 @@ function createBiDirectionalAssociationDom() {
         <div class="qa-body">
           <svg class="qa-connector-canvas" aria-hidden="true"></svg>
           <div class="qa-passage">
-            <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">Passage anchor.<sup class="note-badge">1</sup></span></p>
+            <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1" style="text-decoration: underline; text-decoration-color: #E74C3C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Passage anchor.<sup class="note-badge">1</sup></span></p>
           </div>
           <div class="qa-answer-panel">
             <div class="qa-answer-header">
@@ -515,7 +515,7 @@ function createBiDirectionalAssociationDom() {
                 <div class="qa-option" data-option="A">
                   <span class="qa-status-dot"></span>
                   <span class="qa-option-label">A</span>
-                  <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-01" data-step="1">Answer anchor.<sup class="note-badge">1</sup></span></span>
+                  <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-01" data-step="1" style="text-decoration: underline; text-decoration-color: #1ABC9C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Answer anchor.<sup class="note-badge">1</sup></span></span>
                 </div>
               </div>
             </div>
@@ -1420,7 +1420,7 @@ describe('quiz annotation runtime', () => {
     assert.ok(bubble.querySelector('.action-select-right'), 'expected normalized bubbles to expose the right select action just like notes originally created from the right side');
   });
 
-  it('activates both endpoints and draws both connector legs even when the bubble was originally created from the left side', () => {
+  it('activates both endpoints without drawing persistent connector legs even when the bubble was originally created from the left side', () => {
     const dom = createBiDirectionalAssociationDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
@@ -1430,7 +1430,35 @@ describe('quiz annotation runtime', () => {
 
     assert.ok(qa.querySelector('.text-anchor[data-link="note-01"]')?.classList.contains('anchor-active'), 'expected activation to highlight the left endpoint of the shared linkId');
     assert.ok(qa.querySelector('.answer-anchor[data-link-answer="note-01"]')?.classList.contains('anchor-active'), 'expected activation to highlight the right endpoint of the shared linkId');
-    assert.equal(qa.querySelectorAll('.qa-connector-canvas .connector-step').length, 2, 'expected activation to draw both left and right connector legs for the same linkId regardless of creation order');
+    assert.equal(qa.querySelectorAll('.qa-connector-canvas .connector-step').length, 0, 'expected activation to stop drawing the old persistent orange connector legs and rely on endpoint highlighting instead');
+  });
+
+  it('wraps anchor text into a dedicated visual layer so the focus underline can replace authored underline styles without being offset by note badges', () => {
+    const dom = createBiDirectionalAssociationDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const passageAnchor = qa.querySelector('.text-anchor[data-link="note-01"]');
+    const answerAnchor = qa.querySelector('.answer-anchor[data-link-answer="note-01"]');
+    const passageTextLayer = Array.from(passageAnchor.children).find((el) => el.classList.contains('qa-anchor-text'));
+    const answerTextLayer = Array.from(answerAnchor.children).find((el) => el.classList.contains('qa-anchor-text'));
+
+    assert.ok(passageTextLayer, 'expected init to create a dedicated text wrapper for passage anchors that already carry inline underline styles');
+    assert.ok(answerTextLayer, 'expected init to create a dedicated text wrapper for answer anchors that already carry inline underline styles');
+    assert.match(passageTextLayer.textContent, /Passage anchor\./, 'expected the new passage text layer to preserve the original anchor text content');
+    assert.match(answerTextLayer.textContent, /Answer anchor\./, 'expected the new answer text layer to preserve the original answer anchor text content');
+    assert.equal(passageTextLayer.querySelector('.note-badge'), null, 'expected the note badge to stay outside the dedicated text layer so it does not distort underline positioning');
+    assert.equal(answerTextLayer.querySelector('.note-badge'), null, 'expected the answer-side note badge to stay outside the dedicated text layer so it does not distort underline positioning');
+  });
+
+  it('uses high-contrast aurora styling to replace the real underline and restore the focused bubble halo', () => {
+    assert.match(zoneCssSource, /\.quiz-annotation\s*\{[\s\S]*--qa-focus-aurora:[\s\S]*--qa-focus-aurora-duration:/, 'expected the quiz component to define shared aurora tokens for the active note focus state');
+    assert.match(zoneCssSource, /\.text-anchor\.anchor-active,\s*\.answer-anchor\.anchor-active\s*\{[\s\S]*text-decoration-color:\s*transparent\s*!important/, 'expected active anchors to force-hide authored inline underline colors before repainting the focus underline');
+    assert.match(zoneCssSource, /\.text-anchor\.anchor-active\s+\.qa-anchor-text,\s*\.answer-anchor\.anchor-active\s+\.qa-anchor-text\s*\{[\s\S]*padding-bottom:\s*0\.14em;[\s\S]*border-bottom:\s*0\.162em\s+solid\s+transparent;[\s\S]*border-image-source:\s*var\(--qa-focus-aurora\);[\s\S]*border-image-slice:\s*1;/, 'expected the gradient focus underline to become materially thicker while moving slightly closer to the text baseline');
+    assert.match(zoneCssSource, /\.text-anchor\.anchor-active \.note-badge,\s*\.answer-anchor\.anchor-active \.note-badge\s*\{[\s\S]*background-image:\s*var\(--qa-focus-aurora\);[\s\S]*animation:\s*qaAuroraShift/, 'expected active endpoint badges to share the same aurora motion as their linked note bubble');
+    assert.match(zoneCssSource, /\.qa-note-bubble\.note-active::before\s*\{[\s\S]*opacity:\s*0\.[4-9][\s\S]*animation:\s*qaAuroraShift/, 'expected the focused note bubble to restore a clearly visible whole-bubble aurora halo instead of the nearly invisible earlier glow');
   });
 
   it('uses the theme secondary color token to temporarily fill fragment words on hover in presentation mode', () => {
