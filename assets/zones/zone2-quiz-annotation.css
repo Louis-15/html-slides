@@ -1069,11 +1069,20 @@ body.editor-mode .qa-option {
 
 /* 气泡激活态：收敛到轻微抬升，并把旧橙色外扩改成克制的极光头条与柔光。 */
 .qa-note-bubble.note-active {
-  background-color: rgba(255, 255, 255, 0.16);
-  border-color: rgba(79, 145, 255, 0.46);
+  /* 焦点态宿主层不再自己承载半透明玻璃底色，
+     否则下层 aurora halo 会透过正文阅读面持续闪动，分散学生注意力。
+     真正的内容底板交给 ::after 单独承载。
+     但外围 glow 重新回到宿主层本身，用旧橙色方案那种紧凑物理光晕结构贴着边框发散，
+     这样光晕会从气泡轮廓本身长出来，不再和卡片之间出现缝隙。 */
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(78, 186, 255, 0.42);
   box-shadow:
     0 10px 26px rgba(18, 34, 60, 0.16),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 0 8px 1px rgba(78, 186, 255, 0.26),
+    0 0 16px 4px rgba(78, 186, 255, 0.14),
+    0 0 28px 8px rgba(84, 210, 176, 0.06);
   transform: translateY(-1px);
   z-index: 10;
   margin-left: -12px;
@@ -1081,18 +1090,28 @@ body.editor-mode .qa-option {
 }
 
 .qa-note-bubble.note-active::before {
+  /* 外部 halo 已经迁回宿主层 box-shadow；
+     这里显式关闭之前试验过的 detached ring，避免它继续制造轮廓缝隙。 */
+  content: none;
+}
+
+.qa-note-bubble.note-active::after {
   content: '';
   position: absolute;
-  inset: -5px;
-  border-radius: 16px;
-  background: var(--qa-focus-aurora-soft);
-  background-size: var(--qa-focus-aurora-size);
-  background-position: 0% 50%;
-  filter: blur(24px);
-  opacity: 0.48;
+  inset: 0;
+  border-radius: 12px;
+  /* 这层是实际的阅读底板：放在 halo 上面、正文下面，
+     让外部光晕继续存在，但不再穿过正文阅读面进入文本区。
+     按这轮反馈，把底板退回更早那种冷调蓝绿玻璃，而不是过白的中性底色。 */
+  background: linear-gradient(145deg,
+    rgba(228, 244, 255, 0.9) 0%,
+    rgba(226, 247, 239, 0.88) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(79, 145, 255, 0.46);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   pointer-events: none;
   z-index: -1;
-  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
 }
 
 .qa-note-bubble.note-active.note-activating {
