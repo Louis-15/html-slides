@@ -80,6 +80,13 @@
       rgba(151, 91, 255, 0.42) 100%);
   --qa-focus-aurora-size: 220% 220%;
   --qa-focus-aurora-duration: 9s;
+  /* 纯文章页没有右栏可以借位，所有“靠右外扩”的视觉元素都必须提前在组件内部预留安全边距，
+     这样展开按钮、激活气泡和它们的 hover / glow 都不会再被 .qa-body 的裁切边界切掉。 */
+  --qa-reading-edge-safe-gutter: 0px;
+}
+
+.quiz-annotation:not(.has-quiz) {
+  --qa-reading-edge-safe-gutter: 36px;
 }
 
 
@@ -94,6 +101,11 @@
   min-height: 0;
   position: relative;
   transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quiz-annotation:not(.has-quiz) .qa-body {
+  padding-right: var(--qa-reading-edge-safe-gutter);
+  box-sizing: border-box;
 }
 
 /* 有答题内容时：左栏 + 右栏（批注隐藏态） */
@@ -1414,14 +1426,6 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
 
 /* 纯文章页在未展开时没有右栏可借位，按钮如果继续按“压在线上”的半悬挂定位，
    右半边就会被正文列边界裁掉；这里把整颗按钮收回正文列内，并额外预留 hover 放大余量。 */
-.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-divider-btn {
-  transform: translateX(calc(-100% - 2px));
-}
-
-.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-divider-btn:hover {
-  transform: translateX(calc(-100% - 2px)) scale(1.1);
-}
-
 .qa-divider-btn svg {
   width: 16px;
   height: 16px;

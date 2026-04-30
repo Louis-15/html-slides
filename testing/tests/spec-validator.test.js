@@ -213,13 +213,20 @@ describe('integration: project HTML files', () => {
 });
 
 describe('authoring guardrails for committed lesson decks', () => {
-  it('keeps 高考英语阅读实战.html on underline-based anchors instead of whole-anchor highlight blocks', () => {
+  it('keeps 高考英语阅读实战 deck and sidecar on underline-based anchors instead of whole-anchor highlight blocks', () => {
+    const anchorHighlightPattern = /<span[^>]*class=\\?"(?:text-anchor|answer-anchor)[^"]*\\?"[^>]*style=\\?"[^"]*background-color:/i;
     const html = fs.readFileSync(path.join(projectRoot, '高考英语阅读实战.html'), 'utf-8');
+    const sidecar = fs.readFileSync(path.join(projectRoot, '高考英语阅读实战.annotations.js'), 'utf-8');
 
     assert.doesNotMatch(
       html,
-      /<span[^>]*class="(?:text-anchor|answer-anchor)[^"]*"[^>]*style="[^"]*background-color:/i,
-      'expected committed quiz anchors to avoid whole-anchor background highlights so new authored examples keep following the underline-only anchor rule'
+      anchorHighlightPattern,
+      'expected committed quiz anchors in 高考英语阅读实战.html to avoid whole-anchor background highlights so authored examples keep following the underline-only anchor rule'
+    );
+    assert.doesNotMatch(
+      sidecar,
+      anchorHighlightPattern,
+      'expected 高考英语阅读实战.annotations.js to keep the same underline-only anchor rule so sidecar replay cannot restore whole-anchor highlights'
     );
   });
 });

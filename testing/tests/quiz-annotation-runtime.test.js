@@ -1469,16 +1469,16 @@ describe('quiz annotation runtime', () => {
     assert.match(zoneCssSource, /qa-fragment-hover-proxy/, 'expected doodle-mode hover forwarding to have a proxy class for fragment discovery styling');
   });
 
-  it('keeps the expand-notes divider fully inside the no-quiz reading layout', () => {
+  it('reserves a shared right-side safe gutter for no-quiz reading layouts so divider hover and active note glow stay inside the clipped body', () => {
     assert.match(
       zoneCssSource,
-      /\.quiz-annotation:not\(\.has-quiz\):not\(\.notes-active\)\s+\.qa-divider-btn\s*\{[\s\S]*transform:\s*translateX\([^\n}]*-100%/,
-      'expected the pure-reading layout to override the divider button transform so the whole button stays visible inside the passage edge'
+      /\.quiz-annotation:not\(\.has-quiz\)\s*\{[\s\S]*--qa-reading-edge-safe-gutter:\s*36px;/,
+      'expected pure-reading layouts to define a dedicated right-side safe gutter token instead of relying on right-panel overlap'
     );
     assert.match(
       zoneCssSource,
-      /\.quiz-annotation:not\(\.has-quiz\):not\(\.notes-active\)\s+\.qa-divider-btn:hover\s*\{[\s\S]*transform:\s*translateX\([^\n}]*-100%[\s\S]*scale\(1\.1\)/,
-      'expected the pure-reading layout to preserve the same fully-visible divider placement even during hover scaling'
+      /\.quiz-annotation:not\(\.has-quiz\)\s+\.qa-body\s*\{[\s\S]*padding-right:\s*var\(--qa-reading-edge-safe-gutter\);[\s\S]*box-sizing:\s*border-box;/,
+      'expected the shared safe gutter to be reserved inside the clipped qa-body so both divider hover and active note glow stay fully visible'
     );
   });
 
