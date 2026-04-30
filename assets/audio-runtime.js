@@ -59,6 +59,18 @@
       src: resolveSoundUrl('drawer.mp3'),
       gain: 1
     }),
+    'answer-correct': Object.freeze({
+      type: 'file',
+      /* 例题组件这轮只暴露“提交结果正确/错误”的语义，不让组件自己绑定素材文件名；
+         这样后续要换资源、调音量或按场景统一静音时，都能继续收敛在 AudioRuntime 里处理。 */
+      src: resolveSoundUrl('correct.mp3'),
+      gain: 1
+    }),
+    'answer-wrong': Object.freeze({
+      type: 'file',
+      src: resolveSoundUrl('wrong.mp3'),
+      gain: 1
+    }),
     'fragment-swoosh': Object.freeze({
       type: 'file',
       src: resolveSoundUrl('whoosh.mp3'),

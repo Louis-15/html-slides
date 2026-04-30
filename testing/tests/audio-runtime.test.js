@@ -9,8 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'audio-runtime.js');
 const qaAudioPath = path.join(projectRoot, 'assets', 'quiz-annotation-audio.js');
+const exampleCardAudioPath = path.join(projectRoot, 'assets', 'example-card-audio.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const qaAudioSource = fs.readFileSync(qaAudioPath, 'utf-8');
+const exampleCardAudioSource = fs.readFileSync(exampleCardAudioPath, 'utf-8');
 
 function createAudioRuntimeDom(options = {}) {
   const {
@@ -198,6 +200,41 @@ describe('audio runtime cues', () => {
     window.QuizAnnotationAudio.playFragmentStep({ direction: 'backward' });
 
     assert.deepEqual(presetCalls, ['fragment-swoosh', 'fragment-swoosh-back'], 'expected fragment step audio to use whoosh.mp3 for forward and whoosh_back.mp3 for backward');
+  });
+
+  it('maps example-card result cues to correct.mp3 and wrong.mp3', () => {
+    const { window } = createAudioRuntimeDom();
+
+    const correctCue = window.AudioRuntime.getCueDefinition('answer-correct');
+    const wrongCue = window.AudioRuntime.getCueDefinition('answer-wrong');
+
+    assert.match(correctCue.src, /\/sound\/correct\.mp3$/, 'expected correct example-card submissions to use correct.mp3');
+    assert.match(wrongCue.src, /\/sound\/wrong\.mp3$/, 'expected wrong example-card submissions to use wrong.mp3');
+    assert.equal(correctCue.gain, 1, 'expected correct example-card submissions to keep neutral 1x gain');
+    assert.equal(wrongCue.gain, 1, 'expected wrong example-card submissions to keep neutral 1x gain');
+  });
+
+  it('routes example-card submit-result semantics to the correct global cue', () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      runScripts: 'outside-only',
+      url: 'http://localhost/'
+    });
+    const { window } = dom;
+    const cueCalls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        cueCalls.push(name);
+        return true;
+      }
+    };
+
+    window.eval(exampleCardAudioSource);
+
+    window.ExampleCardAudio.playSubmitResult({ isCorrect: true });
+    window.ExampleCardAudio.playSubmitResult({ isCorrect: false });
+
+    assert.deepEqual(cueCalls, ['answer-correct', 'answer-wrong']);
   });
 
   it('maps flip and collapse forward actions to the dedicated interaction cue files', () => {
