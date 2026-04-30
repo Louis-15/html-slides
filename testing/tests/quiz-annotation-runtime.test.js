@@ -1469,6 +1469,19 @@ describe('quiz annotation runtime', () => {
     assert.match(zoneCssSource, /qa-fragment-hover-proxy/, 'expected doodle-mode hover forwarding to have a proxy class for fragment discovery styling');
   });
 
+  it('keeps the expand-notes divider fully inside the no-quiz reading layout', () => {
+    assert.match(
+      zoneCssSource,
+      /\.quiz-annotation:not\(\.has-quiz\):not\(\.notes-active\)\s+\.qa-divider-btn\s*\{[\s\S]*transform:\s*translateX\([^\n}]*-100%/,
+      'expected the pure-reading layout to override the divider button transform so the whole button stays visible inside the passage edge'
+    );
+    assert.match(
+      zoneCssSource,
+      /\.quiz-annotation:not\(\.has-quiz\):not\(\.notes-active\)\s+\.qa-divider-btn:hover\s*\{[\s\S]*transform:\s*translateX\([^\n}]*-100%[\s\S]*scale\(1\.1\)/,
+      'expected the pure-reading layout to preserve the same fully-visible divider placement even during hover scaling'
+    );
+  });
+
   it('plays one focus sound only when the active bubble actually changes', () => {
     const dom = createTwoBubbleEditorDom();
     const { window } = dom;

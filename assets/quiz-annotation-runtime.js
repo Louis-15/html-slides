@@ -177,6 +177,19 @@
     return !!(qa && qa.classList.contains('has-quiz') && !qa.classList.contains('submitted'));
   }
 
+  function shouldLockKeyboardAnnotationStepping(qa) {
+    if (!qa || qa.classList.contains('submitted')) return false;
+
+    const answerPanel = qa.querySelector('.qa-answer-panel');
+    if (!answerPanel) return false;
+
+    /* 这里专门控制上下键的批注步进门禁：
+       只要右栏还存在真实题目内容，并且整题尚未提交，
+       上下键就不应该提前把中栏批注自动弹出来，避免学生在作答前被讲解打断。
+       对纯文章页或已经提交后的讲解态，则继续保留原有的键盘批注步进能力。 */
+    return !!answerPanel.querySelector('.qa-question, .qa-option, .qa-answer-slot, .qa-blank-slot[data-correct-answer]');
+  }
+
   function getActiveDoodleLayer() {
     const activeSlide = document.querySelector('.slide.active');
     if (!activeSlide) return null;
@@ -1214,14 +1227,18 @@
     window.registerStepStrategy('annotation', {
       canStepTopLevelForward(el) {
         const qa = el.closest('.quiz-annotation') || el;
+        if (shouldLockKeyboardAnnotationStepping(qa)) return false;
         const bubbles = getSortedBubbles(qa);
         return annotationStepIndex < bubbles.length - 1;
       },
-      canStepTopLevelBackward() {
+      canStepTopLevelBackward(el) {
+        const qa = el.closest('.quiz-annotation') || el;
+        if (shouldLockKeyboardAnnotationStepping(qa)) return false;
         return annotationStepIndex >= 0;
       },
       forwardTopLevel(el) {
         const qa = el.closest('.quiz-annotation') || el;
+        if (shouldLockKeyboardAnnotationStepping(qa)) return false;
         const bubbles = getSortedBubbles(qa);
         if (bubbles.length === 0) return false;
 
@@ -1240,6 +1257,7 @@
       },
       backwardTopLevel(el) {
         const qa = el.closest('.quiz-annotation') || el;
+        if (shouldLockKeyboardAnnotationStepping(qa)) return false;
         const bubbles = getSortedBubbles(qa);
 
         if (annotationStepIndex < 0) return false;

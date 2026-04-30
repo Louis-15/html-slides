@@ -211,3 +211,15 @@ describe('integration: project HTML files', () => {
     });
   }
 });
+
+describe('authoring guardrails for committed lesson decks', () => {
+  it('keeps 高考英语阅读实战.html on underline-based anchors instead of whole-anchor highlight blocks', () => {
+    const html = fs.readFileSync(path.join(projectRoot, '高考英语阅读实战.html'), 'utf-8');
+
+    assert.doesNotMatch(
+      html,
+      /<span[^>]*class="(?:text-anchor|answer-anchor)[^"]*"[^>]*style="[^"]*background-color:/i,
+      'expected committed quiz anchors to avoid whole-anchor background highlights so new authored examples keep following the underline-only anchor rule'
+    );
+  });
+});

@@ -1412,6 +1412,16 @@ html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-
   transform: translateX(-50%) scale(1.1);
 }
 
+/* 纯文章页在未展开时没有右栏可借位，按钮如果继续按“压在线上”的半悬挂定位，
+   右半边就会被正文列边界裁掉；这里把整颗按钮收回正文列内，并额外预留 hover 放大余量。 */
+.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-divider-btn {
+  transform: translateX(calc(-100% - 2px));
+}
+
+.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-divider-btn:hover {
+  transform: translateX(calc(-100% - 2px)) scale(1.1);
+}
+
 .qa-divider-btn svg {
   width: 16px;
   height: 16px;

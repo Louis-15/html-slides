@@ -723,6 +723,92 @@ function createQuizFragmentPersistenceDom() {
   return dom;
 }
 
+function createQuizKeyboardGateDom({ includeQuestions = true, submitted = false } = {}) {
+  const answerPanelHtml = includeQuestions ? `
+            <div class="qa-answer-panel">
+              <div class="qa-answer-header">
+                <div class="qa-answer-title">Question</div>
+                <button class="qa-submit-btn">Submit</button>
+              </div>
+              <div class="qa-answer-content">
+                <div class="qa-question" data-type="single">
+                  <div class="qa-option" data-option="A">
+                    <span class="qa-status-dot"></span>
+                    <span class="qa-option-label">A</span>
+                    <span class="qa-option-text">Option</span>
+                  </div>
+                </div>
+              </div>
+            </div>` : '';
+
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation${includeQuestions ? ' has-quiz' : ''}${submitted ? ' submitted' : ''}" data-steppable="annotation">
+          <div class="qa-body">
+            <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+            <div class="qa-passage">
+              <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">First anchor.<sup class="note-badge">1</sup></span></p>
+              <p data-edit-id="passage-02"><span class="text-anchor" data-link="note-02" data-step="2">Second anchor.<sup class="note-badge">2</sup></span></p>
+            </div>
+${answerPanelHtml}
+            <div class="qa-notes-panel">
+              <div class="qa-note-bubble" data-link="note-01" data-step="1">
+                <div class="qa-note-header"><div class="qa-note-handle"><span class="qa-note-step">1</span></div></div>
+                <div class="qa-note-content" contenteditable="true" data-edit-id="note-01">Note 1</div>
+              </div>
+              <div class="qa-note-bubble" data-link="note-02" data-step="2">
+                <div class="qa-note-header"><div class="qa-note-handle"><span class="qa-note-step">2</span></div></div>
+                <div class="qa-note-content" contenteditable="true" data-edit-id="note-02">Note 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+  window.requestAnimationFrame = (callback) => {
+    callback();
+    return 1;
+  };
+  window.cancelAnimationFrame = () => {};
+  window.matchMedia = () => ({
+    matches: false,
+    media: '',
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false; }
+  });
+  window.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.MutationObserver = class { observe() {} disconnect() {} takeRecords() { return []; } };
+  window.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+
+  window.eval(runtimeSource);
+  window.eval(quizRuntimeSource);
+
+  return dom;
+}
+
 describe('slides runtime', () => {
   it('finishes animations on the newly active slide while editor mode is enabled', () => {
     const dom = createSlidesDom();
@@ -1243,7 +1329,10 @@ describe('slides runtime', () => {
   it('keeps revealed quiz fragments visible when ArrowDown moves focus to the next bubble', () => {
     const dom = createQuizFragmentPersistenceDom();
     const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
     const fragment = window.document.querySelector('.text-anchor[data-link="note-01"] [data-fragment-step="true"]');
+
+    qa.classList.add('submitted');
 
     pressKey(window, 'ArrowDown');
     pressKey(window, 'ArrowRight');
@@ -1257,7 +1346,10 @@ describe('slides runtime', () => {
   it('plays the quiz-annotation fragment step cue when ArrowLeft or ArrowRight reveals or hides a fragment', () => {
     const dom = createQuizFragmentPersistenceDom();
     const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
     const calls = [];
+
+    qa.classList.add('submitted');
 
     window.QuizAnnotationAudio = {
       playFragmentStep(payload) {
@@ -1287,5 +1379,29 @@ describe('slides runtime', () => {
 
     pressKey(window, 'ArrowUp');
     assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected exhausted backward steps on quiz-annotation slides not to auto-flip to the previous slide');
+  });
+
+  it('blocks ArrowDown from opening quiz annotation bubbles before answers are submitted when the right panel still has questions', () => {
+    const dom = createQuizKeyboardGateDom({ includeQuestions: true, submitted: false });
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    pressKey(window, 'ArrowDown');
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(qa.classList.contains('notes-active'), false, 'expected unanswered quiz pages with a live right-side question panel to keep the notes column closed on ArrowDown');
+    assert.equal(qa.querySelector('.qa-note-bubble.note-active'), null, 'expected unanswered quiz pages with questions to avoid activating any annotation bubble via ArrowDown before submission');
+    assert.equal(qa.classList.contains('step-active'), true, 'expected the quiz host itself to still receive top-level focus even though internal note stepping stays locked');
+  });
+
+  it('still allows ArrowDown to open annotation bubbles when the quiz page has no right-side question content', () => {
+    const dom = createQuizKeyboardGateDom({ includeQuestions: false, submitted: false });
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    pressKey(window, 'ArrowDown');
+
+    assert.equal(qa.classList.contains('notes-active'), true, 'expected a quiz-annotation page without right-side questions to keep ArrowDown-driven note stepping enabled');
+    assert.ok(qa.querySelector('.qa-note-bubble[data-link="note-01"]')?.classList.contains('note-active'), 'expected the first ArrowDown to activate the first annotation bubble when no right-side questions exist');
   });
 });
