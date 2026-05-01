@@ -2055,6 +2055,7 @@
 
     const answerContent = qa.querySelector('.qa-answer-content');
     if (!answerContent) return;
+    const editorMode = isEditorMode();
 
     const passageSlots = Array.from(qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]'));
     if (!passageSlots.length) return;
@@ -2064,7 +2065,7 @@
       divider = document.createElement('div');
       divider.className = 'qa-slots-divider qa-slots-divider--blank';
     }
-    divider.textContent = isEditorMode()
+    divider.textContent = editorMode
       ? '↑ 编辑模式下请直接在右侧横线上修改正确答案 ↓'
       : '↑ 在横线上输入答案，提交后查看正确答案 ↓';
 
@@ -2079,8 +2080,6 @@
       const blankId = passageSlot.dataset.blankId || '';
       const correctAnswer = passageSlot.dataset.correctAnswer || '';
       const userAnswer = passageSlot.dataset.userAnswer || '';
-      const editorMode = isEditorMode();
-
       const slot = document.createElement('div');
       slot.className = 'qa-answer-slot qa-answer-slot--blank';
       slot.dataset.blankId = blankId;
@@ -2148,7 +2147,10 @@
     }
 
     clearBlankAnswerResults(qa);
-    if (qa.classList.contains('submitted')) {
+    /* submitted 只应该驱动学生态的判分回显。
+       如果老师在已提交页面上再切回编辑模式，右栏应该回到“可直接改正确答案”的作者态，
+       不能继续挂着 √/×、绿色描边和禁用输入框，否则就会出现用户截图 1 那种“看起来像判分结果页、但又处在编辑模式”的串态。 */
+    if (qa.classList.contains('submitted') && !editorMode) {
       renderBlankAnswerResults(qa);
     }
   }

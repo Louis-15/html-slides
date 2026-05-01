@@ -1003,6 +1003,43 @@ describe('quiz annotation runtime', () => {
     assert.equal(firstInputAfterEditor?.disabled, false, 'expected blank inputs to stay editable after editor mode is entered later');
   });
 
+  it('keeps blank answers editable when the page enters editor mode after a submit', () => {
+    const dom = createReadingBlankDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const firstInput = qa.querySelector('.qa-answer-slot[data-blank-id="36"] .qa-slot-input');
+    const secondInput = qa.querySelector('.qa-answer-slot[data-blank-id="38"] .qa-slot-input');
+    inputText(window, firstInput, 'which');
+    inputText(window, secondInput, 'present');
+    clickElement(window, qa.querySelector('.qa-submit-btn'));
+
+    const firstSubmittedSlot = qa.querySelector('.qa-answer-slot[data-blank-id="36"]');
+    assert.equal(firstSubmittedSlot?.classList.contains('slot-correct'), true, 'expected the submitted state to render grading styles before editor mode is entered');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+    window.EditorHooks.fire('onEditModeEnter');
+
+    const firstEditorSlot = qa.querySelector('.qa-answer-slot[data-blank-id="36"]');
+    const secondEditorSlot = qa.querySelector('.qa-answer-slot[data-blank-id="38"]');
+    const firstEditorInput = firstEditorSlot?.querySelector('.qa-slot-input');
+    const secondEditorInput = secondEditorSlot?.querySelector('.qa-slot-input');
+    const divider = qa.querySelector('.qa-slots-divider.qa-slots-divider--blank');
+
+    assert.equal(firstEditorInput?.value, 'which', 'expected entering editor mode after submit to switch the first line back to the current correct answer');
+    assert.equal(secondEditorInput?.value, 'to present', 'expected entering editor mode after submit to switch the second line back to the current correct answer');
+    assert.equal(firstEditorInput?.disabled, false, 'expected submitted blank inputs to become editable again once editor mode is entered');
+    assert.equal(secondEditorInput?.disabled, false, 'expected all blank inputs to become editable again once editor mode is entered');
+    assert.equal(firstEditorSlot?.classList.contains('slot-correct'), false, 'expected editor mode to clear the submitted correct-result styling from blank slot 36');
+    assert.equal(secondEditorSlot?.classList.contains('slot-incorrect'), false, 'expected editor mode to clear the submitted incorrect-result styling from blank slot 38');
+    assert.equal(firstEditorSlot?.querySelector('.qa-slot-mark'), null, 'expected editor mode to remove the submitted check mark from blank slot 36');
+    assert.equal(secondEditorSlot?.querySelector('.qa-slot-mark'), null, 'expected editor mode to remove the submitted cross mark from blank slot 38');
+    assert.match(divider?.textContent || '', /编辑模式下请直接在右侧横线上修改正确答案/, 'expected the blank helper copy to switch back to editor guidance after submit');
+  });
+
   it('starts annotation-store authorization from the first page gesture instead of showing a persistent header icon', async () => {
     const dom = createQuizDom();
     const { window } = dom;
