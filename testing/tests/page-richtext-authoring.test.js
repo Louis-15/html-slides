@@ -138,6 +138,7 @@ function createAuthoringDom(options = {}) {
   const persistenceCalls = [];
   const historyCalls = [];
   const scheduleSaveCalls = [];
+  const saveNowCalls = [];
   const ensureWriteAccessCalls = [];
   window.PersistenceLayer = {
     saveElement(element) {
@@ -152,6 +153,10 @@ function createAuthoringDom(options = {}) {
   window.AnnotationStore = {
     scheduleSave() {
       scheduleSaveCalls.push('scheduled');
+    },
+    saveNow() {
+      saveNowCalls.push('saved-now');
+      return Promise.resolve(true);
     },
     hasWriteAccess() {
       return annotationStoreHasWriteAccess;
@@ -174,6 +179,7 @@ function createAuthoringDom(options = {}) {
     persistenceCalls,
     historyCalls,
     scheduleSaveCalls,
+    saveNowCalls,
     ensureWriteAccessCalls,
   };
 }
@@ -219,6 +225,7 @@ function createExampleCardAuthoringDom(options = {}) {
   const persistenceCalls = [];
   const historyCalls = [];
   const scheduleSaveCalls = [];
+  const saveNowCalls = [];
   const ensureWriteAccessCalls = [];
   window.PersistenceLayer = {
     saveElement(element) {
@@ -233,6 +240,10 @@ function createExampleCardAuthoringDom(options = {}) {
   window.AnnotationStore = {
     scheduleSave() {
       scheduleSaveCalls.push('scheduled');
+    },
+    saveNow() {
+      saveNowCalls.push('saved-now');
+      return Promise.resolve(true);
     },
     hasWriteAccess() {
       return annotationStoreHasWriteAccess;
@@ -253,6 +264,7 @@ function createExampleCardAuthoringDom(options = {}) {
     persistenceCalls,
     historyCalls,
     scheduleSaveCalls,
+    saveNowCalls,
     ensureWriteAccessCalls,
   };
 }
@@ -309,8 +321,8 @@ describe('page richtext authoring', () => {
     assert.match(toolbar?.textContent || '', /隐藏型标注/);
   });
 
-  it('authors fragment markup inside example-card option text and schedules a sidecar save', () => {
-    const { window, persistenceCalls, historyCalls, scheduleSaveCalls } = createExampleCardAuthoringDom();
+  it('authors fragment markup inside example-card option text and writes the sidecar immediately', () => {
+    const { window, persistenceCalls, historyCalls, scheduleSaveCalls, saveNowCalls } = createExampleCardAuthoringDom();
     const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
 
     assert.ok(optionRoot, '测试夹具必须提供 example-card 选项文本根块');
@@ -323,11 +335,12 @@ describe('page richtext authoring', () => {
     assert.equal(fragment.getAttribute('data-fragment-format'), 'strikethrough');
     assert.deepEqual(persistenceCalls, [optionRoot]);
     assert.deepEqual(historyCalls, [true]);
-    assert.deepEqual(scheduleSaveCalls, ['scheduled']);
+    assert.deepEqual(saveNowCalls, ['saved-now']);
+    assert.equal(scheduleSaveCalls.length, 0, 'expected discrete example-card fragment authoring not to stay on the debounced sidecar path');
   });
 
-  it('requests AnnotationStore write access on the first example-card fragment authoring change, then continues with automatic sidecar save', async () => {
-    const { window, scheduleSaveCalls, ensureWriteAccessCalls } = createExampleCardAuthoringDom({ annotationStoreHasWriteAccess: false });
+  it('requests AnnotationStore write access on the first example-card fragment authoring change, then writes the current change immediately', async () => {
+    const { window, scheduleSaveCalls, saveNowCalls, ensureWriteAccessCalls } = createExampleCardAuthoringDom({ annotationStoreHasWriteAccess: false });
     const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
 
     selectText(window, optionRoot, 'fragment sample');
@@ -335,7 +348,8 @@ describe('page richtext authoring', () => {
     await Promise.resolve();
 
     assert.deepEqual(ensureWriteAccessCalls, ['ensured'], 'expected ordinary example-card fragment authoring to use the current toolbar click as the one-time write-access gesture');
-    assert.deepEqual(scheduleSaveCalls, ['scheduled'], 'expected the current authoring change to keep using automatic sidecar save once write access has been acquired');
+    assert.deepEqual(saveNowCalls, ['saved-now'], 'expected the first example-card authoring change to be written immediately once write access has been acquired');
+    assert.equal(scheduleSaveCalls.length, 0, 'expected the first example-card authoring change not to fall back to the debounced queue after permissions succeed');
   });
 
   it('reuses the compact quiz-fragment toolbar structure while keeping the original multicolor buttons and palettes', () => {
@@ -425,14 +439,15 @@ describe('page richtext authoring', () => {
     assert.equal(window.document.querySelector('[data-edit-id="desc-root"] [data-fragment-step="true"]'), null, 'expected authoring to stay within the active ordinary root');
   });
 
-  it('calls AnnotationStore.scheduleSave after adding an ordinary fragment', () => {
-    const { window, scheduleSaveCalls } = createAuthoringDom();
+  it('calls AnnotationStore.saveNow after adding an ordinary fragment', () => {
+    const { window, scheduleSaveCalls, saveNowCalls } = createAuthoringDom();
     const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
 
     selectText(window, titleRoot, 'fragment sample');
     clickToolbarControl(window, getToolbarButton(requireVisiblePageFragmentToolbar(window.document), '删除线'));
 
-    assert.equal(scheduleSaveCalls.length, 1, 'expected ordinary fragment authoring to schedule one sidecar save immediately after adding authored fragment markup');
+    assert.deepEqual(saveNowCalls, ['saved-now'], 'expected ordinary fragment authoring to write the current sidecar payload immediately after adding authored fragment markup');
+    assert.equal(scheduleSaveCalls.length, 0, 'expected discrete ordinary fragment authoring not to stay on the debounced sidecar queue');
   });
 
   it('reuses the same fragment group when a second rich-text layer is authored inside an existing ordinary fragment', () => {
@@ -469,15 +484,16 @@ describe('page richtext authoring', () => {
     assert.match(titleRoot.textContent, /fragment/, 'expected clear-format to preserve the readable base text after removing fragment wrappers');
   });
 
-  it('calls AnnotationStore.scheduleSave after clearing ordinary fragment format', () => {
-    const { window, scheduleSaveCalls } = createAuthoringDom();
+  it('calls AnnotationStore.saveNow after clearing ordinary fragment format', () => {
+    const { window, scheduleSaveCalls, saveNowCalls } = createAuthoringDom();
     const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
     titleRoot.innerHTML = 'Alpha <span data-fragment-step="true" data-fragment-format="highlight" data-fragment-group="frag-01"><span data-fragment-step="true" data-fragment-format="ruby" data-fragment-group="frag-01"><ruby>fragment<rt>主语</rt></ruby></span></span> sample text.';
 
     selectText(window, titleRoot, 'fragment');
     clickToolbarControl(window, getToolbarButton(requireVisiblePageFragmentToolbar(window.document), '清除格式'));
 
-    assert.equal(scheduleSaveCalls.length, 1, 'expected ordinary fragment clear-format to schedule one sidecar save after removing authored fragment wrappers');
+    assert.deepEqual(saveNowCalls, ['saved-now'], 'expected ordinary fragment clear-format to write the current sidecar payload immediately after removing authored fragment wrappers');
+    assert.equal(scheduleSaveCalls.length, 0, 'expected ordinary fragment clear-format not to fall back to the debounced sidecar queue');
   });
 
   it('calls PersistenceLayer.saveElement(root) and historyMgr.recordState(true) after ordinary authoring changes', () => {

@@ -822,6 +822,67 @@ describe('quiz annotation runtime', () => {
     assert.notEqual(statusEl.style.display, 'none', 'expected a declined automatic authorization to surface the fallback prompt');
   });
 
+  it('prefers localStorage over stale AnnotationStore initData when creating dynamic note bubbles', () => {
+    const dom = createRuntimeDom(`<!DOCTYPE html><html><body>
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation has-quiz notes-active">
+          <div class="qa-body">
+            <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+            <div class="qa-passage">
+              <p data-edit-id="passage-01"><span class="text-anchor" data-link="note-01" data-step="1">Anchor text.<sup class="note-badge">1</sup></span></p>
+            </div>
+            <div class="qa-answer-panel">
+              <div class="qa-answer-header">
+                <div class="qa-answer-title">Question</div>
+                <button class="qa-submit-btn">Submit</button>
+              </div>
+              <div class="qa-answer-content">
+                <div class="qa-question" data-type="single">
+                  <div class="qa-option" data-option="A">
+                    <span class="qa-status-dot"></span>
+                    <span class="qa-option-label">A</span>
+                    <span class="qa-option-text">Option</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="qa-notes-panel"></div>
+          </div>
+        </div>
+      </div>
+    </body></html>`);
+
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+
+    window.localStorage.setItem('test:e:new-note-01', 'Fresh <span data-fragment-step="true" data-fragment-format="highlight">local</span> note.');
+    window.AnnotationStore = {
+      getInitData() {
+        return {
+          elements: {
+            'new-note-01': 'Stale <span data-fragment-step="true" data-fragment-format="highlight">sidecar</span> note.'
+          }
+        };
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    const contentEl = qa.querySelector('.qa-note-content[data-edit-id="new-note-01"]');
+    assert.ok(contentEl, 'expected quiz initialization to create a dynamic note bubble for the linked anchor');
+    assert.match(contentEl.textContent, /Fresh local note\./, 'expected dynamic quiz note creation to mirror ordinary-page restore precedence by preferring localStorage over stale sidecar data');
+    assert.doesNotMatch(contentEl.textContent, /Stale sidecar note\./, 'expected stale sidecar note content not to overwrite fresher local restore data on the first refresh');
+  });
+
   it('persists deleted note tombstones so a refresh can still purge source-side quiz annotations', async () => {
     const dom = createBiDirectionalAssociationDom();
     const { window } = dom;
@@ -1285,6 +1346,56 @@ describe('quiz annotation runtime', () => {
 
     assert.ok(qa.querySelector('.text-anchor [data-fragment-step="true"]'), 'expected fragment markup to be authored inside the source anchor');
     assert.equal(qa.querySelector('.qa-note-content [data-fragment-step="true"]'), null, 'expected note bubble text not to receive step fragments');
+  });
+
+  it('persists quiz fragment authoring immediately into the source root and sidecar save path', async () => {
+    const dom = createBubbleEditorDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const savedRoots = [];
+    const saveNowCalls = [];
+    const ensureWriteAccessCalls = [];
+    const scheduleSaveCalls = [];
+
+    window.PersistenceLayer = {
+      saveElement(root) {
+        savedRoots.push(root.getAttribute('data-edit-id'));
+      }
+    };
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      ensureWriteAccess() {
+        ensureWriteAccessCalls.push('called');
+        return Promise.resolve(true);
+      },
+      saveNow() {
+        saveNowCalls.push('saved');
+      },
+      scheduleSave() {
+        scheduleSaveCalls.push('scheduled');
+      }
+    };
+    window.historyMgr = {
+      isRestoring: false,
+      recordState() {}
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.text-anchor'), 'fragment');
+
+    const fragmentToolbar = qa.querySelector('.qa-note-fragment-toolbar');
+    clickElement(window, fragmentToolbar.querySelector('.btn-strikethrough'));
+    await Promise.resolve();
+
+    assert.deepEqual(savedRoots, ['passage-01'], 'expected quiz fragment authoring to immediately persist the nearest source root into localStorage');
+    assert.equal(ensureWriteAccessCalls.length, 1, 'expected the first quiz fragment authoring change to request AnnotationStore write access before saving');
+    assert.equal(saveNowCalls.length, 1, 'expected quiz fragment authoring to write the current DOM change immediately once write access is available');
+    assert.equal(scheduleSaveCalls.length, 0, 'expected button-driven quiz fragment authoring not to fall back to the debounced scheduleSave path when saveNow is available');
   });
 
   it('uses the same ruby icon as the global editor toolbar', () => {

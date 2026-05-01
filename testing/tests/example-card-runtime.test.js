@@ -17,6 +17,54 @@ function createExampleCardDom(bodyHtml, options = {}) {
     url: 'http://localhost/'
   });
 
+  let annotationStoreReadyResolver = null;
+  let annotationStoreCurrentData = options.annotationStoreInitData || null;
+
+  if (options.annotationStoreInitData || options.annotationStoreReadyData) {
+    const readyPromise = options.annotationStoreReadyData
+      ? new Promise((resolve) => {
+          annotationStoreReadyResolver = () => {
+            annotationStoreCurrentData = options.annotationStoreReadyData;
+            resolve(true);
+          };
+        })
+      : Promise.resolve(true);
+
+    dom.window.AnnotationStore = {
+      getInitData() {
+        return annotationStoreCurrentData;
+      },
+      whenReady() {
+        return readyPromise;
+      }
+    };
+  }
+
+  if (options.localStorageElements) {
+    dom.window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+
+    Object.entries(options.localStorageElements).forEach(([editId, html]) => {
+      dom.window.localStorage.setItem(`test:e:${editId}`, html);
+    });
+  }
+
+  if (options.stubFragmentRefresh === true) {
+    const refreshCalls = [];
+    dom.window.PageRichTextAnnotationRuntime = {
+      refreshSlide(slide) {
+        refreshCalls.push(slide);
+      }
+    };
+    dom.window.__fragmentRefreshCalls = refreshCalls;
+  }
+
   // 这里直接读取待实现运行时，确保红灯阶段的失败会明确指向新能力缺失。
   let runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 
@@ -44,6 +92,14 @@ function createExampleCardDom(bodyHtml, options = {}) {
 
   // 测试显式触发初始化，避免把用例结果绑定到 jsdom 的加载时序细节上。
   dom.window.ExampleCardRuntime.initAll();
+
+  if (annotationStoreReadyResolver) {
+    dom.window.__resolveAnnotationStoreReady = async () => {
+      annotationStoreReadyResolver();
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+  }
 
   return dom;
 }
@@ -121,6 +177,103 @@ describe('example-card runtime', () => {
 
     assert.equal(optionA.classList.contains('selected'), false);
     assert.equal(optionB.classList.contains('selected'), false);
+  });
+
+  it('hydrates dynamic example-card edit roots from AnnotationStore initData during initCard', () => {
+    const dom = createExampleCardDom(`
+      <div class="slide active" data-slide="1">
+        <section class="example-card" data-question-type="single">
+          <div class="example-card__main">
+            <div class="example-card__stem" data-edit-id="lesson-example-stem">Original stem.</div>
+            <div class="example-card__answers">
+              <button type="button" class="qa-option example-card__option" data-option-value="A">
+                <span class="qa-option-label">A</span>
+                <span class="qa-option-text" data-edit-id="lesson-example-option-a">Alpha</span>
+              </button>
+            </div>
+          </div>
+          <aside class="example-card__analysis" hidden></aside>
+        </section>
+      </div>
+    `, {
+      annotationStoreInitData: {
+        elements: {
+          'lesson-example-stem': 'Updated <span data-fragment-step="true" data-fragment-format="highlight">fragment</span> stem.'
+        }
+      }
+    });
+
+    const stem = dom.window.document.querySelector('[data-edit-id="lesson-example-stem"]');
+
+    assert.ok(stem, '测试夹具必须提供动态题卡的题干根块');
+    assert.match(stem.innerHTML, /data-fragment-step="true"/, 'expected initCard to hydrate dynamic example-card roots from already loaded sidecar data');
+    assert.match(stem.textContent, /Updated fragment stem\./, 'expected hydrated example-card roots to expose the saved sidecar text immediately on first refresh');
+  });
+
+  it('rehydrates dynamic example-card edit roots after AnnotationStore.whenReady resolves and refreshes fragment hosts', async () => {
+    const dom = createExampleCardDom(`
+      <div class="slide active" data-slide="11">
+        <section class="example-card" data-question-type="single">
+          <div class="example-card__main">
+            <div class="example-card__stem" data-edit-id="lesson-example-stem">Original stem.</div>
+            <div class="example-card__answers">
+              <button type="button" class="qa-option example-card__option" data-option-value="A">
+                <span class="qa-option-label">A</span>
+                <span class="qa-option-text" data-edit-id="lesson-example-option-a">Alpha</span>
+              </button>
+            </div>
+          </div>
+          <aside class="example-card__analysis" hidden></aside>
+        </section>
+      </div>
+    `, {
+      annotationStoreReadyData: {
+        elements: {
+          'lesson-example-stem': 'Delayed <span data-fragment-step="true" data-fragment-format="highlight">fragment</span> stem.'
+        }
+      },
+      stubFragmentRefresh: true
+    });
+
+    const stem = dom.window.document.querySelector('[data-edit-id="lesson-example-stem"]');
+
+    assert.ok(stem, '测试夹具必须提供动态题卡的题干根块');
+    assert.doesNotMatch(stem.innerHTML, /data-fragment-step="true"/, 'expected sidecar data not to exist before the deferred AnnotationStore.whenReady resolves');
+    assert.equal(typeof dom.window.__resolveAnnotationStoreReady, 'function', '测试夹具必须暴露 AnnotationStore 延迟就绪的手动触发器');
+
+    await dom.window.__resolveAnnotationStoreReady();
+
+    assert.match(stem.innerHTML, /data-fragment-step="true"/, 'expected dynamic example-card roots to rehydrate once AnnotationStore finishes loading after initCard');
+    assert.match(stem.textContent, /Delayed fragment stem\./, 'expected the delayed sidecar payload to become visible on the first refresh without requiring a second reload');
+    assert.equal(dom.window.__fragmentRefreshCalls.length, 1, 'expected delayed example-card hydration to refresh the ordinary fragment runtime host cache once the fragment markup arrives');
+  });
+
+  it('prefers localStorage content over stale AnnotationStore initData for dynamic example-card roots', () => {
+    const dom = createExampleCardDom(`
+      <div class="slide active" data-slide="1">
+        <section class="example-card" data-question-type="single">
+          <div class="example-card__main">
+            <div class="example-card__stem" data-edit-id="lesson-example-stem">Original stem.</div>
+          </div>
+          <aside class="example-card__analysis" hidden></aside>
+        </section>
+      </div>
+    `, {
+      annotationStoreInitData: {
+        elements: {
+          'lesson-example-stem': 'Stale <span data-fragment-step="true" data-fragment-format="highlight">sidecar</span> stem.'
+        }
+      },
+      localStorageElements: {
+        'lesson-example-stem': 'Fresh <span data-fragment-step="true" data-fragment-format="highlight">local</span> stem.'
+      }
+    });
+
+    const stem = dom.window.document.querySelector('[data-edit-id="lesson-example-stem"]');
+
+    assert.ok(stem, '测试夹具必须提供动态题卡的题干根块');
+    assert.match(stem.textContent, /Fresh local stem\./, 'expected dynamic example-card roots to mirror ordinary-page restore precedence by preferring localStorage over stale sidecar data');
+    assert.doesNotMatch(stem.textContent, /Stale sidecar stem\./, 'expected stale sidecar content not to overwrite fresher local restore data on the first refresh');
   });
 
   it('stores card-level correctness in state.isCorrect on submit', () => {

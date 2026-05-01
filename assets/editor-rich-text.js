@@ -414,6 +414,7 @@
                当前编辑会话里的普通富文本恢复链路落后，因此这里必须双写并行调度。 */
             if (window.AnnotationStore) {
                 var canScheduleAnnotationSave = typeof window.AnnotationStore.scheduleSave === 'function';
+                var canSaveAnnotationImmediately = typeof window.AnnotationStore.saveNow === 'function';
                 var canEnsureAnnotationWriteAccess = typeof window.AnnotationStore.ensureWriteAccess === 'function';
                 var canAuthorizeAnnotationSave = typeof window.AnnotationStore.authorizeAndSave === 'function';
                 var hasAnnotationWriteAccess = typeof window.AnnotationStore.hasWriteAccess === 'function'
@@ -423,15 +424,22 @@
                 if (!hasAnnotationWriteAccess && canEnsureAnnotationWriteAccess) {
                     /* 普通页面 / example-card 的首轮保存需要先在真实用户手势里拿到文件句柄，
                        但这里不应该直接改成“再手动点一次保存”。作者点击格式按钮之后，
-                       正确的行为是：这一下顺手完成授权，随后仍然走原来的自动 scheduleSave。
-                       这样既满足 File System Access API 的手势要求，也保留“授权一次，后续自动保存”的旧体验。 */
+                       正确的行为是：这一下顺手完成授权，并把这次离散的富文本结构改动立刻写进 sidecar。
+                       否则即便 onEditModeExit 会冲刷 debounce 队列，用户若在写入 Promise 真正落盘前就刷新，
+                       第一次刷新仍可能读到旧 sidecar，表现成“第二次刷新才看到新标注”。
+                       这里的 page-richtext authoring 是按钮驱动的离散事务，不是高频键入，因此允许即时落盘。 */
                     window.AnnotationStore.ensureWriteAccess().then(function (ok) {
-                        if (ok && canScheduleAnnotationSave) {
+                        if (!ok) return;
+                        if (canSaveAnnotationImmediately) {
+                            window.AnnotationStore.saveNow();
+                        } else if (canScheduleAnnotationSave) {
                             window.AnnotationStore.scheduleSave();
                         }
                     }).catch(function () {});
                 } else if (!hasAnnotationWriteAccess && canAuthorizeAnnotationSave) {
                     window.AnnotationStore.authorizeAndSave().catch(function () {});
+                } else if (canSaveAnnotationImmediately) {
+                    window.AnnotationStore.saveNow();
                 } else if (canScheduleAnnotationSave) {
                     window.AnnotationStore.scheduleSave();
                 }

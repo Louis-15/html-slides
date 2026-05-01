@@ -471,6 +471,35 @@
     return changed ? temp.innerHTML : html;
   }
 
+  function _readStoredEditableHTML(editId) {
+    var utils = window._editorUtils;
+
+    if (!editId || !utils || typeof utils.storageKey !== 'function') {
+      return null;
+    }
+
+    try {
+      var primaryKey = utils.storageKey('e:' + editId);
+      var primaryValue = window.localStorage.getItem(primaryKey);
+      if (primaryValue !== null) {
+        return primaryValue;
+      }
+
+      if (typeof utils.legacyStorageKey !== 'function') {
+        return null;
+      }
+
+      var legacyKey = utils.legacyStorageKey('e:' + editId);
+      if (!legacyKey || legacyKey === primaryKey) {
+        return null;
+      }
+
+      return window.localStorage.getItem(legacyKey);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // === 数据恢复 ===
 
   function _applyData(data) {
@@ -490,7 +519,20 @@
       } else if (typeof val === 'string') {
         // 普通 data-edit-id 元素
         var el = document.querySelector('[data-edit-id="' + key + '"]');
-        if (el) el.innerHTML = val;
+        if (!el) return;
+
+        /* localStorage 是当前设备上的最新编辑态快照，sidecar 是跨刷新/跨会话的文件快照。
+           当两者同时存在且版本不一致时，如果这里仍无条件套用 sidecar，
+           就会把“刚写进 localStorage 的新富文本标注”重新覆盖成旧文件内容，
+           用户看到的表现就是第一次刷新回到旧版本、第二次刷新才恢复。
+           因此这里必须对齐普通页面的恢复语义：优先采用 localStorage，sidecar 只做兜底。 */
+        var storedHTML = _readStoredEditableHTML(key);
+        if (storedHTML !== null) {
+          el.innerHTML = storedHTML;
+          elements[key] = storedHTML;
+        } else {
+          el.innerHTML = val;
+        }
       }
     });
 

@@ -14,6 +14,111 @@
   const RESULT_MARK_SELECTOR = '.qa-result-mark';
   const stateMap = new WeakMap();
 
+  function readStoredEditableHTML(editId) {
+    const utils = window._editorUtils;
+
+    if (!editId || !utils || typeof utils.storageKey !== 'function') {
+      return null;
+    }
+
+    try {
+      const primaryKey = utils.storageKey(`e:${editId}`);
+      const primaryValue = window.localStorage.getItem(primaryKey);
+
+      if (primaryValue !== null) {
+        return primaryValue;
+      }
+
+      if (typeof utils.legacyStorageKey !== 'function') {
+        return null;
+      }
+
+      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
+      if (!legacyKey || legacyKey === primaryKey) {
+        return null;
+      }
+
+      return window.localStorage.getItem(legacyKey);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getAnnotationStoreElementHTML(editId) {
+    if (!editId || !window.AnnotationStore || typeof window.AnnotationStore.getInitData !== 'function') {
+      return null;
+    }
+
+    const initData = window.AnnotationStore.getInitData();
+    if (!initData || !initData.elements) {
+      return null;
+    }
+
+    return Object.prototype.hasOwnProperty.call(initData.elements, editId)
+      ? initData.elements[editId]
+      : null;
+  }
+
+  function captureEditableHtmlSnapshot(root) {
+    const snapshot = new Map();
+
+    root.querySelectorAll('[data-edit-id]').forEach((element) => {
+      const editId = element.getAttribute('data-edit-id');
+      if (!editId) return;
+      snapshot.set(editId, element.innerHTML);
+    });
+
+    return snapshot;
+  }
+
+  function hydratePersistedEditRoots(root, initialHtmlSnapshot) {
+    let hasHydratedFragmentMarkup = false;
+
+    root.querySelectorAll('[data-edit-id]').forEach((element) => {
+      const editId = element.getAttribute('data-edit-id');
+      if (!editId) return;
+
+      const persistedHTML = readStoredEditableHTML(editId) ?? getAnnotationStoreElementHTML(editId);
+      if (persistedHTML === null) return;
+
+      if (initialHtmlSnapshot && initialHtmlSnapshot.has(editId) && element.innerHTML !== initialHtmlSnapshot.get(editId)) {
+        return;
+      }
+
+      element.innerHTML = persistedHTML;
+      if (persistedHTML.indexOf('data-fragment-step') !== -1) {
+        hasHydratedFragmentMarkup = true;
+      }
+    });
+
+    if (hasHydratedFragmentMarkup && window.PageRichTextAnnotationRuntime && typeof window.PageRichTextAnnotationRuntime.refreshSlide === 'function') {
+      const slide = root.closest('.slide');
+      if (slide) {
+        window.PageRichTextAnnotationRuntime.refreshSlide(slide);
+      }
+    }
+  }
+
+  function scheduleAnnotationStoreHydration(root, initialHtmlSnapshot) {
+    if (!window.AnnotationStore || typeof window.AnnotationStore.whenReady !== 'function') {
+      return;
+    }
+
+    const state = ensureState(root);
+    if (state.annotationHydrationScheduled) {
+      return;
+    }
+
+    state.annotationHydrationScheduled = true;
+    window.AnnotationStore.whenReady().then(() => {
+      if (!root.isConnected) {
+        return;
+      }
+
+      hydratePersistedEditRoots(root, initialHtmlSnapshot);
+    }).catch(() => {});
+  }
+
   function ensureState(root) {
     if (!stateMap.has(root)) {
       stateMap.set(root, {
@@ -25,7 +130,8 @@
         // 后续音效或提交流程只需要消费这个稳定语义，不必重新回看选项集合。
         isCorrect: null,
         submitted: false,
-        analysisExpanded: false
+        analysisExpanded: false,
+        annotationHydrationScheduled: false
       });
     }
 
@@ -307,7 +413,16 @@
   }
 
   function initCard(root) {
+    const initialHtmlSnapshot = captureEditableHtmlSnapshot(root);
+
     ensureState(root);
+    /* example-card 在真实课件页里经常不是源码直出，而是 template clone 之后才挂到 DOM。
+       这意味着 editor-core / annotation-store 的全局首次恢复可能已经跑完了，
+       但当前题卡的 stem / option / analysis 根块此刻才真正出现。
+       因此这里要像答题与批注组件动态创建气泡那样，在 initCard 阶段主动补一次持久化回放，
+       并在 AnnotationStore 延迟就绪时再补一次，避免用户遇到“第一次刷新还看不到，第二次才出现”。 */
+    hydratePersistedEditRoots(root, initialHtmlSnapshot);
+    scheduleAnnotationStoreHydration(root, initialHtmlSnapshot);
     syncAnswerKey(root);
     renderSelection(root);
     renderSubmission(root);

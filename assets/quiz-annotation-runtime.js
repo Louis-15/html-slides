@@ -158,6 +158,65 @@
     });
   }
 
+  function readStoredEditableHTML(editId) {
+    const utils = window._editorUtils;
+
+    if (!editId || !utils || typeof utils.storageKey !== 'function') {
+      return null;
+    }
+
+    try {
+      const primaryKey = utils.storageKey(`e:${editId}`);
+      const primaryValue = window.localStorage.getItem(primaryKey);
+      if (primaryValue !== null) {
+        return primaryValue;
+      }
+
+      if (typeof utils.legacyStorageKey !== 'function') {
+        return null;
+      }
+
+      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
+      if (!legacyKey || legacyKey === primaryKey) {
+        return null;
+      }
+
+      return window.localStorage.getItem(legacyKey);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getAnnotationStoreElementHTML(editId) {
+    if (!editId || !window.AnnotationStore || typeof window.AnnotationStore.getInitData !== 'function') {
+      return null;
+    }
+
+    const initData = window.AnnotationStore.getInitData();
+    if (!initData || !initData.elements) {
+      return null;
+    }
+
+    return Object.prototype.hasOwnProperty.call(initData.elements, editId)
+      ? initData.elements[editId]
+      : null;
+  }
+
+  function hydrateDynamicNoteContent(contentEl) {
+    if (!contentEl) return;
+
+    const editId = contentEl.getAttribute('data-edit-id') || '';
+    if (!editId) return;
+
+    /* 普通页面正文的恢复顺序是本地缓存优先，sidecar 兜底。
+       quiz 的动态气泡如果先吃到旧 sidecar，再吃 localStorage，就会把“第一次刷新里最新的本地改动”压回旧值，
+       于是出现必须刷新两次才能看到最新批注的错觉。这里显式对齐普通页面的恢复优先级。 */
+    const persistedHTML = readStoredEditableHTML(editId) ?? getAnnotationStoreElementHTML(editId);
+    if (persistedHTML !== null) {
+      contentEl.innerHTML = persistedHTML;
+    }
+  }
+
   function isEditorMode() {
     return document.documentElement.classList.contains('editor-mode') ||
       document.body.classList.contains('editor-mode');
@@ -460,8 +519,55 @@
   }
 
   /** 编辑模式下的结构化变更需要同时触发保存和历史快照 */
-  function persistQuizAuthoringChange() {
-    scheduleAnnotationSave();
+  function persistQuizAuthoringChange(options) {
+    const persistOptions = options && typeof options === 'object' ? options : null;
+    const persistNode = persistOptions && persistOptions.node ? persistOptions.node : null;
+    const persistRoot = persistOptions && persistOptions.root
+      ? persistOptions.root
+      : (persistNode && typeof persistNode.closest === 'function'
+        ? persistNode.closest('[data-edit-id]')
+        : null);
+
+    /* quiz 的 fragment authoring 也是按钮驱动的离散结构变更，不是持续键入。
+       如果这里只走 debounce sidecar 保存，那么用户在退出编辑模式后立刻刷新时，
+       很容易在落盘 Promise 真正完成前读回旧数据，表现成“第一次刷新没生效，第二次才有”。
+       因此这里要和普通页面对齐：
+       1. 先把最近的 data-edit-id 根块立即写入 localStorage；
+       2. 再把 sidecar 尽量在当前手势里立即落盘；
+       3. 只有非离散事务才继续使用 scheduleSave 的 debounce 语义。 */
+    if (persistRoot && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
+      window.PersistenceLayer.saveElement(persistRoot);
+    }
+
+    if (persistOptions && persistOptions.immediate === true && window.AnnotationStore) {
+      const canScheduleAnnotationSave = typeof window.AnnotationStore.scheduleSave === 'function';
+      const canSaveAnnotationImmediately = typeof window.AnnotationStore.saveNow === 'function';
+      const canEnsureAnnotationWriteAccess = typeof window.AnnotationStore.ensureWriteAccess === 'function';
+      const canAuthorizeAnnotationSave = typeof window.AnnotationStore.authorizeAndSave === 'function';
+      const hasAnnotationWriteAccess = typeof window.AnnotationStore.hasWriteAccess === 'function'
+        ? window.AnnotationStore.hasWriteAccess()
+        : true;
+
+      if (!hasAnnotationWriteAccess && canEnsureAnnotationWriteAccess) {
+        window.AnnotationStore.ensureWriteAccess().then((ok) => {
+          if (!ok) return;
+          if (canSaveAnnotationImmediately) {
+            window.AnnotationStore.saveNow();
+          } else if (canScheduleAnnotationSave) {
+            window.AnnotationStore.scheduleSave();
+          }
+        }).catch(() => {});
+      } else if (!hasAnnotationWriteAccess && canAuthorizeAnnotationSave) {
+        window.AnnotationStore.authorizeAndSave().catch(() => {});
+      } else if (canSaveAnnotationImmediately) {
+        window.AnnotationStore.saveNow();
+      } else if (canScheduleAnnotationSave) {
+        window.AnnotationStore.scheduleSave();
+      }
+    } else {
+      scheduleAnnotationSave();
+    }
+
     recordHistorySnapshot();
   }
 
@@ -3528,7 +3634,7 @@
     }
 
     sel.removeAllRanges();
-    persistQuizAuthoringChange();
+    persistQuizAuthoringChange({ node: anchor, immediate: true });
   }
 
   function hideQASelectionToolbars(qa) {
@@ -3629,7 +3735,7 @@
     state.visible.clear();
     syncNoteFragments(bubble);
     sel.removeAllRanges();
-    persistQuizAuthoringChange();
+    persistQuizAuthoringChange({ node: anchor, immediate: true });
   }
 
   /** 安全地将选区文本包裹进锚点 span（替代会在跨元素边界时抛异常的 surroundContents） */
@@ -3768,6 +3874,7 @@
     // 最后再聚焦到新气泡的内容区（在所有 DOM 操作和事件绑定完成后）
     const contentEl = bubble.querySelector('.qa-note-content');
     if (contentEl) {
+      hydrateDynamicNoteContent(contentEl);
       // 内容变化时自动保存到 JSON 文件
       contentEl.addEventListener('input', () => {
         if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
@@ -4023,16 +4130,8 @@
 
       // 从 localStorage 恢复内容（与 AI 原生气泡走同一条 restoreAllElements 链路）
       const contentEl = bubble.querySelector('.qa-note-content');
-      // 从 AnnotationStore 恢复气泡内容（JSON 文件）
       if (contentEl) {
-        const editId = contentEl.getAttribute('data-edit-id');
-        // 从 JSON 数据恢复
-        if (window.AnnotationStore && window.AnnotationStore.getInitData) {
-          const initData = window.AnnotationStore.getInitData();
-          if (initData && initData.elements && initData.elements[editId]) {
-            contentEl.innerHTML = initData.elements[editId];
-          }
-        }
+        hydrateDynamicNoteContent(contentEl);
         // 绑定编辑事件：仅触发 JSON 文件保存
         contentEl.addEventListener('input', () => {
           if (window.AnnotationStore) window.AnnotationStore.scheduleSave();

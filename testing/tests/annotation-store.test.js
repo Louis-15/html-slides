@@ -357,4 +357,86 @@ describe('annotation store collection', () => {
     assert.match(target.innerHTML, /data-fragment-step="true"/);
     assert.match(target.textContent, /Restored/);
   });
+
+  it('prefers localStorage content over stale sidecar payloads for the same edit root on reload', async () => {
+    const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body>
+      <div class="slide active" data-slide="1">
+        <div class="quiz-annotation">
+          <p data-edit-id="s1-p3">Original paragraph.</p>
+        </div>
+      </div>
+    </body></html>`, {
+      runScripts: 'outside-only',
+      url: 'file:///D:/Projects/html-slides/deck.html'
+    });
+
+    const { window } = dom;
+    window.console.log = () => {};
+    window.console.warn = () => {};
+    window._editorUtils = {
+      ensureStableEditableIds() {},
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+    const localStore = new Map();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem(key) {
+          return localStore.has(key) ? localStore.get(key) : null;
+        },
+        setItem(key, value) {
+          localStore.set(key, String(value));
+        },
+        removeItem(key) {
+          localStore.delete(key);
+        }
+      }
+    });
+    window.localStorage.setItem(
+      'test:e:s1-p3',
+      'Fresh <span data-fragment-step="true" data-fragment-format="strikethrough">local</span> paragraph.'
+    );
+    window.indexedDB = {
+      open() {
+        throw new Error('indexeddb-disabled-for-test');
+      }
+    };
+
+    const originalAppendChild = window.document.head.appendChild.bind(window.document.head);
+
+    window.document.head.appendChild = (node) => {
+      if (node.tagName === 'SCRIPT' && /deck\.annotations\.js$/i.test(node.src || '')) {
+        window.__annotationData = {
+          version: 1,
+          title: 'deck',
+          elements: {
+            's1-p3': 'Stale <span data-fragment-step="true" data-fragment-format="highlight">sidecar</span> paragraph.'
+          },
+          answerKeys: [],
+          deletedNotes: []
+        };
+        queueMicrotask(() => {
+          if (typeof node.onload === 'function') node.onload();
+        });
+        return node;
+      }
+      return originalAppendChild(node);
+    };
+
+    window.eval(annotationStoreSource);
+    window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    window.dispatchEvent(new window.Event('load'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const target = window.document.querySelector('[data-edit-id="s1-p3"]');
+
+    assert.match(target.textContent, /Fresh local paragraph\./, 'expected localStorage to remain authoritative when it already contains a fresher edit-root snapshot than the sidecar');
+    assert.doesNotMatch(target.textContent, /Stale sidecar paragraph\./, 'expected stale sidecar content not to overwrite the fresher localStorage snapshot during reload');
+  });
 });
