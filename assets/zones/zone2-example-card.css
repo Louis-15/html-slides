@@ -167,6 +167,23 @@
   padding-bottom: 2px;
 }
 
+.example-card__editor-blank-answer {
+  display: none;
+  order: 2;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 2px;
+}
+
+/* 这两行在编辑模式下会被全局 display:flex 规则点亮；
+   blank 题又需要靠运行时用 hidden 在“答案键 A/B/C/D”和“填空答案输入”之间二选一。
+   如果这里不显式补回 hidden => display:none，编辑模式样式会把 hidden 顶掉，
+   最终就会出现用户截图里那种 blank 题同时露出 A/B/C/D 和填空答案输入框的串场。 */
+.example-card__editor-answer-key[hidden],
+.example-card__editor-blank-answer[hidden] {
+  display: none !important;
+}
+
 .example-card__editor-type-picker {
   display: none;
   order: 1;
@@ -183,8 +200,35 @@
 html.editor-mode .example-card__editor-type-picker,
 body.editor-mode .example-card__editor-type-picker,
 html.editor-mode .example-card__editor-answer-key,
-body.editor-mode .example-card__editor-answer-key {
+body.editor-mode .example-card__editor-answer-key,
+html.editor-mode .example-card__editor-blank-answer,
+body.editor-mode .example-card__editor-blank-answer {
   display: flex;
+}
+
+.example-card__blank-answer-input {
+  min-width: min(18rem, 100%);
+  max-width: 100%;
+  padding: 3px 0 6px;
+  border: 0;
+  border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+  background: transparent;
+  color: var(--text, #1a2e23);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  outline: none;
+  transition: border-bottom-color 0.2s ease, color 0.2s ease;
+}
+
+.example-card__blank-answer-input:focus {
+  border-bottom-color: var(--brand-primary, #00A355);
+}
+
+.example-card__blank-answer-input::placeholder {
+  color: var(--text-dim);
+  font-weight: 600;
 }
 
 .example-card__editor-label {

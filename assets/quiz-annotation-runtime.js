@@ -1157,6 +1157,7 @@
 
     syncChoiceAnswerKeyEditors(qa);
     syncMatchingAnswerUI(qa, { resetTransientState: false });
+    syncBlankAnswerUI(qa);
 
     updateProgressCounter(qa);
   }
@@ -2024,14 +2025,16 @@
 
     qa.querySelectorAll('.qa-answer-slot--blank').forEach(slot => {
       const input = slot.querySelector('.qa-slot-input');
-      const currentValue = input ? input.value : (slot.dataset.userAnswer || '');
+      const currentValue = isEditorMode()
+        ? ((input ? input.value : '') || slot.dataset.correctAnswer || '')
+        : (input ? input.value : (slot.dataset.userAnswer || ''));
 
       slot.classList.remove('slot-correct', 'slot-incorrect');
       slot.classList.toggle('filled', !!String(currentValue || '').trim());
       slot.querySelectorAll('.qa-slot-mark, .qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
 
       if (input) {
-        input.disabled = qa.classList.contains('submitted') || isEditorMode();
+        input.disabled = qa.classList.contains('submitted') && !isEditorMode();
       }
     });
   }
@@ -2062,7 +2065,7 @@
       divider.className = 'qa-slots-divider qa-slots-divider--blank';
     }
     divider.textContent = isEditorMode()
-      ? '阅读填空题的正确答案请直接修改 HTML 标记'
+      ? '↑ 编辑模式下请直接在右侧横线上修改正确答案 ↓'
       : '↑ 在横线上输入答案，提交后查看正确答案 ↓';
 
     let slotsContainer = answerContent.querySelector('.qa-answer-slots.qa-answer-slots--blank');
@@ -2076,6 +2079,7 @@
       const blankId = passageSlot.dataset.blankId || '';
       const correctAnswer = passageSlot.dataset.correctAnswer || '';
       const userAnswer = passageSlot.dataset.userAnswer || '';
+      const editorMode = isEditorMode();
 
       const slot = document.createElement('div');
       slot.className = 'qa-answer-slot qa-answer-slot--blank';
@@ -2097,17 +2101,27 @@
       input.type = 'text';
       input.autocomplete = 'off';
       input.spellcheck = false;
-      input.placeholder = '请输入答案';
-      input.value = userAnswer;
-      input.disabled = qa.classList.contains('submitted') || isEditorMode();
-      input.setAttribute('aria-label', '第 ' + blankId + ' 题答案');
+      input.placeholder = editorMode ? '编辑正确答案' : '请输入答案';
+      input.value = editorMode ? correctAnswer : userAnswer;
+      input.disabled = qa.classList.contains('submitted') && !editorMode;
+      input.setAttribute('aria-label', '第 ' + blankId + ' 题' + (editorMode ? '正确答案' : '答案'));
 
       input.addEventListener('input', () => {
-        if (qa.classList.contains('submitted')) return;
-
         const nextValue = input.value;
-        slot.dataset.userAnswer = nextValue;
-        passageSlot.dataset.userAnswer = nextValue;
+
+        if (editorMode) {
+          slot.dataset.correctAnswer = nextValue;
+          passageSlot.dataset.correctAnswer = nextValue;
+          /* 阅读填空的作者态配置不属于普通富文本 innerHTML；
+             这里和 matching 题的正确答案编辑一样，必须显式走存档调度，
+             否则刷新后会回到旧答案。 */
+          scheduleAnnotationSave();
+        } else {
+          if (qa.classList.contains('submitted')) return;
+          slot.dataset.userAnswer = nextValue;
+          passageSlot.dataset.userAnswer = nextValue;
+        }
+
         slot.classList.toggle('filled', !!nextValue.trim());
 
         /* 学生重新输入时，只清当前槽位的判分痕迹，

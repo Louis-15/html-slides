@@ -884,6 +884,62 @@ describe('quiz annotation runtime', () => {
     assert.equal(secondSlot.querySelector('.qa-slot-input')?.disabled, true, 'expected all submitted blank-mode inputs to become read-only');
   });
 
+  it('shows current blank answers in editor mode and lets the author edit them directly', () => {
+    const dom = createReadingBlankDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const scheduleSaveCalls = [];
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      scheduleSave() {
+        scheduleSaveCalls.push('saved');
+      }
+    };
+
+    ensureQaInitialized(window, qa);
+
+    const firstInput = qa.querySelector('.qa-answer-slot[data-blank-id="36"] .qa-slot-input');
+    const secondInput = qa.querySelector('.qa-answer-slot[data-blank-id="38"] .qa-slot-input');
+    const firstPassageBlank = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="36"]');
+
+    assert.equal(firstInput?.value, 'which', 'expected editor mode to preload the current correct answer into blank slot 36');
+    assert.equal(secondInput?.value, 'to present', 'expected editor mode to preload the current correct answer into blank slot 38');
+    assert.equal(firstInput?.disabled, false, 'expected editor mode blank answers to stay editable');
+
+    inputText(window, firstInput, 'that');
+
+    assert.equal(firstPassageBlank?.getAttribute('data-correct-answer'), 'that', 'expected editing the right-side blank input to sync back to the passage blank correct answer');
+    assert.equal(qa.querySelector('.qa-answer-slot[data-blank-id="36"]')?.getAttribute('data-correct-answer'), 'that', 'expected the blank editor slot to keep its updated correct answer payload');
+    assert.equal(scheduleSaveCalls.length, 1, 'expected editing a blank answer in editor mode to request persistence');
+  });
+
+  it('refreshes blank answers when the page switches from student mode into editor mode', () => {
+    const dom = createReadingBlankDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const firstInputBeforeEditor = qa.querySelector('.qa-answer-slot[data-blank-id="36"] .qa-slot-input');
+    assert.equal(firstInputBeforeEditor?.value, '', 'expected student mode blank slots to start empty before the author enters editor mode');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+    window.EditorHooks.fire('onEditModeEnter');
+
+    const firstInputAfterEditor = qa.querySelector('.qa-answer-slot[data-blank-id="36"] .qa-slot-input');
+    const secondInputAfterEditor = qa.querySelector('.qa-answer-slot[data-blank-id="38"] .qa-slot-input');
+
+    assert.equal(firstInputAfterEditor?.value, 'which', 'expected switching into editor mode to rebuild blank slot 36 with the current correct answer');
+    assert.equal(secondInputAfterEditor?.value, 'to present', 'expected switching into editor mode to rebuild blank slot 38 with the current correct answer');
+    assert.equal(firstInputAfterEditor?.disabled, false, 'expected blank inputs to stay editable after editor mode is entered later');
+  });
+
   it('starts annotation-store authorization from the first page gesture instead of showing a persistent header icon', async () => {
     const dom = createQuizDom();
     const { window } = dom;

@@ -366,6 +366,45 @@ describe('example-card runtime', () => {
     assert.equal(optionC.hasAttribute('data-correct'), true);
   });
 
+  it('shows the current blank answer in editor mode and lets the author edit it directly', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="blank">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="blank-editor-stem">
+            By late summer, the garden had become a small haven for <span class="example-card__blank" data-blank-id="blank-editor-1" data-correct-answer="butterflies">______</span>.
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `, { enableStorageUtils: true });
+
+    const { document, localStorage } = dom.window;
+    document.documentElement.classList.add('editor-mode');
+
+    const blank = document.querySelector('.example-card__blank');
+    const editorInput = document.querySelector('.example-card__blank-answer-input');
+
+    assert.ok(blank, '测试夹具必须提供 blank 占位节点');
+    assert.ok(editorInput, '编辑态 blank 题应该渲染专用答案输入框');
+    assert.equal(editorInput.value, 'butterflies', '编辑态 blank 输入框应该显示当前正确答案');
+    assert.equal(editorInput.disabled, false, '编辑态 blank 输入框必须允许直接修改');
+
+    editorInput.value = 'pollinators';
+    editorInput.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+
+    assert.equal(blank.getAttribute('data-correct-answer'), 'pollinators', '编辑态修改 blank 输入框后，标准答案应同步回 blank 节点');
+
+    const storedConfigEntries = Object.entries(localStorage).filter(([key]) => key.includes('example-card-authoring'));
+    assert.equal(storedConfigEntries.length, 1, '编辑态修改 blank 答案后应写回一份作者态配置快照');
+
+    const storedConfig = JSON.parse(storedConfigEntries[0][1]);
+    assert.match(JSON.stringify(storedConfig.blankAnswers || []), /pollinators/, '作者态配置快照里应保存最新的 blank 正确答案');
+  });
+
   it('blocks leaving editor mode and shakes the hint when a multi question has fewer than two correct answers', () => {
     const dom = createExampleCardDom(`
       <section class="example-card" data-question-type="single">
@@ -1411,6 +1450,14 @@ describe('example-card runtime', () => {
       exampleCardCssSource,
       /\.example-card__question\[hidden\]\s*\{[\s\S]*display:\s*none\s*!important;/,
       'expected multi-question example-card panes to keep an explicit hidden => display:none contract, otherwise the author rule .example-card__question { display:grid } will override the browser default hidden behavior and visible panes will stack on top of each other'
+    );
+  });
+
+  it('keeps blank editor mode from showing both the answer-key chips and the blank answer input at the same time', () => {
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__editor-answer-key\[hidden\],\s*\.example-card__editor-blank-answer\[hidden\]\s*\{[\s\S]*display:\s*none\s*!important;/,
+      'expected blank-question editor rows to honor hidden even inside editor mode, otherwise the global editor display:flex rule will make the A/B/C/D answer-key chips leak back onto blank questions'
     );
   });
 });

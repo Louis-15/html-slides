@@ -6,6 +6,7 @@
   const CARD_SELECTOR = '.example-card';
   const OPTION_SELECTOR = '.example-card__option';
   const ANSWER_KEY_SELECTOR = '.example-card__answer-key';
+  const BLANK_ANSWER_INPUT_SELECTOR = '.example-card__blank-answer-input';
   const TYPE_PICKER_SELECTOR = '.example-card__editor-type-picker';
   const TYPE_BUTTON_SELECTOR = '.example-card__type-button';
   const MULTI_HINT_SELECTOR = '.example-card__editor-multi-hint';
@@ -413,6 +414,43 @@
     return button;
   }
 
+  function ensureBlankAnswerEditorRow(root, questionRoot) {
+    const main = getQuestionMain(questionRoot || root);
+
+    if (!main) {
+      return null;
+    }
+
+    let row = main.querySelector('.example-card__editor-blank-answer');
+
+    if (row) {
+      return row;
+    }
+
+    row = document.createElement('div');
+    row.className = 'example-card__editor-blank-answer';
+    row.setAttribute('data-editor-only', 'true');
+    row.setAttribute('aria-label', '填空答案编辑区');
+    row.appendChild(createEditorLabel('正确答案'));
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'example-card__blank-answer-input';
+    input.placeholder = '请输入填空答案';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    row.appendChild(input);
+
+    const stem = getQuestionStem(questionRoot || root);
+    if (stem) {
+      main.insertBefore(row, stem);
+    } else {
+      main.prepend(row);
+    }
+
+    return row;
+  }
+
   function ensureAnswerKeyRow(root, questionRoot) {
     const main = getQuestionMain(questionRoot || root);
 
@@ -559,11 +597,13 @@
 
     if (questionType === 'blank') {
       ensureBlankSlot(root, questionRoot);
+      ensureBlankAnswerEditorRow(root, questionRoot);
       return;
     }
 
     ensureAnswerKeyRow(root, questionRoot);
     ensureChoiceAnswerSection(root, questionRoot);
+    ensureBlankAnswerEditorRow(root, questionRoot);
   }
 
   function applyStoredAuthoringConfig(root, questionRoot, config) {
@@ -674,7 +714,9 @@
       const typePicker = ensureTypePickerRow(root, questionRoot === root ? null : questionRoot);
       const answers = targetRoot.querySelector('.example-card__answers');
       const answerKeyRow = ensureAnswerKeyRow(root, questionRoot === root ? null : questionRoot);
+      const blankAnswerRow = ensureBlankAnswerEditorRow(root, questionRoot === root ? null : questionRoot);
       const correctCount = collectCorrectValues(root, questionRoot === root ? null : questionRoot).length;
+      const blank = targetRoot.querySelector(BLANK_SELECTOR);
 
       targetRoot.setAttribute('data-question-type', normalizedType);
 
@@ -703,6 +745,18 @@
       if (answerKeyRow) {
         answerKeyRow.hidden = normalizedType === 'blank';
         answerKeyRow.setAttribute('aria-hidden', normalizedType === 'blank' ? 'true' : 'false');
+      }
+
+      if (blankAnswerRow) {
+        const shouldShowBlankEditor = normalizedType === 'blank';
+        const blankInput = blankAnswerRow.querySelector(BLANK_ANSWER_INPUT_SELECTOR);
+        blankAnswerRow.hidden = !shouldShowBlankEditor;
+        blankAnswerRow.setAttribute('aria-hidden', shouldShowBlankEditor ? 'false' : 'true');
+
+        if (blankInput) {
+          blankInput.disabled = !shouldShowBlankEditor;
+          blankInput.value = blank ? (blank.getAttribute('data-correct-answer') || '') : '';
+        }
       }
 
       if (answers) {
@@ -778,6 +832,28 @@
     renderSelection(root);
     renderSubmission(root);
     writeStoredAuthoringConfig(root, questionRoot);
+  }
+
+  function updateBlankAnswerFromEditor(root, input) {
+    if (!root || !input || !isEditorMode()) {
+      return;
+    }
+
+    const questionRoot = input.closest(QUESTION_SELECTOR);
+    const targetRoot = questionRoot || root;
+    const blank = targetRoot.querySelector(BLANK_SELECTOR);
+
+    if (!blank || getQuestionType(root, questionRoot) !== 'blank') {
+      return;
+    }
+
+    blank.setAttribute('data-correct-answer', input.value);
+
+    /* 填空题的标准答案不在富文本正文里直接表达，
+       编辑态这里必须显式写回作者态快照，才能保证刷新后仍然保留最新答案。 */
+    writeStoredAuthoringConfig(root, questionRoot);
+    syncQuestionTypeUI(root);
+    renderSubmission(root);
   }
 
   function shakeMultiHint(root, questionRoot) {
@@ -1309,6 +1385,23 @@
       if (root) {
         toggleAnalysis(root);
       }
+    }
+  });
+
+  document.addEventListener('input', (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const blankInput = event.target.closest(BLANK_ANSWER_INPUT_SELECTOR);
+
+    if (!blankInput) {
+      return;
+    }
+
+    const root = blankInput.closest(CARD_SELECTOR);
+    if (root) {
+      updateBlankAnswerFromEditor(root, blankInput);
     }
   });
 
