@@ -107,7 +107,7 @@ function finishSlideAnimationsForEditorMode(slide) {
   });
 }
 
-function goTo(index) {
+function goTo(index, options) {
   if (index<0 || index>=total || index===current) return;
   const prev = current;
   current = index;
@@ -135,8 +135,12 @@ function goTo(index) {
     }, 350);
   }
 
-  // 步进队列管理：构建新页的交互队列（自动恢复记忆状态）
-  buildInteractionQueue(current);
+  /* 翻页后的一级焦点要区分来源：
+     - 常规进入/刷新当前页时仍可按既有状态恢复；
+     - 但用 ArrowDown / ArrowUp 真正翻页时，用户先需要感知“已经切到新页”，
+       不能立刻把焦点偷偷落到第一页组件上，否则可交互组件会无声地进入已聚焦状态。 */
+  pendingFirstFocusCueAfterPageTurn = !!(options && options.resetFocus === true);
+  buildInteractionQueue(current, options || {});
 
   /* 翻页音效统一收口在 goTo 成功切页之后。
      这样键盘、右下角分页按钮、导航圆点等所有导航入口都会自然复用同一 cue，
@@ -147,8 +151,8 @@ function goTo(index) {
   _slideChangeListeners.forEach(fn => fn(current, prev));
 }
 
-function next() { goTo(current+1); }
-function prev() { goTo(current-1); }
+function next(options) { goTo(current+1, options); }
+function prev(options) { goTo(current-1, options); }
 
 function isQuizAnnotationSlide(index = current) {
   const slide = slides[index];
@@ -233,7 +237,7 @@ document.addEventListener('keydown', (e) => {
       navigateExampleCardQuestion('forward', slides[current]);
       return;
     }
-    if (!stepForward() && !isQuizAnnotationSlide()) next();
+    if (!stepForward() && !isQuizAnnotationSlide()) next({ resetFocus: true });
   }
   if (e.key === 'ArrowUp') {
     e.preventDefault();
@@ -241,7 +245,7 @@ document.addEventListener('keydown', (e) => {
       navigateExampleCardQuestion('backward', slides[current]);
       return;
     }
-    if (!stepBackward() && !isQuizAnnotationSlide()) prev();
+    if (!stepBackward() && !isQuizAnnotationSlide()) prev({ resetFocus: true });
   }
   // PageDown/PageUp 仍保留为直接翻页，兼容键盘习惯。
   if (e.key === 'PageDown') { e.preventDefault(); next(); }
@@ -361,6 +365,7 @@ window.registerStepStrategy = function(name, strategy) {
 const slideStepState = {};
 let interactionQueue = [];
 let stepIndex = -1;
+let pendingFirstFocusCueAfterPageTurn = false;
 
 function getStrategyByElement(el) {
   if (!el) return null;
@@ -472,7 +477,7 @@ function sortElementsByDocumentOrder(elements) {
   1. 普通页 Zone2 里按插槽结构自动发现的组件根；
   2. quiz / page-richtext / 未来扩展显式注册的 data-steppable 宿主。
   最后再按文档顺序去重合并，避免同一个互动组件既被结构发现、又被 data-steppable 重复入队。 */
-function buildInteractionQueue(slideIndex) {
+function buildInteractionQueue(slideIndex, options) {
   const slide = slides[slideIndex];
   const seen = new Set();
   const queueCandidates = [
@@ -486,7 +491,9 @@ function buildInteractionQueue(slideIndex) {
     return true;
   });
 
-  stepIndex = (slideIndex in slideStepState) ? slideStepState[slideIndex] : -1;
+  stepIndex = (options && options.resetFocus === true)
+    ? -1
+    : ((slideIndex in slideStepState) ? slideStepState[slideIndex] : -1);
   updateStepActiveClass();
 }
 
@@ -542,21 +549,23 @@ function setInteractionFocusIndex(nextIndex, options) {
 
   const nextFocusedElement = getFocusedInteractionElement();
 
-  /* 这里的 cue 只服务“一级焦点组件真的换了”这一件事：
+  /* 这里的 cue 只服务“一级焦点真正落到一个可交互宿主”这一件事：
      - 上下键从一个宿主跳到另一个宿主时播；
+     - 从“无焦点”第一次落到一个可交互宿主时也要播，帮助用户判断这里已经可继续互动；
      - 鼠标点击把当前焦点切到另一个宿主时播；
      - 同一宿主内部的翻转、抽拉、fragment reveal 这类组件自带互动不播；
-     - passive 组件只负责承载焦点，不再发出 pop，避免把“可互动提示音”误播成普通浏览音。
-     因此除了前后宿主真的发生切换，还必须要求目标宿主本身是互动体。 */
+     - passive 组件只负责承载焦点，不再发出 pop，避免把“可互动提示音”误播成普通浏览音。 */
   if (
     !shouldMuteFocusCue &&
-    previousFocusedElement &&
     nextFocusedElement &&
     previousFocusedElement !== nextFocusedElement &&
+    (previousFocusedElement || pendingFirstFocusCueAfterPageTurn) &&
     isInteractiveQueueElement(nextFocusedElement)
   ) {
     playGlobalCue('focus-shift');
   }
+
+  pendingFirstFocusCueAfterPageTurn = false;
 
   return nextFocusedElement;
 }
@@ -769,13 +778,12 @@ document.addEventListener('click', (e) => {
 
   const directInteractionTarget = clickedSteppable || steppable;
   const directInteractionAction = getDirectInteractionClickAction(target, directInteractionTarget);
-  const isOrdinaryPageHostClick = steppable.getAttribute('data-steppable') === 'page-richtext-host';
-
   /* quiz 气泡点击本来就有自己的“气泡焦点切换”提示音。
      这里如果再把组件级 focus-shift 也一并播掉，会把一次点击放大成双响。
       互动按钮点击也要静默切焦点，因为它们自己会在后续 forward/backward 中发专属音效。
-      ordinary page host 的鼠标点击同样只是在切换后续 ← → 的宿主所有权，不该发出额外 pop。 */
-    const silentFocusCue = !!target.closest('.qa-note-bubble') || !!directInteractionAction || isOrdinaryPageHostClick;
+      ordinary page host 的右键 reveal 静音同步已经由 page-richtext runtime 内部兜底，
+      左键真正切到另一个普通宿主时则应该和键盘落焦一样发出 pop，帮助用户判断这里可以继续步进。 */
+  const silentFocusCue = !!target.closest('.qa-note-bubble') || !!directInteractionAction;
   window.activateInteractionStepForElement(steppable, { silentFocusCue });
 
   if (directInteractionAction) {
@@ -800,8 +808,10 @@ document.addEventListener('click', (e) => {
 /* 步进焦点管理：给当前焦点组件加上 .step-active 类（持久光晕 + 浮起）
    焦点始终跟着“最后一个已触发的组件”，全部撤销后无焦点。 */
 function updateStepActiveClass() {
-  // 清除当前页所有 step-active
-  slides[current].querySelectorAll('.step-active').forEach(e => e.classList.remove('step-active'));
+  /* step-active 只应该代表当前全局一级焦点。
+     如果只清当前页，上一页遗留的 step-active 会留在离场 DOM 上，
+     让重新回到旧页时看起来像是焦点被错误恢复了。 */
+  document.querySelectorAll('.step-active').forEach((el) => el.classList.remove('step-active'));
   // 给当前焦点组件加上 step-active
   if (stepIndex >= 0 && stepIndex < interactionQueue.length) {
     interactionQueue[stepIndex].classList.add('step-active');

@@ -392,6 +392,59 @@ function createOrdinaryPageHostClickDom() {
   };
 }
 
+function createTwoSlideFocusRestoreDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="focus-card focus-card-a" data-steppable="manual-focus">Slide 1</div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="focus-card focus-card-b" data-steppable="manual-focus">Slide 2</div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  window.registerStepStrategy('manual-focus', {
+    canStepTopLevelForward() {
+      return false;
+    },
+    canStepTopLevelBackward() {
+      return false;
+    },
+    forwardTopLevel() {
+      return true;
+    },
+    backwardTopLevel() {
+      return true;
+    }
+  });
+
+  return {
+    dom,
+    hostA: window.document.querySelector('.focus-card-a'),
+    hostB: window.document.querySelector('.focus-card-b')
+  };
+}
+
 function createSummarySteppingDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -1149,7 +1202,7 @@ describe('slides runtime', () => {
     assert.equal(hostB.classList.contains('step-active'), false, 'expected the previously focused host to lose step-active after the click-based focus switch');
   });
 
-  it('keeps ordinary page host clicks silent while still switching the active host', () => {
+  it('plays the focus-shift cue when clicking a different ordinary page host, while repeated clicks on the same host stay silent', () => {
     const { dom, hostA, hostB } = createOrdinaryPageHostClickDom();
     const { window } = dom;
     const calls = [];
@@ -1163,17 +1216,50 @@ describe('slides runtime', () => {
 
     assert.equal(typeof window.activateInteractionStepForElement, 'function', '测试夹具必须暴露一级焦点同步入口');
 
-    /* ordinary page host 的鼠标点击只是在为后续 ← → fragment 步进切换当前宿主，
-       它本身不应再附带一个全局 pop；否则右键 reveal 或左右栏切换时都会和 fragment 音效叠成双响。 */
+    /* 普通页带隐藏式标注的组件壳本身也属于可交互宿主。
+       因此左键真正把焦点切到另一个 host 时，应和键盘落焦一样播一次 pop；
+       只有重复点击当前 host 才保持静音。右键 reveal 的静音焦点同步由 page-richtext runtime 单独兜底。 */
     window.activateInteractionStepForElement(hostA, { silentFocusCue: true });
     calls.length = 0;
 
     clickElement(window, hostB.querySelector('.ordinary-host-b-inner'));
     clickElement(window, hostA.querySelector('.ordinary-host-a-inner'));
+    clickElement(window, hostA.querySelector('.ordinary-host-a-inner'));
 
-    assert.deepEqual(calls, [], 'expected clicking ordinary page hosts to stay silent while only updating the current focus owner for later keyboard fragment stepping');
+    assert.deepEqual(calls, ['focus-shift', 'focus-shift'], 'expected left-clicking a different ordinary fragment host to emit pop.mp3 just like keyboard focus changes, while repeated clicks on the same host stay silent');
     assert.equal(hostA.classList.contains('step-active'), true, 'expected the latest clicked ordinary page host to become the active top-level host');
     assert.equal(hostB.classList.contains('step-active'), false, 'expected the previously clicked ordinary page host to lose step-active after focus switches back');
+  });
+
+  it('does not auto-focus the first component after ArrowDown turns to a new slide, and only plays pop on the next ArrowDown focus landing', () => {
+    const { dom, hostA, hostB } = createTwoSlideFocusRestoreDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    assert.equal(typeof window.activateInteractionStepForElement, 'function', '测试夹具必须暴露一级焦点同步入口');
+
+    window.activateInteractionStepForElement(hostA, { silentFocusCue: true });
+    pressKey(window, 'PageDown');
+    window.activateInteractionStepForElement(hostB, { silentFocusCue: true });
+    pressKey(window, 'PageUp');
+    calls.length = 0;
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '2', 'expected ArrowDown to still flip to the next slide after the current slide is exhausted');
+    assert.equal(hostB.classList.contains('step-active'), false, 'expected page turns to land on the new slide with no focused component, even if that slide was focused earlier');
+    assert.deepEqual(calls, ['page-turn'], 'expected the page turn itself to stay separate from any focus pop on the next slide');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(hostB.classList.contains('step-active'), true, 'expected the following ArrowDown to land focus onto the first component of the new slide');
+    assert.deepEqual(calls, ['page-turn', 'focus-shift'], 'expected the first post-turn focus landing to emit pop.mp3 only when the component actually receives focus');
+    assert.equal(hostA.classList.contains('step-active'), false, 'expected the previous slide host not to keep step-active after the page turn and later focus landing');
   });
 
   it('plays the page-turn cue only when goTo actually changes slides', () => {
