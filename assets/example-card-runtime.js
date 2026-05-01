@@ -1117,10 +1117,11 @@
       return;
     }
 
-    /* 多选题这里要保留“答案集合”的语义，而不是继续沿用单选题的最后一次覆盖。
-       否则作者即便在 DOM 上标了多个 data-correct，学生态也永远只能留下最后一项，
-       提交时的集合判分就会退化成一条伪多选题。 */
-    if (questionType === 'multi') {
+     /* 多选与不定项选择在学生态都要保留“答案集合”的语义，
+       区别只在作者态约束：多选必须至少两个标准答案，不定项允许一个或多个。
+       但一旦进入学生作答阶段，这两类题都不能再退回“最后一次点击覆盖之前全部选择”的单选行为，
+       否则不定项选择会看起来像单选题，提交后也无法保留被错选项的红色反馈。 */
+     if (questionType === 'multi' || questionType === 'flex') {
       const selectedSet = new Set(state.selectedValues);
 
       if (selectedSet.has(value)) {

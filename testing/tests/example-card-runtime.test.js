@@ -267,6 +267,47 @@ describe('example-card runtime', () => {
     assert.equal(options[2].classList.contains('selected'), true);
   });
 
+  it('keeps multiple selected options before submit for flex questions', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="flex">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="flex-stem">Which of the following could be true according to the talk?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="flex-option-a">The fence still supported bean vines.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="flex-option-b">The garden was repaired by volunteers.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C" data-correct="true">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="flex-option-c">A shallow dish of water was added.</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    const options = Array.from(document.querySelectorAll('.example-card__option'));
+
+    assert.equal(options.length, 3, '测试夹具必须提供 3 个不定项选项');
+
+    options[0].click();
+    options[2].click();
+
+    assert.equal(options[0].classList.contains('selected'), true);
+    assert.equal(options[1].classList.contains('selected'), false);
+    assert.equal(options[2].classList.contains('selected'), true);
+  });
+
   it('lets editor switch question types and keep multiple correct answers for multi questions', () => {
     const dom = createExampleCardDom(`
       <section class="example-card" data-question-type="single">
@@ -835,6 +876,52 @@ describe('example-card runtime', () => {
     assert.equal(optionB.classList.contains('selected'), false);
     assert.equal(optionA.classList.contains('result-incorrect'), true);
     assert.equal(optionB.classList.contains('result-correct'), true);
+  });
+
+  it('marks misselected options red after submit for flex questions too', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="flex">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="flex-submit-stem">Which choices are supported by the speaker's description?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="flex-submit-option-a">The fence still supported climbing beans.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="flex-submit-option-b">The darker fence color attracted butterflies.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C" data-correct="true">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="flex-submit-option-c">A shallow water dish was placed near the flowers.</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    const optionA = document.querySelector('.example-card__option[data-option-value="A"]');
+    const optionB = document.querySelector('.example-card__option[data-option-value="B"]');
+    const optionC = document.querySelector('.example-card__option[data-option-value="C"]');
+    const submitBtn = document.querySelector('.example-card__submit-btn');
+
+    assert.ok(optionA && optionB && optionC && submitBtn, '测试夹具必须提供完整的不定项提交流程节点');
+
+    optionA.click();
+    optionB.click();
+    optionC.click();
+    submitBtn.click();
+
+    assert.equal(optionA.classList.contains('result-correct'), true);
+    assert.equal(optionB.classList.contains('result-incorrect'), true);
+    assert.equal(optionC.classList.contains('result-correct'), true);
   });
 
   it('disables submit button after submit', () => {
