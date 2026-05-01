@@ -3,7 +3,7 @@ name: html-slides
 metadata:
   version: "1.0.0"
   author: danzhu
-description: Generate interactive HTML teaching courseware from lesson materials. Supports layout-driven slide generation with interactive components (flip cards, charts, tables, code blocks, expandable cards, and more). Use this skill when the user wants to create teaching slides, courseware, or educational presentations as HTML. Also trigger when the user invokes /html-slides or mentions creating teaching courseware.
+description: Generate interactive HTML teaching courseware from lesson materials. Supports layout-driven slide generation with interactive components (flip cards, charts, tables, code blocks, expandable cards, quiz-annotation, example-card, and more). Use this skill when the user wants to create teaching slides, courseware, or educational presentations as HTML. Also trigger when the user invokes /html-slides or mentions creating teaching courseware.
 ---
 
 # Teaching Courseware Generator
@@ -214,17 +214,18 @@ Do NOT include summary for:
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
-- Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone3-summary.css`
+- Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules
+- If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
 - [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor-core.js` and before `doodle-runtime.js`
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
 - HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/`
-- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone3-summary.css → editor.css`
+- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css → editor.css`
 - **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor-core.js` at runtime
 - Reference the teaching theme CSS + components.css via `<link>`, and slides-runtime.js via `<script>`
 - Custom animations for this courseware → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
@@ -233,8 +234,9 @@ Do NOT include summary for:
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
 - **Always generate speaker notes** — see Speaker Notes below
-- Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
+- Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js → [example-card-audio.js → example-card-runtime.js if needed]`
 - On ordinary pages, `ArrowUp/ArrowDown` own top-level focus and page turns; `ArrowLeft/ArrowRight` only step fragments inside the currently focused host. Do not generate inline `onclick` handlers to manage `.flip-card`, `.collapse-card`, or `.summary-trigger` state.
+- On slides that contain `.example-card`, `ArrowUp/ArrowDown` are reserved for previous-question / next-question inside the active card, and `ArrowLeft/ArrowRight` must stay pinned to the active `.example-card__main` host.
 
 ### Speaker Notes (Mandatory)
 
@@ -360,6 +362,7 @@ If the user declines, stop here.
 | [zones/zone2-content.css](assets/zones/zone2-content.css) | Zone 2 基础布局与通用组件 | Phase 4 (generation) |
 | [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面与未来沉浸式组件结构 | Phase 4 (generation) |
 | [zones/zone2-quiz-annotation.css](assets/zones/zone2-quiz-annotation.css) | 答题与批注组件专属样式 | Phase 4 (generation) |
+| [zones/zone2-example-card.css](assets/zones/zone2-example-card.css) | 例题组件专属样式 | Phase 4 (when example-card is used) |
 | [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 4 (generation) |
 | [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |
 | [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
@@ -368,6 +371,8 @@ If the user declines, stop here.
 | [annotation-store.js](assets/annotation-store.js) | quiz-annotation sidecar 持久化与 `.annotations.js` 读写 | Phase 4 (when quiz-annotation is used) |
 | [quiz-annotation-audio.js](assets/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
 | [quiz-annotation-runtime.js](assets/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
+| [example-card-audio.js](assets/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
+| [example-card-runtime.js](assets/example-card-runtime.js) | 例题组件运行时逻辑 | Phase 4 (when example-card is used) |
 | [editor-*.js](assets/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
 | [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
 | [editor.css](assets/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |

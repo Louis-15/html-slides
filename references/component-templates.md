@@ -46,9 +46,9 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 ---
 
-## Components (13 Core + 1 Summary + 1 Quiz/Annotation)
+## Components (13 Core + 1 Summary + 2 Teaching Interaction Components)
 
-Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires the runtime stack `slides-runtime.js` → `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`.
+Core content components are defined in `zones/zone2-content.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation.css`, uses `layout-single` exclusively, and requires the runtime stack `slides-runtime.js` → `audio-runtime.js` → `annotation-store.js` → `quiz-annotation-audio.js` → `quiz-annotation-runtime.js`. The Example Card component (#15) is defined in `zones/zone2-example-card.css`, is designed for full-width teaching cards, and requires `example-card-audio.js` plus `example-card-runtime.js` after the editor/page-richtext runtime chain.
 
 > **ORDINARY PAGE INTERACTION CONTRACT (2026-04-25)**: On ordinary pages, `↑/↓` move the top-level focus across component roots before turning pages. Passive components such as `.card`, `.stat-card`, `.timeline-card`, `.chart-container`, `.table-wrap`, `.code-window`, `.image-block`, `.dual-bar`, and `.content-block` still participate in this top-level focus order and show `.step-active`, but they have no own forward action. Interactive hosts such as `.flip-card`, `.collapse-card`, and `.summary-trigger` use a focus-first model: first `ArrowDown` focuses the host, second `ArrowDown` performs the interaction, and `ArrowUp` first rolls the interaction back before leaving. `←/→` are reserved for fragment stepping inside the currently focused host.
 
@@ -544,3 +544,62 @@ Full-page composite component for reading comprehension, cloze tests, and annota
 - Scroll listeners + `requestAnimationFrame` keep connectors aligned during scrolling
 - Submit button uses `.qa-status-dot` for ✓/✗ marks with spring animation
 - Quiz isolation: when `.has-quiz` and not `.submitted`, all annotations are hidden
+- Reading mode now formally covers four cases: `single`, `matching`, `blank`, `analysis`
+- Blank questions use right-column generated slots; in editor mode the same slots become correct-answer editors, not student inputs
+- If a blank page has already been submitted, entering editor mode must clear `√/×` grading chrome and restore plain editable inputs
+
+### 15. 例题组件 / Example Card (`.example-card`)
+
+Compact teaching card for single-question or multi-question walkthroughs. Unlike `.quiz-annotation`, this is **not** a three-column reading system. It is a single glass card that can reveal analysis after submit and can chain multiple questions with previous/next navigation. Recommended for `layout-single` or other full-width slots. Avoid placing it inside narrow multi-column grids because the card itself already owns an internal left/right split when analysis opens.
+
+**Must load `zone2-example-card.css`, `audio-runtime.js`, `example-card-audio.js`, and `example-card-runtime.js`.** For a stable editor contract, `example-card-runtime.js` should be loaded **after** `editor-core.js`, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js`.
+
+```html
+<section class="example-card" data-card-id="ec-01" data-question-type="single">
+  <article class="example-card__question is-active" data-question-id="ec-01-q1" data-question-active="true" data-question-submitted="false">
+    <div class="example-card__main">
+      <div class="example-card__stem" data-edit-id="ec-01-q1-stem">
+        23. What was the speaker's original plan for the small garden behind the house?
+      </div>
+
+      <div class="example-card__answers">
+        <button type="button" class="qa-option example-card__option" data-option-value="A">
+          <span class="qa-option-label">A</span>
+          <span class="qa-option-text" data-edit-id="ec-01-q1-option-a">Grow vegetables only.</span>
+        </button>
+        <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+          <span class="qa-option-label">B</span>
+          <span class="qa-option-text" data-edit-id="ec-01-q1-option-b">Create a small reading corner.</span>
+        </button>
+      </div>
+    </div>
+
+    <aside class="example-card__analysis" hidden>
+      <div class="example-card__analysis-title">解析</div>
+      <div class="example-card__analysis-body" data-edit-id="ec-01-q1-analysis">
+        original plan 对应原文前半句，因此答案是 B。
+      </div>
+    </aside>
+
+    <div class="example-card__footer">
+      <div class="example-card__nav">
+        <button type="button" class="example-card__prev-btn" disabled>上一题</button>
+        <button type="button" class="example-card__next-btn" disabled>下一题</button>
+      </div>
+      <div class="example-card__actions">
+        <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+        <button type="button" class="example-card__submit-btn">提交答案</button>
+      </div>
+    </div>
+  </article>
+</section>
+```
+
+**Key rules:**
+- Supported question types are `single`, `multi`, `flex`, and `blank`
+- The stem renders a type pill automatically from `data-question-type-label`; do not hardcode a second visible pill in templates
+- `multi` enforces at least two correct answers in editor mode; `flex` uses the same student-side multi-select model but allows one or more correct answers in authoring
+- `blank` does not use `A/B/C/D` answer-key chips in editor mode. It switches to `.example-card__blank-answer-input` and mirrors the value to `.example-card__blank[data-correct-answer]`
+- Multi-question cards must keep inactive `.example-card__question` nodes on `hidden aria-hidden="true"`; the runtime relies on that contract to keep only one pane in layout
+- `ArrowDown / ArrowUp` are remapped by `slides-runtime.js` to next-question / previous-question on slides that contain `.example-card`
+- `ArrowLeft / ArrowRight` stay pinned to the active `.example-card__main` host so ordinary fragments only reveal after the current question is submitted

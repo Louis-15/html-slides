@@ -19,8 +19,9 @@ It also offers a **Vibe mode** with 12 creative themes for non-technical present
 - **Zero Dependencies** — HTML files with external CSS/JS references to a shared `assets/` folder. No npm, no build tools, no frameworks.
 - **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
 - **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
-- **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, and more.
+- **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, quiz-annotation pages, example-card walkthroughs, and more.
 - **Host-Aware Stepping & Hidden Annotations** — Ordinary components, summary panels, and authored rich-text fragments share a top-level focus model with scoped left/right fragment stepping and dedicated audio cues.
+- **Teaching Interaction Contracts** — `.quiz-annotation` and `.example-card` have explicit asset stacks, editor-mode rules, and keyboard contracts, so generated courseware can safely mix reading quiz pages with lightweight worked-example cards.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides exports, articles, generic pages) into HTMLSlides format.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
@@ -242,6 +243,9 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
 | `assets/slides-runtime.js` | Navigation JS + top-level focus / stepping integration | Phase 3 (Pro) |
 | `assets/audio-runtime.js` | Global audio cue bus for page turns, focus, and interaction cues | Phase 3 (Pro) |
+| `assets/zones/zone2-example-card.css` | Example-card visual system | Phase 3 (when example-card is used) |
+| `assets/example-card-audio.js` | Example-card audio adapter | Phase 3 (when example-card is used) |
+| `assets/example-card-runtime.js` | Example-card runtime, authoring state, and question navigation | Phase 3 (when example-card is used) |
 | `assets/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping and hover runtime | Phase 3 (Pro) |
 | `assets/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
 | `assets/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |

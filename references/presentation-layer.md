@@ -109,6 +109,17 @@ The courseware must support:
 
 Build navigation via external `slides-runtime.js`. Generate `goTo()`, `next()`, `prev()` as global functions, plus speaker notes console logging on each slide change.
 
+### Interactive Component Runtime Contracts
+
+When the slide contains heavy interaction components, the presentation layer must also preserve their resource and keyboard contracts:
+
+- `.quiz-annotation`: include `zone2-quiz-annotation.css` plus `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js`
+- `.example-card`: include `zone2-example-card.css` plus `example-card-audio.js → example-card-runtime.js`
+- `.example-card` slides remap `ArrowDown / ArrowUp` to previous-question / next-question and pin `ArrowLeft / ArrowRight` to the active `.example-card__main` host
+- `.quiz-annotation` slides keep their own internal stepping and must continue to suppress ordinary-page fragment fallback before submit
+
+These component contracts sit on top of the shared slide shell. The shell should not try to reimplement them with inline handlers.
+
 ## Generator Meta Tag
 
 Every courseware must include in `<head>`:

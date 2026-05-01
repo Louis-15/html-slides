@@ -42,6 +42,7 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="./assets/zones/zone2-content.css">
     <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
     <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
     <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
     <link rel="stylesheet" href="./assets/editor.css"> <!-- always included and loaded after Zone CSS -->
     <link rel="stylesheet" href="./assets/slide-animations.css"> <!-- custom animations -->
@@ -141,6 +142,10 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/page-richtext-annotation-runtime.js"></script>
     <script src="./assets/doodle-runtime.js"></script>
 
+    <!-- Example Card runtime stack (include only when the courseware contains .example-card) -->
+    <script src="./assets/example-card-audio.js"></script>
+    <script src="./assets/example-card-runtime.js"></script>
+
     <script>
         /* Only per-presentation custom JS stays inline
            (e.g., Chart.js config, custom interactions) */
@@ -185,6 +190,7 @@ Reference `editor.css` via `<link>`, **after** the Zone CSS chain:
 <link rel="stylesheet" href="./assets/zones/zone2-content.css">
 <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
 <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+<link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
 <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
 <link rel="stylesheet" href="./assets/editor.css">
 ```
@@ -220,6 +226,13 @@ If the courseware contains `.quiz-annotation`, reference the quiz runtime stack 
 <script src="./assets/quiz-annotation-runtime.js"></script>
 ```
 
+If the courseware contains `.example-card`, reference the example-card stack AFTER `doodle-runtime.js` so the runtime can patch `editor-core.js` and talk to the ordinary page fragment host safely:
+
+```html
+<script src="./assets/example-card-audio.js"></script>
+<script src="./assets/example-card-runtime.js"></script>
+```
+
 Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js` in **strict dependency order**:
 
 ```html
@@ -233,7 +246,7 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="./assets/doodle-runtime.js"></script>
 ```
 
-> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor-utils.js` must be first in the editor chain; `editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks.
+> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor-utils.js` must be first in the editor chain; `editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-runtime.js` must load after `editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
 
 ### 5. Plugin Hook System (for future extensions)
 
@@ -359,6 +372,7 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone2-content.css      # Zone 2 base layouts + common components
 │   ├── zone2-immersive-components.css # Zone 2 immersive components
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
+│   ├── zone2-example-card.css         # Zone 2 example-card component
 │   └── zone3-summary.css      # Zone 3 summary panel
 ├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
@@ -366,6 +380,8 @@ assets/                        # CSS, JS modules, themes, images
 ├── annotation-store.js        # Quiz annotation sidecar persistence (when quiz-annotation is used)
 ├── quiz-annotation-audio.js   # Quiz annotation audio adapter (when quiz-annotation is used)
 ├── quiz-annotation-runtime.js # Quiz annotation runtime (when quiz-annotation is used)
+├── example-card-audio.js      # Example-card audio adapter (when .example-card is used)
+├── example-card-runtime.js    # Example-card runtime (when .example-card is used)
 ├── editor-utils.js            # Editor base utilities
 ├── editor-persistence.js      # localStorage + export
 ├── editor-history.js          # Undo/redo
