@@ -24,6 +24,13 @@
 (function () {
   'use strict';
 
+  const READING_TYPE_LABELS = {
+    single: '阅读单选',
+    matching: '阅读七选五',
+    blank: '阅读填空',
+    analysis: '文章解析'
+  };
+
   // =========================================
   // 工具函数
   // =========================================
@@ -1948,6 +1955,235 @@
     });
   }
 
+  /**
+   * 答题与批注组件这轮正式收口为 4 种阅读形态：
+   * - 阅读单选：普通阅读选择题
+   * - 阅读七选五：沿用 matching 拖拽配对模型
+   * - 阅读填空：右栏输入、提交后展示正确答案
+   * - 文章解析：没有答题区，只有正文与批注
+   *
+   * 这里优先尊重显式 data-reading-type；没有显式标记时，再从现有 DOM 结构反推，
+   * 这样可以兼容历史页面，也方便后续新页面直接声明题型。
+   */
+  function inferReadingType(qa) {
+    if (!qa) return 'analysis';
+
+    const explicitType = (qa.dataset.readingType || '').trim();
+    if (explicitType && Object.prototype.hasOwnProperty.call(READING_TYPE_LABELS, explicitType)) {
+      return explicitType;
+    }
+
+    if (qa.querySelector('.qa-question[data-type="matching"]')) {
+      return 'matching';
+    }
+
+    if (qa.querySelector('.qa-question[data-type="blank"]')) {
+      return 'blank';
+    }
+
+    if (qa.querySelector('.qa-question[data-type="single"], .qa-question[data-type="multi"]')) {
+      return 'single';
+    }
+
+    return 'analysis';
+  }
+
+  /**
+   * 左栏顶部的题型胶囊是组件级语义入口：
+   * 老师切页时一眼就知道当前是做题页还是解析页，
+   * 也为后续四种阅读形态统一出一个稳定视觉锚点。
+   */
+  function syncReadingTypePill(qa) {
+    if (!qa) return;
+
+    const passage = qa.querySelector('.qa-passage');
+    if (!passage) return;
+
+    const readingType = inferReadingType(qa);
+    qa.dataset.readingTypeResolved = readingType;
+
+    let pill = passage.querySelector('.qa-reading-type-pill');
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.className = 'qa-reading-type-pill';
+      passage.insertBefore(pill, passage.firstChild);
+    }
+
+    pill.textContent = READING_TYPE_LABELS[readingType] || READING_TYPE_LABELS.analysis;
+  }
+
+  function normalizeBlankAnswer(value) {
+    return String(value || '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toUpperCase();
+  }
+
+  function clearBlankAnswerResults(qa) {
+    if (!qa) return;
+
+    qa.querySelectorAll('.qa-answer-slot--blank').forEach(slot => {
+      const input = slot.querySelector('.qa-slot-input');
+      const currentValue = input ? input.value : (slot.dataset.userAnswer || '');
+
+      slot.classList.remove('slot-correct', 'slot-incorrect');
+      slot.classList.toggle('filled', !!String(currentValue || '').trim());
+      slot.querySelectorAll('.qa-slot-mark, .qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
+
+      if (input) {
+        input.disabled = qa.classList.contains('submitted') || isEditorMode();
+      }
+    });
+  }
+
+  /**
+   * 阅读填空与七选五不同：
+   * - 左栏正文只负责阅读语境与空位位置
+   * - 右栏统一承担学生输入、判分和正确答案展示
+   *
+   * 这样能避免正文被长答案撑坏，同时让 10 个空位的判分状态全部收口在右栏，
+   * 老师讲题时也更接近真实考试的“题号列表 + 对错反馈”阅读习惯。
+   */
+  function syncBlankAnswerUI(qa) {
+    if (!qa) return;
+
+    const blankQuestion = qa.querySelector('.qa-question[data-type="blank"]');
+    if (!blankQuestion) return;
+
+    const answerContent = qa.querySelector('.qa-answer-content');
+    if (!answerContent) return;
+
+    const passageSlots = Array.from(qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]'));
+    if (!passageSlots.length) return;
+
+    let divider = answerContent.querySelector('.qa-slots-divider.qa-slots-divider--blank');
+    if (!divider) {
+      divider = document.createElement('div');
+      divider.className = 'qa-slots-divider qa-slots-divider--blank';
+    }
+    divider.textContent = isEditorMode()
+      ? '阅读填空题的正确答案请直接修改 HTML 标记'
+      : '↑ 在横线上输入答案，提交后查看正确答案 ↓';
+
+    let slotsContainer = answerContent.querySelector('.qa-answer-slots.qa-answer-slots--blank');
+    if (!slotsContainer) {
+      slotsContainer = document.createElement('div');
+      slotsContainer.className = 'qa-answer-slots qa-answer-slots--blank';
+    }
+    slotsContainer.innerHTML = '';
+
+    passageSlots.forEach((passageSlot) => {
+      const blankId = passageSlot.dataset.blankId || '';
+      const correctAnswer = passageSlot.dataset.correctAnswer || '';
+      const userAnswer = passageSlot.dataset.userAnswer || '';
+
+      const slot = document.createElement('div');
+      slot.className = 'qa-answer-slot qa-answer-slot--blank';
+      slot.dataset.blankId = blankId;
+      slot.dataset.correctAnswer = correctAnswer;
+      if (userAnswer) {
+        slot.dataset.userAnswer = userAnswer;
+      }
+
+      const label = document.createElement('span');
+      label.className = 'qa-slot-label';
+      label.textContent = blankId + '.';
+
+      const blankWrap = document.createElement('label');
+      blankWrap.className = 'qa-slot-blank qa-slot-blank-input-wrap';
+
+      const input = document.createElement('input');
+      input.className = 'qa-slot-input qa-blank-input';
+      input.type = 'text';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      input.placeholder = '请输入答案';
+      input.value = userAnswer;
+      input.disabled = qa.classList.contains('submitted') || isEditorMode();
+      input.setAttribute('aria-label', '第 ' + blankId + ' 题答案');
+
+      input.addEventListener('input', () => {
+        if (qa.classList.contains('submitted')) return;
+
+        const nextValue = input.value;
+        slot.dataset.userAnswer = nextValue;
+        passageSlot.dataset.userAnswer = nextValue;
+        slot.classList.toggle('filled', !!nextValue.trim());
+
+        /* 学生重新输入时，只清当前槽位的判分痕迹，
+           避免上一次提交后的对错色块误导新的输入过程。 */
+        slot.classList.remove('slot-correct', 'slot-incorrect');
+        slot.querySelectorAll('.qa-slot-mark, .qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
+      });
+
+      blankWrap.appendChild(input);
+      slot.appendChild(label);
+      slot.appendChild(blankWrap);
+      slotsContainer.appendChild(slot);
+    });
+
+    if (divider.parentNode !== answerContent) {
+      answerContent.appendChild(divider);
+    }
+    if (slotsContainer.parentNode !== answerContent) {
+      answerContent.appendChild(slotsContainer);
+    }
+
+    clearBlankAnswerResults(qa);
+    if (qa.classList.contains('submitted')) {
+      renderBlankAnswerResults(qa);
+    }
+  }
+
+  function renderBlankAnswerResults(qa) {
+    if (!qa) return;
+
+    qa.querySelectorAll('.qa-answer-slot--blank').forEach(slot => {
+      const label = slot.querySelector('.qa-slot-label');
+      const input = slot.querySelector('.qa-slot-input');
+      const correctAnswer = slot.dataset.correctAnswer || '';
+      const currentValue = input ? input.value : (slot.dataset.userAnswer || '');
+      const normalizedUserAnswer = normalizeBlankAnswer(currentValue);
+      const normalizedCorrectAnswer = normalizeBlankAnswer(correctAnswer);
+      const isAnswered = normalizedUserAnswer.length > 0;
+      const isCorrect = isAnswered && normalizedUserAnswer === normalizedCorrectAnswer;
+
+      slot.dataset.userAnswer = currentValue;
+      slot.classList.toggle('filled', !!String(currentValue || '').trim());
+      slot.classList.remove('slot-correct', 'slot-incorrect');
+      slot.querySelectorAll('.qa-slot-mark, .qa-slot-correct, .qa-slot-feedback').forEach(el => el.remove());
+
+      if (input) {
+        input.disabled = true;
+      }
+
+      const markEl = document.createElement('span');
+      markEl.className = 'qa-slot-mark ' + (isCorrect ? 'correct' : 'incorrect');
+      markEl.textContent = isCorrect ? '✓' : '✗';
+      if (label) {
+        label.appendChild(markEl);
+      }
+
+      if (isCorrect) {
+        slot.classList.add('slot-correct');
+      } else {
+        slot.classList.add('slot-incorrect');
+      }
+
+      if (!isAnswered) {
+        const feedbackEl = document.createElement('span');
+        feedbackEl.className = 'qa-slot-feedback unanswered';
+        feedbackEl.textContent = '未作答';
+        slot.appendChild(feedbackEl);
+      }
+
+      const correctEl = document.createElement('span');
+      correctEl.className = 'qa-slot-correct';
+      correctEl.innerHTML = '<span class="qa-slot-correct-prefix">正确答案：</span>' + correctAnswer;
+      slot.appendChild(correctEl);
+    });
+  }
+
   function syncChoiceAnswerKeyEditors(qa) {
     if (!qa) return;
 
@@ -2266,6 +2502,8 @@
       qa.classList.add('has-quiz');
     }
 
+    syncReadingTypePill(qa);
+
     // 普通选择题的未作答提醒与判分角标都属于运行时反馈，未提交时统一清理，避免历史 DOM 残留。
     if (!qa.classList.contains('submitted')) {
       clearSelectionQuestionResults(qa);
@@ -2303,6 +2541,11 @@
       syncMatchingAnswerUI(qa, {
         resetTransientState: !qa.querySelector('.qa-answer-slots')
       });
+    }
+
+    const blankQuestion = qa.querySelector('.qa-question[data-type="blank"]');
+    if (blankQuestion) {
+      syncBlankAnswerUI(qa);
     }
 
     // — 提交按钮 —
@@ -2633,7 +2876,7 @@
 
     qa.querySelectorAll('.qa-question').forEach(question => {
       const questionType = question.dataset.type;
-      if (questionType === 'matching') return;
+      if (questionType === 'matching' || questionType === 'blank') return;
 
       const options = Array.from(question.querySelectorAll('.qa-option'));
       if (!options.length) return;
@@ -2685,6 +2928,7 @@
     renderSelectionQuestionResults(qa);
 
     const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
+    const hasBlankQ = qa.querySelector('.qa-question[data-type="blank"]');
     if (hasMatchingQ) {
       syncMatchingOptionDragState(qa);
       qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(slot => {
@@ -2693,10 +2937,14 @@
       renderMatchingAnswerResults(qa);
     }
 
+    if (hasBlankQ) {
+      renderBlankAnswerResults(qa);
+    }
+
     // — 填空题判分（连线题的正文空位不再显示判分标记，由右栏槽位统一处理） —
     qa.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(slot => {
       // 连线题的正文空位跳过视觉标记
-      if (hasMatchingQ) return;
+      if (hasMatchingQ || hasBlankQ) return;
 
       const correctAnswer = slot.dataset.correctAnswer;
       const userAnswer = slot.dataset.userAnswer || '';

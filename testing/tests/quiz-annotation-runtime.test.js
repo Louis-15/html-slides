@@ -29,6 +29,12 @@ function clickElement(window, element) {
   element.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 }
 
+function inputText(window, element, value) {
+  element.value = value;
+  element.dispatchEvent(new window.Event('input', { bubbles: true }));
+  element.dispatchEvent(new window.Event('change', { bubbles: true }));
+}
+
 function rightClickElement(window, element) {
   element.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, button: 2 }));
 }
@@ -291,6 +297,68 @@ function createSelectionEditorDom(questionType = 'single') {
                 </div>
               </div>
             </div>
+          </div>
+          <div class="qa-notes-panel"></div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
+function createReadingBlankDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation has-quiz notes-active">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01">
+              The exhibition,
+              <span class="qa-blank-slot" data-blank-id="36" data-correct-answer="which">
+                <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">36</sup></span>
+                <span class="qa-blank-answer"></span>
+              </span>
+              originated in China.
+            </p>
+            <p data-edit-id="passage-02">
+              We hope
+              <span class="qa-blank-slot" data-blank-id="38" data-correct-answer="to present">
+                <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">38</sup></span>
+                <span class="qa-blank-answer"></span>
+              </span>
+              the abstract game in a visual context.
+            </p>
+          </div>
+          <div class="qa-answer-panel">
+            <div class="qa-answer-header">
+              <div class="qa-answer-title">Question</div>
+              <button class="qa-submit-btn">Submit</button>
+            </div>
+            <div class="qa-answer-content">
+              <div class="qa-question" data-type="blank">
+                <p>36-38. Fill in the blanks.</p>
+              </div>
+            </div>
+          </div>
+          <div class="qa-notes-panel"></div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  return createRuntimeDom(html);
+}
+
+function createReadingAnalysisDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <div class="quiz-annotation notes-active">
+        <div class="qa-body">
+          <svg class="qa-connector-canvas" aria-hidden="true"></svg>
+          <div class="qa-passage">
+            <p data-edit-id="passage-01">Pure reading analysis content.</p>
           </div>
           <div class="qa-notes-panel"></div>
         </div>
@@ -767,6 +835,53 @@ describe('quiz annotation runtime', () => {
     clickElement(window, chipA);
     assert.equal(question.querySelector('.qa-option[data-option="A"]').getAttribute('data-correct'), null, 'expected clicking an active multi-choice answer to toggle it off');
     assert.ok(!chipA.classList.contains('is-correct'), 'expected toggled-off chip to clear its active state');
+  });
+
+  it('renders the correct left-column type pill for all four reading modes', () => {
+    const singleDom = createSelectionEditorDom('single');
+    const matchingDom = createMatchingEditorDom();
+    const blankDom = createReadingBlankDom();
+    const analysisDom = createReadingAnalysisDom();
+
+    ensureQaInitialized(singleDom.window, singleDom.window.document.querySelector('.quiz-annotation'));
+    ensureQaInitialized(matchingDom.window, matchingDom.window.document.querySelector('.quiz-annotation'));
+    ensureQaInitialized(blankDom.window, blankDom.window.document.querySelector('.quiz-annotation'));
+    ensureQaInitialized(analysisDom.window, analysisDom.window.document.querySelector('.quiz-annotation'));
+
+    assert.equal(singleDom.window.document.querySelector('.qa-reading-type-pill')?.textContent?.trim(), '阅读单选', 'expected ordinary choice questions to show the reading-single pill');
+    assert.equal(matchingDom.window.document.querySelector('.qa-reading-type-pill')?.textContent?.trim(), '阅读七选五', 'expected matching questions to show the reading-matching pill');
+    assert.equal(blankDom.window.document.querySelector('.qa-reading-type-pill')?.textContent?.trim(), '阅读填空', 'expected blank questions to show the reading-blank pill');
+    assert.equal(analysisDom.window.document.querySelector('.qa-reading-type-pill')?.textContent?.trim(), '文章解析', 'expected pure reading layouts to show the analysis pill');
+  });
+
+  it('builds right-column answer lines for blank questions and grades them on submit', () => {
+    const dom = createReadingBlankDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    ensureQaInitialized(window, qa);
+
+    const inputs = Array.from(qa.querySelectorAll('.qa-answer-slot .qa-slot-input'));
+    assert.equal(inputs.length, 2, 'expected blank-mode initialization to build one right-side input line per passage blank');
+
+    inputText(window, inputs[0], 'which');
+    inputText(window, inputs[1], 'present');
+    clickElement(window, qa.querySelector('.qa-submit-btn'));
+
+    const firstSlot = qa.querySelector('.qa-answer-slot[data-blank-id="36"]');
+    const secondSlot = qa.querySelector('.qa-answer-slot[data-blank-id="38"]');
+    const firstMark = firstSlot.querySelector('.qa-slot-label .qa-slot-mark');
+    const secondMark = secondSlot.querySelector('.qa-slot-label .qa-slot-mark');
+
+    assert.equal(qa.classList.contains('submitted'), true, 'expected blank-mode submit to lock the quiz into submitted state');
+    assert.equal(firstSlot.classList.contains('slot-correct'), true, 'expected a correct blank answer line to receive the success state');
+    assert.equal(secondSlot.classList.contains('slot-incorrect'), true, 'expected a wrong blank answer line to receive the error state');
+    assert.equal(firstMark?.textContent, '✓', 'expected blank-mode grading to pin a check mark onto the blank index badge');
+    assert.equal(secondMark?.textContent, '✗', 'expected blank-mode grading to pin a cross mark onto the blank index badge');
+    assert.match(firstSlot.querySelector('.qa-slot-correct')?.textContent || '', /which/i, 'expected blank-mode grading to reveal the correct answer beside the first line');
+    assert.match(secondSlot.querySelector('.qa-slot-correct')?.textContent || '', /to present/i, 'expected blank-mode grading to reveal the correct answer beside the wrong line too');
+    assert.equal(firstSlot.querySelector('.qa-slot-input')?.disabled, true, 'expected submitted blank-mode inputs to become read-only');
+    assert.equal(secondSlot.querySelector('.qa-slot-input')?.disabled, true, 'expected all submitted blank-mode inputs to become read-only');
   });
 
   it('starts annotation-store authorization from the first page gesture instead of showing a persistent header icon', async () => {
