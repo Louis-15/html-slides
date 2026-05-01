@@ -6,6 +6,9 @@
   const CARD_SELECTOR = '.example-card';
   const OPTION_SELECTOR = '.example-card__option';
   const ANSWER_KEY_SELECTOR = '.example-card__answer-key';
+  const TYPE_PICKER_SELECTOR = '.example-card__editor-type-picker';
+  const TYPE_BUTTON_SELECTOR = '.example-card__type-button';
+  const MULTI_HINT_SELECTOR = '.example-card__editor-multi-hint';
   const ANALYSIS_TOGGLE_SELECTOR = '.example-card__analysis-toggle';
   const SUBMIT_BUTTON_SELECTOR = '.example-card__submit-btn';
   const PREV_BUTTON_SELECTOR = '.example-card__prev-btn';
@@ -15,6 +18,13 @@
   const QUESTION_SELECTOR = '.example-card__question';
   const RESULT_MARK_SELECTOR = '.qa-result-mark';
   const SINGLE_QUESTION_STATE_KEY = '__single__';
+  const QUESTION_TYPE_LABELS = {
+    single: '单选',
+    multi: '多选',
+    flex: '不定项选择',
+    blank: '填空'
+  };
+  const DEFAULT_CHOICE_VALUES = ['A', 'B', 'C', 'D'];
   const stateMap = new WeakMap();
 
   function readStoredEditableHTML(editId) {
@@ -300,8 +310,221 @@
       .filter(Boolean);
   }
 
+  function normalizeQuestionType(questionType) {
+    return Object.prototype.hasOwnProperty.call(QUESTION_TYPE_LABELS, questionType)
+      ? questionType
+      : '';
+  }
+
+  function getQuestionContainers(root) {
+    const questionNodes = getQuestionNodes(root);
+    return questionNodes.length > 0 ? questionNodes : [root];
+  }
+
+  function getQuestionMain(questionRoot) {
+    return questionRoot ? questionRoot.querySelector('.example-card__main') : null;
+  }
+
+  function getQuestionStem(questionRoot) {
+    return questionRoot ? questionRoot.querySelector('.example-card__stem') : null;
+  }
+
+  function buildQuestionDomKey(root, questionRoot) {
+    if (questionRoot && questionRoot !== root) {
+      const questionNodes = getQuestionNodes(root);
+      return getQuestionId(questionRoot, questionNodes.indexOf(questionRoot));
+    }
+
+    return root.getAttribute('data-card-id') || 'example-card';
+  }
+
+  function createEditorLabel(text) {
+    const label = document.createElement('span');
+    label.className = 'example-card__editor-label';
+    label.textContent = text;
+    return label;
+  }
+
+  function createAnswerKeyButton(value) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'example-card__answer-key';
+    button.setAttribute('data-answer-value', value);
+    button.textContent = value;
+    return button;
+  }
+
+  function ensureAnswerKeyRow(root, questionRoot) {
+    const main = getQuestionMain(questionRoot || root);
+
+    if (!main) {
+      return null;
+    }
+
+    let row = main.querySelector('.example-card__editor-answer-key');
+
+    if (row) {
+      return row;
+    }
+
+    row = document.createElement('div');
+    row.className = 'example-card__editor-answer-key';
+    row.setAttribute('data-editor-only', 'true');
+    row.setAttribute('aria-label', '正确答案编辑区');
+    row.appendChild(createEditorLabel('正确答案'));
+    DEFAULT_CHOICE_VALUES.forEach((value) => {
+      row.appendChild(createAnswerKeyButton(value));
+    });
+
+    const stem = getQuestionStem(questionRoot || root);
+    if (stem) {
+      main.insertBefore(row, stem);
+    } else {
+      main.prepend(row);
+    }
+
+    return row;
+  }
+
+  function createTypeButton(type) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'example-card__type-button';
+    button.setAttribute('data-question-type-value', type);
+    button.textContent = QUESTION_TYPE_LABELS[type];
+    return button;
+  }
+
+  function ensureTypePickerRow(root, questionRoot) {
+    const main = getQuestionMain(questionRoot || root);
+
+    if (!main) {
+      return null;
+    }
+
+    let row = main.querySelector(TYPE_PICKER_SELECTOR);
+
+    if (row) {
+      return row;
+    }
+
+    row = document.createElement('div');
+    row.className = 'example-card__editor-type-picker';
+    row.setAttribute('data-editor-only', 'true');
+    row.appendChild(createEditorLabel('题型'));
+
+    ['single', 'multi', 'flex', 'blank'].forEach((type) => {
+      row.appendChild(createTypeButton(type));
+    });
+
+    const multiHint = document.createElement('span');
+    multiHint.className = 'example-card__editor-multi-hint';
+    multiHint.textContent = '至少选择两个答案';
+    multiHint.hidden = true;
+    row.appendChild(multiHint);
+
+    const answerKeyRow = ensureAnswerKeyRow(root, questionRoot);
+    if (answerKeyRow && answerKeyRow.parentNode === main) {
+      main.insertBefore(row, answerKeyRow);
+    } else {
+      main.prepend(row);
+    }
+
+    return row;
+  }
+
+  function ensureChoiceAnswerSection(root, questionRoot) {
+    const targetRoot = questionRoot || root;
+    let answers = targetRoot.querySelector('.example-card__answers');
+
+    if (answers) {
+      return answers;
+    }
+
+    const main = getQuestionMain(targetRoot);
+    if (!main) {
+      return null;
+    }
+
+    answers = document.createElement('div');
+    answers.className = 'example-card__answers';
+    const questionDomKey = buildQuestionDomKey(root, questionRoot || root);
+
+    DEFAULT_CHOICE_VALUES.forEach((value, index) => {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'qa-option example-card__option';
+      option.setAttribute('data-option-value', value);
+
+      if (index === 0) {
+        option.setAttribute('data-correct', 'true');
+      }
+
+      const label = document.createElement('span');
+      label.className = 'qa-option-label';
+      label.textContent = value;
+
+      const text = document.createElement('span');
+      text.className = 'qa-option-text';
+      text.setAttribute('data-edit-id', `${questionDomKey}-option-${value.toLowerCase()}`);
+      text.textContent = `选项 ${value}`;
+
+      option.appendChild(label);
+      option.appendChild(text);
+      answers.appendChild(option);
+    });
+
+    main.appendChild(answers);
+    return answers;
+  }
+
+  function ensureBlankSlot(root, questionRoot) {
+    const targetRoot = questionRoot || root;
+    const stem = getQuestionStem(targetRoot);
+
+    if (!stem || stem.querySelector(BLANK_SELECTOR)) {
+      return stem ? stem.querySelector(BLANK_SELECTOR) : null;
+    }
+
+    const blank = document.createElement('span');
+    blank.className = 'example-card__blank';
+    blank.setAttribute('data-blank-id', `${buildQuestionDomKey(root, questionRoot || root)}-blank-1`);
+    blank.setAttribute('data-correct-answer', '答案');
+    blank.textContent = '______';
+    stem.append(' ', blank);
+    return blank;
+  }
+
+  function ensureQuestionStructureForType(root, questionRoot, questionType) {
+    ensureTypePickerRow(root, questionRoot);
+
+    if (questionType === 'blank') {
+      ensureBlankSlot(root, questionRoot);
+      return;
+    }
+
+    ensureAnswerKeyRow(root, questionRoot);
+    ensureChoiceAnswerSection(root, questionRoot);
+  }
+
+  function inferQuestionType(root, question) {
+    const explicitType = normalizeQuestionType((question && question.getAttribute('data-question-type')) || root.getAttribute('data-question-type'));
+
+    if (explicitType) {
+      return explicitType;
+    }
+
+    const targetRoot = question || root;
+
+    if (targetRoot.querySelector(BLANK_SELECTOR)) {
+      return 'blank';
+    }
+
+    return collectCorrectValues(root, question).length > 1 ? 'multi' : 'single';
+  }
+
   function getQuestionType(root, question) {
-    return (question && question.getAttribute('data-question-type')) || root.getAttribute('data-question-type') || 'single';
+    return inferQuestionType(root, question);
   }
 
   function isEditorMode() {
@@ -316,7 +539,14 @@
 
   function syncAnswerKey(root) {
     const questionRoot = getActiveQuestionContainer(root);
+    const questionType = getQuestionType(root, questionRoot === root ? null : questionRoot);
     const correctValues = collectCorrectValues(root, questionRoot === root ? null : questionRoot);
+    const answerKeyRow = questionRoot.querySelector('.example-card__editor-answer-key');
+
+    if (answerKeyRow) {
+      answerKeyRow.hidden = questionType === 'blank';
+      answerKeyRow.setAttribute('aria-hidden', questionType === 'blank' ? 'true' : 'false');
+    }
 
     questionRoot.querySelectorAll(ANSWER_KEY_SELECTOR).forEach((button) => {
       const value = button.getAttribute('data-answer-value') || '';
@@ -324,9 +554,180 @@
     });
   }
 
+  function syncQuestionTypeUI(root) {
+    getQuestionContainers(root).forEach((questionRoot) => {
+      const normalizedType = getQuestionType(root, questionRoot === root ? null : questionRoot);
+      const targetRoot = questionRoot === root ? root : questionRoot;
+      const stem = getQuestionStem(questionRoot);
+      const typePicker = ensureTypePickerRow(root, questionRoot === root ? null : questionRoot);
+      const answers = targetRoot.querySelector('.example-card__answers');
+      const answerKeyRow = ensureAnswerKeyRow(root, questionRoot === root ? null : questionRoot);
+      const correctCount = collectCorrectValues(root, questionRoot === root ? null : questionRoot).length;
+
+      targetRoot.setAttribute('data-question-type', normalizedType);
+
+      if (stem) {
+        stem.setAttribute('data-question-type-label', QUESTION_TYPE_LABELS[normalizedType] || '');
+        stem.setAttribute('data-question-type', normalizedType);
+      }
+
+      if (typePicker) {
+        typePicker.querySelectorAll(TYPE_BUTTON_SELECTOR).forEach((button) => {
+          const typeValue = button.getAttribute('data-question-type-value') || '';
+          button.classList.toggle('is-active', typeValue === normalizedType);
+        });
+
+        const multiHint = typePicker.querySelector(MULTI_HINT_SELECTOR);
+        if (multiHint) {
+          const shouldShowMultiHint = normalizedType === 'multi';
+          multiHint.hidden = !shouldShowMultiHint;
+          multiHint.classList.toggle('is-invalid', shouldShowMultiHint && correctCount < 2);
+          if (!shouldShowMultiHint) {
+            multiHint.classList.remove('is-shaking');
+          }
+        }
+      }
+
+      if (answerKeyRow) {
+        answerKeyRow.hidden = normalizedType === 'blank';
+        answerKeyRow.setAttribute('aria-hidden', normalizedType === 'blank' ? 'true' : 'false');
+      }
+
+      if (answers) {
+        answers.hidden = normalizedType === 'blank';
+        answers.setAttribute('aria-hidden', normalizedType === 'blank' ? 'true' : 'false');
+      }
+    });
+  }
+
+  function setCorrectValuesForSingleChoice(targetRoot, value) {
+    targetRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
+      const optionValue = option.getAttribute('data-option-value') || '';
+
+      if (optionValue === value) {
+        option.setAttribute('data-correct', 'true');
+      } else {
+        option.removeAttribute('data-correct');
+      }
+    });
+  }
+
+  function toggleCorrectValueForMultiChoice(targetRoot, value) {
+    const targetOption = Array.from(targetRoot.querySelectorAll(OPTION_SELECTOR)).find((option) => {
+      return (option.getAttribute('data-option-value') || '') === value;
+    });
+
+    if (!targetOption) {
+      return;
+    }
+
+    if (targetOption.hasAttribute('data-correct')) {
+      targetOption.removeAttribute('data-correct');
+    } else {
+      targetOption.setAttribute('data-correct', 'true');
+    }
+  }
+
+  function setQuestionType(root, questionRoot, nextType) {
+    const normalizedType = normalizeQuestionType(nextType) || 'single';
+    const targetRoot = questionRoot || root;
+
+    ensureQuestionStructureForType(root, questionRoot, normalizedType);
+    targetRoot.setAttribute('data-question-type', normalizedType);
+
+    if (normalizedType === 'single') {
+      const firstCorrectValue = collectCorrectValues(root, questionRoot)[0]
+        || (targetRoot.querySelector(OPTION_SELECTOR) && targetRoot.querySelector(OPTION_SELECTOR).getAttribute('data-option-value'))
+        || 'A';
+      setCorrectValuesForSingleChoice(targetRoot, firstCorrectValue);
+    }
+
+    if ((normalizedType === 'multi' || normalizedType === 'flex') && collectCorrectValues(root, questionRoot).length === 0) {
+      const firstOption = targetRoot.querySelector(OPTION_SELECTOR);
+      if (firstOption) {
+        firstOption.setAttribute('data-correct', 'true');
+      }
+    }
+
+    const state = getQuestionState(root, questionRoot);
+    state.correctValues = collectCorrectValues(root, questionRoot);
+
+    if (state.submitted && normalizedType !== 'blank') {
+      state.isCorrect = hasSameValueSet(state.selectedValues, state.correctValues);
+    }
+
+    if (state.submitted && normalizedType === 'blank') {
+      state.isCorrect = null;
+    }
+
+    syncActiveQuestionSnapshot(root, stateMap.get(root));
+    syncQuestionTypeUI(root);
+    syncAnswerKey(root);
+    renderSelection(root);
+    renderSubmission(root);
+  }
+
+  function shakeMultiHint(root, questionRoot) {
+    const targetRoot = questionRoot || root;
+    const hint = targetRoot.querySelector(MULTI_HINT_SELECTOR);
+
+    if (!hint) {
+      return;
+    }
+
+    hint.hidden = false;
+    hint.classList.add('is-invalid');
+    hint.classList.remove('is-shaking');
+    void hint.offsetWidth;
+    hint.classList.add('is-shaking');
+  }
+
+  function hasInvalidMultiAnswerConfiguration(root, questionRoot) {
+    return getQuestionType(root, questionRoot) === 'multi' && collectCorrectValues(root, questionRoot).length < 2;
+  }
+
+  function installEditorExitGuard() {
+    const editorCore = window.editorCore;
+
+    if (!editorCore || typeof editorCore.toggleEditMode !== 'function' || editorCore.__exampleCardExitGuardInstalled) {
+      return;
+    }
+
+    const originalToggleEditMode = editorCore.toggleEditMode;
+
+    editorCore.toggleEditMode = function patchedExampleCardEditModeToggle() {
+      if (this.isActive) {
+        const invalidContexts = [];
+
+        document.querySelectorAll(CARD_SELECTOR).forEach((root) => {
+          getQuestionContainers(root).forEach((questionRoot) => {
+            const scopedQuestionRoot = questionRoot === root ? null : questionRoot;
+
+            if (hasInvalidMultiAnswerConfiguration(root, scopedQuestionRoot)) {
+              invalidContexts.push({ root, questionRoot: scopedQuestionRoot });
+            }
+          });
+        });
+
+        if (invalidContexts.length > 0) {
+          invalidContexts.forEach(({ root, questionRoot }) => {
+            syncQuestionTypeUI(root);
+            shakeMultiHint(root, questionRoot);
+          });
+          return false;
+        }
+      }
+
+      return originalToggleEditMode.apply(this, arguments);
+    };
+
+    editorCore.__exampleCardExitGuardInstalled = true;
+  }
+
   function updateCorrectValuesFromAnswerKey(root, button) {
     const questionRoot = button.closest(QUESTION_SELECTOR);
     const value = button.getAttribute('data-answer-value') || '';
+    const questionType = getQuestionType(root, questionRoot);
 
     if (value === '') {
       return;
@@ -340,15 +741,15 @@
 
     const targetRoot = questionRoot || root;
 
-    targetRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
-      const optionValue = option.getAttribute('data-option-value') || '';
+    if (questionType === 'blank') {
+      return;
+    }
 
-      if (optionValue === value) {
-        option.setAttribute('data-correct', 'true');
-      } else {
-        option.removeAttribute('data-correct');
-      }
-    });
+    if (questionType === 'multi' || questionType === 'flex') {
+      toggleCorrectValueForMultiChoice(targetRoot, value);
+    } else {
+      setCorrectValuesForSingleChoice(targetRoot, value);
+    }
 
     const state = getQuestionState(root, questionRoot);
     state.correctValues = collectCorrectValues(root, questionRoot);
@@ -359,6 +760,7 @@
       renderSubmission(root);
     }
 
+    syncQuestionTypeUI(root);
     syncAnswerKey(root);
   }
 
@@ -434,6 +836,7 @@
     state.activeQuestionId = nextQuestionId;
     syncActiveQuestionSnapshot(root, state);
     syncQuestionGateState(root);
+    syncQuestionTypeUI(root);
     syncAnswerKey(root);
     renderSelection(root);
     renderSubmission(root);
@@ -585,6 +988,7 @@
     }
 
     const state = getQuestionState(root, questionRoot);
+  const questionType = getQuestionType(root, questionRoot);
 
     // 编辑模式下点击选项的意图是把光标放进题目文案里继续编辑，
     // 不是执行学生态作答。这里如果不直接短路，作者一边改选项文本、一边就会把 runtime 的 selectedValues 改脏，
@@ -599,8 +1003,23 @@
       return;
     }
 
-    // Task 2 仍只实现单选：最后一次点击覆盖之前选择，不提前扩到多选规则。
-    state.selectedValues = [value];
+    /* 多选题这里要保留“答案集合”的语义，而不是继续沿用单选题的最后一次覆盖。
+       否则作者即便在 DOM 上标了多个 data-correct，学生态也永远只能留下最后一项，
+       提交时的集合判分就会退化成一条伪多选题。 */
+    if (questionType === 'multi') {
+      const selectedSet = new Set(state.selectedValues);
+
+      if (selectedSet.has(value)) {
+        selectedSet.delete(value);
+      } else {
+        selectedSet.add(value);
+      }
+
+      state.selectedValues = Array.from(selectedSet);
+    } else {
+      state.selectedValues = [value];
+    }
+
     syncActiveQuestionSnapshot(root, stateMap.get(root));
     renderSelection(root);
   }
@@ -665,6 +1084,11 @@
     const initialHtmlSnapshot = captureEditableHtmlSnapshot(root);
 
     ensureState(root);
+    getQuestionContainers(root).forEach((questionRoot) => {
+      const scopedQuestionRoot = questionRoot === root ? null : questionRoot;
+      ensureQuestionStructureForType(root, scopedQuestionRoot, getQuestionType(root, scopedQuestionRoot));
+    });
+    installEditorExitGuard();
     /* example-card 在真实课件页里经常不是源码直出，而是 template clone 之后才挂到 DOM。
        这意味着 editor-core / annotation-store 的全局首次恢复可能已经跑完了，
        但当前题卡的 stem / option / analysis 根块此刻才真正出现。
@@ -673,6 +1097,7 @@
     hydratePersistedEditRoots(root, initialHtmlSnapshot);
     scheduleAnnotationStoreHydration(root, initialHtmlSnapshot);
     syncQuestionGateState(root);
+    syncQuestionTypeUI(root);
     syncAnswerKey(root);
     renderSelection(root);
     renderSubmission(root);
@@ -688,6 +1113,20 @@
 
   document.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const typeButton = event.target.closest(TYPE_BUTTON_SELECTOR);
+
+    if (typeButton) {
+      const root = typeButton.closest(CARD_SELECTOR);
+
+      if (root) {
+        const questionRoot = typeButton.closest(QUESTION_SELECTOR);
+        const nextType = typeButton.getAttribute('data-question-type-value') || '';
+        setQuestionType(root, questionRoot, nextType);
+      }
+
       return;
     }
 

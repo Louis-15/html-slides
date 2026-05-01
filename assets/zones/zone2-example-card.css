@@ -167,10 +167,21 @@
   padding-bottom: 2px;
 }
 
+.example-card__editor-type-picker {
+  display: none;
+  order: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
 /* 答案键条只在编辑态显式露出。
    原因不是单纯为了“界面更干净”，而是这排按钮在业务语义上修改的是标准答案基准，
    并不代表学生此刻的作答结果。把它和学生作答控件长期混放，会让作者态能力泄露到学生视角，
    也会让提交后判分的红绿反馈失去可信度。 */
+html.editor-mode .example-card__editor-type-picker,
+body.editor-mode .example-card__editor-type-picker,
 html.editor-mode .example-card__editor-answer-key,
 body.editor-mode .example-card__editor-answer-key {
   display: flex;
@@ -212,18 +223,137 @@ body.editor-mode .example-card__editor-answer-key {
   box-shadow: 0 10px 24px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.18);
 }
 
+.example-card__type-button {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--brand-primary-rgb, 0, 163, 85), 0.18);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.45);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.example-card__type-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.3);
+}
+
+.example-card__type-button.is-active {
+  border-color: var(--brand-primary, #00A355);
+  background-color: var(--brand-primary, #00A355);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.18);
+}
+
+.example-card__editor-multi-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-left: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background-color: rgba(243, 152, 0, 0.1);
+  color: rgba(138, 79, 0, 0.88);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.example-card__editor-multi-hint[hidden] {
+  display: none !important;
+}
+
+.example-card__editor-multi-hint.is-invalid {
+  background-color: rgba(186, 26, 26, 0.12);
+  color: var(--accent-red, #ba1a1a);
+}
+
+.example-card__editor-multi-hint.is-shaking {
+  animation: example-card-multi-hint-shake 0.42s ease;
+}
+
 .example-card__stem {
-  order: 1;
+  order: 3;
   font-size: clamp(18px, 1.9vw, 26px);
   line-height: 1.7;
   font-weight: 700;
   color: var(--text);
 }
 
+.example-card__stem[data-question-type-label]::before {
+  content: attr(data-question-type-label);
+  min-height: 32px;
+  margin-right: 12px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--brand-primary-rgb, 0, 163, 85), 0.18);
+  background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.08);
+  color: var(--brand-primary, #00A355);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  vertical-align: 0.12em;
+}
+
+.example-card__blank {
+  display: inline-block;
+  min-width: 5.6em;
+  margin: 0 0.16em 0 0.04em;
+  padding: 0 0 0.08em;
+  box-sizing: border-box;
+  border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+  color: transparent;
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+  vertical-align: baseline;
+  white-space: nowrap;
+  letter-spacing: 0;
+  text-indent: 0;
+  transition: color 0.25s ease, border-bottom-color 0.25s ease;
+}
+
+.example-card__blank.is-revealed {
+  color: var(--accent-red, #ba1a1a);
+  border-bottom-color: rgba(186, 26, 26, 0.55);
+}
+
 .example-card__answers {
-  order: 3;
+  order: 4;
   display: grid;
   gap: 10px;
+}
+
+@keyframes example-card-multi-hint-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-4px);
+  }
+
+  40% {
+    transform: translateX(4px);
+  }
+
+  60% {
+    transform: translateX(-3px);
+  }
+
+  80% {
+    transform: translateX(3px);
+  }
 }
 
 .example-card .qa-option {

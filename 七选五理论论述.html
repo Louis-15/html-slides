@@ -632,6 +632,83 @@
                             <div class="example-card__footer">
                                 <div class="example-card__nav">
                                     <button type="button" class="example-card__prev-btn">上一题</button>
+                                    <button type="button" class="example-card__next-btn">下一题</button>
+                                </div>
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="example-card__question" data-question-id="lesson-example-q3" data-question-type="multi" data-question-active="false" data-question-submitted="false" hidden aria-hidden="true">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+                                    <span class="example-card__editor-label">正确答案</span>
+                                    <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+                                    <button type="button" class="example-card__answer-key is-active" data-answer-value="C">C</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+                                </div>
+
+                                <div class="example-card__stem" data-edit-id="lesson-example-q3-stem">25. Which TWO changes helped the speaker make the garden friendlier to butterflies?</div>
+
+                                <div class="example-card__answers">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q3-option-a">Adding more milkweed near the back path.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B">
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q3-option-b">Painting the fence a darker color.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C" data-correct="true">
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q3-option-c">Leaving a shallow dish of water beside the flowers.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q3-option-d">Cutting down all the tall bean vines.</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <aside class="example-card__analysis" hidden>
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="lesson-example-q3-analysis">
+                                    <p>The speaker says butterflies returned after more milkweed was planted and a shallow water dish was added, so A and C are both required.</p>
+                                    <p>B is only a visual change, and D goes against the talk because the bean vines were kept for support and shelter.</p>
+                                </div>
+                            </aside>
+
+                            <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn">上一题</button>
+                                    <button type="button" class="example-card__next-btn">下一题</button>
+                                </div>
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="example-card__question" data-question-id="lesson-example-q4" data-question-type="blank" data-question-active="false" data-question-submitted="false" hidden aria-hidden="true">
+                            <div class="example-card__main">
+                                <div class="example-card__stem" data-edit-id="lesson-example-q4-stem">26. Complete the sentence from the talk: “By late summer, the garden had become a small haven for <span class="example-card__blank" data-blank-id="lesson-example-q4-blank-1" data-correct-answer="butterflies and bees">______</span>.”</div>
+                            </div>
+
+                            <aside class="example-card__analysis" hidden>
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="lesson-example-q4-analysis">
+                                    <p>这道填空题不需要手动输入，提交后会直接把原文中的关键信息回填出来。</p>
+                                    <p>这里的完整表达是 butterflies and bees，呼应说话人最后对花园生态变化的总结。</p>
+                                </div>
+                            </aside>
+
+                            <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn">上一题</button>
                                     <button type="button" class="example-card__next-btn" disabled>下一题</button>
                                 </div>
                                 <div class="example-card__actions">
@@ -645,7 +722,7 @@
             </div>
 
             <script type="application/json" class="slide-notes">
-            {"title":"例题组件多题体验","script":"这一页把两道题收进同一个例题组件：左下角可以切换题号，每题的作答与解析状态会独立保存；如果需要修改标准答案，就进入课件编辑模式。","notes":["左下角切换上一题/下一题","每题状态独立保存","编辑模式下可直接修改正确答案"]}
+            {"title":"例题组件多题体验","script":"这一页把四道题收进同一个例题组件，依次覆盖单选、多选和填空体验：左下角可以切换题号，每题的作答与解析状态会独立保存；如果需要修改标准答案，就进入课件编辑模式。","notes":["左下角切换上一题/下一题","四题状态独立保存","覆盖单选、多选、填空三种体验","编辑模式下可直接修改正确答案"]}
             </script>
         </div>
 

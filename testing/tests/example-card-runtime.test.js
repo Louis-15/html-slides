@@ -17,6 +17,12 @@ function createExampleCardDom(bodyHtml, options = {}) {
     url: 'http://localhost/'
   });
 
+  if (options.editorCoreStub) {
+    dom.window.editorCore = typeof options.editorCoreStub === 'function'
+      ? options.editorCoreStub(dom.window)
+      : options.editorCoreStub;
+  }
+
   let annotationStoreReadyResolver = null;
   let annotationStoreCurrentData = options.annotationStoreInitData || null;
 
@@ -212,6 +218,172 @@ describe('example-card runtime', () => {
 
     assert.equal(optionA.classList.contains('selected'), false);
     assert.equal(optionB.classList.contains('selected'), true);
+  });
+
+  it('keeps multiple selected options before submit for multi questions', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="multi">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="multi-stem">Which actions helped the garden attract more butterflies?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="multi-option-a">Planting more milkweed.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="multi-option-b">Painting the fence dark brown.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C" data-correct="true">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="multi-option-c">Leaving a shallow dish of water nearby.</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    const options = Array.from(document.querySelectorAll('.example-card__option'));
+
+    assert.equal(options.length, 3, '测试夹具必须提供 3 个多选选项');
+
+    options[0].click();
+    options[2].click();
+
+    assert.equal(options[0].classList.contains('selected'), true);
+    assert.equal(options[1].classList.contains('selected'), false);
+    assert.equal(options[2].classList.contains('selected'), true);
+  });
+
+  it('lets editor switch question types and keep multiple correct answers for multi questions', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="single">
+        <div class="example-card__main">
+          <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+            <span class="example-card__editor-label">正确答案</span>
+            <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+          </div>
+          <div class="example-card__stem" data-edit-id="type-switch-stem">27. Which changes improved the backyard habitat?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="type-switch-option-a">Planting milkweed.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="type-switch-option-b">Replacing the fence.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="type-switch-option-c">Adding a shallow water dish.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="D">
+              <span class="qa-option-label">D</span>
+              <span class="qa-option-text" data-edit-id="type-switch-option-d">Painting the gate blue.</span>
+            </button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    document.documentElement.classList.add('editor-mode');
+
+    const multiTypeButton = document.querySelector('[data-question-type-value="multi"]');
+    const answerKeyA = document.querySelector('.example-card__answer-key[data-answer-value="A"]');
+    const answerKeyC = document.querySelector('.example-card__answer-key[data-answer-value="C"]');
+    const optionA = document.querySelector('.example-card__option[data-option-value="A"]');
+    const optionC = document.querySelector('.example-card__option[data-option-value="C"]');
+    const card = document.querySelector('.example-card');
+
+    assert.ok(multiTypeButton, '编辑态必须提供题型选择胶囊');
+    assert.ok(answerKeyA, '测试夹具必须提供 A 答案键');
+    assert.ok(answerKeyC, '测试夹具必须提供 C 答案键');
+    assert.ok(card, '测试夹具必须提供例题卡片根节点');
+
+    multiTypeButton.click();
+    answerKeyC.click();
+
+    assert.equal(card.getAttribute('data-question-type'), 'multi');
+    assert.equal(optionA.hasAttribute('data-correct'), true);
+    assert.equal(optionC.hasAttribute('data-correct'), true);
+  });
+
+  it('blocks leaving editor mode and shakes the hint when a multi question has fewer than two correct answers', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="single">
+        <div class="example-card__main">
+          <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+            <span class="example-card__editor-label">正确答案</span>
+            <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+          </div>
+          <div class="example-card__stem" data-edit-id="guard-stem">28. Which TWO details show the garden became more welcoming to insects?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="guard-option-a">More milkweed was planted.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="guard-option-b">The fence was repainted.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="guard-option-c">A shallow water dish was added.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="D">
+              <span class="qa-option-label">D</span>
+              <span class="qa-option-text" data-edit-id="guard-option-d">The path was widened.</span>
+            </button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `, {
+      editorCoreStub(window) {
+        return {
+          isActive: true,
+          toggleCalls: 0,
+          toggleEditMode() {
+            this.toggleCalls += 1;
+            this.isActive = !this.isActive;
+            window.document.documentElement.classList.toggle('editor-mode', this.isActive);
+            window.document.body.classList.toggle('editor-mode', this.isActive);
+          }
+        };
+      }
+    });
+
+    const { document, editorCore } = dom.window;
+    document.documentElement.classList.add('editor-mode');
+    document.body.classList.add('editor-mode');
+
+    const multiTypeButton = document.querySelector('[data-question-type-value="multi"]');
+    const hint = document.querySelector('.example-card__editor-multi-hint');
+
+    assert.ok(multiTypeButton, '编辑态必须提供题型选择胶囊');
+    assert.ok(hint, '多选题必须提供至少两个答案的文字提示');
+
+    multiTypeButton.click();
+    editorCore.toggleEditMode();
+
+    assert.equal(editorCore.isActive, true);
+    assert.equal(editorCore.toggleCalls, 0);
+    assert.equal(document.documentElement.classList.contains('editor-mode'), true);
+    assert.equal(hint.classList.contains('is-shaking'), true);
   });
 
   it('ignores option clicks while editor mode is active', () => {
@@ -998,6 +1170,46 @@ describe('example-card runtime', () => {
     assert.equal(ExampleCardRuntime.__getState(card).isCorrect, null);
     assert.equal(card.querySelectorAll('.result-correct, .result-incorrect').length, 0);
     assert.deepEqual(submitAudioCalls, []);
+  });
+
+  it('renders the question-type pill before the stem and styles the editor type picker', () => {
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__stem\[data-question-type-label\]::before\s*\{[\s\S]*content:\s*attr\(data-question-type-label\);[\s\S]*border-radius:\s*999px;[\s\S]*display:\s*inline-flex;/,
+      'expected the student-facing stem to render a pill from data-question-type-label before the question number'
+    );
+
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__editor-type-picker\s*\{[\s\S]*display:\s*none;[\s\S]*flex-wrap:\s*wrap;/,
+      'expected the editor to expose a dedicated question-type picker row above the answer key'
+    );
+
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__type-button\.is-active\s*\{[\s\S]*background-color:\s*var\(--brand-primary,\s*#00A355\);[\s\S]*color:\s*#fff;/,
+      'expected the active question-type pill to use the same green selection language as the answer-key pills'
+    );
+  });
+
+  it('keeps the blank underline visible and reveals the answer in red without breaking the line', () => {
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__blank\s*\{[\s\S]*display:\s*inline-block;[\s\S]*border-bottom:\s*2px\s+solid[\s\S]*color:\s*transparent;[\s\S]*text-align:\s*center;/,
+      'expected the example-card blank slot to use one continuous underline instead of visible underscore glyph segments'
+    );
+
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__blank\.is-revealed\s*\{[\s\S]*color:\s*var\(--accent-red,\s*#ba1a1a\);[\s\S]*border-bottom-color:/,
+      'expected blank answers to appear in red while keeping the underline visible after submit'
+    );
+
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__editor-multi-hint\.is-shaking\s*\{[\s\S]*animation:\s*example-card-multi-hint-shake/,
+      'expected the multi-answer hint to expose a dedicated shake state when the user tries to leave editor mode too early'
+    );
   });
 
   it('overrides the pre-submit orange halo with result-state glow colors after submit', () => {
