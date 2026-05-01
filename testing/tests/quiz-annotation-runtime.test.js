@@ -918,6 +918,69 @@ describe('quiz annotation runtime', () => {
     assert.equal(scheduleSaveCalls.length, 1, 'expected editing a blank answer in editor mode to request persistence');
   });
 
+  it('persists edited blank answers immediately so the first refresh can read the fresh local snapshot', async () => {
+    const dom = createReadingBlankDom();
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const savedRoots = [];
+    const ensureWriteAccessCalls = [];
+    const saveNowCalls = [];
+    const scheduleSaveCalls = [];
+
+    window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+    window.PersistenceLayer = {
+      saveElement(root) {
+        const editId = root.getAttribute('data-edit-id') || '';
+        savedRoots.push(editId);
+        window.localStorage.setItem(`test:e:${editId}`, root.innerHTML);
+      }
+    };
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      ensureWriteAccess() {
+        ensureWriteAccessCalls.push('called');
+        return Promise.resolve(true);
+      },
+      saveNow() {
+        saveNowCalls.push('saved');
+      },
+      scheduleSave() {
+        scheduleSaveCalls.push('scheduled');
+      }
+    };
+    window.historyMgr = {
+      isRestoring: false,
+      recordState() {}
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+
+    const firstInput = qa.querySelector('.qa-answer-slot[data-blank-id="36"] .qa-slot-input');
+    inputText(window, firstInput, 'that');
+    await Promise.resolve();
+
+    const persistedPassageHtml = window.localStorage.getItem('test:e:passage-01') || '';
+
+    assert.deepEqual(savedRoots, ['passage-01'], 'expected blank-answer authoring to immediately persist the owning passage root into localStorage');
+    assert.equal(ensureWriteAccessCalls.length, 1, 'expected blank-answer authoring to request AnnotationStore write access before the first immediate save');
+    assert.equal(saveNowCalls.length, 1, 'expected blank-answer authoring to flush the updated DOM immediately so the first refresh sees the new answer');
+    assert.equal(scheduleSaveCalls.length, 0, 'expected blank-answer authoring not to fall back to the debounced scheduleSave path when saveNow is available');
+    assert.match(persistedPassageHtml, /data-correct-answer="that"/, 'expected the local snapshot for passage-01 to already contain the edited blank answer before any second refresh');
+    assert.doesNotMatch(persistedPassageHtml, /data-correct-answer="which"/, 'expected the stale blank answer to be removed from the first local snapshot');
+  });
+
   it('refreshes blank answers when the page switches from student mode into editor mode', () => {
     const dom = createReadingBlankDom();
     const { window } = dom;

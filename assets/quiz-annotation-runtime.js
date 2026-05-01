@@ -2112,10 +2112,14 @@
         if (editorMode) {
           slot.dataset.correctAnswer = nextValue;
           passageSlot.dataset.correctAnswer = nextValue;
-          /* 阅读填空的作者态配置不属于普通富文本 innerHTML；
-             这里和 matching 题的正确答案编辑一样，必须显式走存档调度，
-             否则刷新后会回到旧答案。 */
-          scheduleAnnotationSave();
+          /* 阅读填空的正确答案本质上是“正文 data-edit-id 根块里的结构化作者态”。
+             如果这里只走 debounce 的 scheduleSave，用户改完立刻刷新时，
+             第一次刷新仍可能先读到旧 sidecar，表现成“要刷新两次才生效”。
+             这里显式提升到离散 authoring 的即时持久化链：
+             1. 先把 passageSlot 所在 data-edit-id 根块立即写入 localStorage；
+             2. 再尽量在当前手势里触发一次即时落盘；
+             这样普通页面恢复链读取本地缓存时，第一次刷新就能拿到最新答案。 */
+          persistQuizAuthoringChange({ node: passageSlot, immediate: true });
         } else {
           if (qa.classList.contains('submitted')) return;
           slot.dataset.userAnswer = nextValue;
