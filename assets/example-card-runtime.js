@@ -136,6 +136,17 @@
     window.PageRichTextAnnotationRuntime.refreshSlide(slide);
   }
 
+  function playQuestionNavigationSound() {
+    if (!window.AudioRuntime || typeof window.AudioRuntime.playGlobalCue !== 'function') {
+      return false;
+    }
+
+    /* 例题组件的“上一题 / 下一题”语义已经和整页翻页对齐成同一种课堂节奏切换。
+       这里直接复用全局 page-turn cue，既能让鼠标点按钮与键盘 ↑↓ 保持完全同音，
+       也避免再额外维护一套内容相同但调用路径分叉的题内翻页音效。 */
+    return window.AudioRuntime.playGlobalCue('page-turn') === true;
+  }
+
   function getQuestionNodes(root) {
     return Array.from(root.querySelectorAll(QUESTION_SELECTOR));
   }
@@ -448,7 +459,13 @@
       return false;
     }
 
-    return activateQuestion(root, getQuestionId(nextQuestion, nextIndex));
+    const didActivate = activateQuestion(root, getQuestionId(nextQuestion, nextIndex));
+
+    if (didActivate) {
+      playQuestionNavigationSound();
+    }
+
+    return didActivate;
   }
 
   function hasSameValueSet(selectedValues, correctValues) {

@@ -30,13 +30,11 @@
     '.image-block',
     '.content-block'
   ].join(', ');
-  const HOVER_COOLDOWN_MS = 160;
   const hostFragmentState = new WeakMap();
   const fragmentIdentityKeys = new WeakMap();
   let fragmentIdentitySeed = 0;
   let activeDoodleProxyRoot = null;
-  let lastHoverKey = '';
-  let lastHoverTime = 0;
+  let activeHoverRoot = null;
 
   function isEditorMode() {
     return document.documentElement.classList.contains('editor-mode') ||
@@ -492,16 +490,21 @@
 
   function playFragmentHoverSound(root) {
     if (!root || isEditorMode()) return false;
+    return playGlobalCue('ui-hover');
+  }
 
-    const hoverKey = getOrdinaryRootIdentityKey(root);
-    const now = Date.now();
-    if (hoverKey && lastHoverKey === hoverKey && (now - lastHoverTime) < HOVER_COOLDOWN_MS) {
+  function updateActiveHoverRoot(root) {
+    if (activeHoverRoot === root) {
       return false;
     }
 
-    lastHoverKey = hoverKey;
-    lastHoverTime = now;
-    return playGlobalCue('ui-hover');
+    /* 普通页 hover 音效要严格绑定“进入宿主”的边界，而不是 document 级 pointermove 的频率。
+       因此这里单独缓存当前鼠标所在的 ordinary text root：
+       - 在同一 root 里移动时不再重复播音；
+       - 离开到空白处时只清状态，不播音；
+       - 重新进入任一 root 时再播一次。 */
+    activeHoverRoot = root || null;
+    return !!root;
   }
 
   function setActiveDoodleProxyFragment(root) {
@@ -648,6 +651,7 @@
   function handleOrdinaryFragmentHover(event) {
     if (isEditorMode()) {
       clearDoodleProxyFragment();
+      updateActiveHoverRoot(null);
       return;
     }
 
@@ -657,6 +661,7 @@
     if (isDoodleMode() && overDoodleLayer) {
       if (isDoodleDrawingActive()) {
         clearDoodleProxyFragment();
+        updateActiveHoverRoot(null);
         return;
       }
 
@@ -664,11 +669,12 @@
       const root = getOwningOrdinaryTextRoot(resolvedTarget);
       if (!root) {
         clearDoodleProxyFragment();
+        updateActiveHoverRoot(null);
         return;
       }
 
-      const changed = setActiveDoodleProxyFragment(root);
-      if (changed) {
+      setActiveDoodleProxyFragment(root);
+      if (updateActiveHoverRoot(root)) {
         playFragmentHoverSound(root);
       }
       return;
@@ -679,8 +685,14 @@
        这样鼠标落在文本框留白、行间、或 doodle layer 透传到底层的任意子节点上时，
        同一个 text root 里的普通页 fragment 都会一起亮起橙色高光，音效也只按这个 root 去重一次。 */
     const root = getOwningOrdinaryTextRoot(eventTarget);
-    if (!root) return;
-    playFragmentHoverSound(root);
+    if (!root) {
+      updateActiveHoverRoot(null);
+      return;
+    }
+
+    if (updateActiveHoverRoot(root)) {
+      playFragmentHoverSound(root);
+    }
   }
 
   document.addEventListener('contextmenu', (event) => {
@@ -729,6 +741,7 @@
   syncCurrentSlideInteractionQueue(getActiveSlide());
   if (typeof window.addSlideChangeListener === 'function') {
     window.addSlideChangeListener(() => {
+      activeHoverRoot = null;
       clearDoodleProxyFragment();
       syncAllSlideFragmentHostClasses();
     });

@@ -863,6 +863,34 @@ describe('example-card runtime', () => {
     assert.equal(questionTwo.querySelector('.example-card__submit-btn')?.disabled, false, 'expected the second question to remain unsubmitted after the first question was already submitted');
   });
 
+  it('plays the page-turn cue only when example-card question navigation actually changes the active question', () => {
+    const dom = createExampleCardDom(createMultiQuestionExampleCardMarkup('lesson-card-nav-audio'));
+    const { document } = dom.window;
+    const calls = [];
+
+    dom.window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    const prevBtn = document.querySelector('.example-card__prev-btn');
+    const nextBtn = document.querySelector('.example-card__next-btn');
+
+    assert.ok(prevBtn, '测试夹具必须提供上一题按钮');
+    assert.ok(nextBtn, '测试夹具必须提供下一题按钮');
+
+    prevBtn.click();
+    nextBtn.click();
+    nextBtn.click();
+    nextBtn.click();
+    prevBtn.click();
+    prevBtn.click();
+
+    assert.deepEqual(calls, ['page-turn', 'page-turn'], 'expected example-card navigation to reuse turn_page.mp3 only for successful question switches, while exhausted previous/next clicks stay silent');
+  });
+
   it('resets the active question and per-question state after reload even when the card id stays the same', () => {
     const firstDom = createExampleCardDom(createMultiQuestionExampleCardMarkup('lesson-card-persist'), {
       enableStorageUtils: true

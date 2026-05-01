@@ -502,6 +502,43 @@ describe('page richtext annotation runtime', () => {
     assert.deepEqual(calls, ['ui-hover', 'fragment-swoosh', 'fragment-swoosh-back'], 'expected editor mode to stay silent and not emit ordinary page cue traffic');
   });
 
+  it('plays the ordinary hover cue only when the pointer enters a root, not while moving inside it or when leaving it', () => {
+    const dom = createRootHoverOrdinaryPageDom();
+    const { window } = dom;
+    const calls = [];
+    const hoverRoot = window.document.querySelector('.hover-root');
+    const firstFragment = window.document.querySelector('.hover-fragment-one');
+    const secondFragment = window.document.querySelector('.hover-fragment-two');
+    const body = window.document.body;
+    const originalNow = window.Date.now;
+    let nowTick = 1000;
+
+    window.Date.now = () => {
+      nowTick += 250;
+      return nowTick;
+    };
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    try {
+      movePointer(window, hoverRoot);
+      movePointer(window, firstFragment);
+      movePointer(window, secondFragment);
+      movePointer(window, body);
+      movePointer(window, body);
+      movePointer(window, hoverRoot);
+    } finally {
+      window.Date.now = originalNow;
+    }
+
+    assert.deepEqual(calls, ['ui-hover', 'ui-hover'], 'expected ordinary page hover audio to fire once on root entry and again only after re-entering from outside, while internal movement and leaving stay silent');
+  });
+
   it('does not reveal example-card fragments before the active question is submitted', () => {
     const dom = createExampleCardFragmentDom(`
       <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="false">

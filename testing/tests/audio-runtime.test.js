@@ -202,6 +202,37 @@ describe('audio runtime cues', () => {
     assert.deepEqual(presetCalls, ['fragment-swoosh', 'fragment-swoosh-back'], 'expected fragment step audio to use whoosh.mp3 for forward and whoosh_back.mp3 for backward');
   });
 
+  it('does not throttle quiz fragment-hover playback when the runtime explicitly reports repeated enter events', () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      runScripts: 'outside-only',
+      url: 'http://localhost/'
+    });
+    const { window } = dom;
+    const presetCalls = [];
+    const cueRegistry = new Map();
+
+    window.AudioRuntime = {
+      registerComponentCue(componentName, cueName, handler) {
+        cueRegistry.set(`${componentName}:${cueName}`, handler);
+      },
+      playComponentCue(componentName, cueName, payload) {
+        const handler = cueRegistry.get(`${componentName}:${cueName}`);
+        return handler ? handler(payload) : false;
+      },
+      playPreset(name) {
+        presetCalls.push(name);
+        return true;
+      }
+    };
+
+    window.eval(qaAudioSource);
+
+    window.QuizAnnotationAudio.playFragmentHover({ linkId: 'note-01' });
+    window.QuizAnnotationAudio.playFragmentHover({ linkId: 'note-01' });
+
+    assert.deepEqual(presetCalls, ['ui-hover', 'ui-hover'], 'expected quiz hover audio not to self-throttle identical link ids because enter-vs-move should already be decided by the runtime layer');
+  });
+
   it('maps example-card result cues to correct.mp3 and wrong.mp3', () => {
     const { window } = createAudioRuntimeDom();
 
