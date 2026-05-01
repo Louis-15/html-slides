@@ -550,7 +550,11 @@
 
   function syncTopLevelFocusToHost(host) {
     if (!host || typeof window.activateInteractionStepForElement !== 'function') return false;
-    return !!window.activateInteractionStepForElement(host);
+
+    /* ordinary page host 的焦点同步只是为了让随后 ← → 继续挂到正确宿主上，
+       这里不应该再额外播一个一级焦点 pop。
+       否则右键 reveal 非当前宿主时，会把 fragment reveal cue 和 focus-shift 叠成双响。 */
+    return !!window.activateInteractionStepForElement(host, { silentFocusCue: true });
   }
 
   function revealFragmentImmediately(fragment) {

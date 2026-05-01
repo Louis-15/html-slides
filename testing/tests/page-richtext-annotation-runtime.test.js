@@ -371,6 +371,39 @@ describe('page richtext annotation runtime', () => {
     assert.equal(titleRoot.classList.contains('step-active'), false, 'expected only the owning root of the latest immediate reveal to keep the visible focus state');
   });
 
+  it('keeps ordinary host focus sync silent when right click reveal moves from one text root to another', () => {
+    const dom = createQuizFreePageDom();
+    const { window } = dom;
+    const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
+    const descRoot = window.document.querySelector('[data-edit-id="desc-root"]');
+    const firstFragment = window.document.querySelector('.page-fragment-single');
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    assert.equal(typeof window.activateInteractionStepForElement, 'function', '测试夹具必须暴露一级焦点同步入口');
+    assert.ok(titleRoot, '测试夹具必须提供标题 ordinary root');
+    assert.ok(descRoot, '测试夹具必须提供描述 ordinary root');
+    assert.ok(firstFragment, '测试夹具必须提供可右键 reveal 的 ordinary fragment');
+
+    /* 先把一级焦点落到另一侧 ordinary root，
+       再右键当前 fragment，才能稳定复现“reveal 音效 + focus-shift 双响”这个回归。 */
+    window.activateInteractionStepForElement(descRoot, { silentFocusCue: true });
+    calls.length = 0;
+
+    rightClickElement(window, firstFragment);
+
+    assert.ok(firstFragment.classList.contains('qa-fragment-visible'), 'expected right click to keep revealing the target ordinary fragment immediately');
+    assert.equal(titleRoot.classList.contains('step-active'), true, 'expected right click reveal to keep syncing top-level focus onto the owning ordinary root');
+    assert.equal(descRoot.classList.contains('step-active'), false, 'expected the previously focused ordinary root to lose step-active after the reveal target takes ownership');
+    assert.deepEqual(calls, ['fragment-swoosh'], 'expected ordinary page right click reveal to keep only the fragment reveal cue, not an extra focus-shift pop while syncing focus between left and right hosts');
+  });
+
   it('disables ordinary page stepping and right-click reveal on slides that contain quiz-annotation', () => {
     const dom = createQuizLockedPageDom();
     const { window } = dom;

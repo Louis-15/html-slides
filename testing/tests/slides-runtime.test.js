@@ -348,6 +348,46 @@ function createClickFocusSyncDom() {
   return { dom, hostA, hostB };
 }
 
+function createOrdinaryPageHostClickDom() {
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="ordinary-host ordinary-host-a" data-steppable="page-richtext-host" data-page-richtext-host="true">
+          <button class="ordinary-host-inner ordinary-host-a-inner">Left</button>
+        </div>
+        <div class="ordinary-host ordinary-host-b" data-steppable="page-richtext-host" data-page-richtext-host="true">
+          <button class="ordinary-host-inner ordinary-host-b-inner">Right</button>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+
+  window.eval(runtimeSource);
+
+  return {
+    dom,
+    hostA: window.document.querySelector('.ordinary-host-a'),
+    hostB: window.document.querySelector('.ordinary-host-b')
+  };
+}
+
 function createSummarySteppingDom() {
   const html = `<!DOCTYPE html><html><body>
     <div id="particles"></div>
@@ -969,6 +1009,33 @@ describe('slides runtime', () => {
     assert.deepEqual(calls, ['focus-shift', 'focus-shift'], 'expected only true host switches to emit pop.mp3, while fragment stepping and repeated clicks on the same host stay silent');
     assert.equal(hostA.classList.contains('step-active'), true, 'expected the last click-based host switch to move focus back onto hostA');
     assert.equal(hostB.classList.contains('step-active'), false, 'expected the previously focused host to lose step-active after the click-based focus switch');
+  });
+
+  it('keeps ordinary page host clicks silent while still switching the active host', () => {
+    const { dom, hostA, hostB } = createOrdinaryPageHostClickDom();
+    const { window } = dom;
+    const calls = [];
+
+    window.AudioRuntime = {
+      playGlobalCue(name) {
+        calls.push(name);
+        return true;
+      }
+    };
+
+    assert.equal(typeof window.activateInteractionStepForElement, 'function', '测试夹具必须暴露一级焦点同步入口');
+
+    /* ordinary page host 的鼠标点击只是在为后续 ← → fragment 步进切换当前宿主，
+       它本身不应再附带一个全局 pop；否则右键 reveal 或左右栏切换时都会和 fragment 音效叠成双响。 */
+    window.activateInteractionStepForElement(hostA, { silentFocusCue: true });
+    calls.length = 0;
+
+    clickElement(window, hostB.querySelector('.ordinary-host-b-inner'));
+    clickElement(window, hostA.querySelector('.ordinary-host-a-inner'));
+
+    assert.deepEqual(calls, [], 'expected clicking ordinary page hosts to stay silent while only updating the current focus owner for later keyboard fragment stepping');
+    assert.equal(hostA.classList.contains('step-active'), true, 'expected the latest clicked ordinary page host to become the active top-level host');
+    assert.equal(hostB.classList.contains('step-active'), false, 'expected the previously clicked ordinary page host to lose step-active after focus switches back');
   });
 
   it('plays the page-turn cue only when goTo actually changes slides', () => {

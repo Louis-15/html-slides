@@ -686,11 +686,13 @@ document.addEventListener('click', (e) => {
   if (!steppable || !currentSlide.contains(steppable)) return;
 
   const directInteractionAction = getDirectInteractionClickAction(target, steppable);
+    const isOrdinaryPageHostClick = steppable.getAttribute('data-steppable') === 'page-richtext-host';
 
   /* quiz 气泡点击本来就有自己的“气泡焦点切换”提示音。
      这里如果再把组件级 focus-shift 也一并播掉，会把一次点击放大成双响。
-     互动按钮点击也要静默切焦点，因为它们自己会在后续 forward/backward 中发专属音效。 */
-  const silentFocusCue = !!target.closest('.qa-note-bubble') || !!directInteractionAction;
+      互动按钮点击也要静默切焦点，因为它们自己会在后续 forward/backward 中发专属音效。
+      ordinary page host 的鼠标点击同样只是在切换后续 ← → 的宿主所有权，不该发出额外 pop。 */
+    const silentFocusCue = !!target.closest('.qa-note-bubble') || !!directInteractionAction || isOrdinaryPageHostClick;
   window.activateInteractionStepForElement(steppable, { silentFocusCue });
 
   if (directInteractionAction) {
