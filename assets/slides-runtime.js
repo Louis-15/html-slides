@@ -155,14 +155,92 @@ function isQuizAnnotationSlide(index = current) {
   return !!(slide && slide.querySelector('.quiz-annotation'));
 }
 
+function isExampleCardSlide(index = current) {
+  const slide = slides[index];
+  return !!(slide && slide.querySelector('.example-card'));
+}
+
+function getExampleCardKeyboardTarget(slide, hintTarget) {
+  if (!slide) return null;
+
+  const candidateCards = [];
+  const pushCard = (card) => {
+    if (!card || !slide.contains(card) || candidateCards.includes(card)) return;
+    candidateCards.push(card);
+  };
+
+  /* 键盘与鼠标都要优先命中“当前课堂正在看的那张题卡”。
+     因此先尝试用点击目标或当前一级焦点反推出所属 card，
+     再退化到当前 slide 上的第一张 example-card。 */
+  if (hintTarget && hintTarget.closest) {
+    pushCard(hintTarget.closest('.example-card'));
+  }
+
+  const focusedElement = typeof getFocusedInteractionElement === 'function'
+    ? getFocusedInteractionElement()
+    : null;
+  if (focusedElement && focusedElement.closest) {
+    pushCard(focusedElement.closest('.example-card'));
+  }
+
+  pushCard(slide.querySelector('.example-card__main.step-active')?.closest('.example-card'));
+  slide.querySelectorAll('.example-card').forEach((card) => pushCard(card));
+
+  return candidateCards[0] || null;
+}
+
+function getExampleCardMainHost(slide, hintTarget) {
+  const card = getExampleCardKeyboardTarget(slide, hintTarget);
+  if (!card) return null;
+
+  const activeQuestion = card.querySelector('.example-card__question[data-question-active="true"]:not([hidden]):not([aria-hidden="true"])')
+    || card.querySelector('.example-card__question:not([hidden]):not([aria-hidden="true"])')
+    || card.querySelector('.example-card__question');
+
+  if (!activeQuestion) return null;
+  return activeQuestion.querySelector('.example-card__main') || null;
+}
+
+function navigateExampleCardQuestion(direction, slide, hintTarget) {
+  const card = getExampleCardKeyboardTarget(slide, hintTarget);
+  if (!card) return false;
+
+  const activeQuestion = card.querySelector('.example-card__question[data-question-active="true"]:not([hidden]):not([aria-hidden="true"])')
+    || card.querySelector('.example-card__question:not([hidden]):not([aria-hidden="true"])')
+    || card.querySelector('.example-card__question');
+  if (!activeQuestion) return false;
+
+  const selector = direction === 'backward'
+    ? '.example-card__prev-btn'
+    : '.example-card__next-btn';
+  const button = activeQuestion.querySelector(selector) || card.querySelector(selector);
+
+  /* example-card 页的 ↑↓ 已经被重新定义成“上一题 / 下一题”。
+     即便当前已经在边界题，也必须原地吃掉按键，不能再把同一次按键漏给翻页逻辑。 */
+  if (!button || button.disabled) {
+    return false;
+  }
+
+  button.click();
+  return true;
+}
+
 document.addEventListener('keydown', (e) => {
   // 一级步进：↑↓ 先走当前页组件焦点，页内耗尽后再翻页。
   if (e.key === 'ArrowDown') {
     e.preventDefault();
+    if (isExampleCardSlide()) {
+      navigateExampleCardQuestion('forward', slides[current]);
+      return;
+    }
     if (!stepForward() && !isQuizAnnotationSlide()) next();
   }
   if (e.key === 'ArrowUp') {
     e.preventDefault();
+    if (isExampleCardSlide()) {
+      navigateExampleCardQuestion('backward', slides[current]);
+      return;
+    }
     if (!stepBackward() && !isQuizAnnotationSlide()) prev();
   }
   // PageDown/PageUp 仍保留为直接翻页，兼容键盘习惯。
@@ -682,11 +760,16 @@ document.addEventListener('click', (e) => {
   const currentSlide = slides[current];
   if (!currentSlide) return;
 
-  const steppable = findInteractionQueueElement(target, currentSlide);
+  const clickedSteppable = findInteractionQueueElement(target, currentSlide);
+  const lockedExampleCardHost = currentSlide.contains(target)
+    ? getExampleCardMainHost(currentSlide, target)
+    : null;
+  const steppable = lockedExampleCardHost || clickedSteppable;
   if (!steppable || !currentSlide.contains(steppable)) return;
 
-  const directInteractionAction = getDirectInteractionClickAction(target, steppable);
-    const isOrdinaryPageHostClick = steppable.getAttribute('data-steppable') === 'page-richtext-host';
+  const directInteractionTarget = clickedSteppable || steppable;
+  const directInteractionAction = getDirectInteractionClickAction(target, directInteractionTarget);
+  const isOrdinaryPageHostClick = steppable.getAttribute('data-steppable') === 'page-richtext-host';
 
   /* quiz 气泡点击本来就有自己的“气泡焦点切换”提示音。
      这里如果再把组件级 focus-shift 也一并播掉，会把一次点击放大成双响。
@@ -699,12 +782,12 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopImmediatePropagation();
 
-    const strategy = getStrategyByElement(steppable);
+      const strategy = getStrategyByElement(directInteractionTarget);
     if (strategy) {
       if (directInteractionAction === 'forward') {
-        runTopLevelForward(strategy, steppable);
+          runTopLevelForward(strategy, directInteractionTarget);
       } else {
-        runTopLevelBackward(strategy, steppable);
+          runTopLevelBackward(strategy, directInteractionTarget);
       }
       saveStepState();
     }

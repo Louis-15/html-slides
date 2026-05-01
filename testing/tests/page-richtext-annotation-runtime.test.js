@@ -615,8 +615,9 @@ describe('page richtext annotation runtime', () => {
     assert.equal(analysisRoot.getAttribute('data-page-richtext-host'), null, 'expected the analysis column to drop out of the ordinary fragment host contract entirely');
     assert.equal(analysisRoot.getAttribute('data-page-richtext-hover-eligible'), null, 'expected the analysis column not to receive hidden-fragment hover eligibility');
 
-    pressKey(window, 'ArrowDown');
-    assert.equal(main.classList.contains('step-active'), true, 'expected ArrowDown to focus the whole left main column instead of stopping on stem and option roots separately');
+    const didSync = window.activateInteractionStepForElement(main, { silentFocusCue: true });
+    assert.equal(didSync, true, 'expected the example-card left main column to remain a valid single top-level focus target for fragment stepping');
+    assert.equal(main.classList.contains('step-active'), true, 'expected the whole left main column to receive focus instead of stopping on stem and option roots separately');
     assert.equal(stemRoot.classList.contains('step-active'), false, 'expected the stem root not to become its own top-level focus stop');
     assert.equal(optionRoot.classList.contains('step-active'), false, 'expected the option root not to become its own top-level focus stop');
 

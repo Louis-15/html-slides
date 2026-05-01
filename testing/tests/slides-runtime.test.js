@@ -10,6 +10,8 @@ const projectRoot = path.join(__dirname, '..', '..');
 const runtimePath = path.join(projectRoot, 'assets', 'slides-runtime.js');
 const componentsPath = path.join(projectRoot, 'assets', 'components.css');
 const quizRuntimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
+const exampleCardRuntimePath = path.join(projectRoot, 'assets', 'example-card-runtime.js');
+const pageRichTextRuntimePath = path.join(projectRoot, 'assets', 'page-richtext-annotation-runtime.js');
 const zone1HeaderPath = path.join(projectRoot, 'assets', 'zones', 'zone1-header.css');
 const zone2ContentPath = path.join(projectRoot, 'assets', 'zones', 'zone2-content.css');
 const zone3SummaryPath = path.join(projectRoot, 'assets', 'zones', 'zone3-summary.css');
@@ -17,6 +19,8 @@ const xindongfangThemePath = path.join(projectRoot, 'assets', 'themes', 'xindong
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const componentsSource = fs.readFileSync(componentsPath, 'utf-8');
 const quizRuntimeSource = fs.readFileSync(quizRuntimePath, 'utf-8');
+const exampleCardRuntimeSource = fs.readFileSync(exampleCardRuntimePath, 'utf-8');
+const pageRichTextRuntimeSource = fs.readFileSync(pageRichTextRuntimePath, 'utf-8');
 const zone1HeaderSource = fs.readFileSync(zone1HeaderPath, 'utf-8');
 const zone2ContentSource = fs.readFileSync(zone2ContentPath, 'utf-8');
 const zone3SummarySource = fs.readFileSync(zone3SummaryPath, 'utf-8');
@@ -849,6 +853,140 @@ ${answerPanelHtml}
   return dom;
 }
 
+function createExampleCardKeyboardDom(options = {}) {
+  const { includeLeadContent = false, submitFirstQuestion = false } = options;
+  const leadContentHtml = includeLeadContent ? `
+          <div class="content-block example-card-lead-block">
+            <button type="button" class="example-card-lead-btn">Lead content</button>
+          </div>` : '';
+
+  const html = `<!DOCTYPE html><html><body>
+    <div id="particles"></div>
+    <div id="progress"></div>
+    <div id="counter"></div>
+    <div id="slideNav"></div>
+    <div class="deck">
+      <div class="slide active" data-slide="1">
+        <div class="slide-content">
+${leadContentHtml}
+          <article class="example-card" data-card-id="lesson-card-keyboard">
+            <section class="example-card__question" data-question-id="q1">
+              <div class="example-card__main">
+                <div class="example-card__stem" data-edit-id="example-q1-stem">
+                  Q1 stem <span class="page-fragment q1-frag-1" data-fragment-step="true">first</span> cue.
+                </div>
+                <div class="example-card__answers">
+                  <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                    <span class="qa-option-label">A</span>
+                    <span class="qa-option-text" data-edit-id="example-q1-option-a">
+                      Option A <span class="page-fragment q1-frag-2" data-fragment-step="true">second</span> cue.
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <aside class="example-card__analysis">
+                <div class="example-card__analysis-body" data-edit-id="example-q1-analysis">Analysis one</div>
+              </aside>
+              <footer class="example-card__footer">
+                <div class="example-card__nav">
+                  <button type="button" class="example-card__prev-btn">上一题</button>
+                  <button type="button" class="example-card__next-btn">下一题</button>
+                </div>
+                <button type="button" class="example-card__analysis-toggle">查看解析</button>
+                <button type="button" class="example-card__submit-btn">提交</button>
+              </footer>
+            </section>
+            <section class="example-card__question" data-question-id="q2">
+              <div class="example-card__main">
+                <div class="example-card__stem" data-edit-id="example-q2-stem">Question two</div>
+                <div class="example-card__answers">
+                  <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+                    <span class="qa-option-label">B</span>
+                    <span class="qa-option-text" data-edit-id="example-q2-option-b">Option B</span>
+                  </button>
+                </div>
+              </div>
+              <aside class="example-card__analysis">
+                <div class="example-card__analysis-body" data-edit-id="example-q2-analysis">Analysis two</div>
+              </aside>
+              <footer class="example-card__footer">
+                <div class="example-card__nav">
+                  <button type="button" class="example-card__prev-btn">上一题</button>
+                  <button type="button" class="example-card__next-btn">下一题</button>
+                </div>
+                <button type="button" class="example-card__analysis-toggle">查看解析</button>
+                <button type="button" class="example-card__submit-btn">提交</button>
+              </footer>
+            </section>
+          </article>
+        </div>
+      </div>
+      <div class="slide" data-slide="2">
+        <div class="slide-content">
+          <div class="content-block">Second slide</div>
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.setTimeout = (callback) => {
+    callback();
+    return 1;
+  };
+  window.clearTimeout = () => {};
+  window.requestAnimationFrame = (callback) => {
+    callback();
+    return 1;
+  };
+  window.cancelAnimationFrame = () => {};
+  window.matchMedia = () => ({
+    matches: false,
+    media: '',
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false; }
+  });
+  window.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.MutationObserver = class { observe() {} disconnect() {} takeRecords() { return []; } };
+  window.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+
+  /* 依赖顺序不能反：page-richtext runtime 需要先看到 example-card 已经写好的当前题门禁，
+     才能把左栏 main 标成唯一 ordinary host。 */
+  window.eval(runtimeSource);
+  window.eval(exampleCardRuntimeSource);
+  if (window.ExampleCardRuntime && typeof window.ExampleCardRuntime.initAll === 'function') {
+    window.ExampleCardRuntime.initAll();
+  }
+  window.eval(pageRichTextRuntimeSource);
+
+  if (submitFirstQuestion) {
+    clickElement(window, window.document.querySelector('.example-card__question[data-question-id="q1"] .example-card__option[data-option-value="A"]'));
+    clickElement(window, window.document.querySelector('.example-card__question[data-question-id="q1"] .example-card__submit-btn'));
+  }
+
+  return {
+    dom,
+    lessonLead: window.document.querySelector('.example-card-lead-btn'),
+    card: window.document.querySelector('.example-card'),
+    q1: window.document.querySelector('.example-card__question[data-question-id="q1"]'),
+    q2: window.document.querySelector('.example-card__question[data-question-id="q2"]'),
+    q1Main: window.document.querySelector('.example-card__question[data-question-id="q1"] .example-card__main'),
+    q1Analysis: window.document.querySelector('.example-card__question[data-question-id="q1"] .example-card__analysis'),
+    q1FragmentOne: window.document.querySelector('.q1-frag-1'),
+    q1FragmentTwo: window.document.querySelector('.q1-frag-2')
+  };
+}
+
 describe('slides runtime', () => {
   it('finishes animations on the newly active slide while editor mode is enabled', () => {
     const dom = createSlidesDom();
@@ -1446,6 +1584,53 @@ describe('slides runtime', () => {
 
     pressKey(window, 'ArrowUp');
     assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected exhausted backward steps on quiz-annotation slides not to auto-flip to the previous slide');
+  });
+
+  it('uses ArrowDown and ArrowUp to switch example-card questions without flipping the slide at the boundaries', () => {
+    const { dom, q1, q2 } = createExampleCardKeyboardDom();
+    const { window } = dom;
+
+    assert.equal(q1.getAttribute('data-question-active'), 'true', 'expected the first example-card question to start active');
+    assert.equal(q2.getAttribute('data-question-active'), 'false', 'expected the second example-card question to start inactive');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(q1.getAttribute('data-question-active'), 'false', 'expected ArrowDown on an example-card slide to switch away from the first question instead of entering unrelated top-level focus');
+    assert.equal(q2.getAttribute('data-question-active'), 'true', 'expected ArrowDown on an example-card slide to activate the next question');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected switching to the next example-card question not to flip the slide');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(q2.getAttribute('data-question-active'), 'true', 'expected ArrowDown on the last example-card question to stay on that question');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected the last example-card question to block downward page turns too');
+
+    pressKey(window, 'ArrowUp');
+    assert.equal(q1.getAttribute('data-question-active'), 'true', 'expected ArrowUp on an example-card slide to move back to the previous question');
+    assert.equal(q2.getAttribute('data-question-active'), 'false', 'expected ArrowUp to deactivate the later example-card question');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected switching back to the previous example-card question not to flip the slide');
+
+    pressKey(window, 'ArrowUp');
+    assert.equal(q1.getAttribute('data-question-active'), 'true', 'expected ArrowUp on the first example-card question to stay on that question');
+    assert.equal(window.document.querySelector('.slide.active')?.getAttribute('data-slide'), '1', 'expected the first example-card question to block upward page turns too');
+  });
+
+  it('keeps ArrowLeft and ArrowRight pinned to the active example-card left column after clicks move elsewhere on the page', () => {
+    const { dom, lessonLead, q1Main, q1Analysis, q1FragmentOne, q1FragmentTwo, card } = createExampleCardKeyboardDom({ includeLeadContent: true, submitFirstQuestion: true });
+    const { window } = dom;
+
+    assert.equal(q1Main.getAttribute('data-page-richtext-host'), 'true', 'expected submitting the active question to enable the example-card left main column as the ordinary fragment host');
+
+    const didSync = window.activateInteractionStepForElement(q1Main, { silentFocusCue: true });
+    assert.equal(didSync, true, 'expected the example-card left main host to be manually focusable before testing click rerouting');
+
+    clickElement(window, q1Analysis);
+    assert.equal(q1Main.classList.contains('step-active'), true, 'expected clicking the right analysis column not to steal the visible top-level focus away from the left main host');
+    assert.equal(card.classList.contains('step-active'), false, 'expected the example-card shell not to become the active step host after the right-column click');
+
+    pressKey(window, 'ArrowRight');
+    assert.equal(q1FragmentOne.classList.contains('qa-fragment-visible'), true, 'expected ArrowRight after a right-column click to keep stepping the current example-card left-column fragments');
+
+    clickElement(window, lessonLead);
+    pressKey(window, 'ArrowRight');
+    assert.equal(q1FragmentTwo.classList.contains('qa-fragment-visible'), true, 'expected even after clicking another component on the same slide, ArrowRight to continue stepping the active example-card left column');
   });
 
   it('blocks ArrowDown from opening quiz annotation bubbles before answers are submitted when the right panel still has questions', () => {

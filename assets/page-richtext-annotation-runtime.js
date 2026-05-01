@@ -522,8 +522,46 @@
     setActiveDoodleProxyFragment(null);
   }
 
+  function getActiveExampleCardMainHostForSlide(slide, focusedElement) {
+    if (!slide) return null;
+
+    const candidateCards = [];
+    const pushCard = (card) => {
+      if (!card || !slide.contains(card) || candidateCards.includes(card)) return;
+      candidateCards.push(card);
+    };
+
+    if (focusedElement && focusedElement.closest) {
+      pushCard(focusedElement.closest('.example-card'));
+    }
+
+    slide.querySelectorAll('.example-card').forEach((card) => pushCard(card));
+
+    for (const card of candidateCards) {
+      const activeQuestion = card.querySelector('.example-card__question[data-question-active="true"]:not([hidden]):not([aria-hidden="true"])')
+        || card.querySelector('.example-card__question:not([hidden]):not([aria-hidden="true"])')
+        || card.querySelector('.example-card__question');
+      const main = activeQuestion && activeQuestion.querySelector('.example-card__main');
+
+      /* example-card 页的 ← → 这轮被明确锁到“当前显示题目的左栏”。
+         因此只要 slide 上存在一个当前有效的 example-card 左栏宿主，
+         就应该优先把 fragment stepping 绑回它，而不是继续信任可能已经被鼠标点偏的一级焦点。 */
+      if (isManagedOrdinaryHost(main, slide)) {
+        return main;
+      }
+    }
+
+    return null;
+  }
+
   function resolveFocusedOrdinaryHost(slide, focusedElement) {
     if (!slide || !canHandleSlide(slide)) return null;
+
+    const exampleCardHost = getActiveExampleCardMainHostForSlide(slide, focusedElement);
+    if (exampleCardHost) {
+      return exampleCardHost;
+    }
+
     if (!focusedElement || focusedElement.nodeType !== 1) return null;
 
     const host = focusedElement.matches && focusedElement.matches(`[${PAGE_HOST_MARKER_ATTR}="true"]`)
