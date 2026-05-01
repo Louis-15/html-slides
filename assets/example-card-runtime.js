@@ -57,6 +57,65 @@
     }
   }
 
+  function getAuthoringPersistenceKey(root, questionRoot) {
+    const utils = window._editorUtils;
+    if (!utils || typeof utils.storageKey !== 'function') {
+      return '';
+    }
+
+    const targetRoot = questionRoot || root;
+    const stem = getQuestionStem(targetRoot);
+    const stemEditId = stem && stem.getAttribute ? stem.getAttribute('data-edit-id') : '';
+    const cardId = root.getAttribute('data-card-id') || '';
+    const fallbackId = buildQuestionDomKey(root, targetRoot === root ? null : targetRoot);
+    const persistenceId = stemEditId || cardId || fallbackId;
+
+    if (!persistenceId) {
+      return '';
+    }
+
+    return utils.storageKey(`example-card-authoring:${persistenceId}`);
+  }
+
+  function readStoredAuthoringConfig(root, questionRoot) {
+    const key = getAuthoringPersistenceKey(root, questionRoot);
+
+    if (!key) {
+      return null;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStoredAuthoringConfig(root, questionRoot) {
+    const key = getAuthoringPersistenceKey(root, questionRoot);
+    const targetRoot = questionRoot || root;
+
+    if (!key) {
+      return;
+    }
+
+    const blankAnswers = Array.from(targetRoot.querySelectorAll(BLANK_SELECTOR)).map((blank) => ({
+      blankId: blank.getAttribute('data-blank-id') || '',
+      correctAnswer: blank.getAttribute('data-correct-answer') || ''
+    }));
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify({
+        questionType: getQuestionType(root, questionRoot),
+        correctValues: collectCorrectValues(root, questionRoot),
+        blankAnswers
+      }));
+    } catch (error) {
+      return;
+    }
+  }
+
   function getAnnotationStoreElementHTML(editId) {
     if (!editId || !window.AnnotationStore || typeof window.AnnotationStore.getInitData !== 'function') {
       return null;
@@ -507,6 +566,59 @@
     ensureChoiceAnswerSection(root, questionRoot);
   }
 
+  function applyStoredAuthoringConfig(root, questionRoot, config) {
+    const targetRoot = questionRoot || root;
+
+    if (!config || typeof config !== 'object') {
+      return;
+    }
+
+    const storedQuestionType = normalizeQuestionType(config.questionType) || getQuestionType(root, questionRoot);
+
+    ensureQuestionStructureForType(root, questionRoot, storedQuestionType);
+    targetRoot.setAttribute('data-question-type', storedQuestionType);
+
+    if (Array.isArray(config.correctValues) && storedQuestionType !== 'blank') {
+      targetRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
+        option.removeAttribute('data-correct');
+      });
+
+      config.correctValues.forEach((value) => {
+        const option = Array.from(targetRoot.querySelectorAll(OPTION_SELECTOR)).find((candidate) => {
+          return (candidate.getAttribute('data-option-value') || '') === value;
+        });
+
+        if (option) {
+          option.setAttribute('data-correct', 'true');
+        }
+      });
+    }
+
+    if (Array.isArray(config.blankAnswers)) {
+      config.blankAnswers.forEach((blankConfig, index) => {
+        const blankId = blankConfig && blankConfig.blankId ? blankConfig.blankId : '';
+        const selector = blankId
+          ? `${BLANK_SELECTOR}[data-blank-id="${blankId}"]`
+          : null;
+        const blank = selector
+          ? targetRoot.querySelector(selector)
+          : targetRoot.querySelectorAll(BLANK_SELECTOR)[index] || null;
+
+        if (blank) {
+          blank.setAttribute('data-correct-answer', blankConfig && blankConfig.correctAnswer ? blankConfig.correctAnswer : '');
+        }
+      });
+    }
+  }
+
+  function hydrateStoredAuthoringConfig(root) {
+    getQuestionContainers(root).forEach((questionRoot) => {
+      const scopedQuestionRoot = questionRoot === root ? null : questionRoot;
+      const config = readStoredAuthoringConfig(root, scopedQuestionRoot);
+      applyStoredAuthoringConfig(root, scopedQuestionRoot, config);
+    });
+  }
+
   function inferQuestionType(root, question) {
     const explicitType = normalizeQuestionType((question && question.getAttribute('data-question-type')) || root.getAttribute('data-question-type'));
 
@@ -665,6 +777,7 @@
     syncAnswerKey(root);
     renderSelection(root);
     renderSubmission(root);
+    writeStoredAuthoringConfig(root, questionRoot);
   }
 
   function shakeMultiHint(root, questionRoot) {
@@ -762,6 +875,7 @@
 
     syncQuestionTypeUI(root);
     syncAnswerKey(root);
+    writeStoredAuthoringConfig(root, questionRoot);
   }
 
   function revealBlankAnswers(root) {
@@ -1096,6 +1210,7 @@
        并在 AnnotationStore 延迟就绪时再补一次，避免用户遇到“第一次刷新还看不到，第二次才出现”。 */
     hydratePersistedEditRoots(root, initialHtmlSnapshot);
     scheduleAnnotationStoreHydration(root, initialHtmlSnapshot);
+    hydrateStoredAuthoringConfig(root);
     syncQuestionGateState(root);
     syncQuestionTypeUI(root);
     syncAnswerKey(root);

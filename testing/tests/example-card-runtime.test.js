@@ -67,6 +67,12 @@ function createExampleCardDom(bodyHtml, options = {}) {
         dom.window.localStorage.setItem(`test:e:${editId}`, html);
       });
     }
+
+    if (options.localStorageRawEntries) {
+      Object.entries(options.localStorageRawEntries).forEach(([key, value]) => {
+        dom.window.localStorage.setItem(key, value);
+      });
+    }
   }
 
   if (options.stubFragmentRefresh === true) {
@@ -384,6 +390,93 @@ describe('example-card runtime', () => {
     assert.equal(editorCore.toggleCalls, 0);
     assert.equal(document.documentElement.classList.contains('editor-mode'), true);
     assert.equal(hint.classList.contains('is-shaking'), true);
+  });
+
+  it('restores editor-authored question type and correct answers after reload', () => {
+    const firstDom = createExampleCardDom(`
+      <section class="example-card" data-card-id="persist-card" data-question-type="single">
+        <div class="example-card__main">
+          <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+            <span class="example-card__editor-label">正确答案</span>
+            <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+          </div>
+          <div class="example-card__stem" data-edit-id="persist-stem">29. Which changes made the backyard more suitable for pollinators?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="persist-option-a">Planting milkweed.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="persist-option-b">Replacing the fence.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="persist-option-c">Adding a shallow water dish.</span>
+            </button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `, { enableStorageUtils: true });
+
+    const { document: firstDocument, localStorage: firstLocalStorage } = firstDom.window;
+    firstDocument.documentElement.classList.add('editor-mode');
+
+    firstDocument.querySelector('[data-question-type-value="multi"]')?.click();
+    firstDocument.querySelector('.example-card__answer-key[data-answer-value="C"]')?.click();
+
+    const rawEntries = {};
+    for (let index = 0; index < firstLocalStorage.length; index += 1) {
+      const key = firstLocalStorage.key(index);
+      if (!key) continue;
+      rawEntries[key] = firstLocalStorage.getItem(key) || '';
+    }
+
+    const secondDom = createExampleCardDom(`
+      <section class="example-card" data-card-id="persist-card" data-question-type="single">
+        <div class="example-card__main">
+          <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+            <span class="example-card__editor-label">正确答案</span>
+            <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+            <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+          </div>
+          <div class="example-card__stem" data-edit-id="persist-stem">29. Which changes made the backyard more suitable for pollinators?</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="persist-option-a">Planting milkweed.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="persist-option-b">Replacing the fence.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="C">
+              <span class="qa-option-label">C</span>
+              <span class="qa-option-text" data-edit-id="persist-option-c">Adding a shallow water dish.</span>
+            </button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `, {
+      enableStorageUtils: true,
+      localStorageRawEntries: rawEntries
+    });
+
+    const secondDocument = secondDom.window.document;
+    const reloadedCard = secondDocument.querySelector('.example-card');
+    const reloadedOptionA = secondDocument.querySelector('.example-card__option[data-option-value="A"]');
+    const reloadedOptionC = secondDocument.querySelector('.example-card__option[data-option-value="C"]');
+
+    assert.equal(reloadedCard?.getAttribute('data-question-type'), 'multi');
+    assert.equal(reloadedOptionA?.hasAttribute('data-correct'), true);
+    assert.equal(reloadedOptionC?.hasAttribute('data-correct'), true);
   });
 
   it('ignores option clicks while editor mode is active', () => {
