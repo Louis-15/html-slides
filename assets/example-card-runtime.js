@@ -8,10 +8,13 @@
   const ANSWER_KEY_SELECTOR = '.example-card__answer-key';
   const ANALYSIS_TOGGLE_SELECTOR = '.example-card__analysis-toggle';
   const SUBMIT_BUTTON_SELECTOR = '.example-card__submit-btn';
+  const PREV_BUTTON_SELECTOR = '.example-card__prev-btn';
+  const NEXT_BUTTON_SELECTOR = '.example-card__next-btn';
   const ANALYSIS_PANEL_SELECTOR = '.example-card__analysis';
   const BLANK_SELECTOR = '.example-card__blank[data-correct-answer]';
   const QUESTION_SELECTOR = '.example-card__question';
   const RESULT_MARK_SELECTOR = '.qa-result-mark';
+  const SINGLE_QUESTION_STATE_KEY = '__single__';
   const stateMap = new WeakMap();
 
   function readStoredEditableHTML(editId) {
@@ -133,34 +136,161 @@
     window.PageRichTextAnnotationRuntime.refreshSlide(slide);
   }
 
+  function getQuestionNodes(root) {
+    return Array.from(root.querySelectorAll(QUESTION_SELECTOR));
+  }
+
+  function getQuestionId(question, index) {
+    if (!question) {
+      return SINGLE_QUESTION_STATE_KEY;
+    }
+
+    const existingId = question.getAttribute('data-question-id');
+    if (existingId) {
+      return existingId;
+    }
+
+    const fallbackId = `question-${index + 1}`;
+    question.setAttribute('data-question-id', fallbackId);
+    return fallbackId;
+  }
+
+  function createQuestionState() {
+    return {
+      selectedValues: [],
+      correctValues: [],
+      isCorrect: null,
+      submitted: false,
+      analysisExpanded: false
+    };
+  }
+
+  function getInitialActiveQuestionId(root, state) {
+    const questionNodes = getQuestionNodes(root);
+
+    if (questionNodes.length === 0) {
+      return SINGLE_QUESTION_STATE_KEY;
+    }
+
+    const activeQuestion = questionNodes.find((question) => {
+      return question.classList.contains('is-active') && !question.hidden && question.getAttribute('aria-hidden') !== 'true';
+    }) || questionNodes.find((question) => !question.hidden && question.getAttribute('aria-hidden') !== 'true') || questionNodes[0];
+
+    return getQuestionId(activeQuestion, questionNodes.indexOf(activeQuestion));
+  }
+
+  function ensureQuestionStateMap(root, state) {
+    const questionNodes = getQuestionNodes(root);
+
+    if (questionNodes.length === 0) {
+      if (!state.questionStates[SINGLE_QUESTION_STATE_KEY]) {
+        state.questionStates[SINGLE_QUESTION_STATE_KEY] = createQuestionState();
+      }
+
+      if (!state.activeQuestionId) {
+        state.activeQuestionId = SINGLE_QUESTION_STATE_KEY;
+      }
+
+      return;
+    }
+
+    questionNodes.forEach((question, index) => {
+      const questionId = getQuestionId(question, index);
+
+      if (!state.questionStates[questionId]) {
+        state.questionStates[questionId] = createQuestionState();
+      }
+    });
+
+    if (!state.activeQuestionId || !state.questionStates[state.activeQuestionId]) {
+      state.activeQuestionId = getInitialActiveQuestionId(root, state);
+    }
+  }
+
+  function getQuestionState(root, question) {
+    const state = ensureState(root);
+    const questionNodes = getQuestionNodes(root);
+    const questionId = question
+      ? getQuestionId(question, questionNodes.indexOf(question))
+      : (state.activeQuestionId || SINGLE_QUESTION_STATE_KEY);
+
+    if (!state.questionStates[questionId]) {
+      state.questionStates[questionId] = createQuestionState();
+    }
+
+    return state.questionStates[questionId];
+  }
+
+  function getActiveQuestionFromState(root, state) {
+    const questionNodes = getQuestionNodes(root);
+
+    if (questionNodes.length === 0) {
+      return null;
+    }
+
+    return questionNodes.find((question, index) => getQuestionId(question, index) === state.activeQuestionId) || questionNodes[0];
+  }
+
+  function getActiveQuestion(root) {
+    const state = stateMap.get(root) || ensureState(root);
+    return getActiveQuestionFromState(root, state);
+  }
+
+  function getActiveQuestionContainer(root) {
+    return getActiveQuestion(root) || root;
+  }
+
+  function syncActiveQuestionSnapshot(root, state) {
+    const currentState = state || stateMap.get(root);
+
+    if (!currentState) {
+      return;
+    }
+
+    const activeQuestion = getQuestionNodes(root).length > 0
+      ? getActiveQuestionFromState(root, currentState)
+      : null;
+    const activeQuestionState = currentState.questionStates[currentState.activeQuestionId || SINGLE_QUESTION_STATE_KEY] || createQuestionState();
+
+    activeQuestionState.correctValues = collectCorrectValues(root, activeQuestion);
+    currentState.selectedValues = activeQuestionState.selectedValues;
+    currentState.correctValues = activeQuestionState.correctValues;
+    currentState.isCorrect = activeQuestionState.isCorrect;
+    currentState.submitted = activeQuestionState.submitted;
+    currentState.analysisExpanded = activeQuestionState.analysisExpanded;
+  }
+
   function ensureState(root) {
     if (!stateMap.has(root)) {
       stateMap.set(root, {
-        // Task 2 需要在提交时统一对比“已选答案集合”和“正确答案集合”，即便当前只做单选，
-        // 也先把状态形状收敛成数组，避免提交逻辑还要同时兼容字符串和数组两套分支。
         selectedValues: [],
         correctValues: [],
-        // 未提交时用 null 区分“还没判分”和“已经判错”，
-        // 后续音效或提交流程只需要消费这个稳定语义，不必重新回看选项集合。
         isCorrect: null,
         submitted: false,
         analysisExpanded: false,
-        annotationHydrationScheduled: false
+        annotationHydrationScheduled: false,
+        activeQuestionId: '',
+        questionStates: Object.create(null)
       });
     }
 
-    return stateMap.get(root);
+    const state = stateMap.get(root);
+    ensureQuestionStateMap(root, state);
+    syncActiveQuestionSnapshot(root, state);
+    return state;
   }
 
-  function collectCorrectValues(root) {
-    return Array.from(root.querySelectorAll(OPTION_SELECTOR))
+  function collectCorrectValues(root, question) {
+    const targetRoot = question || root;
+
+    return Array.from(targetRoot.querySelectorAll(OPTION_SELECTOR))
       .filter((option) => option.hasAttribute('data-correct'))
       .map((option) => option.getAttribute('data-option-value') || '')
       .filter(Boolean);
   }
 
-  function getQuestionType(root) {
-    return root.getAttribute('data-question-type') || 'single';
+  function getQuestionType(root, question) {
+    return (question && question.getAttribute('data-question-type')) || root.getAttribute('data-question-type') || 'single';
   }
 
   function isEditorMode() {
@@ -174,15 +304,17 @@
   }
 
   function syncAnswerKey(root) {
-    const correctValues = collectCorrectValues(root);
+    const questionRoot = getActiveQuestionContainer(root);
+    const correctValues = collectCorrectValues(root, questionRoot === root ? null : questionRoot);
 
-    root.querySelectorAll(ANSWER_KEY_SELECTOR).forEach((button) => {
+    questionRoot.querySelectorAll(ANSWER_KEY_SELECTOR).forEach((button) => {
       const value = button.getAttribute('data-answer-value') || '';
       button.classList.toggle('is-active', value !== '' && correctValues.includes(value));
     });
   }
 
   function updateCorrectValuesFromAnswerKey(root, button) {
+    const questionRoot = button.closest(QUESTION_SELECTOR);
     const value = button.getAttribute('data-answer-value') || '';
 
     if (value === '') {
@@ -195,7 +327,9 @@
       return;
     }
 
-    root.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
+    const targetRoot = questionRoot || root;
+
+    targetRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
       const optionValue = option.getAttribute('data-option-value') || '';
 
       if (optionValue === value) {
@@ -205,11 +339,12 @@
       }
     });
 
-    const state = ensureState(root);
-    state.correctValues = collectCorrectValues(root);
+    const state = getQuestionState(root, questionRoot);
+    state.correctValues = collectCorrectValues(root, questionRoot);
 
     if (state.submitted) {
       state.isCorrect = hasSameValueSet(state.selectedValues, state.correctValues);
+      syncActiveQuestionSnapshot(root, stateMap.get(root));
       renderSubmission(root);
     }
 
@@ -236,13 +371,84 @@
     }
 
     questionNodes.forEach((question, index) => {
-      const isActive = !question.hidden && (question.classList.contains('is-active') || index === 0);
+      const questionId = getQuestionId(question, index);
+      const questionState = state.questionStates[questionId] || createQuestionState();
+      const isActive = state.activeQuestionId === questionId;
 
+      question.hidden = !isActive;
+      question.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      question.classList.toggle('is-active', isActive);
       question.setAttribute('data-question-active', isActive ? 'true' : 'false');
-      // 2A 还没有多题状态机，这里只把当前显示题是否已提交显式写回 DOM，
-      // 供普通页 fragment runtime 判断“是否允许 reveal”。其它题先保持 false，避免提前暴露后续题的讲评片段。
-      question.setAttribute('data-question-submitted', isActive && state.submitted ? 'true' : 'false');
+      question.setAttribute('data-question-submitted', isActive && questionState.submitted ? 'true' : 'false');
     });
+  }
+
+  function renderNavigation(root) {
+    const questionNodes = getQuestionNodes(root);
+    const questionRoot = getActiveQuestionContainer(root);
+    const prevBtn = questionRoot.querySelector(PREV_BUTTON_SELECTOR) || root.querySelector(PREV_BUTTON_SELECTOR);
+    const nextBtn = questionRoot.querySelector(NEXT_BUTTON_SELECTOR) || root.querySelector(NEXT_BUTTON_SELECTOR);
+
+    if (questionNodes.length <= 1) {
+      if (prevBtn) {
+        prevBtn.disabled = true;
+      }
+
+      if (nextBtn) {
+        nextBtn.disabled = true;
+      }
+
+      return;
+    }
+
+    const activeQuestion = getActiveQuestion(root);
+    const activeIndex = activeQuestion ? questionNodes.indexOf(activeQuestion) : 0;
+
+    if (prevBtn) {
+      prevBtn.disabled = activeIndex <= 0;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = activeIndex >= questionNodes.length - 1;
+    }
+  }
+
+  function activateQuestion(root, nextQuestionId) {
+    const state = ensureState(root);
+
+    if (!nextQuestionId || !state.questionStates[nextQuestionId] || state.activeQuestionId === nextQuestionId) {
+      return false;
+    }
+
+    state.activeQuestionId = nextQuestionId;
+    syncActiveQuestionSnapshot(root, state);
+    syncQuestionGateState(root);
+    syncAnswerKey(root);
+    renderSelection(root);
+    renderSubmission(root);
+    renderAnalysis(root);
+    renderNavigation(root);
+    refreshFragmentRuntime(root);
+    return true;
+  }
+
+  function navigateQuestion(root, direction) {
+    const questionNodes = getQuestionNodes(root);
+
+    if (questionNodes.length <= 1) {
+      return false;
+    }
+
+    const activeQuestion = getActiveQuestion(root);
+    const activeIndex = activeQuestion ? questionNodes.indexOf(activeQuestion) : 0;
+    const nextIndex = direction === 'backward' ? activeIndex - 1 : activeIndex + 1;
+    const nextQuestion = questionNodes[nextIndex];
+
+    if (!nextQuestion) {
+      return false;
+    }
+
+    return activateQuestion(root, getQuestionId(nextQuestion, nextIndex));
   }
 
   function hasSameValueSet(selectedValues, correctValues) {
@@ -259,9 +465,10 @@
   }
 
   function renderSelection(root) {
-    const state = ensureState(root);
+    const state = getQuestionState(root, getActiveQuestion(root));
+    const questionRoot = getActiveQuestionContainer(root);
 
-    root.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
+    questionRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
       const value = option.getAttribute('data-option-value') || '';
 
       // 选择态完全由状态驱动重绘，避免通过直接切换 DOM 类名导致多个选项残留 selected。
@@ -295,9 +502,10 @@
   }
 
   function renderSubmission(root) {
-    const state = ensureState(root);
-    const analysisToggle = root.querySelector(ANALYSIS_TOGGLE_SELECTOR);
-    const submitBtn = root.querySelector(SUBMIT_BUTTON_SELECTOR);
+    const state = getQuestionState(root, getActiveQuestion(root));
+    const questionRoot = getActiveQuestionContainer(root);
+    const analysisToggle = questionRoot.querySelector(ANALYSIS_TOGGLE_SELECTOR);
+    const submitBtn = questionRoot.querySelector(SUBMIT_BUTTON_SELECTOR);
 
     root.classList.toggle('is-submitted', state.submitted);
 
@@ -309,7 +517,7 @@
       submitBtn.disabled = state.submitted;
     }
 
-    root.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
+    questionRoot.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
       const value = option.getAttribute('data-option-value') || '';
       const isSelected = value !== '' && state.selectedValues.includes(value);
       const isCorrect = value !== '' && state.correctValues.includes(value);
@@ -332,19 +540,21 @@
   }
 
   function renderAnalysis(root) {
-    const state = ensureState(root);
-    const analysis = root.querySelector(ANALYSIS_PANEL_SELECTOR);
+    const state = getQuestionState(root, getActiveQuestion(root));
+    const questionRoot = getActiveQuestionContainer(root);
+    const analysis = questionRoot.querySelector(ANALYSIS_PANEL_SELECTOR);
     const shouldOpen = state.submitted && state.analysisExpanded;
 
-    if (analysis) {
-      analysis.hidden = !shouldOpen;
-    }
+    root.querySelectorAll(ANALYSIS_PANEL_SELECTOR).forEach((panel) => {
+      panel.hidden = panel !== analysis || !shouldOpen;
+    });
 
     root.classList.toggle('is-analysis-open', shouldOpen);
   }
 
   function handleOptionClick(option) {
     const root = option.closest(CARD_SELECTOR);
+    const questionRoot = option.closest(QUESTION_SELECTOR);
 
     if (!root) {
       return;
@@ -357,7 +567,7 @@
       return;
     }
 
-    const state = ensureState(root);
+    const state = getQuestionState(root, questionRoot);
 
     // 编辑模式下点击选项的意图是把光标放进题目文案里继续编辑，
     // 不是执行学生态作答。这里如果不直接短路，作者一边改选项文本、一边就会把 runtime 的 selectedValues 改脏，
@@ -374,12 +584,14 @@
 
     // Task 2 仍只实现单选：最后一次点击覆盖之前选择，不提前扩到多选规则。
     state.selectedValues = [value];
+    syncActiveQuestionSnapshot(root, stateMap.get(root));
     renderSelection(root);
   }
 
   function submitCard(root) {
-    const state = ensureState(root);
-    const questionType = getQuestionType(root);
+    const questionRoot = getActiveQuestion(root);
+    const state = getQuestionState(root, questionRoot);
+    const questionType = getQuestionType(root, questionRoot);
 
     state.submitted = true;
     state.analysisExpanded = false;
@@ -390,6 +602,7 @@
       // 因为当前组件还没有采集 blank 作答值的正式交互，硬给 true/false 只会制造伪判分语义，
       // 同时也不能播放对错音效，否则会把“仅 reveal 正确答案”误包装成已经完成正式判分。
       state.isCorrect = null;
+      syncActiveQuestionSnapshot(root, stateMap.get(root));
       revealBlankAnswers(root);
       renderSubmission(root);
       renderAnalysis(root);
@@ -397,10 +610,11 @@
       return;
     }
 
-    state.correctValues = collectCorrectValues(root);
+    state.correctValues = collectCorrectValues(root, questionRoot);
     // 提交瞬间把卡片级判分结果固化下来，后续音效、统计、解析开关等逻辑
     // 都应该消费这个布尔语义，而不是重复比较集合，避免提交后语义源分散。
     state.isCorrect = hasSameValueSet(state.selectedValues, state.correctValues);
+    syncActiveQuestionSnapshot(root, stateMap.get(root));
 
     renderSelection(root);
     renderSubmission(root);
@@ -415,8 +629,9 @@
   }
 
   function toggleAnalysis(root) {
-    const state = ensureState(root);
-    const analysis = root.querySelector(ANALYSIS_PANEL_SELECTOR);
+    const questionRoot = getActiveQuestion(root);
+    const state = getQuestionState(root, questionRoot);
+    const analysis = getActiveQuestionContainer(root).querySelector(ANALYSIS_PANEL_SELECTOR);
 
     // 解析区在提交前必须保持关闭，核心原因是它承担的是“判分后的复盘信息”，
     // 不是作答前提示；如果允许提前展开，就会直接泄露答案线索，打破先作答再讲解的流程边界。
@@ -425,6 +640,7 @@
     }
 
     state.analysisExpanded = !state.analysisExpanded;
+    syncActiveQuestionSnapshot(root, stateMap.get(root));
     renderAnalysis(root);
   }
 
@@ -439,11 +655,12 @@
        并在 AnnotationStore 延迟就绪时再补一次，避免用户遇到“第一次刷新还看不到，第二次才出现”。 */
     hydratePersistedEditRoots(root, initialHtmlSnapshot);
     scheduleAnnotationStoreHydration(root, initialHtmlSnapshot);
+    syncQuestionGateState(root);
     syncAnswerKey(root);
     renderSelection(root);
     renderSubmission(root);
     renderAnalysis(root);
-    syncQuestionGateState(root);
+    renderNavigation(root);
   }
 
   function initAll(scope = document) {
@@ -483,6 +700,30 @@
 
       if (root) {
         submitCard(root);
+      }
+
+      return;
+    }
+
+    const prevBtn = event.target.closest(PREV_BUTTON_SELECTOR);
+
+    if (prevBtn) {
+      const root = prevBtn.closest(CARD_SELECTOR);
+
+      if (root) {
+        navigateQuestion(root, 'backward');
+      }
+
+      return;
+    }
+
+    const nextBtn = event.target.closest(NEXT_BUTTON_SELECTOR);
+
+    if (nextBtn) {
+      const root = nextBtn.closest(CARD_SELECTOR);
+
+      if (root) {
+        navigateQuestion(root, 'forward');
       }
 
       return;

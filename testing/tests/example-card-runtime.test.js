@@ -40,7 +40,7 @@ function createExampleCardDom(bodyHtml, options = {}) {
     };
   }
 
-  if (options.localStorageElements) {
+  if (options.localStorageElements || options.localStorageCardStates || options.enableStorageUtils === true) {
     dom.window._editorUtils = {
       storageKey(suffix) {
         return `test:${suffix}`;
@@ -50,9 +50,17 @@ function createExampleCardDom(bodyHtml, options = {}) {
       }
     };
 
-    Object.entries(options.localStorageElements).forEach(([editId, html]) => {
-      dom.window.localStorage.setItem(`test:e:${editId}`, html);
-    });
+    if (options.localStorageCardStates) {
+      Object.entries(options.localStorageCardStates).forEach(([cardId, state]) => {
+        dom.window.localStorage.setItem(`test:example-card-state:${cardId}`, JSON.stringify(state));
+      });
+    }
+
+    if (options.localStorageElements) {
+      Object.entries(options.localStorageElements).forEach(([editId, html]) => {
+        dom.window.localStorage.setItem(`test:e:${editId}`, html);
+      });
+    }
   }
 
   if (options.stubFragmentRefresh === true) {
@@ -102,6 +110,70 @@ function createExampleCardDom(bodyHtml, options = {}) {
   }
 
   return dom;
+}
+
+function readStoredCardState(window, cardId) {
+  const raw = window.localStorage.getItem(`test:example-card-state:${cardId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function createMultiQuestionExampleCardMarkup(cardId) {
+  return `
+    <section class="example-card" data-card-id="${cardId}" data-question-type="single">
+      <article class="example-card__question is-active" data-question-id="q1">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="${cardId}-q1-stem">Question one stem.</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="${cardId}-q1-option-a">Question one option A.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="${cardId}-q1-option-b">Question one option B.</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden>
+          <div class="example-card__analysis-body" data-edit-id="${cardId}-q1-analysis">Question one analysis.</div>
+        </aside>
+      </article>
+
+      <article class="example-card__question" data-question-id="q2" hidden aria-hidden="true">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="${cardId}-q2-stem">Question two stem.</div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="${cardId}-q2-option-a">Question two option A.</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="${cardId}-q2-option-b">Question two option B.</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden>
+          <div class="example-card__analysis-body" data-edit-id="${cardId}-q2-analysis">Question two analysis.</div>
+        </aside>
+      </article>
+
+      <div class="example-card__footer">
+        <div class="example-card__nav">
+          <button type="button" class="example-card__prev-btn" disabled>上一题</button>
+          <button type="button" class="example-card__next-btn">下一题</button>
+        </div>
+      </div>
+    </section>
+  `;
 }
 
 describe('example-card runtime', () => {
@@ -743,6 +815,119 @@ describe('example-card runtime', () => {
     assert.equal(dom.window.__fragmentRefreshCalls.length, 1, 'expected example-card submit to refresh the ordinary fragment runtime immediately so post-submit hover and reveal gating become effective without another page reload');
   });
 
+  it('switches questions with footer navigation and keeps each question state independent', () => {
+    const dom = createExampleCardDom(createMultiQuestionExampleCardMarkup('lesson-card-a'));
+
+    const { document } = dom.window;
+    const prevBtn = document.querySelector('.example-card__prev-btn');
+    const nextBtn = document.querySelector('.example-card__next-btn');
+    const questionOne = document.querySelector('[data-question-id="q1"]');
+    const questionTwo = document.querySelector('[data-question-id="q2"]');
+    const questionOneOptionA = questionOne?.querySelector('[data-option-value="A"]');
+    const questionOneSubmit = questionOne?.querySelector('.example-card__submit-btn');
+    const questionTwoOptionB = questionTwo?.querySelector('[data-option-value="B"]');
+    const questionTwoSubmit = questionTwo?.querySelector('.example-card__submit-btn');
+
+    assert.ok(prevBtn, '测试夹具必须提供上一题按钮');
+    assert.ok(nextBtn, '测试夹具必须提供下一题按钮');
+    assert.ok(questionOne, '测试夹具必须提供第一题容器');
+    assert.ok(questionTwo, '测试夹具必须提供第二题容器');
+    assert.ok(questionOneOptionA, '测试夹具必须提供第一题 A 选项');
+    assert.ok(questionOneSubmit, '测试夹具必须提供第一题提交按钮');
+    assert.ok(questionTwoOptionB, '测试夹具必须提供第二题 B 选项');
+    assert.ok(questionTwoSubmit, '测试夹具必须提供第二题提交按钮');
+
+    assert.equal(prevBtn.disabled, true, 'expected the first question to disable previous navigation initially');
+    assert.equal(nextBtn.disabled, false, 'expected the first question to allow forward navigation when later questions exist');
+
+    questionOneOptionA.click();
+    questionOneSubmit.click();
+    nextBtn.click();
+
+    assert.equal(questionOne.hidden, true, 'expected the first question to hide once the card navigates to the second question');
+    assert.equal(questionTwo.hidden, false, 'expected the second question to become visible after clicking 下一题');
+    assert.equal(prevBtn.disabled, false, 'expected the second question to enable backward navigation');
+    assert.equal(nextBtn.disabled, true, 'expected the last question to disable forward navigation');
+
+    questionTwoOptionB.click();
+    prevBtn.click();
+
+    assert.equal(questionOne.hidden, false, 'expected navigating back to restore the first question visibility');
+    assert.equal(questionOne.querySelector('.example-card__submit-btn')?.disabled, true, 'expected the first question to keep its own submitted state after leaving and coming back');
+    assert.equal(questionOne.querySelector('.example-card__analysis-toggle')?.disabled, false, 'expected the first question analysis toggle to stay unlocked after its own submission');
+
+    nextBtn.click();
+
+    assert.equal(questionTwo.hidden, false, 'expected navigating forward again to re-activate the second question');
+    assert.equal(questionTwo.querySelector('[data-option-value="B"]')?.classList.contains('selected'), true, 'expected the second question to keep its own in-progress selection instead of inheriting the first question result state');
+    assert.equal(questionTwo.querySelector('.example-card__submit-btn')?.disabled, false, 'expected the second question to remain unsubmitted after the first question was already submitted');
+  });
+
+  it('resets the active question and per-question state after reload even when the card id stays the same', () => {
+    const firstDom = createExampleCardDom(createMultiQuestionExampleCardMarkup('lesson-card-persist'), {
+      enableStorageUtils: true
+    });
+
+    const firstDocument = firstDom.window.document;
+    firstDocument.querySelector('[data-question-id="q1"] [data-option-value="A"]')?.click();
+    firstDocument.querySelector('[data-question-id="q1"] .example-card__submit-btn')?.click();
+    firstDocument.querySelector('.example-card__next-btn')?.click();
+    firstDocument.querySelector('[data-question-id="q2"] [data-option-value="B"]')?.click();
+
+    const storedState = readStoredCardState(firstDom.window, 'lesson-card-persist');
+
+    assert.equal(storedState, null, 'expected example-card runtime not to persist student answer state across reloads, otherwise refreshing the lesson would keep the previous round of answers and make repeated classroom reuse impossible');
+
+    const reloadedDom = createExampleCardDom(createMultiQuestionExampleCardMarkup('lesson-card-persist'), {
+      enableStorageUtils: true
+    });
+
+    const { document } = reloadedDom.window;
+    const questionOne = document.querySelector('[data-question-id="q1"]');
+    const questionTwo = document.querySelector('[data-question-id="q2"]');
+
+    assert.ok(questionOne, '测试夹具必须提供第一题容器');
+    assert.ok(questionTwo, '测试夹具必须提供第二题容器');
+    assert.equal(questionOne.hidden, false, 'expected reload to restart from the first question instead of reopening the previously active question');
+    assert.equal(questionTwo.hidden, true, 'expected reload to hide later questions until the user navigates there again');
+    assert.equal(questionOne.querySelector('.example-card__submit-btn')?.disabled, false, 'expected reload to clear the previous submitted state and let the class reuse the question immediately');
+    assert.equal(questionOne.querySelector('.example-card__analysis-toggle')?.disabled, true, 'expected reload to relock analysis until the new round is submitted');
+    assert.equal(questionOne.querySelector('[data-option-value="A"]')?.classList.contains('selected'), false, 'expected reload not to keep the previous round of selected answers');
+    assert.equal(questionTwo.querySelector('[data-option-value="B"]')?.classList.contains('selected'), false, 'expected reload not to keep in-progress selections from later questions either');
+  });
+
+  it('keeps multiple example-card components independent in memory without writing cross-refresh card buckets', () => {
+    const dom = createExampleCardDom(`
+      <div class="slide active" data-slide="1">
+        ${createMultiQuestionExampleCardMarkup('lesson-card-a')}
+        ${createMultiQuestionExampleCardMarkup('lesson-card-b')}
+      </div>
+    `, {
+      enableStorageUtils: true
+    });
+
+    const { document, localStorage } = dom.window;
+    const cardA = document.querySelector('[data-card-id="lesson-card-a"]');
+    const cardB = document.querySelector('[data-card-id="lesson-card-b"]');
+
+    assert.ok(cardA, '测试夹具必须提供第一张 example-card');
+    assert.ok(cardB, '测试夹具必须提供第二张 example-card');
+
+    cardA.querySelector('.example-card__next-btn')?.click();
+    cardA.querySelector('[data-question-id="q2"] [data-option-value="B"]')?.click();
+    cardB.querySelector('[data-question-id="q1"] [data-option-value="A"]')?.click();
+    cardB.querySelector('[data-question-id="q1"] .example-card__submit-btn')?.click();
+
+    const cardAState = JSON.parse(localStorage.getItem('test:example-card-state:lesson-card-a') || 'null');
+    const cardBState = JSON.parse(localStorage.getItem('test:example-card-state:lesson-card-b') || 'null');
+
+    assert.equal(cardAState, null, 'expected the first example-card not to leave behind cross-refresh answer buckets in localStorage');
+    assert.equal(cardBState, null, 'expected the second example-card not to leave behind cross-refresh answer buckets in localStorage either');
+    assert.equal(cardA.querySelector('[data-question-id="q2"]')?.hidden, false, 'expected the first card to keep its own in-memory active question independently during the current session');
+    assert.equal(cardB.querySelector('[data-question-id="q1"] .example-card__submit-btn')?.disabled, true, 'expected the second card submitted state to stay isolated inside its own card during the current session');
+    assert.equal(cardA.querySelector('[data-question-id="q1"] .example-card__submit-btn')?.disabled, false, 'expected the first card not to inherit the second card submitted state');
+  });
+
   it('reveals blank answers without grading blank questions on submit', () => {
     const dom = createExampleCardDom(`
       <section class="example-card" data-question-type="blank">
@@ -798,6 +983,14 @@ describe('example-card runtime', () => {
       exampleCardCssSource,
       /\.example-card \.qa-option\.result-incorrect\s*\{[\s\S]*box-shadow:\s*0\s+0\s+0\s+2px\s+rgba\(186,\s*26,\s*26,\s*0\.15\);/,
       'expected submitted incorrect options to replace the selected orange halo with a red glow'
+    );
+  });
+
+  it('forces inactive multi-question panes fully out of layout when hidden', () => {
+    assert.match(
+      exampleCardCssSource,
+      /\.example-card__question\[hidden\]\s*\{[\s\S]*display:\s*none\s*!important;/,
+      'expected multi-question example-card panes to keep an explicit hidden => display:none contract, otherwise the author rule .example-card__question { display:grid } will override the browser default hidden behavior and visible panes will stack on top of each other'
     );
   });
 });

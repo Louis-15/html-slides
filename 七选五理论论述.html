@@ -525,11 +525,11 @@
             </script>
         </div>
 
-        <!-- ========== SLIDE 11: 例题组件单题体验 ========== -->
+        <!-- ========== SLIDE 11: 例题组件多题体验 ========== -->
         <div class="slide" data-slide="11">
             <div class="slide-header banner">
                 <div class="header-module">例题组件</div>
-                <div class="header-title">单题状态体验</div>
+                <div class="header-title">多题状态体验</div>
             </div>
 
             <div class="slide-content layout-single example-card-playground" data-scrollable id="exampleCardPlayground">
@@ -578,6 +578,62 @@
                             </aside>
 
                             <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn" disabled>上一题</button>
+                                    <button type="button" class="example-card__next-btn">下一题</button>
+                                </div>
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="example-card__question" data-question-id="lesson-example-q2" data-question-active="false" data-question-submitted="false" hidden aria-hidden="true">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+                                    <span class="example-card__editor-label">正确答案</span>
+                                    <button type="button" class="example-card__answer-key is-active" data-answer-value="A">A</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="B">B</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+                                </div>
+
+                                <div class="example-card__stem" data-edit-id="lesson-example-q2-stem">24. Why did the speaker keep the old wooden fence at first?</div>
+
+                                <div class="example-card__answers">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q2-option-a">It still worked as a support for climbing beans.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B">
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q2-option-b">It was too expensive to repair the entire garden.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q2-option-c">It helped keep birds away from the vegetables.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-q2-option-d">It was part of a community gardening project.</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <aside class="example-card__analysis" hidden>
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="lesson-example-q2-analysis">
+                                    <p>The talk explains that the fence looked old, but it still held the bean vines in place, so the speaker left it there for practical use.</p>
+                                    <p>That directly supports A. The other options add cost concerns, bird control, or community plans that the speaker never mentions.</p>
+                                </div>
+                            </aside>
+
+                            <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn">上一题</button>
+                                    <button type="button" class="example-card__next-btn" disabled>下一题</button>
+                                </div>
                                 <div class="example-card__actions">
                                     <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
                                     <button type="button" class="example-card__submit-btn">提交答案</button>
@@ -589,7 +645,7 @@
             </div>
 
             <script type="application/json" class="slide-notes">
-            {"title":"例题组件单题体验","script":"这一页直接使用同一道题的真实作答流：先选择并提交，再展开解析；如果需要修改标准答案，就进入课件编辑模式。","notes":["不再用顶部按钮模拟状态","提交后可查看解析","编辑模式下可直接修改正确答案"]}
+            {"title":"例题组件多题体验","script":"这一页把两道题收进同一个例题组件：左下角可以切换题号，每题的作答与解析状态会独立保存；如果需要修改标准答案，就进入课件编辑模式。","notes":["左下角切换上一题/下一题","每题状态独立保存","编辑模式下可直接修改正确答案"]}
             </script>
         </div>
 
@@ -644,6 +700,10 @@
                 if (!card.querySelector('.example-card__answer-key[data-answer-value="B"].is-active')) {
                     throw new Error('例题组件初始正确答案没有同步到答案键');
                 }
+
+                if (!card.querySelector('.example-card__next-btn')) {
+                    throw new Error('例题组件初始态缺少多题导航按钮');
+                }
             }
 
             try {
@@ -652,7 +712,7 @@
                 }
 
                 // 这里故意只渲染一次初始题卡，不再在课件页里伪造“提交后态 / 编辑态”的快捷切换。
-                // 这样用户看到的就是组件真实工作流：先点击选项再提交，若要修改标准答案则进入系统编辑模式。
+                // 这样用户看到的就是组件真实工作流：先在组件内部切题，再分别作答与提交；若要修改标准答案则进入系统编辑模式。
                 assertInitialState(buildFreshCard());
             } catch (error) {
                 console.error(error);

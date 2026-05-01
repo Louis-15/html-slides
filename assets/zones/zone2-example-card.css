@@ -70,6 +70,14 @@
   transition: grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 多题模式下 inactive question 依赖 hidden 彻底退出布局。
+   由于上面把题目壳层显式声明成 display:grid，浏览器默认的 [hidden] -> display:none
+   会被作者样式覆盖掉；如果这里不再显式补回，所有题目都会占用同一个 grid 单元，
+   最终表现成题干文字互相重叠、底部按钮被上层题目遮住而无法点击。 */
+.example-card__question[hidden] {
+  display: none !important;
+}
+
 .example-card.is-analysis-open .example-card__question {
   grid-template-columns: minmax(0, 5fr) minmax(280px, 3fr);
 }
@@ -117,12 +125,21 @@
   grid-row: 2;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   min-width: 0;
   gap: 16px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(109, 127, 139, 0.18);
+}
+
+.example-card__nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
 }
 
 /* DOM 结构仍然保持左右两栏各自独立，
@@ -300,8 +317,11 @@ body.editor-mode .example-card__editor-answer-key {
   flex-wrap: wrap;
   gap: 10px;
   min-width: 0;
+  margin-left: auto;
 }
 
+.example-card__prev-btn,
+.example-card__next-btn,
 .example-card__analysis-toggle,
 .example-card__submit-btn {
   appearance: none;
@@ -318,22 +338,30 @@ body.editor-mode .example-card__editor-answer-key {
   transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
+.example-card__prev-btn,
+.example-card__next-btn,
 .example-card__analysis-toggle {
   border-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
   background-color: rgba(255, 255, 255, 0.52);
   color: var(--text-muted);
 }
 
+.example-card__prev-btn:hover:not(:disabled),
+.example-card__next-btn:hover:not(:disabled),
 .example-card__analysis-toggle:hover:not(:disabled),
 .example-card__submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
+.example-card__prev-btn:hover:not(:disabled),
+.example-card__next-btn:hover:not(:disabled),
 .example-card__analysis-toggle:hover:not(:disabled) {
   border-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.26);
   background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.08);
 }
 
+.example-card__prev-btn:disabled,
+.example-card__next-btn:disabled,
 .example-card__analysis-toggle:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -439,6 +467,8 @@ body.editor-mode .example-card__editor-answer-key {
 }
 
 .example-card .qa-option:focus-visible,
+.example-card__prev-btn:focus-visible,
+.example-card__next-btn:focus-visible,
 .example-card__analysis-toggle:focus-visible,
 .example-card__submit-btn:focus-visible,
 .example-card__answer-key:focus-visible {
@@ -487,10 +517,18 @@ body.editor-mode .example-card__editor-answer-key {
     padding-top: 12px;
   }
 
+  .example-card__nav,
   .example-card__actions {
-    justify-content: stretch;
+    flex: 1 1 100%;
   }
 
+  .example-card__actions {
+    justify-content: stretch;
+    margin-left: 0;
+  }
+
+  .example-card__prev-btn,
+  .example-card__next-btn,
   .example-card__analysis-toggle,
   .example-card__submit-btn {
     flex: 1 1 180px;
@@ -516,10 +554,17 @@ body.editor-mode .example-card__editor-answer-key {
     align-items: stretch;
   }
 
+  .example-card__nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .example-card__footer {
     justify-content: stretch;
   }
 
+  .example-card__prev-btn,
+  .example-card__next-btn,
   .example-card__analysis-toggle,
   .example-card__submit-btn {
     width: 100%;
@@ -529,6 +574,8 @@ body.editor-mode .example-card__editor-answer-key {
 @media (prefers-reduced-motion: reduce) {
 
   .example-card,
+  .example-card__prev-btn,
+  .example-card__next-btn,
   .example-card__answer-key,
   .example-card__analysis-toggle,
   .example-card__submit-btn,
