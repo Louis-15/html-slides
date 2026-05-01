@@ -572,6 +572,63 @@ describe('page richtext annotation runtime', () => {
     assert.equal(inactiveFragment.classList.contains('qa-fragment-visible'), false, 'expected inactive question fragments to stay unrevealable');
   });
 
+  it('uses only the example-card left main column as one fragment host and excludes the analysis column', () => {
+    const dom = createExampleCardFragmentDom(`
+      <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="true">
+        <div class="example-card__main">
+          <div class="example-card__stem" data-edit-id="example-stem">
+            Stem <span class="page-fragment stem-fragment" data-fragment-step="true">first</span> cue.
+          </div>
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="example-option-a">
+                Option <span class="page-fragment option-fragment" data-fragment-step="true">second</span> cue.
+              </span>
+            </button>
+          </div>
+        </div>
+        <aside class="example-card__analysis">
+          <div class="example-card__analysis-body" data-edit-id="example-analysis">
+            Analysis <span class="page-fragment analysis-fragment" data-fragment-step="true">third</span> cue.
+          </div>
+        </aside>
+      </article>
+    `);
+
+    const { window } = dom;
+    const main = window.document.querySelector('.example-card__main');
+    const stemRoot = window.document.querySelector('[data-edit-id="example-stem"]');
+    const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
+    const analysisRoot = window.document.querySelector('[data-edit-id="example-analysis"]');
+    const stemFragment = window.document.querySelector('.stem-fragment');
+    const optionFragment = window.document.querySelector('.option-fragment');
+    const analysisFragment = window.document.querySelector('.analysis-fragment');
+
+    assert.ok(main, '测试夹具必须提供 example-card 左栏主区宿主');
+    assert.ok(stemRoot, '测试夹具必须提供题干根块');
+    assert.ok(optionRoot, '测试夹具必须提供选项根块');
+    assert.ok(analysisRoot, '测试夹具必须提供解析根块');
+    assert.equal(main.getAttribute('data-page-richtext-host'), 'true', 'expected the example-card left main column to become the only ordinary fragment host');
+    assert.equal(stemRoot.getAttribute('data-page-richtext-host'), null, 'expected the stem root not to remain an independent top-level host once the whole left column owns fragment stepping');
+    assert.equal(optionRoot.getAttribute('data-page-richtext-host'), null, 'expected option text roots to stay inside the shared left-column host rather than entering the top-level queue independently');
+    assert.equal(analysisRoot.getAttribute('data-page-richtext-host'), null, 'expected the analysis column to drop out of the ordinary fragment host contract entirely');
+    assert.equal(analysisRoot.getAttribute('data-page-richtext-hover-eligible'), null, 'expected the analysis column not to receive hidden-fragment hover eligibility');
+
+    pressKey(window, 'ArrowDown');
+    assert.equal(main.classList.contains('step-active'), true, 'expected ArrowDown to focus the whole left main column instead of stopping on stem and option roots separately');
+    assert.equal(stemRoot.classList.contains('step-active'), false, 'expected the stem root not to become its own top-level focus stop');
+    assert.equal(optionRoot.classList.contains('step-active'), false, 'expected the option root not to become its own top-level focus stop');
+
+    pressKey(window, 'ArrowRight');
+    assert.equal(stemFragment.classList.contains('qa-fragment-visible'), true, 'expected the first ArrowRight to reveal the stem fragment first');
+    assert.equal(optionFragment.classList.contains('qa-fragment-visible'), false, 'expected later option fragments to remain hidden until their DOM turn arrives');
+
+    pressKey(window, 'ArrowRight');
+    assert.equal(optionFragment.classList.contains('qa-fragment-visible'), true, 'expected the second ArrowRight to continue through the left column in DOM order and reveal the option fragment next');
+    assert.equal(analysisFragment.classList.contains('qa-fragment-visible'), false, 'expected the right analysis column to stay outside the hidden-fragment stepping contract');
+  });
+
   it('forwards doodle pointer hover through to the owning text root and keeps right click reveal aligned to that root host', () => {
     const dom = createDoodleOrdinaryPageDom();
     const { window } = dom;

@@ -116,6 +116,14 @@
             var root = el.closest('[data-edit-id]');
             if (!root) return null;
             if (root.closest('.quiz-annotation')) return null;
+
+            /* example-card 的右栏解析区本轮不再参与“隐藏型标注”协议。
+               设计目标已经收敛成：
+               1. 左栏题干/选项才允许 authored hidden fragment；
+               2. 右栏解析只保留普通富文本编辑，所见即所得。
+               如果这里继续把 .example-card__analysis 里的 data-edit-id 视为 ordinary fragment root，
+               选择解析文本时仍会弹出“隐藏型标注”工具条，和新的交互约束冲突。 */
+            if (root.closest('.example-card__analysis')) return null;
             return root;
         },
 

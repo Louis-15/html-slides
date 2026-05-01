@@ -321,6 +321,18 @@ describe('page richtext authoring', () => {
     assert.match(toolbar?.textContent || '', /隐藏型标注/);
   });
 
+  it('does not show the hidden-fragment toolbar for selections inside example-card analysis text', () => {
+    const { window } = createExampleCardAuthoringDom();
+    const analysisRoot = window.document.querySelector('[data-edit-id="example-analysis"]');
+
+    assert.ok(analysisRoot, '测试夹具必须提供 example-card 解析文本根块');
+
+    selectText(window, analysisRoot, 'fragment sample');
+
+    const toolbar = getPageFragmentToolbar(window.document);
+    assert.equal(toolbar?.classList.contains('visible'), false, 'expected example-card analysis text to stay on direct rich-text formatting only instead of reopening the hidden-fragment authoring toolbar');
+  });
+
   it('authors fragment markup inside example-card option text and writes the sidecar immediately', () => {
     const { window, persistenceCalls, historyCalls, scheduleSaveCalls, saveNowCalls } = createExampleCardAuthoringDom();
     const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');

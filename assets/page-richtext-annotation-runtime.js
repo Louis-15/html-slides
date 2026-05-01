@@ -93,9 +93,26 @@
     return !!(slide && slide.querySelector('.quiz-annotation'));
   }
 
+  function isExampleCardAnalysisRoot(root) {
+    return !!(root && root.closest && root.closest('.example-card__analysis'));
+  }
+
+  function getExampleCardMainHost(root, slide) {
+    if (!root || !slide || !slide.contains(root)) return null;
+
+    /* example-card 的 hidden fragment 现在只允许留在左栏主区：
+       - 右栏解析区本身已经是“显式唤出”的内容，不再叠加一层 hidden-fragment 协议；
+       - 左栏内部的题干、选项也不再各自占一个一级焦点，而是统一并入 .example-card__main；
+       这样用户只需把焦点停在左栏，随后用 ← → 就能按 DOM 顺序连续步进整道题的所有 fragment。 */
+    const main = root.closest('.example-card__main');
+    if (!main || !slide.contains(main)) return null;
+    return main;
+  }
+
   function isOrdinaryEditRoot(root, slide) {
     if (!root || !slide || !slide.contains(root)) return false;
     if (root.closest('.quiz-annotation')) return false;
+    if (isExampleCardAnalysisRoot(root)) return false;
 
     const parentRoot = root.parentElement && root.parentElement.closest('[data-edit-id]');
     if (!parentRoot || !slide.contains(parentRoot)) return true;
@@ -205,6 +222,11 @@
   function getOrdinaryFragmentHost(root, slide) {
     if (!root || !slide || !slide.contains(root)) return null;
 
+    const exampleCardMainHost = getExampleCardMainHost(root, slide);
+    if (exampleCardMainHost) {
+      return exampleCardMainHost;
+    }
+
     const summaryHost = getSummaryTriggerHost(root, slide);
     if (summaryHost) {
       return summaryHost;
@@ -280,6 +302,7 @@
 
     const eligibleHosts = new Set(getOrdinaryFragmentHosts(slide));
     const candidates = new Set([
+      ...eligibleHosts,
       ...slide.querySelectorAll('[data-edit-id]'),
       ...slide.querySelectorAll('[data-steppable]'),
       ...slide.querySelectorAll(PAGE_COMPONENT_HOST_SELECTOR),
