@@ -217,6 +217,19 @@ function createQuizLockedPageDom() {
   `);
 }
 
+function createExampleCardFragmentDom(questionMarkup) {
+  return createRuntimeDom(`
+    <div class="slide active" data-slide="1">
+      <section class="example-card">
+        ${questionMarkup}
+      </section>
+    </div>
+    <div class="slide" data-slide="2">
+      <div class="header-title">Slide 2</div>
+    </div>
+  `);
+}
+
 describe('page richtext annotation runtime', () => {
   it('uses ArrowDown to focus ordinary roots first, then keeps ArrowRight and ArrowLeft scoped to the focused root fragments', () => {
     const dom = createQuizFreePageDom();
@@ -454,6 +467,53 @@ describe('page richtext annotation runtime', () => {
     pressKey(window, 'ArrowLeft');
 
     assert.deepEqual(calls, ['ui-hover', 'fragment-swoosh', 'fragment-swoosh-back'], 'expected editor mode to stay silent and not emit ordinary page cue traffic');
+  });
+
+  it('does not reveal example-card fragments before the active question is submitted', () => {
+    const dom = createExampleCardFragmentDom(`
+      <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="false">
+        <div class="example-card__stem" data-edit-id="example-stem">
+          Intro <span class="page-fragment example-card-fragment" data-fragment-step="true">hidden</span> cue.
+        </div>
+      </article>
+    `);
+
+    const { window } = dom;
+    const fragment = window.document.querySelector('.example-card-fragment');
+
+    assert.ok(fragment, '测试夹具必须提供 example-card fragment');
+
+    rightClickElement(window, fragment);
+
+    assert.equal(fragment.classList.contains('qa-fragment-visible'), false, 'expected unsubmitted example-card fragments to stay unrevealable');
+  });
+
+  it('reveals only the active submitted example-card question fragments', () => {
+    const dom = createExampleCardFragmentDom(`
+      <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="true">
+        <div class="example-card__stem" data-edit-id="active-stem">
+          Active <span class="page-fragment active-fragment" data-fragment-step="true">hidden</span> cue.
+        </div>
+      </article>
+      <article class="example-card__question" data-question-id="q2" hidden data-question-active="false" data-question-submitted="true">
+        <div class="example-card__stem" data-edit-id="inactive-stem">
+          Hidden <span class="page-fragment inactive-fragment" data-fragment-step="true">hidden</span> cue.
+        </div>
+      </article>
+    `);
+
+    const { window } = dom;
+    const activeFragment = window.document.querySelector('.active-fragment');
+    const inactiveFragment = window.document.querySelector('.inactive-fragment');
+
+    assert.ok(activeFragment, '测试夹具必须提供活跃题 fragment');
+    assert.ok(inactiveFragment, '测试夹具必须提供非活跃题 fragment');
+
+    rightClickElement(window, activeFragment);
+    rightClickElement(window, inactiveFragment);
+
+    assert.equal(activeFragment.classList.contains('qa-fragment-visible'), true, 'expected the active submitted question fragment to reveal');
+    assert.equal(inactiveFragment.classList.contains('qa-fragment-visible'), false, 'expected inactive question fragments to stay unrevealable');
   });
 
   it('forwards doodle pointer hover through to the owning text root and keeps right click reveal aligned to that root host', () => {

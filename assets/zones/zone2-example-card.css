@@ -52,6 +52,28 @@
   align-items: stretch;
 }
 
+/* 2A 为了给未来“一组件多题”预留独立题目壳层，
+   在 .example-card 下面新增了 .example-card__question 包裹层。
+   旧样式的左右栏布局原本依赖 .example-card 直接承载 main / analysis / footer，
+   如果不把这套 grid 明确下沉到题目壳层，解析区就会退回普通文档流并被挤到下方。 */
+.example-card__question {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  transition: grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.example-card.is-analysis-open .example-card__question {
+  grid-template-columns: minmax(0, 5fr) minmax(280px, 3fr);
+}
+
 .example-card__main,
 .example-card__analysis {
   grid-row: 1;
@@ -436,6 +458,12 @@ body.editor-mode .example-card__editor-answer-key {
   .example-card.is-analysis-open {
     grid-template-columns: minmax(0, 1fr);
     padding: 20px;
+    gap: 16px;
+  }
+
+  .example-card__question,
+  .example-card.is-analysis-open .example-card__question {
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
 

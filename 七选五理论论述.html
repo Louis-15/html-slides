@@ -537,51 +537,53 @@
 
                 <template id="exampleCardPlaygroundTemplate">
                     <section class="example-card" data-question-type="single" data-card-id="lesson-example-card">
-                        <div class="example-card__main">
-                            <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
-                                <span class="example-card__editor-label">正确答案</span>
-                                <button type="button" class="example-card__answer-key" data-answer-value="A">A</button>
-                                <button type="button" class="example-card__answer-key is-active" data-answer-value="B">B</button>
-                                <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
-                                <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+                        <article class="example-card__question is-active" data-question-id="lesson-example-q1" data-question-active="true" data-question-submitted="false">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区">
+                                    <span class="example-card__editor-label">正确答案</span>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="A">A</button>
+                                    <button type="button" class="example-card__answer-key is-active" data-answer-value="B">B</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="C">C</button>
+                                    <button type="button" class="example-card__answer-key" data-answer-value="D">D</button>
+                                </div>
+
+                                <div class="example-card__stem" data-edit-id="lesson-example-stem">23. What was the speaker's original plan for the small garden behind the house?</div>
+
+                                <div class="example-card__answers">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A">
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-option-a">To build a quiet reading corner for visitors.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-option-b">To grow vegetables for the family kitchen.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-option-c">To attract rare birds with a shallow pond.</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text" data-edit-id="lesson-example-option-d">To turn the space into a play area for neighbors.</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="example-card__stem" data-edit-id="lesson-example-stem">23. What was the speaker's original plan for the small garden behind the house?</div>
+                            <aside class="example-card__analysis" hidden>
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="lesson-example-analysis">
+                                    <p>原文里先说 the backyard was meant to provide fresh vegetables for the kitchen，后面才引出“后来意外吸引来蝴蝶和鸟”。</p>
+                                    <p>因此 B 是直接对应题干问法的原始意图，A 属于后来追加的想法，不是最初计划。</p>
+                                </div>
+                            </aside>
 
-                            <div class="example-card__answers">
-                                <button type="button" class="qa-option example-card__option" data-option-value="A">
-                                    <span class="qa-option-label">A</span>
-                                    <span class="qa-option-text" data-edit-id="lesson-example-option-a">To build a quiet reading corner for visitors.</span>
-                                </button>
-                                <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
-                                    <span class="qa-option-label">B</span>
-                                    <span class="qa-option-text" data-edit-id="lesson-example-option-b">To grow vegetables for the family kitchen.</span>
-                                </button>
-                                <button type="button" class="qa-option example-card__option" data-option-value="C">
-                                    <span class="qa-option-label">C</span>
-                                    <span class="qa-option-text" data-edit-id="lesson-example-option-c">To attract rare birds with a shallow pond.</span>
-                                </button>
-                                <button type="button" class="qa-option example-card__option" data-option-value="D">
-                                    <span class="qa-option-label">D</span>
-                                    <span class="qa-option-text" data-edit-id="lesson-example-option-d">To turn the space into a play area for neighbors.</span>
-                                </button>
+                            <div class="example-card__footer">
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
                             </div>
-                        </div>
-
-                        <aside class="example-card__analysis" hidden>
-                            <div class="example-card__analysis-title">解析</div>
-                            <div class="example-card__analysis-body" data-edit-id="lesson-example-analysis">
-                                <p>原文里先说 the backyard was meant to provide fresh vegetables for the kitchen，后面才引出“后来意外吸引来蝴蝶和鸟”。</p>
-                                <p>因此 B 是直接对应题干问法的原始意图，A 属于后来追加的想法，不是最初计划。</p>
-                            </div>
-                        </aside>
-
-                        <div class="example-card__footer">
-                            <div class="example-card__actions">
-                                <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
-                                <button type="button" class="example-card__submit-btn">提交答案</button>
-                            </div>
-                        </div>
+                        </article>
                     </section>
                 </template>
             </div>

@@ -86,6 +86,43 @@ describe('example-card runtime', () => {
     assert.equal(optionB.classList.contains('selected'), true);
   });
 
+  it('ignores option clicks while editor mode is active', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="single">
+        <div class="example-card__main">
+          <div class="example-card__answers">
+            <button type="button" class="qa-option example-card__option" data-option-value="A">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="q-editor-a">Alpha</span>
+            </button>
+            <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+              <span class="qa-option-label">B</span>
+              <span class="qa-option-text" data-edit-id="q-editor-b">Beta</span>
+            </button>
+          </div>
+          <div class="example-card__actions">
+            <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+            <button type="button" class="example-card__submit-btn">提交答案</button>
+          </div>
+        </div>
+        <aside class="example-card__analysis" hidden></aside>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    const optionA = document.querySelector('[data-option-value="A"]');
+    const optionB = document.querySelector('[data-option-value="B"]');
+
+    assert.ok(optionA, '测试夹具必须提供 A 选项按钮');
+    assert.ok(optionB, '测试夹具必须提供 B 选项按钮');
+
+    document.documentElement.classList.add('editor-mode');
+    optionA.click();
+
+    assert.equal(optionA.classList.contains('selected'), false);
+    assert.equal(optionB.classList.contains('selected'), false);
+  });
+
   it('stores card-level correctness in state.isCorrect on submit', () => {
     const dom = createExampleCardDom(
       `
@@ -474,6 +511,43 @@ describe('example-card runtime', () => {
     assert.equal(answerKeyA.classList.contains('is-active'), true);
     assert.equal(answerKeyB.classList.contains('is-active'), false);
     assert.equal(document.querySelectorAll('.example-card__answer-key.is-active').length, 1);
+  });
+
+  it('marks the active example-card question submitted for fragment gating after submit', () => {
+    const dom = createExampleCardDom(`
+      <section class="example-card" data-question-type="single">
+        <article class="example-card__question is-active" data-question-id="q1">
+          <div class="example-card__main">
+            <div class="example-card__answers">
+              <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                <span class="qa-option-label">A</span>
+                <span class="qa-option-text" data-edit-id="q-gate-a">Alpha</span>
+              </button>
+            </div>
+            <div class="example-card__actions">
+              <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+              <button type="button" class="example-card__submit-btn">提交答案</button>
+            </div>
+          </div>
+          <aside class="example-card__analysis" hidden></aside>
+        </article>
+      </section>
+    `);
+
+    const { document } = dom.window;
+    const optionA = document.querySelector('[data-option-value="A"]');
+    const submitBtn = document.querySelector('.example-card__submit-btn');
+    const question = document.querySelector('.example-card__question');
+
+    assert.ok(optionA, '测试夹具必须提供 A 选项按钮');
+    assert.ok(submitBtn, '测试夹具必须提供提交按钮');
+    assert.ok(question, '测试夹具必须提供题目容器');
+
+    optionA.click();
+    submitBtn.click();
+
+    assert.equal(question.getAttribute('data-question-submitted'), 'true');
+    assert.equal(question.getAttribute('data-question-active'), 'true');
   });
 
   it('reveals blank answers without grading blank questions on submit', () => {

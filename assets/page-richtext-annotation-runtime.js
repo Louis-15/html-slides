@@ -157,9 +157,30 @@
     return collectFragmentEntriesForTextRoot(root).length > 0;
   }
 
-  function getOrdinaryFragmentRoots(slide) {
+  function getFragmentBearingOrdinaryRoots(slide) {
     if (!slide || isQuizAnnotationSlide(slide)) return [];
     return getOrdinaryEditRoots(slide).filter((root) => rootOwnsOrdinaryFragments(root));
+  }
+
+  function isExampleCardRevealEligible(root) {
+    const card = root && root.closest ? root.closest('.example-card') : null;
+    if (!card) return true;
+
+    const question = root.closest('.example-card__question');
+    if (!question) {
+      return card.getAttribute('data-question-submitted') === 'true' || card.classList.contains('is-submitted');
+    }
+
+    const isActive = question.getAttribute('data-question-active') === 'true' &&
+      !question.hidden &&
+      question.getAttribute('aria-hidden') !== 'true';
+
+    if (!isActive) return false;
+    return question.getAttribute('data-question-submitted') === 'true';
+  }
+
+  function getOrdinaryFragmentRoots(slide) {
+    return getFragmentBearingOrdinaryRoots(slide).filter((root) => isExampleCardRevealEligible(root));
   }
 
   function getSummaryTriggerHost(root, slide) {
@@ -230,7 +251,7 @@
   function shouldEnableOrdinaryFragmentHost(slide) {
     if (!slide) return false;
     if (isQuizAnnotationSlide(slide)) return false;
-    return getOrdinaryFragmentHosts(slide).length > 0;
+    return getFragmentBearingOrdinaryRoots(slide).length > 0;
   }
 
   function syncHostSteppableState(host, enabled) {
@@ -314,6 +335,7 @@
     const root = target.closest('[data-edit-id]');
     if (!slide || !root || !isOrdinaryEditRoot(root, slide)) return null;
     if (!rootOwnsOrdinaryFragments(root)) return null;
+    if (!isExampleCardRevealEligible(root)) return null;
     return root;
   }
 

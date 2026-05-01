@@ -50,27 +50,63 @@ function evaluateAnnotationStore(url) {
   return { headAppends, bodyAppends };
 }
 
-function createAnnotationStoreHarness(bodyHtml, url = 'https://example.com/demo.html') {
+function createAnnotationStoreHarness(bodyHtml, url = 'https://example.com/demo.html', options = {}) {
   const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body>${bodyHtml}</body></html>`, {
     runScripts: 'outside-only',
     url
   });
   const { window } = dom;
   const writes = [];
+  const pickerCalls = [];
+  const pendingTimers = [];
+  const originalHeadAppendChild = window.document.head.appendChild.bind(window.document.head);
 
   window.console.log = () => {};
   window.console.warn = () => {};
+  window.EditorHooks = {
+    _hooks: {
+      onEditModeExit: []
+    },
+    register(hookName, fn) {
+      if (!this._hooks[hookName]) this._hooks[hookName] = [];
+      this._hooks[hookName].push(fn);
+    },
+    fire(hookName, arg) {
+      (this._hooks[hookName] || []).forEach((fn) => fn(arg));
+    }
+  };
   window.indexedDB = {
     open() {
       throw new Error('indexeddb-disabled-for-test');
     }
   };
   window.setTimeout = (callback) => {
+    if (options.deferTimers) {
+      pendingTimers.push(callback);
+      return pendingTimers.length;
+    }
     callback();
     return 1;
   };
   window.clearTimeout = () => {};
-  window.showSaveFilePicker = async () => ({
+  window.document.head.appendChild = (node) => {
+    if (node.tagName === 'SCRIPT' && /\.annotations\.js$/i.test(node.src || '')) {
+      queueMicrotask(() => {
+        if (options.mockAnnotationData) {
+          window.__annotationData = options.mockAnnotationData;
+          if (typeof node.onload === 'function') node.onload();
+          return;
+        }
+
+        if (typeof node.onerror === 'function') node.onerror(new Error('missing-annotation-sidecar-for-test'));
+      });
+      return node;
+    }
+    return originalHeadAppendChild(node);
+  };
+  window.showSaveFilePicker = async () => {
+    pickerCalls.push('picked');
+    return ({
     queryPermission: async () => 'granted',
     requestPermission: async () => 'granted',
     createWritable: async () => ({
@@ -79,11 +115,23 @@ function createAnnotationStoreHarness(bodyHtml, url = 'https://example.com/demo.
       },
       close: async () => {}
     })
-  });
+    });
+  };
 
   window.eval(annotationStoreSource);
 
-  return { dom, window, writes };
+  return {
+    dom,
+    window,
+    writes,
+    pickerCalls,
+    runPendingTimers() {
+      while (pendingTimers.length > 0) {
+        const callback = pendingTimers.shift();
+        callback();
+      }
+    }
+  };
 }
 
 async function authorizeAndCollect(window, writes) {
@@ -110,6 +158,54 @@ describe('annotation store loader', () => {
 });
 
 describe('annotation store collection', () => {
+  it('flushes a pending sidecar save immediately when edit mode exits', async () => {
+    const { window, writes } = createAnnotationStoreHarness(`
+      <div class="slide active" data-slide="1">
+        <div class="header-title" data-edit-id="title-root">
+          Intro <span data-fragment-step="true" data-fragment-format="highlight">hidden fragment</span> content.
+        </div>
+      </div>
+    `, 'file:///D:/Projects/html-slides/demo.html', { deferTimers: true });
+
+    await window.AnnotationStore.whenReady();
+    await window.AnnotationStore.authorizeAndSave();
+    writes.length = 0;
+
+    const titleRoot = window.document.querySelector('[data-edit-id="title-root"]');
+    titleRoot.innerHTML = 'Updated <span data-fragment-step="true" data-fragment-format="highlight">hidden fragment</span> content.';
+
+    window.AnnotationStore.scheduleSave();
+    assert.equal(writes.length, 0, 'expected the delayed save queue not to write immediately before edit mode exits');
+
+    window.EditorHooks.fire('onEditModeExit');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.equal(writes.length, 1, 'expected edit mode exit to flush the pending sidecar save immediately');
+    const data = parseAnnotationPayload(writes[writes.length - 1]);
+    assert.match(data.elements['title-root'], /Updated/, 'expected the flushed payload to contain the newest rich-text authoring change');
+  });
+
+  it('requests write access on the first user gesture without eagerly rewriting the sidecar payload', async () => {
+    const { window, writes, pickerCalls } = createAnnotationStoreHarness(`
+      <div class="slide active" data-slide="1">
+        <div class="header-title" data-edit-id="title-root">
+          Intro <span data-fragment-step="true" data-fragment-format="highlight">hidden fragment</span> content.
+        </div>
+      </div>
+    `);
+
+    await window.AnnotationStore.whenReady();
+
+    window.document.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.deepEqual(pickerCalls, ['picked'], 'expected annotation-store to request file access on the first real user gesture when no write handle is cached');
+    assert.equal(writes.length, 0, 'expected first-gesture authorization to acquire access only, without eagerly overwriting the sidecar before the user actually edits content');
+    assert.equal(window.AnnotationStore.hasWriteAccess(), true, 'expected write access to remain available for subsequent automatic saves after the first authorization');
+  });
+
   it('collects ordinary data-edit-id roots that contain authored fragments into elements', async () => {
     const { window, writes } = createAnnotationStoreHarness(`
       <div class="slide active" data-slide="1">
@@ -181,5 +277,84 @@ describe('annotation store collection', () => {
     assert.ok(fragment, 'expected collected ordinary fragment markup to retain authored fragment structure');
     assert.equal(fragment.classList.contains('qa-fragment-visible'), false, 'expected sidecar collection to strip runtime-only qa-fragment-visible state from ordinary fragments');
     assert.equal(fragment.hasAttribute('data-fragment-manual-reveal'), false, 'expected sidecar collection to strip runtime-only manual reveal markers from ordinary fragments');
+  });
+
+  it('collects example-card option roots that contain authored fragments into ordinary elements payload', async () => {
+    const { window, writes } = createAnnotationStoreHarness(`
+      <div class="slide active" data-slide="1">
+        <section class="example-card">
+          <button type="button" class="qa-option example-card__option" data-option-value="A">
+            <span class="qa-option-label">A</span>
+            <span class="qa-option-text" data-edit-id="example-option-a">
+              Option <span data-fragment-step="true" data-fragment-format="highlight">hidden fragment</span> text.
+            </span>
+          </button>
+        </section>
+      </div>
+    `);
+
+    const data = await authorizeAndCollect(window, writes);
+
+    assert.equal(Object.prototype.hasOwnProperty.call(data.elements, 'example-option-a'), true, 'expected example-card option roots with authored fragments to enter the shared ordinary elements payload');
+  });
+
+  it('restores sidecar element payloads into example-card option roots on deck reload', async () => {
+    const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body>
+      <div class="slide active" data-slide="1">
+        <section class="example-card">
+          <button type="button" class="qa-option example-card__option" data-option-value="A">
+            <span class="qa-option-label">A</span>
+            <span class="qa-option-text" data-edit-id="example-option-a">Original option text.</span>
+          </button>
+        </section>
+      </div>
+    </body></html>`, {
+      runScripts: 'outside-only',
+      url: 'file:///D:/Projects/html-slides/deck.html'
+    });
+
+    const { window } = dom;
+    window.console.log = () => {};
+    window.console.warn = () => {};
+    window._editorUtils = {
+      ensureStableEditableIds() {}
+    };
+    window.indexedDB = {
+      open() {
+        throw new Error('indexeddb-disabled-for-test');
+      }
+    };
+
+    const originalAppendChild = window.document.head.appendChild.bind(window.document.head);
+
+    window.document.head.appendChild = (node) => {
+      if (node.tagName === 'SCRIPT' && /deck\.annotations\.js$/i.test(node.src || '')) {
+        window.__annotationData = {
+          version: 1,
+          title: 'deck',
+          elements: {
+            'example-option-a': 'Restored <span data-fragment-step="true" data-fragment-format="highlight">fragment</span> text.'
+          },
+          answerKeys: [],
+          deletedNotes: []
+        };
+        queueMicrotask(() => {
+          if (typeof node.onload === 'function') node.onload();
+        });
+        return node;
+      }
+      return originalAppendChild(node);
+    };
+
+    window.eval(annotationStoreSource);
+    window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    window.dispatchEvent(new window.Event('load'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const target = window.document.querySelector('[data-edit-id="example-option-a"]');
+
+    assert.match(target.innerHTML, /data-fragment-step="true"/);
+    assert.match(target.textContent, /Restored/);
   });
 });

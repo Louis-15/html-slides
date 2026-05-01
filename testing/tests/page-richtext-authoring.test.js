@@ -104,7 +104,8 @@ function selectAcrossRoots(window, startContainer, startText, endContainer, endT
   return applySelection(window, range);
 }
 
-function createAuthoringDom() {
+function createAuthoringDom(options = {}) {
+  const annotationStoreHasWriteAccess = options.annotationStoreHasWriteAccess !== false;
   const html = `<!DOCTYPE html><html><body>
     <div class="slide active" data-slide="1">
       <div class="header-title" data-edit-id="title-root" contenteditable="true">
@@ -137,6 +138,7 @@ function createAuthoringDom() {
   const persistenceCalls = [];
   const historyCalls = [];
   const scheduleSaveCalls = [];
+  const ensureWriteAccessCalls = [];
   window.PersistenceLayer = {
     saveElement(element) {
       persistenceCalls.push(element);
@@ -150,6 +152,13 @@ function createAuthoringDom() {
   window.AnnotationStore = {
     scheduleSave() {
       scheduleSaveCalls.push('scheduled');
+    },
+    hasWriteAccess() {
+      return annotationStoreHasWriteAccess;
+    },
+    ensureWriteAccess() {
+      ensureWriteAccessCalls.push('ensured');
+      return Promise.resolve(true);
     }
   };
 
@@ -165,6 +174,86 @@ function createAuthoringDom() {
     persistenceCalls,
     historyCalls,
     scheduleSaveCalls,
+    ensureWriteAccessCalls,
+  };
+}
+
+function createExampleCardAuthoringDom(options = {}) {
+  const annotationStoreHasWriteAccess = options.annotationStoreHasWriteAccess !== false;
+  const html = `<!DOCTYPE html><html><body>
+    <div class="slide active" data-slide="1">
+      <section class="example-card">
+        <div class="example-card__stem" data-edit-id="example-stem" contenteditable="true">
+          Stem fragment sample text.
+        </div>
+        <div class="example-card__answers">
+          <button type="button" class="qa-option example-card__option" data-option-value="A">
+            <span class="qa-option-label">A</span>
+            <span class="qa-option-text" data-edit-id="example-option-a" contenteditable="true">
+              Option fragment sample text.
+            </span>
+          </button>
+        </div>
+        <aside class="example-card__analysis" hidden>
+          <div class="example-card__analysis-body" data-edit-id="example-analysis" contenteditable="true">
+            Analysis fragment sample text.
+          </div>
+        </aside>
+      </section>
+    </div>
+  </body></html>`;
+
+  const dom = new JSDOM(html, {
+    runScripts: 'outside-only',
+    url: 'http://localhost/'
+  });
+
+  const { window } = dom;
+  window.console.log = () => {};
+  window.console.warn = () => {};
+  window.alert = () => {};
+  window.prompt = () => '主语';
+  window.document.execCommand = () => true;
+  window.editorCore = { isActive: true };
+
+  const persistenceCalls = [];
+  const historyCalls = [];
+  const scheduleSaveCalls = [];
+  const ensureWriteAccessCalls = [];
+  window.PersistenceLayer = {
+    saveElement(element) {
+      persistenceCalls.push(element);
+    }
+  };
+  window.historyMgr = {
+    recordState(forceSnapshot) {
+      historyCalls.push(forceSnapshot);
+    }
+  };
+  window.AnnotationStore = {
+    scheduleSave() {
+      scheduleSaveCalls.push('scheduled');
+    },
+    hasWriteAccess() {
+      return annotationStoreHasWriteAccess;
+    },
+    ensureWriteAccess() {
+      ensureWriteAccessCalls.push('ensured');
+      return Promise.resolve(true);
+    }
+  };
+
+  window.eval(editorUtilsSource);
+  window.eval(editorRichTextSource);
+  window.RichTextToolbar.init();
+
+  return {
+    dom,
+    window,
+    persistenceCalls,
+    historyCalls,
+    scheduleSaveCalls,
+    ensureWriteAccessCalls,
   };
 }
 
@@ -205,6 +294,48 @@ describe('page richtext authoring', () => {
     assert.ok(buttonLabels.some((label) => label.includes('删除线')), 'expected the ordinary toolbar to expose a strikethrough control');
     assert.ok(buttonLabels.some((label) => label.includes('顶标')), 'expected the ordinary toolbar to expose a ruby control');
     assert.ok(buttonLabels.some((label) => label.includes('清除格式')), 'expected the ordinary toolbar to expose a clear-format control');
+  });
+
+  it('shows the ordinary hidden-fragment toolbar for a partial selection inside example-card option text', () => {
+    const { window } = createExampleCardAuthoringDom();
+    const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
+
+    assert.ok(optionRoot, '测试夹具必须提供 example-card 选项文本根块');
+
+    selectText(window, optionRoot, 'fragment sample');
+
+    const toolbar = getPageFragmentToolbar(window.document);
+    assert.ok(toolbar?.classList.contains('visible'), 'expected example-card option text to reuse the ordinary hidden-fragment toolbar');
+    assert.match(toolbar?.textContent || '', /隐藏型标注/);
+  });
+
+  it('authors fragment markup inside example-card option text and schedules a sidecar save', () => {
+    const { window, persistenceCalls, historyCalls, scheduleSaveCalls } = createExampleCardAuthoringDom();
+    const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
+
+    assert.ok(optionRoot, '测试夹具必须提供 example-card 选项文本根块');
+
+    selectText(window, optionRoot, 'fragment sample');
+    clickToolbarControl(window, getToolbarButton(requireVisiblePageFragmentToolbar(window.document), '删除线'));
+
+    const fragment = optionRoot.querySelector('[data-fragment-step="true"]');
+    assert.ok(fragment, 'expected example-card option text to receive authored fragment markup');
+    assert.equal(fragment.getAttribute('data-fragment-format'), 'strikethrough');
+    assert.deepEqual(persistenceCalls, [optionRoot]);
+    assert.deepEqual(historyCalls, [true]);
+    assert.deepEqual(scheduleSaveCalls, ['scheduled']);
+  });
+
+  it('requests AnnotationStore write access on the first example-card fragment authoring change, then continues with automatic sidecar save', async () => {
+    const { window, scheduleSaveCalls, ensureWriteAccessCalls } = createExampleCardAuthoringDom({ annotationStoreHasWriteAccess: false });
+    const optionRoot = window.document.querySelector('[data-edit-id="example-option-a"]');
+
+    selectText(window, optionRoot, 'fragment sample');
+    clickToolbarControl(window, getToolbarButton(requireVisiblePageFragmentToolbar(window.document), '删除线'));
+    await Promise.resolve();
+
+    assert.deepEqual(ensureWriteAccessCalls, ['ensured'], 'expected ordinary example-card fragment authoring to use the current toolbar click as the one-time write-access gesture');
+    assert.deepEqual(scheduleSaveCalls, ['scheduled'], 'expected the current authoring change to keep using automatic sidecar save once write access has been acquired');
   });
 
   it('reuses the compact quiz-fragment toolbar structure while keeping the original multicolor buttons and palettes', () => {

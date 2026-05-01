@@ -184,6 +184,25 @@
      * 与 answer-anchor 专属恢复链路发生覆盖顺序竞争，因此稳定 id 准备器需要显式跳过它。 */
     var STABLE_ID_SKIP_SELECTOR = '.quiz-annotation .qa-option-text';
 
+    function isExampleCardOptionText(el) {
+        return !!(el && el.matches && el.matches('.example-card .qa-option-text'));
+    }
+
+    function isBlacklistedEditable(el) {
+        if (!el) return false;
+
+        /* example-card 的选项文本虽然放在 qa-option 按钮内部，
+         * 但作者态需要直接在这块文本上改文案并承接普通页面隐藏型标注协议。
+         * 这里不能因为祖先是 button 就把它和真正的交互控件一起排除；
+         * 同时又必须把放行范围压到 .example-card .qa-option-text，避免把 quiz 选项或普通按钮子树误送进 generic contenteditable 链路。 */
+        if (isExampleCardOptionText(el)) {
+            return false;
+        }
+
+        return (EDITABLE_BLACKLIST && el.matches(EDITABLE_BLACKLIST)) ||
+            (EDITABLE_BLACKLIST && el.closest(EDITABLE_BLACKLIST));
+    }
+
     function getEditableCandidates(root) {
         var scope = root && root.querySelectorAll ? root : document;
         var selector = scope === document
@@ -192,8 +211,7 @@
         var candidates = scope.querySelectorAll(selector);
         var filtered = [];
         candidates.forEach(function (el) {
-            if ((EDITABLE_BLACKLIST && el.matches(EDITABLE_BLACKLIST)) ||
-                (EDITABLE_BLACKLIST && el.closest(EDITABLE_BLACKLIST))) {
+            if (isBlacklistedEditable(el)) {
                 return;
             }
             filtered.push(el);

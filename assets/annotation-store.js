@@ -17,8 +17,12 @@
   // === 内部状态 ===
   var _fileHandle = null;
   var _saveTimer = null;
+  var _hasPendingSave = false;
   var _initData = null;
   var _permissionGranted = false;  // 真实权限状态追踪
+  var _firstGestureAuthInstalled = false;
+  var _firstGestureAuthAttempted = false;
+  var _exitFlushHookInstalled = false;
 
   // === 文件名推导 ===
 
@@ -176,6 +180,23 @@
     }).catch(function () { return _pickNewFile(); });
   }
 
+  function _ensureWriteAccess() {
+    if (_fileHandle && _permissionGranted) return Promise.resolve(true);
+
+    return _requestWritePermission().then(function (ok) {
+      if (ok) {
+        _permissionGranted = true;
+        _updateStatus('ready');
+        return true;
+      }
+      _updateStatus('needs-auth');
+      return false;
+    }).catch(function () {
+      _updateStatus('error');
+      return false;
+    });
+  }
+
   function _pickNewFile() {
     if (!window.showSaveFilePicker) {
       console.warn('[AnnotationStore] 浏览器不支持 File System Access API');
@@ -210,6 +231,40 @@
       _updateStatus('error');
       return false;
     });
+  }
+
+  function _flushPendingSave() {
+    if (!_hasPendingSave) return Promise.resolve(false);
+
+    if (_saveTimer) {
+      clearTimeout(_saveTimer);
+      _saveTimer = null;
+    }
+
+    _hasPendingSave = false;
+    var data = _collectData();
+
+    if (_fileHandle && _permissionGranted) {
+      return _writeToFile(data);
+    }
+
+    if (_fileHandle && !_permissionGranted) {
+      return _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
+        if (perm === 'granted') {
+          _permissionGranted = true;
+          _updateStatus('ready');
+          return _writeToFile(data);
+        }
+        _updateStatus('needs-auth');
+        return false;
+      }).catch(function () {
+        _updateStatus('needs-auth');
+        return false;
+      });
+    }
+
+    _updateStatus('needs-auth');
+    return Promise.resolve(false);
   }
 
   // === 数据收集 ===
@@ -516,6 +571,60 @@
     });
   }
 
+  function _installFirstGestureAuth() {
+    if (_firstGestureAuthInstalled || _firstGestureAuthAttempted) return;
+    if (_fileHandle && _permissionGranted) return;
+
+    _firstGestureAuthInstalled = true;
+
+    function removeListeners() {
+      if (!_firstGestureAuthInstalled) return;
+      _firstGestureAuthInstalled = false;
+      document.removeEventListener('click', handleFirstGesture, true);
+      document.removeEventListener('keydown', handleFirstGesture, true);
+    }
+
+    function handleFirstGesture() {
+      removeListeners();
+      _firstGestureAuthAttempted = true;
+      /* 本地课件的用户记忆是“打开后第一次真实操作时授权一次，后面自动保存”。
+         这里恢复的是“先拿句柄和写权限”，而不是立刻整包写文件。
+         这样既能保留原来的无感自动保存体验，也能避免在 DOM 仍处于恢复中的时刻
+         把一个尚未完全回放的快照覆盖写回 sidecar。 */
+      _ensureWriteAccess();
+    }
+
+    document.addEventListener('click', handleFirstGesture, true);
+    document.addEventListener('keydown', handleFirstGesture, true);
+  }
+
+  function _installExitFlushHook() {
+    if (_exitFlushHookInstalled) return;
+
+    function registerHook() {
+      if (_exitFlushHookInstalled) return true;
+      if (!window.EditorHooks || typeof window.EditorHooks.register !== 'function') return false;
+
+      _exitFlushHookInstalled = true;
+      window.EditorHooks.register('onEditModeExit', function () {
+        /* 富文本标注目前通过 300ms debounce 写 sidecar。
+           如果用户刚改完就退出编辑模式并立刻刷新，定时器常常还没来得及落盘，
+           第一次刷新就只能读到旧 sidecar，第二次才看见新内容。
+           退出编辑模式是一个明确的“我要结束这轮编辑”的边界，这里直接冲刷待保存队列，
+           让第一次刷新就能看到刚刚新增的标注。 */
+        _flushPendingSave();
+      });
+      return true;
+    }
+
+    if (registerHook()) return;
+    document.addEventListener('editor-utils-ready', function handleEditorUtilsReady() {
+      if (registerHook()) {
+        document.removeEventListener('editor-utils-ready', handleEditorUtilsReady);
+      }
+    });
+  }
+
   // === 初始化 ===
 
   var _readyResolve;
@@ -556,6 +665,7 @@
   }
 
   function _init() {
+    _installExitFlushHook();
     _loadDataFile().then(function (data) {
       if (data) {
         _initData = data;
@@ -570,6 +680,9 @@
       } else if (handleStatus === 'needs-reauth') {
         _updateStatus('needs-auth');
       }
+      if (!_permissionGranted) {
+        _installFirstGestureAuth();
+      }
       _readyResolve(!!_initData);
     }).catch(function () {
       _readyResolve(false);
@@ -583,28 +696,11 @@
     getInitData: function () { return _initData; },
 
     scheduleSave: function () {
+      _hasPendingSave = true;
       if (_saveTimer) clearTimeout(_saveTimer);
       _saveTimer = setTimeout(function () {
-        var data = _collectData();
-        if (_fileHandle && _permissionGranted) {
-          // 权限已确认，直接写入
-          _writeToFile(data);
-        } else if (_fileHandle && !_permissionGranted) {
-          // 句柄存在但权限未授予，尝试 requestPermission（需要用户手势上下文）
-          _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
-            if (perm === 'granted') {
-              _permissionGranted = true;
-              _updateStatus('ready');
-              _writeToFile(data);
-            } else {
-              _updateStatus('needs-auth');
-            }
-          }).catch(function () {
-            _updateStatus('needs-auth');
-          });
-        } else {
-          _updateStatus('needs-auth');
-        }
+        _saveTimer = null;
+        _flushPendingSave();
       }, 300);
     },
 
@@ -615,15 +711,21 @@
     },
 
     authorizeAndSave: function () {
-      return _requestWritePermission().then(function (ok) {
+      return _ensureWriteAccess().then(function (ok) {
         if (ok) {
-          _permissionGranted = true;
-          _updateStatus('ready');
           var data = _collectData();
           return _writeToFile(data);
         }
         return false;
       });
+    },
+
+    ensureWriteAccess: function () {
+      return _ensureWriteAccess();
+    },
+
+    flushPendingSave: function () {
+      return _flushPendingSave();
     },
 
     hasWriteAccess: function () {

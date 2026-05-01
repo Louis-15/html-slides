@@ -114,6 +114,40 @@ describe('stable editable ids', () => {
     );
   });
 
+  it('treats example-card option text as a generic editable root while keeping quiz option text on the dedicated path', () => {
+    const bodyHtml = `
+      <div class="deck">
+        <div class="slide active" data-slide="1">
+          <section class="example-card">
+            <button type="button" class="qa-option example-card__option" data-option-value="A">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text" data-edit-id="example-option-a">Example option text</span>
+            </button>
+          </section>
+
+          <div class="quiz-annotation">
+            <button type="button" class="qa-option" data-option="A">
+              <span class="qa-option-label">A</span>
+              <span class="qa-option-text">Quiz option text</span>
+            </button>
+          </div>
+        </div>
+      </div>`;
+
+    const dom = createDom(bodyHtml);
+    const { window } = dom;
+    window.eval(editorUtilsSource);
+
+    const exampleOption = window.document.querySelector('.example-card .qa-option-text');
+    const quizOption = window.document.querySelector('.quiz-annotation .qa-option-text');
+    const candidates = window._editorUtils.getEditableCandidates();
+
+    assert.ok(exampleOption, '测试夹具必须提供 example-card 选项文本');
+    assert.ok(quizOption, '测试夹具必须提供 quiz 选项文本');
+    assert.equal(candidates.includes(exampleOption), true, 'expected example-card option text to enter the generic editable candidate set even though it sits inside a button');
+    assert.equal(candidates.includes(quizOption), false, 'expected quiz option text to stay out of the generic editable candidate set');
+  });
+
   it('restores localStorage content for generated stable ids before editor-core finishes booting', () => {
     const bodyHtml = `
       <div class="deck">

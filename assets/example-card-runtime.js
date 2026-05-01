@@ -10,6 +10,7 @@
   const SUBMIT_BUTTON_SELECTOR = '.example-card__submit-btn';
   const ANALYSIS_PANEL_SELECTOR = '.example-card__analysis';
   const BLANK_SELECTOR = '.example-card__blank[data-correct-answer]';
+  const QUESTION_SELECTOR = '.example-card__question';
   const RESULT_MARK_SELECTOR = '.qa-result-mark';
   const stateMap = new WeakMap();
 
@@ -102,6 +103,28 @@
     });
   }
 
+  function syncQuestionGateState(root) {
+    const state = ensureState(root);
+    const questionNodes = root.querySelectorAll(QUESTION_SELECTOR);
+
+    if (questionNodes.length === 0) {
+      // 单题旧结构还没有 question wrapper 时，直接把门禁状态落在卡片根上，
+      // 让 page-richtext runtime 仍然能从 DOM 上读到“当前这题是否已提交”。
+      root.setAttribute('data-question-active', 'true');
+      root.setAttribute('data-question-submitted', state.submitted ? 'true' : 'false');
+      return;
+    }
+
+    questionNodes.forEach((question, index) => {
+      const isActive = !question.hidden && (question.classList.contains('is-active') || index === 0);
+
+      question.setAttribute('data-question-active', isActive ? 'true' : 'false');
+      // 2A 还没有多题状态机，这里只把当前显示题是否已提交显式写回 DOM，
+      // 供普通页 fragment runtime 判断“是否允许 reveal”。其它题先保持 false，避免提前暴露后续题的讲评片段。
+      question.setAttribute('data-question-submitted', isActive && state.submitted ? 'true' : 'false');
+    });
+  }
+
   function hasSameValueSet(selectedValues, correctValues) {
     const selectedSet = new Set(selectedValues);
     const correctSet = new Set(correctValues);
@@ -184,6 +207,8 @@
         syncResultMark(option, null);
       }
     });
+
+    syncQuestionGateState(root);
   }
 
   function renderAnalysis(root) {
@@ -213,6 +238,13 @@
     }
 
     const state = ensureState(root);
+
+    // 编辑模式下点击选项的意图是把光标放进题目文案里继续编辑，
+    // 不是执行学生态作答。这里如果不直接短路，作者一边改选项文本、一边就会把 runtime 的 selectedValues 改脏，
+    // 后续提交态与答案键预览都会读到一份并非作者真正想表达的“作答结果”。
+    if (isEditorMode()) {
+      return;
+    }
 
     // 提交后的卡片必须冻结作答交互，原因不是单纯防止重复点击，
     // 而是要保证“作答结果”和“判分结果”一一对应，避免用户在看到正确答案后再改选，破坏复盘语义。
@@ -280,6 +312,7 @@
     renderSelection(root);
     renderSubmission(root);
     renderAnalysis(root);
+    syncQuestionGateState(root);
   }
 
   function initAll(scope = document) {

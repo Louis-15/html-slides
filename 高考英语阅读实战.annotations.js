@@ -1,6 +1,6 @@
 window.__annotationData = {
   "version": 1,
-  "timestamp": "2026-04-30T23:00:21.851Z",
+  "timestamp": "2026-05-01T01:08:46.097Z",
   "title": "高考英语阅读实战 — 七选五 & 阅读理解",
   "elements": {
     "s1-p1": "\n                                <span class=\"text-anchor\" data-link=\"note-01\" data-step=\"1\" style=\"text-decoration: underline; text-decoration-color: #E74C3C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">Healthy eating is not just about <span class=\"qa-note-fragment\" data-fragment-step=\"true\" data-fragment-group=\"frag-group-5\" data-fragment-format=\"highlight\" data-fragment-highlight=\"rgba(231, 76, 60, 0.4)\" style=\"--qa-fragment-highlight: rgba(231, 76, 60, 0.4);\" data-fragment-presentation-ready=\"true\">losing</span> weight</span><sup class=\"note-badge\">1</sup></span> or following a strict diet. It is about feeling great, having more energy, and stabilizing your mood. <span class=\"qa-blank-slot qa-matching-passage-slot\" data-blank-id=\"36\" data-correct-answer=\"G\" data-qa-matching-click-bound=\"true\">\n                                    <span class=\"qa-blank-user\"><span class=\"qa-blank-value\"></span><sup style=\"font-size:0.7em;color:var(--text-dim);\">36</sup></span>\n                                    <span class=\"qa-blank-answer\" style=\"display: none;\"></span>\n                                </span>",
