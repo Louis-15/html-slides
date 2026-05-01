@@ -15,6 +15,7 @@
   const PAGE_HOST_STEP_TYPE = 'page-richtext-host';
   const PAGE_HOST_MARKER_ATTR = 'data-page-richtext-host';
   const PAGE_HOST_STEP_MARKER_ATTR = 'data-page-richtext-steppable';
+  const PAGE_ROOT_HOVER_ELIGIBLE_ATTR = 'data-page-richtext-hover-eligible';
   const PAGE_FRAGMENT_HOVER_PROXY_CLASS = 'page-fragment-hover-proxy';
   const PAGE_COMPONENT_HOST_SELECTOR = [
     '.card',
@@ -294,10 +295,35 @@
     });
   }
 
+  function syncSlideHoverEligibleRoots(slide) {
+    if (!slide) return;
+
+    const eligibleRoots = new Set(getOrdinaryFragmentRoots(slide));
+    const candidates = new Set([
+      ...getOrdinaryEditRoots(slide),
+      ...slide.querySelectorAll(`[${PAGE_ROOT_HOVER_ELIGIBLE_ATTR}]`)
+    ]);
+
+    candidates.forEach((root) => {
+      if (!root || !root.matches || !root.matches('[data-edit-id]')) return;
+
+      /* 普通页共享的 hover 高光是纯 CSS 选择器，无法自己理解 example-card 的“当前激活且已提交”门禁。
+         如果不把资格结果先写回到 root 属性，未提交题目虽然 JS 侧不会触发 reveal / hover cue，
+         但鼠标落在 text root 上时，裸 :hover 规则仍会把 fragment 染成橙色，造成学生误以为这里可交互。
+         这里让 runtime 只给当前真正允许 hover 的 ordinary root 打标，CSS 再只消费这份显式资格。 */
+      if (eligibleRoots.has(root)) {
+        root.setAttribute(PAGE_ROOT_HOVER_ELIGIBLE_ATTR, 'true');
+      } else {
+        root.removeAttribute(PAGE_ROOT_HOVER_ELIGIBLE_ATTR);
+      }
+    });
+  }
+
   function syncSlideFragmentHostClass(slide) {
     if (!slide) return;
 
     syncSlideOrdinaryHosts(slide);
+    syncSlideHoverEligibleRoots(slide);
 
     /* 普通页面 fragment 的隐藏/显隐样式必须显式 opt-in，不能裸挂到所有 [data-edit-id]。
        原因是 mixed / quiz 页面里同样存在普通 data-edit-id 根块；如果 CSS 无条件生效，

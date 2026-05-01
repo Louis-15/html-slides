@@ -1733,9 +1733,11 @@ html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .a
 html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
 /* 普通页 hover / doodle proxy 现在按 text root 命中，而不是只看 leaf fragment。
    这样鼠标落在文本框留白、inline 子元素或 doodle 透传命中的任意位置时，
-   同一个 text root 下的普通页 fragment 都会一起亮起橙色高光。 */
-html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-edit-id]:hover [data-fragment-step="true"],
-html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-edit-id].page-fragment-hover-proxy [data-fragment-step="true"] {
+  同一个 text root 下的普通页 fragment 都会一起亮起橙色高光。
+  但 example-card 要等到“当前题目已提交”后才允许 hover cue，因此这里只认 runtime 显式打标的 root，
+  避免未提交题干仍被共享 ordinary-page :hover 规则误点亮。 */
+html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-page-richtext-hover-eligible="true"]:hover [data-fragment-step="true"],
+html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-page-richtext-hover-eligible="true"].page-fragment-hover-proxy [data-fragment-step="true"] {
   background-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.24) !important;
   box-shadow: inset 0 0 0 999px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08);
 }

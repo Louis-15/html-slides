@@ -119,6 +119,20 @@
     }).catch(() => {});
   }
 
+  function refreshFragmentRuntime(root) {
+    const slide = root && root.closest ? root.closest('.slide') : null;
+
+    if (!slide || !window.PageRichTextAnnotationRuntime || typeof window.PageRichTextAnnotationRuntime.refreshSlide !== 'function') {
+      return;
+    }
+
+    /* example-card 的提交会立即改变 ordinary fragment 的 reveal / hover 资格。
+       如果这里只写 data-question-submitted 而不立刻刷新普通页 fragment runtime，
+       CSS 侧基于运行时资格打下的 hover 标记会一直停留在“提交前”的旧状态，
+       用户就会看到提交后仍然没有高光，直到下一次整页刷新才恢复。 */
+    window.PageRichTextAnnotationRuntime.refreshSlide(slide);
+  }
+
   function ensureState(root) {
     if (!stateMap.has(root)) {
       stateMap.set(root, {
@@ -379,6 +393,7 @@
       revealBlankAnswers(root);
       renderSubmission(root);
       renderAnalysis(root);
+      refreshFragmentRuntime(root);
       return;
     }
 
@@ -390,6 +405,7 @@
     renderSelection(root);
     renderSubmission(root);
     renderAnalysis(root);
+    refreshFragmentRuntime(root);
 
     if (window.ExampleCardAudio && typeof window.ExampleCardAudio.playSubmitResult === 'function') {
       // runtime 这里保持在“提交结果语义”层，而不直接播 answer-correct / answer-wrong cue；

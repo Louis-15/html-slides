@@ -488,6 +488,22 @@ describe('page richtext annotation runtime', () => {
     assert.equal(fragment.classList.contains('qa-fragment-visible'), false, 'expected unsubmitted example-card fragments to stay unrevealable');
   });
 
+  it('does not mark unsubmitted example-card roots hover-eligible before submit', () => {
+    const dom = createExampleCardFragmentDom(`
+      <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="false">
+        <div class="example-card__stem" data-edit-id="example-stem">
+          Intro <span class="page-fragment example-card-fragment" data-fragment-step="true">hidden</span> cue.
+        </div>
+      </article>
+    `);
+
+    const { window } = dom;
+    const root = window.document.querySelector('[data-edit-id="example-stem"]');
+
+    assert.ok(root, '测试夹具必须提供 example-card 的 ordinary text root');
+    assert.equal(root.getAttribute('data-page-richtext-hover-eligible'), null, 'expected unsubmitted example-card roots not to receive ordinary fragment hover eligibility before the student submits the answer');
+  });
+
   it('reveals only the active submitted example-card question fragments', () => {
     const dom = createExampleCardFragmentDom(`
       <article class="example-card__question is-active" data-question-id="q1" data-question-active="true" data-question-submitted="true">
@@ -505,9 +521,16 @@ describe('page richtext annotation runtime', () => {
     const { window } = dom;
     const activeFragment = window.document.querySelector('.active-fragment');
     const inactiveFragment = window.document.querySelector('.inactive-fragment');
+  const activeRoot = window.document.querySelector('[data-edit-id="active-stem"]');
+  const inactiveRoot = window.document.querySelector('[data-edit-id="inactive-stem"]');
 
     assert.ok(activeFragment, '测试夹具必须提供活跃题 fragment');
     assert.ok(inactiveFragment, '测试夹具必须提供非活跃题 fragment');
+  assert.ok(activeRoot, '测试夹具必须提供活跃题 ordinary text root');
+  assert.ok(inactiveRoot, '测试夹具必须提供非活跃题 ordinary text root');
+
+  assert.equal(activeRoot.getAttribute('data-page-richtext-hover-eligible'), 'true', 'expected the active submitted example-card root to receive ordinary fragment hover eligibility after submission');
+  assert.equal(inactiveRoot.getAttribute('data-page-richtext-hover-eligible'), null, 'expected inactive example-card roots not to receive ordinary fragment hover eligibility even if they already have authored fragments');
 
     rightClickElement(window, activeFragment);
     rightClickElement(window, inactiveFragment);
@@ -556,7 +579,8 @@ describe('page richtext annotation runtime', () => {
   it('shares the fragment hide and reveal CSS contract with ordinary data-edit-id roots', () => {
     assert.match(fragmentCssSource, /\.page-richtext-fragment-host\s+\[data-edit-id\]\s+\[data-fragment-step="true"\][\s\S]*color:\s*inherit\s*!important;/, 'expected ordinary page fragments to opt into the hidden baseline through a dedicated slide class instead of a global bare [data-edit-id] selector');
     assert.match(fragmentCssSource, /\.page-richtext-fragment-host\s+\[data-edit-id\]\s+\[data-fragment-step="true"\]\.qa-fragment-visible\[data-fragment-format="highlight"\][\s\S]*background-color:\s*var\(--qa-fragment-highlight, transparent\)\s*!important;/, 'expected ordinary page reveal to restore authored highlight formatting once the runtime marks a fragment visible');
-    assert.match(fragmentCssSource, /html:not\(\.editor-mode\)\s+body:not\(\.editor-mode\)\s+\.page-richtext-fragment-host\s+\[data-edit-id\]:hover\s+\[data-fragment-step="true"\][\s\S]*\[data-edit-id\]\.page-fragment-hover-proxy\s+\[data-fragment-step="true"\][\s\S]*background-color:\s*rgba\(var\(--brand-secondary-rgb, 243, 152, 0\), 0\.24\)\s*!important;/, 'expected ordinary page hover CSS to light every fragment under the owning text root, including doodle proxy cases, while both html and body stay out of editor mode');
+    assert.match(fragmentCssSource, /html:not\(\.editor-mode\)\s+body:not\(\.editor-mode\)\s+\.page-richtext-fragment-host\s+\[data-page-richtext-hover-eligible="true"\]:hover\s+\[data-fragment-step="true"\][\s\S]*\[data-page-richtext-hover-eligible="true"\]\.page-fragment-hover-proxy\s+\[data-fragment-step="true"\][\s\S]*background-color:\s*rgba\(var\(--brand-secondary-rgb, 243, 152, 0\), 0\.24\)\s*!important;/, 'expected ordinary page hover CSS to light every fragment only for roots that the runtime has explicitly marked hover-eligible, including doodle proxy cases');
+    assert.doesNotMatch(fragmentCssSource, /\.page-richtext-fragment-host\s+\[data-edit-id\]:hover\s+\[data-fragment-step="true"\]/, 'expected ordinary page hover CSS not to target every bare ordinary root, otherwise unsubmitted example-card roots would still show orange hover glow before submission');
     assert.doesNotMatch(fragmentCssSource, /\.page-richtext-fragment-host\s+\[data-page-richtext-root="true"\]\.step-active/, 'expected ordinary page CSS not to keep the previous orange root-level step-active container styling');
   });
 });

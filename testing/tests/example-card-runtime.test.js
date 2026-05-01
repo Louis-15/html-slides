@@ -703,6 +703,46 @@ describe('example-card runtime', () => {
     assert.equal(question.getAttribute('data-question-active'), 'true');
   });
 
+  it('refreshes the ordinary fragment runtime immediately after submit so hover gating updates in place', () => {
+    const dom = createExampleCardDom(`
+      <div class="slide active" data-slide="1">
+        <section class="example-card" data-question-type="single">
+          <article class="example-card__question is-active" data-question-id="q1">
+            <div class="example-card__main">
+              <div class="example-card__stem" data-edit-id="lesson-example-stem">
+                Intro <span data-fragment-step="true" data-fragment-format="highlight">hidden</span> cue.
+              </div>
+              <div class="example-card__answers">
+                <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                  <span class="qa-option-label">A</span>
+                  <span class="qa-option-text" data-edit-id="q-gate-refresh-a">Alpha</span>
+                </button>
+              </div>
+              <div class="example-card__actions">
+                <button type="button" class="example-card__analysis-toggle" disabled>查看解析</button>
+                <button type="button" class="example-card__submit-btn">提交答案</button>
+              </div>
+            </div>
+            <aside class="example-card__analysis" hidden></aside>
+          </article>
+        </section>
+      </div>
+    `, { stubFragmentRefresh: true });
+
+    const { document } = dom.window;
+    const optionA = document.querySelector('[data-option-value="A"]');
+    const submitBtn = document.querySelector('.example-card__submit-btn');
+
+    assert.ok(optionA, '测试夹具必须提供 A 选项按钮');
+    assert.ok(submitBtn, '测试夹具必须提供提交按钮');
+    assert.ok(Array.isArray(dom.window.__fragmentRefreshCalls), '测试夹具必须暴露 ordinary fragment runtime refresh 调用记录');
+
+    optionA.click();
+    submitBtn.click();
+
+    assert.equal(dom.window.__fragmentRefreshCalls.length, 1, 'expected example-card submit to refresh the ordinary fragment runtime immediately so post-submit hover and reveal gating become effective without another page reload');
+  });
+
   it('reveals blank answers without grading blank questions on submit', () => {
     const dom = createExampleCardDom(`
       <section class="example-card" data-question-type="blank">
