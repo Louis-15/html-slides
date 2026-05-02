@@ -209,6 +209,30 @@
       : null;
   }
 
+  function clearStoredEditableHTML(editId) {
+    const utils = window._editorUtils;
+
+    if (!editId || !utils || typeof utils.storageKey !== 'function') {
+      return;
+    }
+
+    try {
+      const primaryKey = utils.storageKey(`e:${editId}`);
+      window.localStorage.removeItem(primaryKey);
+
+      if (typeof utils.legacyStorageKey !== 'function') {
+        return;
+      }
+
+      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
+      if (legacyKey && legacyKey !== primaryKey) {
+        window.localStorage.removeItem(legacyKey);
+      }
+    } catch (error) {
+      // 删除批注时清缓存只是兜底清理，不应因为存储异常阻断真正的删除流程。
+    }
+  }
+
   function hydrateDynamicNoteContent(contentEl) {
     if (!contentEl) return;
 
@@ -403,8 +427,52 @@
    * 锚点变更后持久化：触发 JSON 文件保存
    * AnnotationStore 会从 DOM 收集所有带 data-edit-id 容器的 innerHTML
    */
-  function persistAnchorChange(anchor) {
-    if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+  function persistAnchorChange(anchor, options) {
+    const persistNode = anchor || null;
+    const persistRoot = persistNode && typeof persistNode.closest === 'function'
+      ? persistNode.closest('[data-edit-id]')
+      : null;
+    const persistOptions = options && typeof options === 'object' ? options : null;
+    const immediate = !!(persistOptions && persistOptions.immediate === true);
+
+    /* 新建批注、关联/解绑端点、删除批注都属于离散结构变更。
+       如果这里只走 debounce 的 sidecar 保存，用户在这一步后立刻刷新，
+       就可能只留下 new-note-* 的内容缓存，却丢掉 passage / answer 上的 anchor 结构，
+       表现成“新批注没了，但再次新建又自动带回旧文字”。
+       因此这类链路必须先把最近的 data-edit-id 根块立即写入本地，再尽量立即 flush sidecar。 */
+    if (persistRoot && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
+      window.PersistenceLayer.saveElement(persistRoot);
+    }
+
+    if (immediate && window.AnnotationStore) {
+      const canScheduleAnnotationSave = typeof window.AnnotationStore.scheduleSave === 'function';
+      const canSaveAnnotationImmediately = typeof window.AnnotationStore.saveNow === 'function';
+      const canEnsureAnnotationWriteAccess = typeof window.AnnotationStore.ensureWriteAccess === 'function';
+      const canAuthorizeAnnotationSave = typeof window.AnnotationStore.authorizeAndSave === 'function';
+      const hasAnnotationWriteAccess = typeof window.AnnotationStore.hasWriteAccess === 'function'
+        ? window.AnnotationStore.hasWriteAccess()
+        : true;
+
+      if (!hasAnnotationWriteAccess && canEnsureAnnotationWriteAccess) {
+        window.AnnotationStore.ensureWriteAccess().then((ok) => {
+          if (!ok) return;
+          if (canSaveAnnotationImmediately) {
+            window.AnnotationStore.saveNow();
+          } else if (canScheduleAnnotationSave) {
+            window.AnnotationStore.scheduleSave();
+          }
+        }).catch(() => {});
+      } else if (!hasAnnotationWriteAccess && canAuthorizeAnnotationSave) {
+        window.AnnotationStore.authorizeAndSave().catch(() => {});
+      } else if (canSaveAnnotationImmediately) {
+        window.AnnotationStore.saveNow();
+      } else if (canScheduleAnnotationSave) {
+        window.AnnotationStore.scheduleSave();
+      }
+      return;
+    }
+
+    scheduleAnnotationSave();
   }
 
   /** 统一的批注存档调度入口，避免各处重复判断 API 能力 */
@@ -975,6 +1043,37 @@
     qa.dataset.deletedNotes = JSON.stringify([...ids]);
     // 保存到 JSON 文件
     if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+  }
+
+  function parseNoteNumericId(linkId) {
+    const match = String(linkId || '').match(/^note-(\d+)$/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  function getNextNoteLinkId(qa) {
+    const usedNumbers = new Set();
+
+    qa.querySelectorAll('[data-link], [data-link-answer]').forEach((element) => {
+      const linkId = element.getAttribute('data-link') || element.getAttribute('data-link-answer') || '';
+      const noteNumber = parseNoteNumericId(linkId);
+      if (Number.isInteger(noteNumber)) {
+        usedNumbers.add(noteNumber);
+      }
+    });
+
+    getDeletedNoteIds(qa).forEach((linkId) => {
+      const noteNumber = parseNoteNumericId(linkId);
+      if (Number.isInteger(noteNumber)) {
+        usedNumbers.add(noteNumber);
+      }
+    });
+
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) {
+      nextNumber += 1;
+    }
+
+    return `note-${String(nextNumber).padStart(2, '0')}`;
   }
 
   /** 清除原始 HTML 中残留的已删除批注的锚点和气泡 */
@@ -3276,7 +3375,7 @@
         }
         parent.removeChild(anchor);
         parent.normalize();
-        if (typeof persistAnchorChange === 'function') persistAnchorChange(parent);
+        if (typeof persistAnchorChange === 'function') persistAnchorChange(parent, { immediate: true });
       }
     };
 
@@ -3425,6 +3524,25 @@
 
   /** 删除批注 */
   function deleteNote(qa, linkId) {
+    const bubble = getBubbleByLink(qa, linkId);
+    const contentEl = bubble ? bubble.querySelector('.qa-note-content[data-edit-id]') : null;
+    const contentEditId = contentEl ? (contentEl.getAttribute('data-edit-id') || '') : '';
+
+    // 删除批注是“整条 note 生命周期结束”，不是单纯断开一边关联。
+    // 因此左栏、右栏、中栏气泡和对应的本地恢复缓存都必须在当前页面立即清干净，
+    // 否则就会出现“眼前还留着气泡 / 刷新后一度看似删除 / 再新建又回灌旧内容”的假象。
+    const passageAnchor = getAnchorByLink(qa, linkId);
+    if (passageAnchor) {
+      passageAnchor.querySelectorAll('.note-badge').forEach(b => b.remove());
+      const parent = passageAnchor.parentNode;
+      while (passageAnchor.firstChild) {
+        parent.insertBefore(passageAnchor.firstChild, passageAnchor);
+      }
+      parent.removeChild(passageAnchor);
+      parent.normalize();
+      persistAnchorChange(parent, { immediate: true });
+    }
+
     // 清除右栏答题锚点的关联角标
     getAnswerAnchorsByLink(qa, linkId).forEach(aa => {
       aa.querySelectorAll('.note-badge').forEach(b => b.remove());
@@ -3434,11 +3552,25 @@
         parent.insertBefore(aa.firstChild, aa);
       }
       parent.removeChild(aa);
+      parent.normalize();
+      persistAnchorChange(parent, { immediate: true });
     });
+
+    if (bubble) {
+      if (window.linkingState && window.linkingState.bubble === bubble) {
+        window.linkingState = null;
+        document.body.classList.remove('linking-mode');
+      }
+      bubble.remove();
+    }
+
+    clearStoredEditableHTML(contentEditId);
 
     // 清除连线
     clearStepConnectors(qa);
     clearHoverConnectors(qa);
+
+    qa.classList.remove('has-active-note');
 
     // 重算序号
     recalcStepNumbers(qa);
@@ -4033,14 +4165,9 @@
 
     if (!inPassage && !inAnswer) return;
 
-    // 生成新的 data-link ID
-    const allLinks = qa.querySelectorAll('[data-link]');
-    let maxId = 0;
-    allLinks.forEach(el => {
-      const match = el.dataset.link.match(/note-(\d+)/);
-      if (match) maxId = Math.max(maxId, parseInt(match[1]));
-    });
-    const newLinkId = `note-${String(maxId + 1).padStart(2, '0')}`;
+    // 新建批注的 id 不能复用 deletedNotes 里的 tombstone，
+    // 否则刷新时 purgeDeletedNotes 会把这条“新批注”再次当成旧删除记录吞掉。
+    const newLinkId = getNextNoteLinkId(qa);
 
     // 计算新的 step
     const allBubbles = qa.querySelectorAll('.qa-note-bubble');
@@ -4126,7 +4253,7 @@
     initDragAndDrop(qa);
 
     // 持久化正文/答题区的锚点变更到 localStorage
-    persistAnchorChange(anchor);
+    persistAnchorChange(anchor, { immediate: true });
 
     // 【撤销栈】：记录新建批注变动，支持 Ctrl+Z 撤销
     if (window.historyMgr && !window.historyMgr.isRestoring) {
@@ -4222,7 +4349,7 @@
     arrangeAdjacentBadges(qa);
 
     // 持久化正文/答题区的锚点变更到 localStorage
-    persistAnchorChange(anchor);
+    persistAnchorChange(anchor, { immediate: true });
 
     // 【撤销栈】：记录关联变动，支持 Ctrl+Z 撤销
     if (window.historyMgr && !window.historyMgr.isRestoring) {

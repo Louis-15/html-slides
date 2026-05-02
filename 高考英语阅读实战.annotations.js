@@ -1,6 +1,6 @@
 window.__annotationData = {
   "version": 1,
-  "timestamp": "2026-05-01T12:21:48.320Z",
+  "timestamp": "2026-05-02T10:05:58.825Z",
   "title": "高考英语阅读实战 — 七选五 & 阅读理解",
   "elements": {
     "s1-p1": "\n                                <span class=\"text-anchor\" data-link=\"note-01\" data-step=\"1\" style=\"text-decoration: underline; text-decoration-color: #E74C3C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\"><span class=\"qa-note-fragment\" data-fragment-step=\"true\" data-fragment-group=\"frag-group-3\" data-fragment-format=\"color\" data-fragment-color=\"#E74C3C\" style=\"--qa-fragment-color: #E74C3C;\" data-fragment-presentation-ready=\"true\">Healthy</span> eating is not <span class=\"qa-note-fragment\" data-fragment-step=\"true\" data-fragment-group=\"frag-group-4\" data-fragment-format=\"strikethrough\" data-fragment-strike-color=\"rgba(186, 26, 26, 0.4)\" data-fragment-strike-thickness=\"0.12em\" style=\"--qa-fragment-strike-color: rgba(186, 26, 26, 0.4); --qa-fragment-strike-thickness: 0.12em;\" data-fragment-presentation-ready=\"true\">just</span> about losing weight</span><sup class=\"note-badge\">1</sup></span> or following a strict diet. It is about feeling great, having more energy, and stabilizing your mood. <span class=\"qa-blank-slot qa-matching-passage-slot\" data-blank-id=\"36\" data-correct-answer=\"G\" data-qa-matching-click-bound=\"true\">\n                                    <span class=\"qa-blank-user\"><span class=\"qa-blank-value\"></span><sup style=\"font-size:0.7em;color:var(--text-dim);\">36</sup></span>\n                                    <span class=\"qa-blank-answer\" style=\"display: none;\"></span>\n                                </span>",
@@ -21,6 +21,9 @@ window.__annotationData = {
     "s1-note-03": "\n                                    <strong>连接词信号：</strong>\"listen to your body\" 是本段主旨，后文 \"signals\" 和 \"stuffed\" 都属于身体信号的范畴。选项 F \"Pay attention to how your hunger cues feel\" 中的 hunger cues（饥饿信号）与 signals 构成<em>同义替换</em>关系。\n                                ",
     "s1-note-04": "\n                                    <strong>逻辑链条分析：</strong>\"process\" 一词是关键锚点。空后说 \"Don't get discouraged\"（不要气馁），暗示这是一个需要时间的过程。选项 C \"It takes time for your body to adjust\" 中的 \"takes time\" 与 \"process\" 完美呼应，且与 \"be patient\" 形成因果关系：因为需要时间适应（C），所以要有耐心（be patient）。\n                                ",
     "s1-note-05": "\n                                    角标时代发生的发生地方送达方式的手动发送\n                                ",
+    "new-note-06": "小时代",
+    "new-note-07": "啊啊",
+    "new-note-08": "",
     "note-01-right": {
       "qaIndex": 0,
       "option": "A",
@@ -35,6 +38,21 @@ window.__annotationData = {
       "qaIndex": 0,
       "option": "D",
       "innerHTML": "<span class=\"answer-anchor\" data-link-answer=\"note-05\" data-step=\"5\" style=\"text-decoration: underline; text-decoration-color: #3498DB; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">Ask yourself how you feel after eating certain foods.</span><sup class=\"note-badge\" style=\"margin-left: 0px;\">5</sup></span>"
+    },
+    "note-08-right": {
+      "qaIndex": 0,
+      "option": "E",
+      "innerHTML": "You <span class=\"answer-anchor\" data-link-answer=\"note-08\" data-step=\"8\" style=\"text-decoration: underline; text-decoration-color: #2C3E50; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">should always consult a doctor before changing your diet.</span><sup class=\"note-badge\">8</sup></span>"
+    },
+    "note-06-right": {
+      "qaIndex": 0,
+      "option": "F",
+      "innerHTML": "<span class=\"answer-anchor\" data-link-answer=\"note-06\" data-step=\"6\" style=\"text-decoration: underline; text-decoration-color: #E74C3C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">Pay attention to how your hunger cues feel.</span><sup class=\"note-badge\" style=\"margin-left: 0px;\">6</sup></span>"
+    },
+    "note-07-right": {
+      "qaIndex": 0,
+      "option": "G",
+      "innerHTML": "<span class=\"answer-anchor\" data-link-answer=\"note-07\" data-step=\"7\" style=\"text-decoration: underline; text-decoration-color: #3498DB; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">Healthy eating can be simple and enjoyable.</span><sup class=\"note-badge\" style=\"margin-left: 0px;\">7</sup></span>"
     },
     "s2-p1": "\n                                \n                                    <span class=\"text-anchor\" data-link=\"note-11\" data-step=\"1\" style=\"text-decoration: underline; text-decoration-color: #2ECC71; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;\"><span class=\"qa-anchor-text\">John, a retired teacher, has spent the last decade transforming his backyard into a sanctuary for local wildlife.</span><sup class=\"note-badge\">1</sup></span>\n                                \n                                What started as a small project to grow some vegetables has blossomed into a thriving ecosystem.\n                            ",
     "s2-p2": "\n                                \n                                    <span class=\"text-anchor\" data-link=\"note-12\" data-step=\"2\" style=\"text-decoration: underline; text-decoration-color: var(--accent-blue);\"><span class=\"qa-anchor-text\">In an effort to attract more pollinators, John began planting native flowers such as milkweed and coneflowers.</span><sup class=\"note-badge\" style=\"margin-left: 0px;\">2</sup></span>\n                                \n                                He spent hours researching which plants would best support the local bee and butterfly populations. It wasn't just about the plants, though; he also installed several bird baths and a small pond.\n                            ",

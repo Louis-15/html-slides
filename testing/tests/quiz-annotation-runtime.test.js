@@ -1178,6 +1178,228 @@ describe('quiz annotation runtime', () => {
     assert.equal(reloadQa.querySelector('.answer-anchor[data-link-answer="note-01"]'), null, 'expected re-init to keep the deleted answer anchor purged after refresh');
   });
 
+  it('removes deleted dynamic notes immediately and clears their stale local restore payload before the same linkId is reused', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const createdBubble = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    assert.ok(createdBubble, 'expected the first selection to create a dynamic note bubble');
+
+    window.localStorage.setItem('test:e:new-note-01', 'Deleted note content.');
+    clickElement(window, createdBubble.querySelector('.qa-note-action-btn.action-delete'));
+
+    assert.equal(qa.querySelector('.qa-note-bubble[data-link="note-01"]'), null, 'expected delete to remove the bubble immediately instead of only unlinking it');
+    assert.equal(qa.querySelector('.text-anchor[data-link="note-01"]'), null, 'expected delete to remove the left passage anchor immediately');
+    assert.equal(qa.querySelector('.answer-anchor[data-link-answer="note-01"]'), null, 'expected delete to remove the right answer anchor immediately');
+    assert.equal(window.localStorage.getItem('test:e:new-note-01'), null, 'expected delete to clear the local restore payload for the removed dynamic note');
+
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const recreatedContent = qa.querySelector('.qa-note-bubble[data-link="note-02"] .qa-note-content[data-edit-id="new-note-02"]');
+    assert.ok(recreatedContent, 'expected recreating the same selection to allocate a fresh dynamic edit-id after the old note id is tombstoned');
+    assert.equal(recreatedContent.textContent.trim(), '', 'expected the recreated note bubble not to inherit deleted note content from stale local storage');
+  });
+
+  it('persists newly created dynamic note anchors immediately so a refresh keeps the bubble and does not require recreating it to recover content', async () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const createdBubble = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    const createdContent = createdBubble?.querySelector('.qa-note-content[data-edit-id="new-note-01"]');
+    assert.ok(createdBubble, 'expected the first selection to create a dynamic note bubble');
+    assert.ok(createdContent, 'expected the created dynamic note to expose a stable edit-id');
+
+    createdContent.innerHTML = 'Freshly created note.';
+    window.localStorage.setItem('test:e:new-note-01', 'Freshly created note.');
+
+    const savedPayload = await captureAnnotationStoreSave(window);
+
+    const reloadedDom = createSelectionEditorDom('single');
+    const reloadWindow = reloadedDom.window;
+    const reloadQa = reloadWindow.document.querySelector('.quiz-annotation');
+
+    reloadWindow._editorUtils = window._editorUtils;
+    reloadWindow.localStorage.setItem('test:e:new-note-01', 'Freshly created note.');
+    reloadWindow.AnnotationStore = {
+      getInitData() {
+        return { elements: savedPayload.elements || {} };
+      }
+    };
+
+    reloadWindow.document.documentElement.classList.add('editor-mode');
+    reloadWindow.document.body.classList.add('editor-mode');
+
+    const persistedPassageHtml = savedPayload.elements?.['passage-01'] || '';
+    reloadQa.querySelector('.qa-passage [data-edit-id="passage-01"]').innerHTML = persistedPassageHtml;
+
+    ensureQaInitialized(reloadWindow, reloadQa);
+
+    const reloadedBubble = reloadQa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    const reloadedContent = reloadedBubble?.querySelector('.qa-note-content[data-edit-id="new-note-01"]');
+
+    assert.ok(reloadedBubble, 'expected refresh to rebuild the dynamic bubble from the persisted passage anchor instead of losing it');
+    assert.ok(reloadedContent, 'expected the rebuilt bubble to keep the original dynamic edit-id');
+    assert.equal(reloadedContent.textContent.trim(), 'Freshly created note.', 'expected refresh to keep the newly created note content without requiring a second recreation');
+  });
+
+  it('persists newly created note anchors into the owning passage root immediately before any later refresh', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+    const savedRoots = [];
+    const saveNowCalls = [];
+    const ensureWriteAccessCalls = [];
+
+    window.PersistenceLayer = {
+      saveElement(element) {
+        savedRoots.push(element?.getAttribute('data-edit-id') || '');
+      }
+    };
+
+    window.AnnotationStore = {
+      hasWriteAccess() {
+        return false;
+      },
+      ensureWriteAccess() {
+        ensureWriteAccessCalls.push('ensure');
+        return Promise.resolve(true);
+      },
+      saveNow() {
+        saveNowCalls.push('save-now');
+      },
+      scheduleSave() {}
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    return Promise.resolve().then(() => {
+      assert.deepEqual(savedRoots, ['passage-01'], 'expected creating a new note to immediately persist the owning passage root into localStorage');
+      assert.equal(ensureWriteAccessCalls.length, 1, 'expected creating a new note to request AnnotationStore write access before flushing the structural change');
+      assert.equal(saveNowCalls.length, 1, 'expected creating a new note to flush the current DOM immediately so the first refresh keeps the new anchor');
+    });
+  });
+
+  it('does not reuse a deleted note tombstone id when creating the next dynamic note', () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window._editorUtils = {
+      storageKey(suffix) {
+        return `test:${suffix}`;
+      },
+      legacyStorageKey(suffix) {
+        return `legacy:${suffix}`;
+      }
+    };
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+    clickElement(window, qa.querySelector('.qa-note-bubble[data-link="note-01"] .qa-note-action-btn.action-delete'));
+
+    selectText(window, qa.querySelector('.qa-passage p'), 'second');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const recreatedBubble = qa.querySelector('.qa-note-bubble');
+    const recreatedAnchor = qa.querySelector('.text-anchor');
+
+    assert.equal(recreatedBubble?.dataset.link, 'note-02', 'expected a newly created note to skip ids that are already tombstoned as deleted');
+    assert.equal(recreatedAnchor?.dataset.link, 'note-02', 'expected the passage anchor to use the same fresh note id instead of reusing a deleted tombstone id');
+  });
+
+  it('does not hydrate a newly recreated note bubble with the stale content of a previously deleted dynamic note', async () => {
+    const dom = createSelectionEditorDom('single');
+    const { window } = dom;
+    const qa = window.document.querySelector('.quiz-annotation');
+
+    window.document.documentElement.classList.add('editor-mode');
+    window.document.body.classList.add('editor-mode');
+
+    ensureQaInitialized(window, qa);
+    selectText(window, qa.querySelector('.qa-passage p'), 'first');
+    clickElement(window, getAnnotationToolbar(qa).querySelector('.ul-colors .color-swatch'));
+
+    const createdBubble = qa.querySelector('.qa-note-bubble[data-link="note-01"]');
+    const createdContent = createdBubble?.querySelector('.qa-note-content[data-edit-id="new-note-01"]');
+    assert.ok(createdBubble, 'expected the first selection to create a dynamic note bubble');
+    assert.ok(createdContent, 'expected the dynamic note bubble to use the new-note-<linkId> edit-id contract');
+
+    createdContent.innerHTML = 'Deleted note content.';
+
+    clickElement(window, createdBubble.querySelector('.qa-note-action-btn.action-delete'));
+
+    const savedPayload = await captureAnnotationStoreSave(window);
+
+    const reloadedDom = createSelectionEditorDom('single');
+    const reloadWindow = reloadedDom.window;
+    const reloadQa = reloadWindow.document.querySelector('.quiz-annotation');
+
+    reloadWindow.AnnotationStore = {
+      getInitData() {
+        return { elements: savedPayload.elements || {} };
+      }
+    };
+
+    reloadWindow.document.documentElement.classList.add('editor-mode');
+    reloadWindow.document.body.classList.add('editor-mode');
+    reloadQa.dataset.deletedNotes = JSON.stringify(savedPayload.deletedNotes || []);
+
+    ensureQaInitialized(reloadWindow, reloadQa);
+    assert.equal(reloadQa.querySelector('.qa-note-bubble[data-link="note-01"]'), null, 'expected the deleted dynamic note bubble to stay purged after refresh');
+
+    selectText(reloadWindow, reloadQa.querySelector('.qa-passage p'), 'first');
+    clickElement(reloadWindow, getAnnotationToolbar(reloadQa).querySelector('.ul-colors .color-swatch'));
+
+    const recreatedContent = reloadQa.querySelector('.qa-note-bubble[data-link="note-02"] .qa-note-content[data-edit-id="new-note-02"]');
+    assert.ok(recreatedContent, 'expected recreating the same selection after a deleted tombstone to allocate a fresh dynamic edit-id');
+    assert.equal(recreatedContent.textContent.trim(), '', 'expected a recreated note bubble not to inherit deleted note content from stale sidecar data');
+  });
+
   it('renders matching answer-key slots in editor mode and syncs the selected correct answer', () => {
     const dom = createMatchingEditorDom();
     const { window } = dom;

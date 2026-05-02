@@ -23,6 +23,7 @@
   var _firstGestureAuthInstalled = false;
   var _firstGestureAuthAttempted = false;
   var _exitFlushHookInstalled = false;
+  var _writeChain = Promise.resolve();
 
   // === 文件名推导 ===
 
@@ -218,7 +219,7 @@
     });
   }
 
-  function _writeToFile(data) {
+  function _writeToFileNow(data) {
     if (!_fileHandle) return Promise.resolve(false);
     var jsContent = 'window.__annotationData = ' + JSON.stringify(data, null, 2) + ';\n';
     return _fileHandle.createWritable().then(function (writable) {
@@ -231,6 +232,19 @@
       _updateStatus('error');
       return false;
     });
+  }
+
+  function _writeToFile(data) {
+    /* File System Access 的 createWritable() 默认会先截断目标文件。
+       新增批注时会连续触发“立即保存 + debounce 保存 + 退出编辑态冲刷”等多条写链路，
+       如果这里允许它们并发抢同一个 sidecar，后一个 writable 可能在前一个尚未 close 时
+       先把文件清空，最终就会留下 0 字节的 .annotations.js，刷新后所有新增批注都会丢失。
+       因此必须把 sidecar 写入串行化：前一笔彻底结束后，下一笔才能打开新的 writable。 */
+    var writeTask = _writeChain.catch(function () { return false; }).then(function () {
+      return _writeToFileNow(data);
+    });
+    _writeChain = writeTask.catch(function () { return false; });
+    return writeTask;
   }
 
   function _flushPendingSave() {

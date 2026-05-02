@@ -104,9 +104,7 @@ function createAnnotationStoreHarness(bodyHtml, url = 'https://example.com/demo.
     }
     return originalHeadAppendChild(node);
   };
-  window.showSaveFilePicker = async () => {
-    pickerCalls.push('picked');
-    return ({
+  const writableHandle = options.fileHandle || ({
     queryPermission: async () => 'granted',
     requestPermission: async () => 'granted',
     createWritable: async () => ({
@@ -115,7 +113,10 @@ function createAnnotationStoreHarness(bodyHtml, url = 'https://example.com/demo.
       },
       close: async () => {}
     })
-    });
+  });
+  window.showSaveFilePicker = async () => {
+    pickerCalls.push('picked');
+    return writableHandle;
   };
 
   window.eval(annotationStoreSource);
@@ -139,6 +140,12 @@ async function authorizeAndCollect(window, writes) {
   assert.equal(saved, true, 'expected authorizeAndSave to succeed with the fake writable handle');
   assert.ok(writes.length > 0, 'expected authorizeAndSave to write one annotation payload');
   return parseAnnotationPayload(writes[writes.length - 1]);
+}
+
+async function flushMicrotasks(turns = 4) {
+  for (let index = 0; index < turns; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 describe('annotation store loader', () => {
@@ -178,12 +185,74 @@ describe('annotation store collection', () => {
     assert.equal(writes.length, 0, 'expected the delayed save queue not to write immediately before edit mode exits');
 
     window.EditorHooks.fire('onEditModeExit');
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushMicrotasks();
 
     assert.equal(writes.length, 1, 'expected edit mode exit to flush the pending sidecar save immediately');
     const data = parseAnnotationPayload(writes[writes.length - 1]);
     assert.match(data.elements['title-root'], /Updated/, 'expected the flushed payload to contain the newest rich-text authoring change');
+  });
+
+  it('serializes overlapping sidecar writes so a later save cannot truncate the file mid-write', async () => {
+    let activeWritableCount = 0;
+    let peakWritableCount = 0;
+    let writableSerial = 0;
+    let releaseFirstWrite;
+    const firstWriteGate = new Promise((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    const lifecycle = [];
+    const writes = [];
+    const fileHandle = {
+      queryPermission: async () => 'granted',
+      requestPermission: async () => 'granted',
+      createWritable: async () => {
+        writableSerial += 1;
+        const currentSerial = writableSerial;
+        activeWritableCount += 1;
+        peakWritableCount = Math.max(peakWritableCount, activeWritableCount);
+        lifecycle.push(`create:${currentSerial}`);
+        return {
+          write: async (content) => {
+            lifecycle.push(`write:${currentSerial}`);
+            writes.push(content);
+            if (currentSerial === 1) {
+              await firstWriteGate;
+            }
+          },
+          close: async () => {
+            lifecycle.push(`close:${currentSerial}`);
+            activeWritableCount -= 1;
+          }
+        };
+      }
+    };
+    const harness = createAnnotationStoreHarness(`
+      <div class="slide active" data-slide="1">
+        <div class="header-title" data-edit-id="title-root">Initial <span data-fragment-step="true" data-fragment-format="highlight">title</span>.</div>
+      </div>
+    `, 'file:///D:/Projects/html-slides/demo.html', { fileHandle });
+    const { window } = harness;
+
+    await window.AnnotationStore.whenReady();
+
+    const firstSavePromise = window.AnnotationStore.authorizeAndSave();
+    await flushMicrotasks();
+
+    window.document.querySelector('[data-edit-id="title-root"]').innerHTML = 'Updated <span data-fragment-step="true" data-fragment-format="highlight">title</span>.';
+    const secondSavePromise = window.AnnotationStore.saveNow();
+    await flushMicrotasks();
+
+    assert.deepEqual(lifecycle, ['create:1', 'write:1'], 'expected the second save to wait until the first writable fully finishes before opening a new one');
+    assert.equal(peakWritableCount, 1, 'expected annotation-store never to hold two writable handles for the same sidecar at once');
+
+    releaseFirstWrite();
+    await Promise.all([firstSavePromise, secondSavePromise]);
+
+    assert.equal(peakWritableCount, 1, 'expected serialized writes to keep writable concurrency at one even after queued saves flush');
+    assert.deepEqual(lifecycle, ['create:1', 'write:1', 'close:1', 'create:2', 'write:2', 'close:2'], 'expected queued writes to run strictly one after another');
+    assert.equal(writes.length, 2, 'expected both save requests to eventually flush their payloads');
+    const latestPayload = parseAnnotationPayload(writes[1]);
+    assert.match(latestPayload.elements['title-root'], /Updated/, 'expected the later queued save to preserve the newest DOM snapshot');
   });
 
   it('requests write access on the first user gesture without eagerly rewriting the sidecar payload', async () => {
