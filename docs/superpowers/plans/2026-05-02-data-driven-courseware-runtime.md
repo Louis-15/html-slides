@@ -33,12 +33,14 @@
 
 ## 固定契约
 
-### 1. HTML 壳只保留结构，不保留内容
+### 1. HTML 壳保留播放器 chrome + 空挂载根，不保留课件内容
 
-HTML 只允许保留以下信息：
+HTML 保留的信息分为两层：
 
-1. `div#deck`、加载态 / 空态容器、工具条挂载根。
-2. 可选 `<template>`，仅用于 renderer 生成 slide 骨架。
+**播放器 chrome（永远留在壳里，不随课件变化）：**
+
+1. 幻灯片导航 UI：`div#progress`、`div#slideNav`、`div#counter`、`div#particles`。
+2. 挂载根与加载态：`div#deck`（空）、`.deck-loading-state`、`.deck-shell-toolbar`。
 3. 小型 manifest 元数据，不包含正文内容：
 
 ```html
@@ -53,6 +55,14 @@ HTML 只允许保留以下信息：
 ```
 
 4. 运行时脚本与 CSS 引用。
+
+**课件内容（全部外挂到 JSON，HTML 壳里不允许出现）：**
+
+1. 每个 slide 的 block HTML（标题、题干、批注、选项、解析等）。
+2. speaker notes。
+3. 任何因课件不同而变化的结构和文字。
+
+> ⚠️ **Bug 1 教训：** 最初设计时把 `#progress`、`#counter` 等播放器 chrome 元素也当成课件内容删掉了，导致 `slides-runtime.js` 初始化时 `getElementById` 返回 null、导航系统瘫痪。判断标准：删掉它会崩溃的 → 播放器 chrome → 留在壳里；删掉它只是没内容显示的 → 课件内容 → 外挂 JSON。
 
 ### 2. JSON 文件是可迁移真相源
 
@@ -273,8 +283,14 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 +  <link rel="stylesheet" href="../../assets/deck-shell.css" />
 +</head>
 +<body>
++  <!-- 播放器 chrome：运行时脚本初始化时就需要这些元素 -->
++  <div class="progress-bar" id="progress"></div>
++  <div class="particles" id="particles"></div>
++  <div class="slide-nav" id="slideNav"></div>
++  <div class="slide-counter" id="counter"></div>
 +  <div class="deck-shell-toolbar"></div>
 +  <div class="deck-loading-state">正在加载课件数据...</div>
++  <!-- 课件内容挂载根：空的，由 renderer 从 JSON 渲染注入 -->
 +  <div class="deck" id="deck"></div>
 +  <script type="application/json" class="deck-manifest">{"deckId":"minimal-shell","schemaVersion":1,"seedVersion":"2026-05-03T10:00:00Z","seedPath":"./minimal-shell.deck.json"}</script>
 +</body>
@@ -298,7 +314,7 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 
 必须新增：
 
-1. `div#deck` 只作为挂载根。
+1. HTML 壳必须包含播放器 chrome 元素（`#progress`、`#particles`、`#slideNav`、`#counter`）和空挂载根（`#deck`）。这些是运行时脚本初始化阶段的依赖，不属于课件内容。
 2. `script.deck-manifest` 只保存 deckId / schemaVersion / seedVersion / seedPath。
 3. 顶部工具条保留保存按钮挂载位，不内嵌正文内容。
 4. 首版禁用 `custom-box`、`native mods`、`doodle` 的说明。
@@ -963,11 +979,190 @@ Expected: PASS
 
 ---
 
+## 实际实现中发现的 Bug 与修复记录
+
+> 以下是在 Phase A–E 实现过程中实际遇到的 Bug，以及对应的根因分析和修复方案。这些问题在计划制定阶段未预见，但必须在计划文档中记录，以防后续迭代重犯同样错误。
+
+### Bug 1: HTML 壳剥离过度——把播放器 chrome 也当成课件内容删掉了
+
+**现象：** 数据驱动 HTML 打开后只能看到首页内容，无法通过键盘/滚轮翻到其他幻灯片。导航点、进度条、页码全部不显示。
+
+**认知错误：** 在设计数据驱动架构时，对"HTML 壳里应该留什么"的判断出了偏差。把原 HTML 中**所有非脚本、非 CSS 的元素**都当成了"课件内容"全部剥离，只留下了 `<div id="deck">` 和加载状态提示。但实际上，原 HTML 中的 DOM 元素分为两层，不应该等同处理：
+
+**第一层：播放器 chrome（player chrome）——不属于课件内容，但运行时脚本必须依赖的结构性 UI 元素。** 这些元素**不论课件内容是什么都永远存在**，和 `#deck` 一样属于壳本身：
+
+| 元素 | 作用 | 运行时依赖 |
+|---|---|---|
+| `#progress` | 幻灯片进度条 | `slides-runtime.js` 初始化时 `getElementById` |
+| `#counter` | 页码计数 "1/6" | `slides-runtime.js` 初始化时 `getElementById` |
+| `#slideNav` | 导航点容器 | `slides-runtime.js` 初始化时 `getElementById`，并在 `goTo()` 中动态更新 |
+| `#particles` | 背景粒子容器 | `slides-runtime.js` 初始化时创建粒子元素放入其中 |
+| `.edit-hotzone` | 编辑模式触区 | `editor-core.js` 初始化时动态创建（需 body 已就绪） |
+| `#editToggle` | 编辑按钮 | `editor-core.js` 初始化时动态创建 |
+| `#richToolbar` | 富文本工具栏 | `editor-core.js` 初始化时动态创建 |
+
+**第二层：课件内容（courseware content）——每个课件不同、需要可编辑、数据驱动化要外挂到 JSON 的东西：**
+
+| 内容 | 应该外挂到 JSON |
+|---|---|
+| 每个 slide 的 block HTML | 是 |
+| 标题文字、题干、选项、解析 | 是 |
+| 批注气泡、锚点 | 是 |
+| speaker notes | 是 |
+| 例题卡片内容 | 是 |
+
+**根因链：**
+
+1. 第一步，把原 HTML 壳中 `#progress`、`#counter`、`#slideNav`、`#particles` 这些播放器 chrome 元素连同课件内容一起删掉了。
+2. 第二步，`slides-runtime.js` 在脚本加载时 `getElementById` 获取这些元素，结果全是 `null`——导航点无法创建、进度条无法更新、页码无法显示。
+3. 第三步，`slides-runtime.js` 在脚本加载时 `querySelectorAll('.slide')` 扫描幻灯片，但此时 `#deck` 还是空的（数据还没加载和渲染），所以 `slides` 是空 NodeList、`total = 0`，导航系统意味着总页数为 0，`goTo()` 任何索引都会被 `if (index < 0 || index >= total) return` 拦截。
+4. 数据驱动渲染完成后，6 个 `.slide` 元素被注入 `#deck`，第一个加上 `.active` 所以能短暂看到首页，但导航系统仍然基于旧的空列表，无法翻页。
+
+**修复：**
+
+1. **HTML 壳必须保留播放器 chrome 元素。** 数据驱动的 HTML 壳不是越空越好，它仍然是一个完整的幻灯片播放器壳，只是课件内容从 HTML 硬编码变成了 JSON 外挂。壳里必须保留所有运行时脚本在初始化阶段就需要访问的结构性 UI 元素：
+
+```html
+<!-- 播放器 chrome：运行时脚本初始化时就要访问，必须留在壳里 -->
+<div class="progress-bar" id="progress"></div>
+<div class="particles" id="particles"></div>
+<div class="slide-nav" id="slideNav"></div>
+<div class="slide-counter" id="counter"></div>
+<div class="deck-shell-toolbar"></div>
+<div class="deck-loading-state">正在加载课件数据...</div>
+
+<!-- 课件内容挂载根：空的，由 renderer 从 JSON 渲染注入 -->
+<div class="deck" id="deck"></div>
+```
+
+2. **`slides-runtime.js`：幻灯片列表改为懒初始化。** 把 `const slides` / `const total` 改为 `let slides` / `let total`；新增 `refreshSlidesNav()` 函数，在数据驱动渲染完成后重新扫描 `.slide` 元素、重建导航点、刷新 UI；挂到 `window.refreshSlidesNav`。这是因为数据驱动架构下，脚本加载时 `#deck` 是空的，幻灯片列表要到 `renderDeck()` 完成后才存在。
+
+```js
+let slides = document.querySelectorAll('.slide');
+let total = slides.length;
+
+function refreshSlides() {
+  slides = document.querySelectorAll('.slide');
+  total = slides.length;
+  // 重新扫描 Zone 变体、steppable 组件
+  // 重建导航点、确保当前 slide 有 active 类
+  rebuildNavDots();
+  updateUI();
+  showSpeakerNotes(current);
+  buildInteractionQueue(current);
+}
+window.refreshSlidesNav = refreshSlides;
+```
+
+3. **`slides-runtime.js` 初始化安全守卫：** 在 `total === 0` 时跳过所有依赖非空 slide 列表的初始化步骤，包括 `updateUI()`、`buildInteractionQueue()`、`finishSlideAnimationsForEditorMode()`、Chart 初始化、speaker notes 初始化。这些步骤会在 `refreshSlidesNav()` 被调用时补上。
+
+4. **`deck-runtime-entry.js`：** 在 `renderDeck()` 后立即调用 `window.refreshSlidesNav()`，触发导航系统的完整初始化。
+
+**设计原则总结：** HTML 壳的职责边界是"播放器 chrome"（永远存在、不随课件变化）和"课件内容挂载根"（空容器，等渲染器从 JSON 填充）。判断一个元素归属哪一层的标准是：**如果删掉它，运行时脚本在初始化阶段就会崩溃或找不到依赖，那它就是播放器 chrome，必须留在壳里。**
+
+### Bug 2: 编辑模式临时 DOM 污染 IndexedDB 数据导致刷新后页面"卡在编辑模式"
+
+**现象：** 用户在第 N 页编辑一次内容后退出编辑模式，刷新页面，翻到第 N 页时看到的内容仍然带有编辑模式的视觉效果（`.editable-wrap` 边框、📍✖ 控件条、缩放手柄等），但实际上并未进入编辑模式（按 E 键不会退出，因为这些是残留的 DOM 元素而非真正的编辑状态）。
+
+**和 Bug 1 的区别：** Bug 1 是 HTML 壳剥离过度导致**播放器 chrome** 缺失，问题在壳侧；Bug 2 是**保存侧**把运行时临时 DOM 序列化进了数据源，问题在 `DeckDataAuthoring` 和 `BoxManager` 的交互边界。
+
+**根因分析：** 数据驱动架构中，课件内容的真相源链路是：
+
+```
+用户编辑 DOM → saveBlockFromNode() → IndexedDB block.html → 下次 renderDeck() 读取并渲染
+```
+
+问题出在 `saveBlockFromNode()` 直接使用 `blockEl.innerHTML` 取内容。但编辑模式下，`BoxManager._injectControls()` 会向每个可编辑元素注入以下运行时临时 DOM：
+
+| 注入内容 | 作用 | 是否属于课件数据 |
+|---|---|---|
+| `.editable-wrap.native-edit-wrap` | 包裹可编辑元素的 wrapper 壳 | **否**，编辑态 UI |
+| `.box-controls`（📍✖ 按钮） | 拖拽/删除控件 | **否**，编辑态 UI |
+| `.rs-handle`（八爪鱼缩放点） | 缩放手柄 | **否**，编辑态 UI |
+| `contenteditable="true"` | 使元素可编辑 | **否**，编辑态属性 |
+| `style="position: relative"` | BoxManager 给元素加的定位 | **否**，编辑态样式 |
+
+这些临时 DOM 是**播放器运行时状态**，不是**课件内容数据**，绝对不应该被持久化到 IndexedDB。但 `innerHTML` 把它们一股脑序列化了进去。下次刷新时渲染器从 IndexedDB 读到的 HTML 自带这些编辑态标记，直接渲染出来就"看起来像编辑模式"。
+
+这和旧架构不会遇到这个问题形成对比：旧架构用 `localStorage` 保存，`PersistenceLayer.saveElement()` 调用 `stripTransientEditableHTML()` 做了净化，但数据驱动架构的 `saveBlockFromNode()` 是新写的代码路径，没有做同样的净化。
+
+**修复：**
+
+1. **`deck-data-authoring.js`：在保存前净化 block HTML。** 新增 `cleanBlockHtml(blockEl)` 函数，克隆 block 元素后移除所有编辑态临时 DOM，只返回干净的课件内容 HTML：
+
+```js
+function cleanBlockHtml(blockEl) {
+  var clone = blockEl.cloneNode(true);
+
+  // 1. 解包 .editable-wrap：用其子节点替换 wrapper 本身
+  clone.querySelectorAll('.editable-wrap').forEach(function (wrap) {
+    if (wrap.classList.contains('custom-box')) {
+      wrap.remove();  // 自定义图元不属于种子数据
+      return;
+    }
+    var parent = wrap.parentNode;
+    if (!parent) return;
+    while (wrap.firstChild) {
+      parent.insertBefore(wrap.firstChild, wrap);
+    }
+    parent.removeChild(wrap);
+  });
+
+  // 2. 删除编辑控件和缩放手柄
+  clone.querySelectorAll('.box-controls, .rs-handle').forEach(function (el) {
+    el.remove();
+  });
+
+  // 3. 移除 contenteditable 属性
+  clone.querySelectorAll('[contenteditable]').forEach(function (el) {
+    el.removeAttribute('contenteditable');
+  });
+
+  // 4. 移除编辑模式注入的 style="position: relative"
+  clone.querySelectorAll('[style*="position"]').forEach(function (el) {
+    if (el.style.position === 'relative') {
+      el.style.removeProperty('position');
+      if (!el.style.cssText.trim()) el.removeAttribute('style');
+    }
+  });
+
+  // 5. 清理批注运行时的手动揭示标记
+  clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
+    el.classList.remove('qa-fragment-visible');
+  });
+  clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
+    el.removeAttribute('data-fragment-manual-reveal');
+  });
+
+  return clone.innerHTML;
+}
+```
+
+2. 将 `saveBlockFromNode()` 中的 `var blockHtml = blockEl.innerHTML` 替换为 `var blockHtml = cleanBlockHtml(blockEl)`。
+
+3. **设计原则：任何从 DOM 取 HTML 写入真相源的代码路径，都必须先做净化。** 旧架构的 `stripTransientEditableHTML()` 只清理了 fragment 相关的类，没有覆盖编辑模式的 wrapper/控件/属性。新的 `cleanBlockHtml()` 是数据驱动架构下的完整净化函数，两者覆盖范围不同但职责相同：**真相源里只存课件数据，不存运行时状态。**
+
+4. **每次修复数据污染 Bug 后必须更新 `seedVersion` 时间戳。** 浏览器的 bootstrap 逻辑通过比较 manifest 中的 `seedVersion` 和 IndexedDB 缓存的版本来决定是否重新导入。如果只修了代码但没更新版本号，浏览器会命中旧缓存而不重新导入，被污染的数据仍然存在。
+
+### 教训总结
+
+1. **HTML 壳的职责是"播放器 chrome + 空挂载根"，不是"越空越好"。** 剥离课件内容到 JSON 时，必须区分两层：播放器 chrome（`#progress`、`#counter`、`#slideNav`、`#particles` 等）永远留在壳里，因为运行时脚本在初始化阶段就需要它们；课件内容（slide、block、标题、题干等）才外挂到 JSON。判断标准：删掉它会崩溃的 → 播放器 chrome → 留在壳里；删掉它只是没内容显示的 → 课件内容 → 外挂 JSON。
+
+2. **真相源里只存课件数据，不存运行时状态。** `innerHTML` 会把编辑模式注入的 wrapper、控件、属性全部序列化。数据驱动架构中每条写入 IndexedDB/JSON 的代码路径（`saveBlockFromNode`、`scheduleBlockSaveFromNode`、`exportCurrentDeck`）都必须在保存前做净化，剥离编辑态临时 DOM。旧架构的 `stripTransientEditableHTML()` 覆盖不全，新的 `cleanBlockHtml()` 是完整替代。
+
+3. **数据驱动架构下，运行时脚本的初始化必须分两阶段：空壳阶段安全降级 + 渲染后完整初始化。** `slides-runtime.js` 在脚本加载时 `querySelectorAll('.slide')` 为空是正常的——数据还没渲染。必须允许 `total === 0` 时安全跳过，等 `refreshSlidesNav()` 被调用再完成完整初始化。同理，所有在空壳阶段依赖非空 DOM 的逻辑都需要守卫。
+
+4. **`const` vs `let` 在闭包中引用可变状态的问题。** `slides-runtime.js` 中 `const slides = document.querySelectorAll('.slide')` 在数据驱动模式下为空 NodeList，后续渲染完的 slide 不会自动更新这个引用。改为 `let` 并在 `refreshSlidesNav()` 中重新赋值。
+
+5. **seedVersion 是数据驱动架构的关键过期机制。** 任何时候修复了数据污染或渲染 Bug，都必须同步更新 manifest 和 seed.js 里的 `seedVersion`，否则浏览器会命中旧缓存而不重新导入。版本号是 IndexedDB 缓存过期的唯一信号。
+
+---
+
 ## 自检结果
 
 ### Spec coverage
 
-1. HTML 壳只保留容器：Task 1、Task 2、Task 7、Task 8 覆盖。
+1. HTML 壳保留播放器 chrome + 空挂载根（不是越空越好）：Task 1、Task 2、Task 7、Task 8 覆盖；Bug 1 记录了因过度剥离导致的问题与修复。
 2. JSON 外挂文件为真相源：Task 1、Task 3、Task 6、Task 7 覆盖。
 3. 启动顺序被固定并前置验证：Task 1、Task 2 覆盖。
 4. IndexedDB 作为最新状态缓存：Task 3、Task 4、Task 5 覆盖。
