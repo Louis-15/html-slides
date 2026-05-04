@@ -50,61 +50,9 @@
     });
   }
 
-  function _escapeHTML(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
   function _loadDataFile() {
-    if (location.protocol === 'file:') {
-      // 本地独立课件以 file:// 打开时，Chrome 对 sandbox iframe 里的相对脚本加载并不稳定。
-      // 这里回退到原先可靠的脚本注入方案，优先保证用户的本地批注能恢复出来。
-      return _loadDataFileViaScriptTag();
-    }
-
-    return new Promise(function (resolve) {
-      var token = 'ann-sandbox:' + Date.now() + ':' + Math.random().toString(36).slice(2);
-      var iframe = document.createElement('iframe');
-      var host = document.body || document.documentElement;
-      var settled = false;
-      var timeoutId = null;
-
-      function cleanup(result) {
-        if (settled) return;
-        settled = true;
-        if (timeoutId) clearTimeout(timeoutId);
-        window.removeEventListener('message', onMessage);
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        resolve(result || null);
-      }
-
-      function onMessage(event) {
-        var payload = event && event.data;
-        if (!payload || payload.source !== 'AnnotationStoreSandbox' || payload.token !== token) return;
-        cleanup(payload.payload || null);
-      }
-
-      window.addEventListener('message', onMessage);
-      iframe.setAttribute('sandbox', 'allow-scripts');
-      iframe.style.display = 'none';
-      iframe.srcdoc =
-        '<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + _escapeHTML(location.href) + '"></head><body><script>' +
-        'window.__annotationData = null;' +
-        'function notify(payload){ parent.postMessage({ source: "AnnotationStoreSandbox", token: ' + JSON.stringify(token) + ', payload: payload }, "*"); }' +
-        'window.addEventListener("error", function(){ notify(null); });' +
-        'var script = document.createElement("script");' +
-        'script.src = ' + JSON.stringify('./' + _getDataFilename()) + ';' +
-        'script.onload = function(){ notify(window.__annotationData || null); };' +
-        'script.onerror = function(){ notify(null); };' +
-        'document.head.appendChild(script);' +
-        '<\/script></body></html>';
-
-      host.appendChild(iframe);
-      timeoutId = setTimeout(function () { cleanup(null); }, 3000);
-    });
+    // 统一使用脚本标签注入加载侧挂数据，兼容 file:// 和 HTTP(S) 两种协议
+    return _loadDataFileViaScriptTag();
   }
 
   function _readStoredEditableHTML(editId) {
