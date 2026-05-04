@@ -4,7 +4,7 @@
 
 **Goal:** 将 html-slides 从“HTML 内嵌正文内容 + localStorage / sidecar 混合持久化”重构为“HTML 壳 + 外挂 JSON 真相源 + IndexedDB 最新状态缓存 + 显式导出保存”的新架构，并同步改写 skill 输出机制。
 
-**Architecture:** 新课件不再把正文、批注、标注直接写进 HTML，而是生成 `my-deck.html + my-deck.deck.json + assets/`。运行时增加 `deck-runtime-entry.js` 作为唯一启动总入口，按“读取 manifest -> bootstrap 种子/缓存 -> render block DOM -> 初始化 editor/quiz/example-card”顺序启动，避免空壳先被旧编辑器恢复链和 history 基线捕获。JSON 是可迁移真相源，IndexedDB 仅保存当前最新稳定状态；撤销/重做只来自运行时内存 history 栈，左上角按钮显式把当前快照导出为 JSON。
+**Architecture:** 新课件不再把正文、批注、标注直接写进 HTML，而是生成 `my-deck.html + my-deck.deck.json + assets/`。HTML 与 JSON 必须保持同主名绑定，例如 `foo.html` 对应 `foo.deck.json`，manifest 只允许指向同目录的对应 JSON。运行时增加 `deck-runtime-entry.js` 作为唯一启动总入口，按“读取 manifest -> bootstrap 种子/缓存 -> render block DOM -> 初始化 editor/quiz/example-card”顺序启动，避免空壳先被旧编辑器恢复链和 history 基线捕获。JSON 是可迁移真相源，IndexedDB 仅保存当前最新稳定状态；撤销/重做只来自运行时内存 history 栈；左下角 doodle 按钮右侧新增“保存 / 读取”两个并排按钮，其中“保存”显式把当前快照写回 JSON，“读取”默认从同目录同主名 JSON 读取，并在覆盖当前内容前要求用户二次确认。
 
 **Tech Stack:** 原生 HTML / CSS / JavaScript、IndexedDB、File System Access API、Node.js `--test` + jsdom、既有 editor / quiz / example-card 运行时。
 
@@ -15,19 +15,22 @@
 4. 新架构首版不再依赖 `annotation-store.js` 参与日常运行时恢复；外挂文件只在首开导入与显式保存时参与。
 5. 运行时新增文件继续采用浏览器全局脚本 + `window.*` 暴露模式，不切到 ESM；Node 测试统一走 jsdom + harness + `window.eval()`。
 6. 必须在独立 worktree 分支中开发，禁止在当前主工作区直接大改运行时与 skill 文档。
-7. 新架构首版显式禁用 `custom-box`、`native mods`、`doodle`，避免旧 localStorage 状态源继续污染运行时。若未来要恢复这些能力，单独开新计划。
+7. 新架构首版显式禁用 `custom-box`、`native mods`；保留 doodle 按钮与现有涂鸦能力，但 doodle 数据存储不纳入本轮 JSON 真相源迁移，继续按现有独立链路工作。若未来要把 doodle 也并入统一数据模型，单独开新计划。
 
 ---
 
-## 先解决的 5 个高风险点
+## 先解决的 8 个高风险点
 
-在进入大迁移前，必须先把下面 5 件事钉死，否则实现阶段会高频返工：
+在进入大迁移前，必须先把下面 8 件事钉死，否则实现阶段会高频返工：
 
 1. **统一测试/实现模块约定**：运行时文件继续用浏览器全局脚本，测试不能再写成直接 `import { ... } from '../../assets/*.js'`。
-2. **固定启动顺序**：必须先 bootstrap + render，再允许 `editor-core.js`、`quiz-annotation-runtime.js`、`example-card-runtime.js` 初始化。
-3. **清理旧持久化残留链路**：不能只补新保存调用，却保留旧 `AnnotationStore` / localStorage 恢复逻辑继续抢状态源。
-4. **补齐测试夹具**：原计划里引用了大量 `create*Harness()`，但没有把 helper 文件列入任务和文件地图。
-5. **收缩首版范围**：`custom-box`、`native mods`、`doodle` 不属于本轮必须完成的“正文/批注/标注数据驱动化”，必须显式关停。
+2. **先打通“manifest -> seed/cached doc -> render #deck”闭环**：如果没有单独的 bootstrap / renderer 任务，实现者会在 `deck-runtime-entry.js` 里临时拼逻辑，最后出现“页面空白、根本没内容”的结果。
+3. **固定启动顺序**：必须先 bootstrap + render + refresh slides/nav，再允许 `editor-core.js`、`quiz-annotation-runtime.js`、`example-card-runtime.js` 初始化。
+4. **拆清 HTML 壳、播放器 chrome 与课件内容的边界**：`#progress`、`#slideNav`、`#counter`、`#particles` 属于播放器壳，不属于课件正文，不能跟正文一起剥离。
+5. **把 `slides-runtime.js` 纳入主迁移面**：现有翻页、小圆点、页码、进度条都由它控制；如果不显式修改它去适配“空壳先加载、render 后补内容”，就会出现“只有首页、不能翻页”的共性故障。
+6. **清理旧持久化残留链路**：不能只补新保存调用，却保留旧 `AnnotationStore` / localStorage 恢复逻辑继续抢状态源。
+7. **保存前必须净化编辑态 DOM**：若 `saveBlockFromNode()` 直接写 `innerHTML`，`.editable-wrap`、`.box-controls`、`.rs-handle`、`contenteditable` 等编辑态临时结构会污染真相源，刷新后页面就会“卡在编辑模式”。
+8. **补齐测试夹具并收缩首版范围**：`custom-box`、`native mods` 不属于本轮必须完成的“正文/批注/标注数据驱动化”，必须显式关停；`doodle` 保留现有能力但不纳入本轮存储迁移；缺少 harness 的任务不得进入实现。
 
 ---
 
@@ -99,15 +102,23 @@ HTML 保留的信息分为两层：
 }
 ```
 
-### 3. JSON 与 IndexedDB 的关系
+### 3. HTML 与 JSON 的绑定命名规则
+
+1. 每个 HTML 壳只允许对应一个同目录、同主名的 JSON 文件。
+2. 命名规则固定为：`foo.html` 对应 `foo.deck.json`；这里的“同名”指主名 `foo` 必须一致。
+3. `script.deck-manifest` 里的 `seedPath` 必须指向这个同目录同主名 JSON，不允许再指向跨目录或其他别名文件。
+4. Task 8 产出模板与 Task 9 示例课件都必须遵守这条命名规则，避免生成物与运行时读取约定脱节。
+
+### 4. JSON 与 IndexedDB 的关系
 
 1. JSON 是可迁移真相源。
 2. IndexedDB 只保存当前最新稳定状态，不保存历史版本链。
 3. manifest 里的 `seedVersion` 与 IndexedDB 中缓存版本一致时，启动直接读 IndexedDB。
 4. 版本不一致或缓存缺失时，bootstrap 才重新加载 JSON 并导入 IndexedDB。
-5. 左上角保存按钮始终导出当前 IndexedDB 快照到 JSON 文件。
+5. 左下角工具区的“保存”按钮始终把当前 IndexedDB 快照写回同目录同主名 JSON 文件。
+6. 左下角工具区的“读取”按钮默认读取同目录同主名 JSON，但只有在用户完成二次确认后才允许覆盖当前 IndexedDB 与当前页面内容。
 
-### 4. 撤销 / 重做边界
+### 5. 撤销 / 重做边界
 
 1. `editor-history.js` 继续作为唯一历史管理器，负责记录当前会话中的 undo / redo 栈。
 2. `DeckDataAuthoring` 每次保存 block 时，只把最新结果写入 IndexedDB，不负责维护历史版本链。
@@ -115,24 +126,60 @@ HTML 保留的信息分为两层：
 4. 禁止把 IndexedDB 设计成撤销仓库，不引入“从 IndexedDB 回放上一步快照”的实现路径。
 5. 第一版不追求“刷新页面后还能撤销刷新前的每一步操作”；如果未来需要跨刷新编辑历史，必须单独设计操作日志层。
 
-### 5. `file://` 首开导入策略
+### 6. `file://` 首开导入策略
 
 为避免纯 `file://` 下直接 `fetch()` JSON 不稳定，bootstrap 必须实现双路径：
 
 1. `http(s)`：优先 `fetch(manifest.seedPath)`。
-2. `file://`：优先尝试文本桥读取同目录 JSON。
+2. `file://`：优先尝试文本桥读取 manifest 指向的同目录同主名 JSON。
 3. 如果 `file://` 文本桥失败，显示“导入本地 JSON 数据文件”降级入口，但不能静默失败。
 4. 这条路径必须先通过技术尖刺验证，再允许进入正式迁移。
+5. 必须把“首开可读”和“按钮可覆写”视为两种不同能力分别验证；能 bootstrap 读到 JSON，不等于浏览器已经具备同名 JSON 覆写能力。
+6. `saveDeckToFile()` 首次成功覆写前，必须通过显式用户手势拿到可复用的写句柄或等价能力；若当前环境拿不到覆写能力，必须给出明确错误或降级提示。
+7. `readDeckFromSeedFile()` 若无法直接读取 manifest 指向文件，也必须走显式降级路径；不能因为启动阶段曾成功导入过一次，就假定后续手动读取一定可用。
 
-### 6. 启动顺序是强制契约
+### 7. `seedVersion` 是缓存失效的强制信号
+
+1. manifest / seed JSON 与 IndexedDB 的新旧判断只看 `seedVersion`。
+2. 任何会影响初始渲染或已修复脏数据的改动，都必须同步 bump `seedVersion`。
+3. 若不 bump 版本，即使代码修好了，浏览器仍可能继续命中旧缓存，导致用户误以为“修复无效”。
+
+### 8. 启动顺序是强制契约
 
 唯一允许的顺序是：
 
 1. `deck-runtime-entry.js` 解析 manifest。
 2. `deck-data-bootstrap.js` 决定走 IndexedDB 还是 seed JSON。
 3. `deck-data-renderer.js` 把 slide / block 渲染到 `#deck`。
-4. render 完成后，再显式调用 editor / quiz / example-card 初始化。
-5. 任何旧模块都不允许在空壳阶段先执行恢复、初始化或 baseline 捕获。
+4. render 完成后，立即调用 `window.refreshSlidesNav()` 或等价入口，重新扫描 `.slide`、重建导航点、刷新页码与进度条。
+5. slides/nav 就绪后，再显式调用 editor / quiz / example-card 初始化。
+6. 任何旧模块都不允许在空壳阶段先执行恢复、初始化或 baseline 捕获。
+7. 用户点击“读取”并确认覆盖后，也必须复用这同一条受控顺序；禁止在已有运行时上直接 `innerHTML = ...` 热替换 deck DOM。
+8. 覆盖读取前必须先销毁当前交互运行时引用并清空当前 history baseline；覆盖完成后，再以新快照重建 editor / quiz / example-card。
+
+### 9. `slides-runtime.js` 必须支持“空壳安全降级 + 渲染后重扫”
+
+1. 现有 `slides-runtime.js` 在脚本加载时就会读取 `#progress`、`#counter`、`#slideNav`，并扫描 `.slide`。
+2. 数据驱动模式下，脚本加载时 `#deck` 为空属于正常状态，因此 `slides-runtime.js` 不能把“此时没有 slide”当作异常。
+3. 必须把 slide 列表和总数从一次性常量改为可刷新的运行时状态，例如 `let slides`、`let total`。
+4. 必须新增 `refreshSlidesNav()` 或等价公开入口，在 renderer 完成后重建导航点、重绑当前 slide、更新 UI。
+5. `total === 0` 时，所有依赖 slide 列表的初始化逻辑都必须安全跳过，而不是抛错或卡死在首页。
+
+### 10. 真相源写回前必须剥离编辑态临时 DOM
+
+1. `DeckDataAuthoring.saveBlockFromNode()` 不允许直接保存 `blockEl.innerHTML`。
+2. 在写入 IndexedDB / JSON 前，必须先克隆 block 根节点并清理编辑器注入的 wrapper、控件、手柄、属性和临时 reveal 标记。
+3. 第一版至少要剥离：`.editable-wrap`、`.box-controls`、`.rs-handle`、`contenteditable`、纯编辑态 `style.position = 'relative'`、`.qa-fragment-visible`、`data-fragment-manual-reveal`。
+4. `custom-box` 不属于首版种子数据，若出现在清理副本中必须直接移除，不能被序列化回真相源。
+5. 所有从 DOM 取 HTML 写回真相源的路径都必须复用同一个净化函数，禁止每个模块各写一版不一致的 strip 逻辑。
+6. doodle 运行时生成的 `svg.doodle-layer`、`#doodleToolbar`、`#doodleToggleBtn`、`#doodleLaserPointer` 与相关状态类同样不得进入 JSON 真相源。
+
+### 11. doodle 与 JSON 真相源必须严格隔离
+
+1. doodle 继续沿用现有 `doodle-runtime.js`、localStorage 与 `.doodle` 导入/导出链路，不进入 `DeckDataStore`。
+2. `saveDeckToFile()` 与 `readDeckFromSeedFile()` 只处理课件 JSON 快照，不得读写 `ds_doodles_*` 之类 doodle 存储键，也不得劫持 `.doodle` 导入/导出流程。
+3. 覆盖读取 JSON 时，不得顺手执行 doodle 清空、导入或恢复逻辑；若为防止命中冲突需要暂时退出 doodle mode，也只能暂停交互态，不能删除现有涂鸦数据。
+4. 用户如果需要处理涂鸦，继续使用现有 doodle 工具栏里的导入 / 导出 / 清空能力；JSON 保存/读取按钮不是 doodle 备份按钮。
 
 ---
 
@@ -142,26 +189,28 @@ HTML 保留的信息分为两层：
 
 | 文件 | 责任 |
 | --- | --- |
-| `assets/deck-runtime-entry.js` | 新架构唯一启动入口，统一编排 bootstrap -> render -> editor/quiz/example-card init |
+| `assets/deck-runtime-entry.js` | 新架构唯一启动入口，统一编排 bootstrap -> render -> slides refresh -> editor/quiz/example-card init |
 | `assets/deck-data-schema.js` | 课件 JSON schema、manifest 解析、版本校验辅助 |
 | `assets/deck-data-store.js` | IndexedDB 打开、最新快照读取、导入、更新、导出 |
-| `assets/deck-data-bootstrap.js` | 首开导入桥，按 manifest 决定走缓存还是种子 JSON |
+| `assets/deck-data-bootstrap.js` | 首开导入桥，按 manifest 决定走缓存还是种子 JSON，并负责显式降级态 |
 | `assets/deck-data-renderer.js` | 根据 JSON / IndexedDB 文档把 slide、header、block 渲染进 HTML 壳 |
-| `assets/deck-data-authoring.js` | 作者态统一保存入口，把 DOM 变更回写到对应 block |
-| `assets/deck-save-runtime.js` | 左上角保存按钮、File System Access 导出、后续覆盖写句柄 |
-| `assets/deck-shell.css` | HTML 壳级占位样式、加载态、空壳提示、保存按钮样式 |
+| `assets/deck-data-authoring.js` | 作者态统一保存入口，负责 block HTML 净化与回写 |
+| `assets/deck-save-runtime.js` | 左下角“保存 / 读取”按钮、同主名 JSON 写回、覆盖前确认、受控重启委托、后续文件句柄复用 |
+| `assets/deck-shell.css` | HTML 壳级占位样式、加载态、空壳提示、保存/读取按钮样式 |
 
 ### 需要修改的现有运行时文件
 
 | 文件 | 新职责 |
 | --- | --- |
-| `assets/editor-core.js` | 不再自行在空壳阶段恢复内容；改为受 `deck-runtime-entry.js` 控制初始化，并注入“保存到本地化文件”按钮 |
+| `assets/slides-runtime.js` | 改为支持空壳安全降级、render 后 `refreshSlidesNav()` 重扫、导航圆点/页码/进度条重建 |
+| `assets/editor-core.js` | 不再自行在空壳阶段恢复内容；改为受 `deck-runtime-entry.js` 控制初始化，并把“保存 / 读取”按钮注入到 `#doodleToggleBtn` 右侧 |
 | `assets/editor-history.js` | 保持撤销/重做基于运行时内存历史栈，不让 IndexedDB 承担编辑历史仓库职责 |
 | `assets/editor-persistence.js` | 从 localStorage 普通内容持久化层改为 `DeckDataAuthoring` 代理层；数据驱动模式下禁用旧 `boxes/nmods` 流程 |
 | `assets/editor-rich-text.js` | 富文本标注改为写 block HTML 到 `DeckDataAuthoring`，不再写 sidecar / localStorage |
 | `assets/page-richtext-annotation-runtime.js` | 保持 reveal 行为，但不再依赖旧 sidecar 恢复链 |
 | `assets/quiz-annotation-runtime.js` | 删除 `AnnotationStore` 保存/恢复/授权链，结构变更与气泡正文统一回写当前 quiz block |
 | `assets/example-card-runtime.js` | 删除 `AnnotationStore` / localStorage 文本水合与 authoring config 旧链，题干/选项/解析统一回写当前 example-card block |
+| `assets/doodle-runtime.js` | 保持现有 `#doodleToggleBtn` / `#doodleToolbar` / `.doodle-layer` / `.doodle` 导入导出链路；与 JSON 保存/读取入口并存，但不并入真相源 |
 | `assets/editor-utils.js` | 继续负责 example-card 可编辑候选，但不再为旧 localStorage/sidecar 恢复特殊兜底 |
 
 ### 测试辅助文件
@@ -171,11 +220,13 @@ HTML 保留的信息分为两层：
 | 文件 | 责任 |
 | --- | --- |
 | `testing/tests/helpers/deck-bootstrap-harness.js` | 构造 manifest + seed loader + fake IndexedDB 的 bootstrap 测试夹具 |
+| `testing/tests/helpers/deck-renderer-harness.js` | 构造 shell DOM、seed 文档与 renderer 输出断言夹具 |
 | `testing/tests/helpers/deck-authoring-harness.js` | 构造 block DOM、store、editor persistence 的普通块作者态夹具 |
 | `testing/tests/helpers/deck-history-harness.js` | 构造 historyMgr + store + DOM 的撤销/重做契约夹具 |
 | `testing/tests/helpers/deck-quiz-block-harness.js` | 构造 quiz block 迁移集成夹具 |
 | `testing/tests/helpers/deck-example-card-harness.js` | 构造 example-card block 迁移集成夹具 |
-| `testing/tests/helpers/deck-save-harness.js` | 构造导出按钮与保存句柄夹具 |
+| `testing/tests/helpers/deck-save-harness.js` | 构造保存/读取按钮、覆盖确认与文件句柄夹具 |
+| `testing/tests/helpers/slides-runtime-harness.js` | 构造空壳 + render 后 slide 列表重扫的导航运行时夹具 |
 | `testing/tests/helpers/deck-runtime-entry-harness.js` | 构造 shell -> bootstrap -> render -> init 顺序测试夹具 |
 
 ### 新增测试文件
@@ -184,24 +235,26 @@ HTML 保留的信息分为两层：
 | --- | --- |
 | `testing/tests/deck-shell-contract.test.js` | HTML 壳不再内嵌正文内容 |
 | `testing/tests/deck-bootstrap-spike.test.js` | 最高风险尖刺：`file://` 文本桥和 seed 导入策略 |
+| `testing/tests/slides-runtime.test.js` | 空壳加载后经 `refreshSlidesNav()` 重新建立翻页、页码、导航圆点 |
 | `testing/tests/deck-runtime-entry.test.js` | 启动顺序：先 render 后 init，禁止空壳先 baseline |
 | `testing/tests/deck-data-schema.test.js` | schema 归一化、manifest 解析、版本规则 |
 | `testing/tests/deck-data-store.test.js` | IndexedDB 导入、读取、更新、导出 |
-| `testing/tests/deck-data-bootstrap.test.js` | bootstrap 命中逻辑 |
+| `testing/tests/deck-data-bootstrap.test.js` | bootstrap 命中逻辑与显式降级结果 |
 | `testing/tests/deck-data-renderer.test.js` | shell -> slide -> block 渲染结果 |
-| `testing/tests/deck-data-authoring.test.js` | 块回写、富文本保真、普通块保存 |
+| `testing/tests/deck-data-authoring.test.js` | 块回写、富文本保真、普通块保存、编辑态 DOM 净化 |
 | `testing/tests/deck-history-contract.test.js` | 撤销/重做只依赖运行时内存历史栈，不从 IndexedDB 回放历史 |
-| `testing/tests/deck-save-runtime.test.js` | 保存按钮、导出 JSON、句柄复用 |
+| `testing/tests/deck-save-runtime.test.js` | 保存按钮、读取按钮、覆盖确认、JSON 写回/覆盖、受控重启与句柄复用 |
+| `testing/tests/doodle-runtime-compat.test.js` | doodle 按钮/工具栏锚点、JSON 读取覆盖不污染 doodle 独立链路 |
 | `testing/tests/deck-skill-output.test.js` | 新模板输出契约，不再依赖旧 sidecar |
 
 ### 首版明确不做的东西
 
 1. `custom-box` 持久化。
 2. 原生元素位移 / 隐藏状态 `nmods` 持久化。
-3. `doodle` 数据迁移。
+3. `doodle` 数据并入统一 JSON 真相源。
 4. 跨刷新完整撤销/重做历史。
 
-这些能力在新 shell 首版必须显式关停或隐藏，不允许处于“计划没写，但运行时可能还活着”的灰区。
+其中 `doodle` 按钮与现有能力继续保留，但它的数据存储边界必须明确写成“暂不并入本轮 JSON 真相源”；其余未纳入首版的能力必须显式关停或隐藏，不允许处于“计划没写，但运行时可能还活着”的灰区。
 
 ---
 
@@ -243,6 +296,9 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 +  const html = fs.readFileSync(new URL('../fixtures/data-driven/minimal-shell.html', import.meta.url), 'utf8');
 +  assert.match(html, /class="deck-manifest"/);
 +  assert.match(html, /id="deck"/);
++  assert.match(html, /id="progress"/);
++  assert.match(html, /id="slideNav"/);
++  assert.match(html, /doodle-runtime\.js/);
 +  assert.doesNotMatch(html, /高考英语阅读实战正文/);
 +  assert.doesNotMatch(html, /class="quiz-annotation"/);
 +});
@@ -266,7 +322,7 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 +test('bootstrap spike never lets editor initialize before deck render completes', async () => {
 +  const harness = await createBootstrapHarness({ protocol: 'https:' });
 +  await harness.runFullBoot();
-+  assert.deepEqual(harness.lifecycle, ['bootstrap:start', 'bootstrap:ready', 'render:start', 'render:done', 'editor:init']);
++  assert.deepEqual(harness.lifecycle, ['bootstrap:start', 'bootstrap:ready', 'render:start', 'render:done', 'slides:refresh', 'editor:init']);
 +});
 ```
 
@@ -293,6 +349,7 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 +  <!-- 课件内容挂载根：空的，由 renderer 从 JSON 渲染注入 -->
 +  <div class="deck" id="deck"></div>
 +  <script type="application/json" class="deck-manifest">{"deckId":"minimal-shell","schemaVersion":1,"seedVersion":"2026-05-03T10:00:00Z","seedPath":"./minimal-shell.deck.json"}</script>
++  <script src="../../assets/doodle-runtime.js"></script>
 +</body>
 +</html>
 ```
@@ -317,7 +374,8 @@ Expected: worktree 创建成功，现有基线测试可跑；如果基线失败�
 1. HTML 壳必须包含播放器 chrome 元素（`#progress`、`#particles`、`#slideNav`、`#counter`）和空挂载根（`#deck`）。这些是运行时脚本初始化阶段的依赖，不属于课件内容。
 2. `script.deck-manifest` 只保存 deckId / schemaVersion / seedVersion / seedPath。
 3. 顶部工具条保留保存按钮挂载位，不内嵌正文内容。
-4. 首版禁用 `custom-box`、`native mods`、`doodle` 的说明。
+4. 模板必须继续保留 `doodle-runtime.js`，并维持 `#doodleToggleBtn` / `#doodleToolbar` 的现有左下角注入与避让约定，Task 7 的按钮直接挂在这个锚点右侧，不得另起一套新工具区。
+5. 首版禁用 `custom-box`、`native mods`，并明确 `doodle` 保留现有能力但不纳入本轮 JSON 存储迁移的说明。
 
 - [ ] **Step 6: 运行壳契约 + 技术尖刺测试并提交**
 
@@ -347,12 +405,15 @@ Commit:
 **Files:**
 - Create: `assets/deck-runtime-entry.js`
 - Create: `testing/tests/deck-runtime-entry.test.js`
+- Create: `testing/tests/slides-runtime.test.js`
 - Create: `testing/tests/helpers/deck-runtime-entry-harness.js`
+- Create: `testing/tests/helpers/slides-runtime-harness.js`
+- Modify: `assets/slides-runtime.js`
 - Modify: `assets/editor-core.js`
 - Modify: `assets/quiz-annotation-runtime.js`
 - Modify: `assets/example-card-runtime.js`
 
-- [ ] **Step 1: 先写失败测试，锁住“render 完成前不允许 editor/quiz/example-card 初始化”**
+- [ ] **Step 1: 先写失败测试，锁住“render 完成前不允许初始化”，并补上导航运行时重扫契约**
 
 在 `testing/tests/deck-runtime-entry.test.js` 写入：
 
@@ -364,8 +425,41 @@ Commit:
 +test('runtime entry renders deck before editor captures baseline', async () => {
 +  const harness = await createRuntimeEntryHarness();
 +  await harness.start();
-+  assert.deepEqual(harness.lifecycle, ['bootstrap:start', 'bootstrap:ready', 'render:start', 'render:done', 'editor:init', 'quiz:init', 'example-card:init']);
++  assert.deepEqual(harness.lifecycle, ['bootstrap:start', 'bootstrap:ready', 'render:start', 'render:done', 'slides:refresh', 'editor:init', 'quiz:init', 'example-card:init']);
 +  assert.equal(harness.emptyShellBaselineCaptured, false);
++});
++
++test('runtime entry restart rebuilds interactive state from a fresh baseline after confirmed read', async () => {
++  const harness = await createRuntimeEntryHarness();
++  await harness.start();
++  await harness.restartFromCurrentStore();
++  assert.deepEqual(harness.restartLifecycle, ['runtime:dispose', 'render:start', 'render:done', 'slides:refresh', 'editor:init', 'quiz:init', 'example-card:init']);
++  assert.equal(harness.historyReset, true);
++});
+```
+
+在 `testing/tests/slides-runtime.test.js` 写入：
+
+```js
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createSlidesRuntimeHarness } from './helpers/slides-runtime-harness.js';
++
++test('slides runtime rebuilds navigation and paging after renderer injects slides', async () => {
++  const harness = await createSlidesRuntimeHarness();
++  harness.renderSlides(3);
++  harness.window.refreshSlidesNav();
++  assert.equal(harness.document.querySelectorAll('.slide').length, 3);
++  assert.equal(harness.document.querySelectorAll('.slide-nav-dot').length, 3);
++  assert.match(harness.document.getElementById('counter').textContent, /1\s*\/\s*3/);
++});
++
++test('slides runtime safely stays idle when shell starts with zero slides', async () => {
++  const harness = await createSlidesRuntimeHarness();
++  assert.doesNotThrow(function () {
++    harness.window.refreshSlidesNav();
++  });
++  assert.equal(harness.document.querySelectorAll('.slide-nav-dot').length, 0);
 +});
 ```
 
@@ -379,15 +473,26 @@ Commit:
 +
 +  async function startDeckRuntime() {
 +    const boot = await window.DeckDataBootstrap.bootstrapDeckRuntime();
-+    const doc = await boot.store.getDocument(boot.manifest.deckId);
++    const doc = boot.document || await boot.store.getDocument(boot.manifest.deckId);
 +    window.DeckDataRenderer.renderDeck(document, doc);
++    if (typeof window.refreshSlidesNav === 'function') {
++      window.refreshSlidesNav();
++    }
 +    initializeInteractiveRuntimes();
 +    return boot;
 +  }
 +
-+  window.DeckRuntimeEntry = { startDeckRuntime };
++  async function restartDeckRuntime() {}
++
++  window.DeckRuntimeEntry = { startDeckRuntime, restartDeckRuntime };
 +})();
 ```
+
+要求补充：
+
+1. `restartDeckRuntime()` 必须先释放旧 DOM 上挂着的 editor / quiz / example-card 引用、监听器与 history baseline，再从当前 store 快照重新 render。
+2. Task 7 的“读取并确认覆盖”只能委托 `DeckRuntimeEntry.restartDeckRuntime()` 或等价入口完成，禁止在 `deck-save-runtime.js` 里私自复制一套启动流程。
+3. 若当前正处于 doodle mode，重启前只允许暂时退出命中态或隐藏工具栏，不能删除现有 doodle 独立存储。
 
 - [ ] **Step 3: 修改 `assets/editor-core.js`，把当前构造期自动恢复改成受控流程**
 
@@ -398,7 +503,16 @@ Commit:
 3. `loadCustomBoxes()` 在数据驱动模式下不执行。
 4. 补中文注释，说明为什么空壳阶段不能先做 baseline 与 editable 候选收集。
 
-- [ ] **Step 4: 修改 `assets/quiz-annotation-runtime.js` 与 `assets/example-card-runtime.js` 的 auto-init 入口**
+- [ ] **Step 4: 修改 `assets/slides-runtime.js`，把当前“脚本加载时一次性扫描 slide 列表”的模型改成懒初始化**
+
+要求：
+
+1. 把 `const slides` / `const total` 改成可刷新的运行时状态，例如 `let slides` / `let total`。
+2. 新增 `refreshSlidesNav()` 或等价公开入口，render 后重新扫描 `.slide`、重建圆点、刷新 `#progress` / `#counter`。
+3. `total === 0` 时，`updateUI()`、`goTo()`、speaker notes、Chart 初始化、interaction queue 构建都必须安全降级，不得把空壳当作异常。
+4. 补中文注释，明确说明数据驱动架构下“脚本先加载、内容后注入”是正常时序，不允许未来维护者再把它改回一次性初始化。
+
+- [ ] **Step 5: 修改 `assets/quiz-annotation-runtime.js` 与 `assets/example-card-runtime.js` 的 auto-init 入口**
 
 要求：
 
@@ -406,13 +520,13 @@ Commit:
 2. 数据驱动模式下只响应 `DeckRuntimeEntry` 的渲染完成调用。
 3. 旧模式入口暂时保留，直到新示例课件全部切换完成。
 
-- [ ] **Step 5: 运行 runtime-entry 测试并提交**
+- [ ] **Step 6: 运行 runtime-entry 与 slides-runtime 测试并提交**
 
 Run:
 
 ```powershell
 +Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
-+node --test tests/deck-runtime-entry.test.js
++node --test tests/deck-runtime-entry.test.js tests/slides-runtime.test.js
 ```
 
 Expected: PASS
@@ -421,8 +535,8 @@ Commit:
 
 ```powershell
 +Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
-+git add assets/deck-runtime-entry.js assets/editor-core.js assets/quiz-annotation-runtime.js assets/example-card-runtime.js testing/tests/deck-runtime-entry.test.js testing/tests/helpers/deck-runtime-entry-harness.js
-+git commit -m "feat: add runtime entry and freeze init order"
++git add assets/deck-runtime-entry.js assets/slides-runtime.js assets/editor-core.js assets/quiz-annotation-runtime.js assets/example-card-runtime.js testing/tests/deck-runtime-entry.test.js testing/tests/slides-runtime.test.js testing/tests/helpers/deck-runtime-entry-harness.js testing/tests/helpers/slides-runtime-harness.js
++git commit -m "feat: freeze runtime order and lazy-init slide navigation"
 ```
 
 ---
@@ -542,7 +656,122 @@ Commit:
 +git commit -m "feat: add deck schema and indexeddb latest-state store"
 ```
 
-### Task 4: 用统一 authoring 桥接替换普通块的 localStorage / sidecar 保存
+### Task 4: 新增 `deck-data-bootstrap.js` 与 `deck-data-renderer.js`，先打通内容载入与首屏渲染
+
+**Files:**
+- Create: `assets/deck-data-bootstrap.js`
+- Create: `assets/deck-data-renderer.js`
+- Create: `testing/tests/deck-data-bootstrap.test.js`
+- Create: `testing/tests/deck-data-renderer.test.js`
+- Create: `testing/tests/helpers/deck-renderer-harness.js`
+
+- [ ] **Step 1: 先写 bootstrap 失败测试，锁住“首开必须能拿到 seed 文档或给出显式降级”**
+
+```js
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createBootstrapHarness } from './helpers/deck-bootstrap-harness.js';
++
++test('bootstrap imports seed into indexeddb when cache is missing', async () => {
++  const harness = await createBootstrapHarness({ protocol: 'https:' });
++  const result = await harness.bootstrap();
++  assert.equal(result.source, 'seed');
++  assert.equal(result.document.deckId, 'minimal-shell');
++});
++
++test('bootstrap surfaces manual import requirement instead of blank screen on file fallback miss', async () => {
++  const harness = await createBootstrapHarness({ protocol: 'file:', failTextBridge: true });
++  const result = await harness.bootstrap();
++  assert.equal(result.source, 'manual-import-required');
++  assert.match(result.message, /导入本地 JSON 数据文件/);
++});
+```
+
+- [ ] **Step 2: 再写 renderer 失败测试，锁住“render 后 `#deck` 里必须真的出现 slide/block DOM”**
+
+```js
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createDeckRendererHarness } from './helpers/deck-renderer-harness.js';
++
++test('renderer injects slides and blocks into empty deck host', async () => {
++  const harness = await createDeckRendererHarness();
++  harness.window.DeckDataRenderer.renderDeck(harness.document, harness.seedDocument);
++  assert.equal(harness.document.querySelectorAll('#deck .slide').length, 2);
++  assert.equal(harness.document.querySelectorAll('#deck [data-block-id]').length, 2);
++});
++
++test('renderer preserves shell chrome while replacing only deck host content', async () => {
++  const harness = await createDeckRendererHarness();
++  harness.window.DeckDataRenderer.renderDeck(harness.document, harness.seedDocument);
++  assert.ok(harness.document.getElementById('progress'));
++  assert.ok(harness.document.getElementById('slideNav'));
++  assert.ok(harness.document.getElementById('counter'));
++});
+```
+
+- [ ] **Step 3: 实现 `assets/deck-data-bootstrap.js`，负责缓存命中、seed 导入与显式降级态**
+
+最小 API：
+
+```js
++(function () {
++  'use strict';
++
++  async function bootstrapDeckRuntime() {}
++
++  window.DeckDataBootstrap = { bootstrapDeckRuntime };
++})();
+```
+
+要求：
+
+1. 先解析 manifest，再比较 `seedVersion` 决定是否命中缓存。
+2. 命中缓存时返回 `source: 'cache'`；重新导入 seed 时返回 `source: 'seed'`。
+3. `file://` 文本桥失败时返回可渲染的降级信息，禁止静默失败成空白页面。
+4. bootstrap 返回值里必须带 `manifest`、`store`、`document` 或等价字段，禁止让 `deck-runtime-entry.js` 自己重复 fetch / import 逻辑。
+
+- [ ] **Step 4: 实现 `assets/deck-data-renderer.js`，负责把 deck document 显式渲染进 `#deck`**
+
+最小 API：
+
+```js
++(function () {
++  'use strict';
++
++  function renderDeck(doc, deckDocument) {}
++
++  window.DeckDataRenderer = { renderDeck };
++})();
+```
+
+要求：
+
+1. `renderDeck()` 只替换 `#deck` 挂载根内容，不得碰 `#progress`、`#slideNav`、`#counter`、`#particles` 等播放器 chrome。
+2. 每个 slide 必须渲染为现有运行时可识别的 `.slide` 结构，block 根必须带 `data-block-id`。
+3. renderer 必须负责“当前页初始 active 态”与空 deck loading state 收口，避免首屏虽然有 DOM 但仍停留在加载态。
+4. speaker notes、header、layout class 等课件结构必须在这里还原，不能留给 editor/quiz/example-card 去临时拼。
+
+- [ ] **Step 5: 运行 bootstrap + renderer 测试并提交**
+
+Run:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
++node --test tests/deck-data-bootstrap.test.js tests/deck-data-renderer.test.js
+```
+
+Expected: PASS
+
+Commit:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
++git add assets/deck-data-bootstrap.js assets/deck-data-renderer.js testing/tests/deck-data-bootstrap.test.js testing/tests/deck-data-renderer.test.js testing/tests/helpers/deck-renderer-harness.js
++git commit -m "feat: add deck bootstrap and renderer pipeline"
+```
+
+### Task 5: 用统一 authoring 桥接替换普通块的 localStorage / sidecar 保存
 
 **Files:**
 - Create: `assets/deck-data-authoring.js`
@@ -555,7 +784,7 @@ Commit:
 - Create: `testing/tests/helpers/deck-authoring-harness.js`
 - Create: `testing/tests/helpers/deck-history-harness.js`
 
-- [ ] **Step 1: 先写普通块 authoring 失败测试**
+- [ ] **Step 1: 先写普通块 authoring 失败测试，并补一个“编辑态 DOM 不得污染快照”的失败测试**
 
 ```js
 +import { test } from 'node:test';
@@ -568,6 +797,13 @@ Commit:
 +  await harness.window.PersistenceLayer.saveElement(harness.document.querySelector('[data-edit-id="p1"]'));
 +  const snapshot = await harness.exportSnapshot();
 +  assert.match(snapshot.slides[0].blocks[0].html, /New/);
++});
++
++test('saveBlockFromNode strips editor-only wrapper dom before writing snapshot', async () => {
++  const harness = await createAuthoringHarness('<div data-block-id="b1"><div class="editable-wrap native-edit-wrap"><p data-edit-id="p1" contenteditable="true" style="position: relative;">New</p><div class="box-controls"></div><div class="rs-handle"></div></div></div>');
++  await harness.window.DeckDataAuthoring.saveBlockFromNode(harness.document.querySelector('[data-edit-id="p1"]'));
++  const snapshot = await harness.exportSnapshot();
++  assert.doesNotMatch(snapshot.slides[0].blocks[0].html, /editable-wrap|box-controls|rs-handle|contenteditable/);
 +});
 ```
 
@@ -597,11 +833,12 @@ Commit:
 +(function () {
 +  'use strict';
 +
++  function cleanBlockHtml(blockEl) {}
 +  async function saveBlockFromNode(node) {}
 +  function scheduleBlockSaveFromNode(node) {}
 +  async function exportCurrentDeck() {}
 +
-+  window.DeckDataAuthoring = { saveBlockFromNode, scheduleBlockSaveFromNode, exportCurrentDeck };
++  window.DeckDataAuthoring = { cleanBlockHtml, saveBlockFromNode, scheduleBlockSaveFromNode, exportCurrentDeck };
 +})();
 ```
 
@@ -610,7 +847,10 @@ Commit:
 1. `saveBlockFromNode(node)` 必须上溯到最近的 `data-block-id` 容器。
 2. 回写时更新 JSON 文档中对应 block 的 `html` 字段。
 3. 第一版只做 block 级整块序列化，不做局部 patch。
-4. 允许在撤销 / 重做恢复完成后把恢复后的最新 DOM 重新写回 IndexedDB，但不得在这个同步过程中新增 history 帧。
+4. 必须抽出单一 `cleanBlockHtml(blockEl)` 或等价函数，在保存前统一剥离编辑态 wrapper、控件、手柄、属性和临时 reveal 标记。
+5. 允许在撤销 / 重做恢复完成后把恢复后的最新 DOM 重新写回 IndexedDB，但不得在这个同步过程中新增 history 帧。
+6. `saveBlockFromNode(node)` 的宿主边界只认 `data-block-id`，不认中间层的 `[data-edit-id]`、`.qa-note-bubble`、`.text-anchor`、`.example-card__question` 或按钮容器；quiz 与 example-card 仍然是“整块真相源”，不能被误切成子块保存。
+7. `cleanBlockHtml(blockEl)` 必须支持组件级额外净化规则；至少要允许 quiz/example-card 在整块回写前剥离各自的运行时脏状态，而不是只清理普通页面的编辑器 wrapper。
 
 - [ ] **Step 4: 修改 `assets/editor-history.js`，显式保留“历史栈在内存、持久化层只存最新结果”的边界**
 
@@ -668,7 +908,7 @@ Commit:
 
 ## Phase D: quiz / example-card 迁移清单
 
-### Task 5: 把 quiz-annotation 与 example-card 改成整块回写模型，并逐项清空旧链路
+### Task 6: 把 quiz-annotation 与 example-card 改成整块回写模型，并逐项清空旧链路
 
 **Files:**
 - Modify: `assets/quiz-annotation-runtime.js`
@@ -689,6 +929,14 @@ Commit:
 +  const reloadWindow = await reloadFromSnapshot(snapshot);
 +  assert.match(reloadWindow.document.querySelector('.quiz-annotation').innerHTML, /新批注/);
 +});
++
++it('quiz block snapshots strip runtime-only active classes, connectors and result marks', async () => {
++  const { window, qa, exportSnapshot } = await createQuizBlockHarness();
++  activateBubbleByLink(qa, 'note-1');
++  const snapshot = await exportSnapshot();
++  const html = snapshot.slides[0].blocks[0].html;
++  assert.doesNotMatch(html, /note-active|note-expanded|anchor-active|qa-connector-canvas|connector-step|connector-hover|qa-result-mark/);
++});
 ```
 
 - [ ] **Step 2: 再补 example-card 失败测试，锁住题干 / 选项 / 解析的块级持久化**
@@ -701,6 +949,25 @@ Commit:
 +  const snapshot = await exportSnapshot();
 +  const reloadWindow = await reloadFromSnapshot(snapshot);
 +  assert.match(reloadWindow.document.querySelector('.qa-option-text').innerHTML, /新的选项文本/);
++});
++
++it('example-card saves the whole card block instead of only the active question subtree', async () => {
++  const { window, exportSnapshot } = await createExampleCardBlockHarness({ multiQuestion: true });
++  window.document.querySelector('.qa-option-text').innerHTML = '当前题新文案';
++  await window.DeckDataAuthoring.saveBlockFromNode(window.document.querySelector('.qa-option-text'));
++  const html = (await exportSnapshot()).slides[0].blocks[0].html;
++  assert.match(html, /当前题新文案/);
++  assert.match(html, /另一题原文/);
++});
++
++it('example-card snapshots strip runtime-only question gate and editor-only dom', async () => {
++  const { window, exportSnapshot, root } = await createExampleCardBlockHarness();
++  root.setAttribute('data-question-active', 'true');
++  root.setAttribute('data-question-submitted', 'true');
++  root.classList.add('is-submitted');
++  const snapshot = await exportSnapshot();
++  const html = snapshot.slides[0].blocks[0].html;
++  assert.doesNotMatch(html, /data-question-active|data-question-submitted|is-submitted|qa-result-mark|data-editor-only/);
 +});
 ```
 
@@ -717,6 +984,9 @@ Commit:
 +window.DeckDataAuthoring.scheduleBlockSaveFromNode(qa);
 ```
 
+5. quiz 的保存宿主边界固定为当前 `.quiz-annotation` block；从 `.qa-note-content`、`.text-anchor`、`.answer-anchor` 触发保存时，不得只序列化局部 `[data-edit-id]` 根。
+6. 整块回写前必须剥离 `.note-active`、`.note-expanded`、`.anchor-active`、`.qa-connector-canvas`、`.connector-step`、`.connector-hover`、`.qa-result-mark` 与同类纯运行时节点 / class，避免刷新后把“当前展开状态”和“批改结果态”误当成 authored 内容。
+
 - [ ] **Step 4: 改 `example-card-runtime.js` 与 `editor-utils.js`，不仅改保存路径，还要删 localStorage / AnnotationStore 旧恢复链**
 
 必须同时完成：
@@ -724,6 +994,9 @@ Commit:
 1. 清理 `readStoredEditableHTML()`、`getAnnotationStoreElementHTML()`、`scheduleAnnotationStoreHydration()` 旧文本恢复链。
 2. 清理 `writeStoredAuthoringConfig()` 和对应 localStorage authoring config 路径，除非它被明确迁入 deck document schema；本计划第一版默认不迁，故直接删除并用 block 数据承载。
 3. 保留 `.qa-option-text` 可编辑，但编辑态文本统一回写当前 example-card block。
+4. example-card 的保存宿主边界固定为整张 `.example-card` block；不得因为当前正在编辑某一道题，就只序列化 `.example-card__question` 子树，否则多题卡片会在保存后丢掉未激活题目内容。
+5. `data-question-active`、`data-question-submitted`、`.is-submitted`、`.qa-result-mark` 以及 `data-editor-only` 生成的作者态控件都属于运行时 / 作者态门禁，不得写回 JSON 真相源；这些状态必须在 runtime init / submit / 切题时重新推导。
+6. 普通页面 fragment host 对 example-card 的 reveal / hover 门禁继续只认 runtime 重新推导出的“当前激活且已提交题目”；不能依赖快照里残留的 question gate 属性。
 
 - [ ] **Step 5: 运行 quiz / example-card 回归并提交**
 
@@ -731,7 +1004,7 @@ Run:
 
 ```powershell
 +Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
-+node --test tests/quiz-annotation-runtime.test.js tests/example-card-runtime.test.js tests/page-richtext-annotation-runtime.test.js
++node --test tests/quiz-annotation-runtime.test.js tests/example-card-runtime.test.js tests/page-richtext-annotation-runtime.test.js tests/deck-data-authoring.test.js
 ```
 
 Expected: PASS，且“新增/删除批注需要刷新两次”类回归为 0，并且不再调用旧 `AnnotationStore` 路径。
@@ -744,36 +1017,142 @@ Commit:
 +git commit -m "feat: migrate quiz and example-card to block snapshots"
 ```
 
+### Task 5 / Task 6 实现时最容易写错的检查清单
+
+> 用法：真正开始改 `deck-data-authoring.js`、`quiz-annotation-runtime.js`、`example-card-runtime.js`、`editor-utils.js` 时，提交前至少逐条过一遍。只要有一条不能明确回答“是”，就先不要继续扩大改动面。
+
+1. **保存宿主是否最终落在 `data-block-id` 上，而不是停在中间层？**
+
+  - 普通正文从 `[data-edit-id]` 触发保存时，最终必须写回最近的 block。
+  - quiz 从 `.qa-note-content`、`.text-anchor`、`.answer-anchor` 触发保存时，最终必须写回整个 `.quiz-annotation` 所在 block。
+  - example-card 从 `.qa-option-text`、题干、解析区触发保存时，最终必须写回整张 `.example-card` 所在 block。
+
+2. **example-card 是否误存成“当前激活题子树”了？**
+
+  - 多题 example-card 改当前题文案后，快照里仍然必须保留未激活题目的原始 DOM。
+  - 如果保存结果只剩当前 `.example-card__question`，说明宿主边界已经写错。
+
+3. **`cleanBlockHtml()` 是否真的在做“组件级净化”，而不是只清编辑器 wrapper？**
+
+  - 不能只删 `contenteditable`、拖拽手柄、编辑浮层。
+  - 还必须给 quiz / example-card 留出额外净化口，把各自运行时脏状态一并剥掉。
+
+4. **quiz 运行时脏状态是否被明确剥离出快照？**
+
+  - 快照里不应残留 `.note-active`、`.note-expanded`、`.anchor-active`。
+  - 快照里不应残留 `.qa-connector-canvas`、`.connector-step`、`.connector-hover`。
+  - 快照里不应残留 `.qa-result-mark` 这类判题结果 DOM。
+
+5. **example-card 运行时门禁是否被错误落盘了？**
+
+  - 快照里不应残留 `data-question-active`、`data-question-submitted`、`.is-submitted`。
+  - 快照里不应残留 `data-editor-only` 生成的作者态控件。
+  - 这些状态必须在 runtime init / submit / 切题时重新推导，而不是从快照复活。
+
+6. **普通页 fragment host 是否仍然只认 runtime 重新计算出的门禁？**
+
+  - example-card 的 reveal / hover 资格仍然只能基于“当前激活且已提交题目”实时计算。
+  - 不能改成依赖快照里残留的 question gate 属性，否则切题或刷新后会出现宿主错绑。
+
+7. **旧持久化链是否真的删干净，而不是偷偷并行存在？**
+
+  - example-card 不能再走 `readStoredEditableHTML()`、`getAnnotationStoreElementHTML()`、`scheduleAnnotationStoreHydration()`。
+  - quiz 不能再走 `AnnotationStore.scheduleSave()`、`saveNow()`、`authorizeAndSave()`、`hasWriteAccess()` 这一整条旧路径。
+  - 如果新旧链并存，最常见的症状就是“第一次刷新没变，第二次才对”或“新内容被旧缓存回写覆盖”。
+
+8. **`editor-utils.js` 的 generic editable 流水线是否误伤了 quiz / example-card 的专属边界？**
+
+  - `.example-card .qa-option-text` 仍然允许编辑，但保存目标必须是 example-card block。
+  - `.quiz-annotation .qa-option-text` 仍然不能被 generic 稳定 id / 通用恢复链抢走控制权。
+
+9. **撤销 / 重做和持久化是否仍然保持“内存历史栈 vs 最新快照”分层？**
+
+  - undo / redo 只看运行时内存历史，不向 IndexedDB 追历史帧。
+  - 恢复后的最新 DOM 可以重新同步成最新快照，但不能因此再插入新的 history 帧。
+
+10. **读取覆盖后是否仍然走受控重启，而不是热替换局部 DOM？**
+
+  - 读取确认后必须重建 deck、刷新 slides runtime、重建 editor / quiz / example-card 初始化。
+  - 不能在旧监听器、旧 history、旧运行时状态还活着时，直接把新 block html 塞回当前页面。
+
+11. **doodle 是否仍然和本轮 JSON 真相源严格隔离？**
+
+  - JSON 保存 / 读取不应写 doodle 的 localStorage，也不应清理 `.doodle` sidecar。
+  - 挂在左下角 doodle 按钮右侧的“保存 / 读取”只是共用 UI 锚点，不代表 doodle 数据一起迁移。
+
+12. **最便宜的回归现象是否都手动对过一遍？**
+
+  - quiz：新增批注后刷新一次即恢复，删除批注后刷新一次仍保持删除态。
+  - example-card：改选项文本后刷新一次即恢复，多题卡片未激活题不丢。
+  - 普通页 fragment：切题、提交、刷新后 hover / reveal 不串宿主。
+
+#### 代码评审口令版
+
+> 用法：每改完一个相关文件，先把下面这 10 句顺着过一遍；只要有一句答不上来，就回到上面的长清单逐条补证据。
+
+1. 宿主回到 `data-block-id` 了吗？
+2. example-card 还是整张卡保存吗？
+3. `cleanBlockHtml()` 连 quiz / example-card 的运行时脏状态一起清了吗？
+4. quiz 的 active / connector / result mark 没进快照吧？
+5. example-card 的 question gate / editor-only / submitted 态没进快照吧？
+6. 普通页 fragment host 还只认 runtime 现算门禁吧？
+7. 旧 localStorage / AnnotationStore 链真的拆干净了吗？
+8. `editor-utils.js` 没把 quiz / example-card 的专属边界冲掉吧？
+9. undo/redo 还是只看内存历史，IndexedDB 只存最新快照吧？
+10. 读取覆盖仍然是受控重启，doodle 仍然完全隔离吧？
+
 ---
 
 ## Phase E: 保存、skill 输出与示例课件
 
-### Task 6: 增加左上角“保存到本地化文件”按钮与 JSON 导出链路
+### Task 7: 在左下角 doodle 按钮右侧增加“保存 / 读取”按钮，并完成 JSON 写回与覆盖读取链路
 
 **Files:**
 - Create: `assets/deck-save-runtime.js`
 - Create: `testing/tests/deck-save-runtime.test.js`
+- Create: `testing/tests/doodle-runtime-compat.test.js`
 - Create: `testing/tests/helpers/deck-save-harness.js`
 - Modify: `assets/editor-core.js`
 - Modify: `assets/editor.css`
 - Modify: `assets/deck-shell.css`
 
-- [ ] **Step 1: 先写保存按钮失败测试，锁住“导出的是当前 IndexedDB 快照，不是 DOM 即时拼接字符串”**
+- [ ] **Step 1: 先写保存/读取失败测试，锁住“保存写回最新快照，读取覆盖必须二次确认”**
 
 ```js
 +import { test } from 'node:test';
 +import assert from 'node:assert/strict';
 +import { createSaveHarness } from './helpers/deck-save-harness.js';
 +
-+test('save runtime exports current deck snapshot as json', async () => {
++test('save runtime writes current deck snapshot to the sibling same-name json file', async () => {
 +  const runtime = await createSaveHarness({ deckId: 'demo', blockHtml: '<p>Saved</p>' });
-+  const exported = await runtime.exportCurrentDeck();
-+  assert.equal(exported.deckId, 'demo');
-+  assert.match(JSON.stringify(exported), /Saved/);
++  const result = await runtime.saveDeckToFile();
++  assert.equal(result.targetPath, './demo.deck.json');
++  assert.match(result.writtenJson, /Saved/);
++});
++
++test('read runtime asks for overwrite confirmation before replacing current deck state', async () => {
++  const runtime = await createSaveHarness({ deckId: 'demo', blockHtml: '<p>Before</p>' });
++  const result = await runtime.readDeckFromSeedFile();
++  assert.equal(result.confirmationRequired, true);
++  assert.equal(result.applied, false);
++});
++
++test('confirmed read rebuilds the deck through a controlled restart instead of hot-swapping current dom', async () => {
++  const runtime = await createSaveHarness({ deckId: 'demo', blockHtml: '<p>Before</p>' });
++  const result = await runtime.confirmReadAndApply();
++  assert.deepEqual(result.lifecycle, ['runtime:dispose', 'render:start', 'render:done', 'slides:refresh', 'editor:init', 'quiz:init', 'example-card:init']);
++  assert.equal(result.historyReset, true);
++});
++
++test('json save and read never mutate doodle sidecar state', async () => {
++  const runtime = await createSaveHarness({ deckId: 'demo', blockHtml: '<p>Before</p>', doodleStorageSeeded: true });
++  await runtime.saveDeckToFile();
++  await runtime.readDeckFromSeedFile();
++  assert.equal(runtime.doodleStorageWriteCount, 0);
 +});
 ```
 
-- [ ] **Step 2: 实现 `assets/deck-save-runtime.js`，只负责导出与文件句柄复用**
+- [ ] **Step 2: 实现 `assets/deck-save-runtime.js`，负责同主名 JSON 写回、读取与覆盖确认**
 
 最小 API：
 
@@ -791,16 +1170,30 @@ Commit:
 +    const json = JSON.stringify(snapshot, null, 2);
 +  }
 +
-+  window.DeckSaveRuntime = { exportCurrentDeck, saveDeckToFile };
++  async function readDeckFromSeedFile() {}
++
++  window.DeckSaveRuntime = { exportCurrentDeck, saveDeckToFile, readDeckFromSeedFile };
 +})();
 ```
 
-- [ ] **Step 3: 修改 `editor-core.js`，把保存按钮注入到左上角固定区域**
+要求：
+
+1. `saveDeckToFile()` 默认写回 manifest 指向的同目录同主名 JSON；不得让保存目标与当前 HTML 对应 JSON 脱钩。
+2. `readDeckFromSeedFile()` 默认读取 manifest 指向的同目录同主名 JSON。
+3. 读取后不得立刻覆盖，必须先弹出二次确认；只有用户明确确认，才允许替换 IndexedDB 当前快照并触发重新渲染。
+4. 若用户取消覆盖，当前页面与 IndexedDB 状态必须完全保持不变。
+5. 读取失败时必须给出显式错误提示，禁止静默失败。
+6. 用户确认覆盖后，`deck-save-runtime.js` 只能调用 `DeckRuntimeEntry.restartDeckRuntime()` 或等价受控重启入口；禁止自己直接替换 `#deck` 内容。
+7. 覆盖完成后必须把 history 栈重置到“新快照刚加载完成”的基线，不能保留旧内容的 undo / redo 帧。
+8. JSON 保存/读取链路不得读写 doodle localStorage 或 `.doodle` 导入导出状态；doodle 继续完全走独立链路。
+
+- [ ] **Step 3: 修改 `editor-core.js`，把“保存 / 读取”两个按钮注入到左下角 doodle 按钮右侧**
 
 新增按钮 HTML：
 
 ```html
-+<button type="button" class="deck-save-btn" aria-label="保存到本地化文件">保存到本地化文件</button>
++<button type="button" class="deck-save-btn" aria-label="保存">保存</button>
++<button type="button" class="deck-load-btn" aria-label="读取">读取</button>
 ```
 
 绑定行为：
@@ -809,23 +1202,33 @@ Commit:
 +saveBtn.addEventListener('click', function () {
 +  window.DeckSaveRuntime.saveDeckToFile();
 +});
++loadBtn.addEventListener('click', function () {
++  window.DeckSaveRuntime.readDeckFromSeedFile();
++});
 ```
 
-- [ ] **Step 4: 在 `editor.css` 与 `deck-shell.css` 里补保存按钮样式，不影响现有编辑开关**
+要求：
+
+1. 两个按钮必须并排放在左下角 doodle 按钮右侧，作为同一工具区的一部分。
+2. 不得挪到左上角或顶部工具条，避免与用户现有操作习惯冲突。
+3. doodle 按钮本身继续保留并可用，本轮只在它右侧扩展 JSON 保存/读取入口。
+
+- [ ] **Step 4: 在 `editor.css` 与 `deck-shell.css` 里补保存/读取按钮样式，不影响现有编辑开关与 doodle 区域**
 
 按钮需满足：
 
-1. 固定在左上角工具区。
+1. 固定在左下角 doodle 工具区右侧。
 2. 编辑模式与放映模式都可见。
 3. 不使用“自动保存”文案，避免误解为实时写文件。
+4. 两个按钮必须明确区分主次态，避免把“读取”误解为“刷新页面”。
 
-- [ ] **Step 5: 运行保存按钮测试并提交**
+- [ ] **Step 5: 运行保存/读取按钮测试并提交**
 
 Run:
 
 ```powershell
 +Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
-+node --test tests/deck-save-runtime.test.js tests/deck-data-authoring.test.js
++node --test tests/deck-save-runtime.test.js tests/doodle-runtime-compat.test.js tests/deck-data-authoring.test.js
 ```
 
 Expected: PASS
@@ -834,11 +1237,11 @@ Commit:
 
 ```powershell
 +Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
-+git add assets/deck-save-runtime.js assets/editor-core.js assets/editor.css assets/deck-shell.css testing/tests/deck-save-runtime.test.js testing/tests/helpers/deck-save-harness.js
-+git commit -m "feat: add explicit json export button"
++git add assets/deck-save-runtime.js assets/editor-core.js assets/editor.css assets/deck-shell.css testing/tests/deck-save-runtime.test.js testing/tests/doodle-runtime-compat.test.js testing/tests/helpers/deck-save-harness.js
++git commit -m "feat: add explicit json save and reload buttons"
 ```
 
-### Task 7: 改写 skill 输出机制，让新课件生成 HTML 壳 + JSON 数据文件
+### Task 8: 改写 skill 输出机制，让新课件生成 HTML 壳 + JSON 数据文件
 
 **Files:**
 - Modify: `SKILL.md`
@@ -859,6 +1262,8 @@ Commit:
 +  const template = fs.readFileSync(new URL('../../references/html-template.md', import.meta.url), 'utf8');
 +  assert.match(template, /deck-runtime-entry\.js/);
 +  assert.match(template, /deck-manifest/);
++  assert.match(template, /foo\.html/);
++  assert.match(template, /foo\.deck\.json/);
 +  assert.doesNotMatch(template, /annotation-store\.js/);
 +});
 ```
@@ -878,7 +1283,8 @@ Commit:
 1. HTML 是壳。
 2. JSON 存所有 slide / block 内容。
 3. 新课件不再默认依赖 `annotation-store.js`。
-4. 首版禁用 `custom-box`、`native mods`、`doodle`。
+4. 文件命名固定为 `foo.html` 对应 `foo.deck.json`，二者必须在同目录且主名一致。
+5. 首版禁用 `custom-box`、`native mods`；`doodle` 保留现有能力，但其数据存储不纳入本轮 JSON 真相源迁移。
 
 - [ ] **Step 3: 修改 `references/html-template.md` 与 `references/component-templates.md`**
 
@@ -893,8 +1299,10 @@ Commit:
 
 1. 首次打开时会从同目录 JSON 导入缓存。
 2. 平时编辑只修改本地缓存。
-3. 点击左上角按钮才会把当前状态写回 JSON 文件。
-4. 首版新架构暂不支持 `custom-box`、`native mods`、`doodle`。
+3. 点击左下角 doodle 按钮右侧的“保存”按钮，才会把当前状态写回同目录同主名 JSON 文件。
+4. 点击左下角 doodle 按钮右侧的“读取”按钮时，会先读取同目录同主名 JSON，并在覆盖前要求用户二次确认。
+5. 首版新架构暂不支持 `custom-box`、`native mods`；`doodle` 保留现有能力，但其数据存储不纳入本轮 JSON 真相源迁移。
+6. 读取确认后会走一次受控重启，避免旧 DOM 监听器、旧 history 帧和新内容混在一起。
 
 - [ ] **Step 5: 运行输出契约测试并提交**
 
@@ -915,7 +1323,7 @@ Commit:
 +git commit -m "docs: switch skill output to shell plus deck json"
 ```
 
-### Task 8: 用新架构重生成示例课件并做整体验证
+### Task 9: 用新架构重生成示例课件并做整体验证
 
 **Files:**
 - Modify: `高考英语阅读实战.html`
@@ -932,6 +1340,7 @@ Commit:
 1. HTML 只保留壳、manifest、脚本引用。
 2. 原本正文、题干、批注、例题内容全部迁入对应 `.deck.json`。
 3. 删除同目录旧 `.annotations.js` 在新示例中的依赖关系。
+4. 示例文件命名必须满足 HTML 与 JSON 同主名绑定，例如 `高考英语阅读实战.html` 对应 `高考英语阅读实战.deck.json`。
 
 - [ ] **Step 2: 补开发者文档，说明 quiz / example-card 在新架构里的保存语义**
 
@@ -939,8 +1348,9 @@ Commit:
 
 1. 组件内容现在跟随 block JSON 走。
 2. 日常编辑不会实时写同目录文件。
-3. 显式点击保存按钮才会导出当前状态。
-4. 首版不支持 `custom-box`、`native mods`、`doodle`。
+3. 显式点击左下角 doodle 按钮右侧的“保存”按钮才会把当前状态写回同目录同主名 JSON。
+4. 点击“读取”按钮后，只有在用户二次确认覆盖后才会用同目录同主名 JSON 替换当前内容。
+5. 首版不支持 `custom-box`、`native mods`；`doodle` 保留现有能力，但其数据存储不纳入本轮 JSON 真相源迁移。
 
 - [ ] **Step 3: 跑全量自动化回归**
 
@@ -966,8 +1376,9 @@ Expected: PASS
 1. 新增批注后刷新一次即可恢复。
 2. 删除批注后刷新一次仍保持删除态。
 3. example-card 选项文本编辑后刷新一次即可恢复。
-4. 点击左上角按钮能导出 JSON 文件。
-5. 清空 IndexedDB 后，重新打开 HTML 仍能从 JSON 还原。
+4. 点击左下角“保存”按钮能把当前状态写回同目录同主名 JSON 文件。
+5. 点击左下角“读取”按钮时，必须先看到覆盖确认；取消后内容不变，确认后才用 JSON 覆盖当前内容。
+6. 清空 IndexedDB 后，重新打开 HTML 仍能从 JSON 还原。
 
 - [ ] **Step 5: 完成最终提交**
 
@@ -1162,15 +1573,18 @@ function cleanBlockHtml(blockEl) {
 
 ### Spec coverage
 
-1. HTML 壳保留播放器 chrome + 空挂载根（不是越空越好）：Task 1、Task 2、Task 7、Task 8 覆盖；Bug 1 记录了因过度剥离导致的问题与修复。
-2. JSON 外挂文件为真相源：Task 1、Task 3、Task 6、Task 7 覆盖。
+1. HTML 壳保留播放器 chrome + 空挂载根（不是越空越好）：Task 1、Task 2、Task 8、Task 9 覆盖；Bug 1 记录了因过度剥离导致的问题与修复。
+2. JSON 外挂文件为真相源：Task 1、Task 3、Task 4、Task 8 覆盖。
 3. 启动顺序被固定并前置验证：Task 1、Task 2 覆盖。
 4. IndexedDB 作为最新状态缓存：Task 3、Task 4、Task 5 覆盖。
-5. 撤销 / 重做基于运行时内存历史栈：Task 4 覆盖。
-6. 左上角保存按钮：Task 6 覆盖。
-7. 正文、批注、标注全部迁入新架构：Task 4、Task 5、Task 8 覆盖。
-8. 旧持久化残留链路被显式迁移：Task 4、Task 5 覆盖。
-9. 首版范围外能力被显式关停：固定契约、Task 4、Task 7、Task 8 覆盖。
+5. 撤销 / 重做基于运行时内存历史栈：Task 5 覆盖。
+6. 左下角 doodle 右侧的保存/读取按钮：Task 7 覆盖。
+7. 正文、批注、标注全部迁入新架构：Task 4、Task 5、Task 6、Task 9 覆盖。
+8. 旧持久化残留链路被显式迁移：Task 5、Task 6 覆盖。
+9. 首版范围外能力与保留边界被显式写清：固定契约、Task 5、Task 8、Task 9 覆盖。
+10. HTML 与 JSON 的同主名绑定被写成契约并进入输出测试：固定契约、Task 1、Task 8、Task 9 覆盖。
+11. 手动“读取并覆盖”被锁成一次受控重启，而不是局部 DOM 热替换：固定契约、Task 2、Task 7、Task 9 覆盖。
+12. doodle 保持独立链路，JSON 保存/读取不得污染其存储或导入导出流程：固定契约、Task 7、Task 8、Task 9 覆盖。
 
 ### Placeholder scan
 
