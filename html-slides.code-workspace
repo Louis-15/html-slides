@@ -1,12 +1,15 @@
 {
 	"folders": [
 		{
+			"name": "Coding_Copilot",
 			"path": "../../Coding_Copilot"
 		},
 		{
+			"name": "html-slides",
 			"path": "."
 		},
 		{
+			"name": "Intermediate Products",
 			"path": "../Intermediate Products"
 		}
 	],
