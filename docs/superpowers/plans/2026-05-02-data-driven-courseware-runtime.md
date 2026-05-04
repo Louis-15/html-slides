@@ -784,6 +784,16 @@ Commit:
 - Create: `testing/tests/helpers/deck-authoring-harness.js`
 - Create: `testing/tests/helpers/deck-history-harness.js`
 
+**执行顺序与边界：**
+
+1. 本任务只负责普通块 authoring、history 边界、普通页 sidecar 触发链切换。
+2. 在本任务完成前，不得修改 `assets/quiz-annotation-runtime.js`、`assets/example-card-runtime.js`、`assets/editor-utils.js`。
+3. 推荐把本任务按 3 个连续切片推进：
+  - 切片 A：`deck-data-authoring.js` 最小桥接 + 普通块失败测试。
+  - 切片 B：`editor-history.js` / `editor-persistence.js` 入口切换。
+  - 切片 C：普通页 `editor-rich-text.js` / `page-richtext-annotation-runtime.js` sidecar 触发链切换。
+4. 只有本任务相关窄测试全绿后，才能进入 Task 6。
+
 - [ ] **Step 1: 先写普通块 authoring 失败测试，并补一个“编辑态 DOM 不得污染快照”的失败测试**
 
 ```js
@@ -851,6 +861,7 @@ Commit:
 5. 允许在撤销 / 重做恢复完成后把恢复后的最新 DOM 重新写回 IndexedDB，但不得在这个同步过程中新增 history 帧。
 6. `saveBlockFromNode(node)` 的宿主边界只认 `data-block-id`，不认中间层的 `[data-edit-id]`、`.qa-note-bubble`、`.text-anchor`、`.example-card__question` 或按钮容器；quiz 与 example-card 仍然是“整块真相源”，不能被误切成子块保存。
 7. `cleanBlockHtml(blockEl)` 必须支持组件级额外净化规则；至少要允许 quiz/example-card 在整块回写前剥离各自的运行时脏状态，而不是只清理普通页面的编辑器 wrapper。
+8. 这一阶段只打通普通块最小闭环，不接入 quiz / example-card 专属 runtime；组件级净化只允许预留扩展口，不允许顺手把组件迁移并进来。
 
 - [ ] **Step 4: 修改 `assets/editor-history.js`，显式保留“历史栈在内存、持久化层只存最新结果”的边界**
 
@@ -869,8 +880,9 @@ Commit:
 2. `restoreAllElements()` 改为 no-op，填值由 renderer 完成。
 3. 数据驱动模式下，`saveCustomBoxes()`、`loadCustomBoxes()`、`saveNativeMods()`、`restoreNativeMods()` 全部显式 no-op 或 gated return。
 4. 补中文注释，说明这些能力属于首版范围外，禁止“半迁移半保留”。
+5. 这一阶段只做代理与旧入口关停，不扩大到 quiz / example-card 的宿主边界问题。
 
-- [ ] **Step 6: 改 `editor-rich-text.js` 与 `page-richtext-annotation-runtime.js`，彻底切断旧 sidecar 触发**
+- [ ] **Step 6: 只改普通页 `editor-rich-text.js` 与 `page-richtext-annotation-runtime.js`，彻底切断旧 sidecar 触发**
 
 把以下调用全部替换：
 
@@ -884,6 +896,12 @@ Commit:
 ```js
 +window.DeckDataAuthoring.scheduleBlockSaveFromNode(targetNode)
 ```
+
+要求：
+
+1. 只处理普通页路径，不动 quiz / example-card 组件专属 runtime。
+2. 这一刀完成后，普通页路径不再写旧 `AnnotationStore` sidecar。
+3. 如果这里出现“第一次刷新没变，第二次才对”，先回查普通页是否仍存在双写 / 双恢复链，不要提前跳去修改 renderer。
 
 - [ ] **Step 7: 运行普通块 authoring / history 测试与相关回归并提交**
 
@@ -919,6 +937,13 @@ Commit:
 - Create: `testing/tests/helpers/deck-quiz-block-harness.js`
 - Create: `testing/tests/helpers/deck-example-card-harness.js`
 
+**执行顺序与边界：**
+
+1. 本任务必须严格按下面顺序串行推进：先 quiz 写路径，再 quiz 旧链拆除；再 example-card 整卡保存，再 example-card 旧链拆除；最后才允许动 `editor-utils.js`。
+2. 不允许把 quiz 迁移和 example-card 迁移并成同一次大改，也不允许把 `editor-utils.js` 提前成第一刀。
+3. 如果实际提交要合并，只能按相邻切片合并；不能跨 quiz / example-card / Task 7 乱并。
+4. 只有本任务全量回归通过后，才能进入 Task 7 的“保存 / 读取”按钮链路。
+
 - [ ] **Step 1: 先补 quiz 失败测试，锁住“新增 / 删除批注一次刷新就生效”**
 
 ```js
@@ -939,7 +964,68 @@ Commit:
 +});
 ```
 
-- [ ] **Step 2: 再补 example-card 失败测试，锁住题干 / 选项 / 解析的块级持久化**
+- [ ] **Step 2: 先只改 `quiz-annotation-runtime.js` 的写路径与快照净化，不拆旧初始化 / 授权链**
+
+必须同时完成：
+
+1. 所有锚点、气泡正文、删除墓碑变化统一先接到：
+
+```js
++window.DeckDataAuthoring.scheduleBlockSaveFromNode(qa);
+```
+
+2. quiz 的保存宿主边界固定为当前 `.quiz-annotation` block；从 `.qa-note-content`、`.text-anchor`、`.answer-anchor` 触发保存时，不得只序列化局部 `[data-edit-id]` 根。
+3. 整块回写前必须剥离 `.note-active`、`.note-expanded`、`.anchor-active`、`.qa-connector-canvas`、`.connector-step`、`.connector-hover`、`.qa-result-mark` 与同类纯运行时节点 / class。
+4. 这一刀不删 `AnnotationStore.whenReady()`、授权状态文案与旧初始化栅栏；先把“写路径已切换且快照已净化”单独跑稳。
+
+- [ ] **Step 3: 运行 quiz 窄回归并提交第一刀**
+
+Run:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
++node --test tests/quiz-annotation-runtime.test.js tests/deck-data-authoring.test.js
+```
+
+Expected: PASS，且“新增 / 删除批注一次刷新就生效”已经成立。
+
+Commit:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
++git add assets/quiz-annotation-runtime.js testing/tests/quiz-annotation-runtime.test.js testing/tests/helpers/deck-quiz-block-harness.js
++git commit -m "feat: persist quiz mutations via block snapshots"
+```
+
+- [ ] **Step 4: 再拆 `quiz-annotation-runtime.js` 的旧 AnnotationStore 初始化 / 授权链**
+
+必须同时完成：
+
+1. 删除 `AnnotationStore.scheduleSave()` / `saveNow()` / `authorizeAndSave()` / `hasWriteAccess()` 路径。
+2. 删除 `getAnnotationStoreElementHTML()` 和 `AnnotationStore.whenReady()` 初始化栅栏。
+3. 删除旧 JSON 存档状态文案与首次授权分支。
+4. 如果这一步出现“第一次刷新没变，第二次才对”，优先回查是否仍存在旧 localStorage / `AnnotationStore` 双恢复链，而不是先怀疑 renderer。
+
+- [ ] **Step 5: 运行 quiz 全量回归并提交第二刀**
+
+Run:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
++node --test tests/quiz-annotation-runtime.test.js tests/page-richtext-annotation-runtime.test.js tests/deck-data-authoring.test.js
+```
+
+Expected: PASS，且不再调用旧 `AnnotationStore` 路径。
+
+Commit:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
++git add assets/quiz-annotation-runtime.js testing/tests/quiz-annotation-runtime.test.js
++git commit -m "refactor: remove legacy annotation-store flow from quiz"
+```
+
+- [ ] **Step 6: 再补 example-card 失败测试，锁住题干 / 选项 / 解析的块级持久化**
 
 ```js
 +it('persists edited example-card option text through block html snapshots', async () => {
@@ -971,34 +1057,45 @@ Commit:
 +});
 ```
 
-- [ ] **Step 3: 改 `quiz-annotation-runtime.js`，不仅改保存路径，还要删完整个旧 AnnotationStore 链**
+- [ ] **Step 7: 先只改 `example-card-runtime.js` 的整卡保存边界，不拆旧恢复链，也不提前动 `editor-utils.js`**
 
 必须同时完成：
 
-1. 删除 `AnnotationStore.scheduleSave()` / `saveNow()` / `authorizeAndSave()` / `hasWriteAccess()` 路径。
-2. 删除 `getAnnotationStoreElementHTML()` 和 `AnnotationStore.whenReady()` 初始化栅栏。
-3. 删除旧 JSON 存档状态文案与首次授权分支。
-4. 所有锚点、气泡正文、删除墓碑变化统一改为：
+1. 保留 `.qa-option-text` 可编辑，但编辑态文本统一回写当前 example-card block。
+2. example-card 的保存宿主边界固定为整张 `.example-card` block；不得因为当前正在编辑某一道题，就只序列化 `.example-card__question` 子树，否则多题卡片会在保存后丢掉未激活题目内容。
+3. 这一刀先锁住“整卡保存”和“多题不丢内容”，不删 `readStoredEditableHTML()`、`getAnnotationStoreElementHTML()`、`scheduleAnnotationStoreHydration()`、`writeStoredAuthoringConfig()`。
 
-```js
-+window.DeckDataAuthoring.scheduleBlockSaveFromNode(qa);
+- [ ] **Step 8: 运行 example-card 窄回归并提交第三刀**
+
+Run:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime/testing'
++node --test tests/example-card-runtime.test.js tests/deck-data-authoring.test.js
 ```
 
-5. quiz 的保存宿主边界固定为当前 `.quiz-annotation` block；从 `.qa-note-content`、`.text-anchor`、`.answer-anchor` 触发保存时，不得只序列化局部 `[data-edit-id]` 根。
-6. 整块回写前必须剥离 `.note-active`、`.note-expanded`、`.anchor-active`、`.qa-connector-canvas`、`.connector-step`、`.connector-hover`、`.qa-result-mark` 与同类纯运行时节点 / class，避免刷新后把“当前展开状态”和“批改结果态”误当成 authored 内容。
+Expected: PASS，且多题卡片保存后未激活题不丢。
 
-- [ ] **Step 4: 改 `example-card-runtime.js` 与 `editor-utils.js`，不仅改保存路径，还要删 localStorage / AnnotationStore 旧恢复链**
+Commit:
+
+```powershell
++Set-Location 'd:/Projects/html-slides/.worktrees/data-driven-courseware-runtime'
++git add assets/example-card-runtime.js testing/tests/example-card-runtime.test.js testing/tests/helpers/deck-example-card-harness.js
++git commit -m "feat: persist example-card edits at card block level"
+```
+
+- [ ] **Step 9: 再拆 `example-card-runtime.js` 的旧恢复链，并把 `editor-utils.js` 留到最后只做边界修正**
 
 必须同时完成：
 
 1. 清理 `readStoredEditableHTML()`、`getAnnotationStoreElementHTML()`、`scheduleAnnotationStoreHydration()` 旧文本恢复链。
 2. 清理 `writeStoredAuthoringConfig()` 和对应 localStorage authoring config 路径，除非它被明确迁入 deck document schema；本计划第一版默认不迁，故直接删除并用 block 数据承载。
-3. 保留 `.qa-option-text` 可编辑，但编辑态文本统一回写当前 example-card block。
-4. example-card 的保存宿主边界固定为整张 `.example-card` block；不得因为当前正在编辑某一道题，就只序列化 `.example-card__question` 子树，否则多题卡片会在保存后丢掉未激活题目内容。
-5. `data-question-active`、`data-question-submitted`、`.is-submitted`、`.qa-result-mark` 以及 `data-editor-only` 生成的作者态控件都属于运行时 / 作者态门禁，不得写回 JSON 真相源；这些状态必须在 runtime init / submit / 切题时重新推导。
-6. 普通页面 fragment host 对 example-card 的 reveal / hover 门禁继续只认 runtime 重新推导出的“当前激活且已提交题目”；不能依赖快照里残留的 question gate 属性。
+3. `data-question-active`、`data-question-submitted`、`.is-submitted`、`.qa-result-mark` 以及 `data-editor-only` 生成的作者态控件都属于运行时 / 作者态门禁，不得写回 JSON 真相源；这些状态必须在 runtime init / submit / 切题时重新推导。
+4. 普通页面 fragment host 对 example-card 的 reveal / hover 门禁继续只认 runtime 重新推导出的“当前激活且已提交题目”；不能依赖快照里残留的 question gate 属性。
+5. 如果出现“切题后普通页 fragment 宿主错绑”，先查 question gate 是否残留在快照里，不要先改 `page-richtext-annotation-runtime.js` 的 host 选择算法。
+6. `editor-utils.js` 只能在这一步最后收口 generic editable / 稳定 id 边界：`.example-card .qa-option-text` 仍可编辑，而 `.quiz-annotation .qa-option-text` 不得被 generic 恢复链抢权。
 
-- [ ] **Step 5: 运行 quiz / example-card 回归并提交**
+- [ ] **Step 10: 运行 Task 6 全量回归并提交**
 
 Run:
 
@@ -1017,90 +1114,6 @@ Commit:
 +git commit -m "feat: migrate quiz and example-card to block snapshots"
 ```
 
-### Task 5 / Task 6 实现时最容易写错的检查清单
-
-> 用法：真正开始改 `deck-data-authoring.js`、`quiz-annotation-runtime.js`、`example-card-runtime.js`、`editor-utils.js` 时，提交前至少逐条过一遍。只要有一条不能明确回答“是”，就先不要继续扩大改动面。
-
-1. **保存宿主是否最终落在 `data-block-id` 上，而不是停在中间层？**
-
-  - 普通正文从 `[data-edit-id]` 触发保存时，最终必须写回最近的 block。
-  - quiz 从 `.qa-note-content`、`.text-anchor`、`.answer-anchor` 触发保存时，最终必须写回整个 `.quiz-annotation` 所在 block。
-  - example-card 从 `.qa-option-text`、题干、解析区触发保存时，最终必须写回整张 `.example-card` 所在 block。
-
-2. **example-card 是否误存成“当前激活题子树”了？**
-
-  - 多题 example-card 改当前题文案后，快照里仍然必须保留未激活题目的原始 DOM。
-  - 如果保存结果只剩当前 `.example-card__question`，说明宿主边界已经写错。
-
-3. **`cleanBlockHtml()` 是否真的在做“组件级净化”，而不是只清编辑器 wrapper？**
-
-  - 不能只删 `contenteditable`、拖拽手柄、编辑浮层。
-  - 还必须给 quiz / example-card 留出额外净化口，把各自运行时脏状态一并剥掉。
-
-4. **quiz 运行时脏状态是否被明确剥离出快照？**
-
-  - 快照里不应残留 `.note-active`、`.note-expanded`、`.anchor-active`。
-  - 快照里不应残留 `.qa-connector-canvas`、`.connector-step`、`.connector-hover`。
-  - 快照里不应残留 `.qa-result-mark` 这类判题结果 DOM。
-
-5. **example-card 运行时门禁是否被错误落盘了？**
-
-  - 快照里不应残留 `data-question-active`、`data-question-submitted`、`.is-submitted`。
-  - 快照里不应残留 `data-editor-only` 生成的作者态控件。
-  - 这些状态必须在 runtime init / submit / 切题时重新推导，而不是从快照复活。
-
-6. **普通页 fragment host 是否仍然只认 runtime 重新计算出的门禁？**
-
-  - example-card 的 reveal / hover 资格仍然只能基于“当前激活且已提交题目”实时计算。
-  - 不能改成依赖快照里残留的 question gate 属性，否则切题或刷新后会出现宿主错绑。
-
-7. **旧持久化链是否真的删干净，而不是偷偷并行存在？**
-
-  - example-card 不能再走 `readStoredEditableHTML()`、`getAnnotationStoreElementHTML()`、`scheduleAnnotationStoreHydration()`。
-  - quiz 不能再走 `AnnotationStore.scheduleSave()`、`saveNow()`、`authorizeAndSave()`、`hasWriteAccess()` 这一整条旧路径。
-  - 如果新旧链并存，最常见的症状就是“第一次刷新没变，第二次才对”或“新内容被旧缓存回写覆盖”。
-
-8. **`editor-utils.js` 的 generic editable 流水线是否误伤了 quiz / example-card 的专属边界？**
-
-  - `.example-card .qa-option-text` 仍然允许编辑，但保存目标必须是 example-card block。
-  - `.quiz-annotation .qa-option-text` 仍然不能被 generic 稳定 id / 通用恢复链抢走控制权。
-
-9. **撤销 / 重做和持久化是否仍然保持“内存历史栈 vs 最新快照”分层？**
-
-  - undo / redo 只看运行时内存历史，不向 IndexedDB 追历史帧。
-  - 恢复后的最新 DOM 可以重新同步成最新快照，但不能因此再插入新的 history 帧。
-
-10. **读取覆盖后是否仍然走受控重启，而不是热替换局部 DOM？**
-
-  - 读取确认后必须重建 deck、刷新 slides runtime、重建 editor / quiz / example-card 初始化。
-  - 不能在旧监听器、旧 history、旧运行时状态还活着时，直接把新 block html 塞回当前页面。
-
-11. **doodle 是否仍然和本轮 JSON 真相源严格隔离？**
-
-  - JSON 保存 / 读取不应写 doodle 的 localStorage，也不应清理 `.doodle` sidecar。
-  - 挂在左下角 doodle 按钮右侧的“保存 / 读取”只是共用 UI 锚点，不代表 doodle 数据一起迁移。
-
-12. **最便宜的回归现象是否都手动对过一遍？**
-
-  - quiz：新增批注后刷新一次即恢复，删除批注后刷新一次仍保持删除态。
-  - example-card：改选项文本后刷新一次即恢复，多题卡片未激活题不丢。
-  - 普通页 fragment：切题、提交、刷新后 hover / reveal 不串宿主。
-
-#### 代码评审口令版
-
-> 用法：每改完一个相关文件，先把下面这 10 句顺着过一遍；只要有一句答不上来，就回到上面的长清单逐条补证据。
-
-1. 宿主回到 `data-block-id` 了吗？
-2. example-card 还是整张卡保存吗？
-3. `cleanBlockHtml()` 连 quiz / example-card 的运行时脏状态一起清了吗？
-4. quiz 的 active / connector / result mark 没进快照吧？
-5. example-card 的 question gate / editor-only / submitted 态没进快照吧？
-6. 普通页 fragment host 还只认 runtime 现算门禁吧？
-7. 旧 localStorage / AnnotationStore 链真的拆干净了吗？
-8. `editor-utils.js` 没把 quiz / example-card 的专属边界冲掉吧？
-9. undo/redo 还是只看内存历史，IndexedDB 只存最新快照吧？
-10. 读取覆盖仍然是受控重启，doodle 仍然完全隔离吧？
-
 ---
 
 ## Phase E: 保存、skill 输出与示例课件
@@ -1115,6 +1128,12 @@ Commit:
 - Modify: `assets/editor-core.js`
 - Modify: `assets/editor.css`
 - Modify: `assets/deck-shell.css`
+
+**进入前提：**
+
+1. Task 5 与 Task 6 全量回归必须已经通过。
+2. quiz / example-card 的宿主边界、旧恢复链拆除、`editor-utils.js` 边界修正必须已经稳定。
+3. 本任务只负责把已经稳定的 block snapshot / controlled restart 能力挂到 UI，不允许回头再改 Task 5 / Task 6 的宿主归属。
 
 - [ ] **Step 1: 先写保存/读取失败测试，锁住“保存写回最新快照，读取覆盖必须二次确认”**
 
