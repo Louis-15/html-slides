@@ -740,47 +740,5 @@
     <script src="./assets/page-richtext-annotation-runtime.js"></script>
     <script src="./assets/doodle-runtime.js"></script>
     <script src="./assets/example-card-runtime.js"></script>
-
-    <script>
-        (function initLessonExampleCardPlayground() {
-            function assertInitialState(card) {
-                if (!card) {
-                    throw new Error('例题组件没有正确渲染');
-                }
-
-                if (card.classList.contains('is-submitted')) {
-                    throw new Error('例题组件初始态不应该已经提交');
-                }
-
-                if (card.querySelector('.example-card__option.selected')) {
-                    throw new Error('例题组件初始态不应该带预选答案');
-                }
-
-                if (!card.querySelector('.example-card__answer-key[data-answer-value="B"].is-active')) {
-                    throw new Error('例题组件初始正确答案没有同步到答案键');
-                }
-
-                if (!card.querySelector('.example-card__next-btn')) {
-                    throw new Error('例题组件初始态缺少多题导航按钮');
-                }
-            }
-
-            try {
-                if (!window.ExampleCardRuntime) {
-                    throw new Error('ExampleCardRuntime 未加载');
-                }
-
-                var card = document.querySelector('#exampleCardPlaygroundHost .example-card');
-                if (!card) {
-                    throw new Error('例题组件没有找到');
-                }
-
-                window.ExampleCardRuntime.initCard(card);
-                assertInitialState(card);
-            } catch (error) {
-                console.error(error);
-            }
-        })();
-    </script>
 </body>
 </html>

@@ -442,7 +442,7 @@
     row.appendChild(input);
 
     const stem = getQuestionStem(questionRoot || root);
-    if (stem) {
+    if (stem && stem.parentNode === main) {
       main.insertBefore(row, stem);
     } else {
       main.prepend(row);
@@ -474,7 +474,7 @@
     });
 
     const stem = getQuestionStem(questionRoot || root);
-    if (stem) {
+    if (stem && stem.parentNode === main) {
       main.insertBefore(row, stem);
     } else {
       main.prepend(row);
@@ -603,7 +603,7 @@
 
     ensureAnswerKeyRow(root, questionRoot);
     ensureChoiceAnswerSection(root, questionRoot);
-    ensureBlankAnswerEditorRow(root, questionRoot);
+    // 非填空题型不需要 blank editor — 避免 insertBefore 失败
   }
 
   function applyStoredAuthoringConfig(root, questionRoot, config) {
@@ -1411,10 +1411,11 @@
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
       initAll();
     });
   } else {
-    initAll();
+    // 延迟到下一个事件循环，确保 editor-core 等同步脚本已全部完成初始化
+    setTimeout(function () { initAll(); }, 0);
   }
 })();

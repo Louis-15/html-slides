@@ -146,16 +146,9 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/example-card-audio.js"></script>
     <script src="./assets/example-card-runtime.js"></script>
 
-    <!-- Example Card: placed directly in DOM (no <template> wrapper) -->
-    <!-- Runtime auto-discovers .example-card elements and initializes them -->
-    <script>
-        (function() {
-            var card = document.querySelector('#exampleCardPlaygroundHost .example-card');
-            if (card && window.ExampleCardRuntime) {
-                window.ExampleCardRuntime.initCard(card);
-            }
-        })();
-    </script>
+    <!-- Example Card: placed directly in DOM (no <template> wrapper).
+         Runtime auto-discovers .example-card elements and initializes them via initAll().
+         No manual initCard() call needed. -->
 </body>
 </html>
 ```

@@ -237,7 +237,7 @@ Do NOT include summary for:
 - Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js → [example-card-audio.js → example-card-runtime.js if needed]`
 - On ordinary pages, `ArrowUp/ArrowDown` own top-level focus and page turns; `ArrowLeft/ArrowRight` only step fragments inside the currently focused host. Do not generate inline `onclick` handlers to manage `.flip-card`, `.collapse-card`, or `.summary-trigger` state.
 - On slides that contain `.example-card`, `ArrowUp/ArrowDown` are reserved for previous-question / next-question inside the active card, and `ArrowLeft/ArrowRight` must stay pinned to the active `.example-card__main` host.
-- **Example-card content is placed directly in the slide DOM** (not inside `<template>`). The `.example-card` element is a child of the host div. Initialize with `ExampleCardRuntime.initCard(cardEl)` in an inline script — do not clone from a template.
+- **Example-card content is placed directly in the slide DOM** (not inside `<template>`). The `.example-card` element is a child of the host div. The runtime's `initAll()` auto-discovers and initializes it — no manual `initCard()` call is needed in inline scripts.
 
 ### Speaker Notes (Mandatory)
 
