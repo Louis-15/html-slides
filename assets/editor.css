@@ -696,3 +696,13 @@ html.editor-mode .slide.active *::after {
 .editor-mode .content-block {
     overflow: visible !important;
 }
+
+/* ===========================================
+   13. 保存/读取按钮颜色区分
+   =========================================== */
+.save-toggle svg {
+    color: var(--editor-accent);
+}
+.load-toggle svg {
+    color: var(--accent-green, #3fb950);
+}

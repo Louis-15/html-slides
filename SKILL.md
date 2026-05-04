@@ -237,6 +237,7 @@ Do NOT include summary for:
 - Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js → [example-card-audio.js → example-card-runtime.js if needed]`
 - On ordinary pages, `ArrowUp/ArrowDown` own top-level focus and page turns; `ArrowLeft/ArrowRight` only step fragments inside the currently focused host. Do not generate inline `onclick` handlers to manage `.flip-card`, `.collapse-card`, or `.summary-trigger` state.
 - On slides that contain `.example-card`, `ArrowUp/ArrowDown` are reserved for previous-question / next-question inside the active card, and `ArrowLeft/ArrowRight` must stay pinned to the active `.example-card__main` host.
+- **Example-card content is placed directly in the slide DOM** (not inside `<template>`). The `.example-card` element is a child of the host div. Initialize with `ExampleCardRuntime.initCard(cardEl)` in an inline script — do not clone from a template.
 
 ### Speaker Notes (Mandatory)
 
@@ -325,7 +326,7 @@ Follow Phase 2 (Content Analysis) → Phase 3 (Layout Planning) → Phase 4 (Gen
    - File location, slide count
    - Navigation: Arrow keys, Space, scroll/swipe, click nav dots
    - Speaker notes: Open DevTools (F12), detach to separate window
-   - Editing: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to export clean HTML
+   - Editing: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save changes to the HTML file, or use the save/load buttons near the edit toggle for archive/restore
 
 ---
 
@@ -368,7 +369,7 @@ If the user declines, stop here.
 | [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
 | [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 4 (generation) |
 | [audio-runtime.js](assets/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 4 (always included) |
-| [annotation-store.js](assets/annotation-store.js) | quiz-annotation sidecar 持久化与 `.annotations.js` 读写 | Phase 4 (when quiz-annotation is used) |
+| [annotation-store.js](assets/annotation-store.js) | 旧版 sidecar 兼容加载器（新课件标注数据直接内联在 HTML 元素中） | Phase 4 (always included for backward compat) |
 | [quiz-annotation-audio.js](assets/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
 | [quiz-annotation-runtime.js](assets/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
 | [example-card-audio.js](assets/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |

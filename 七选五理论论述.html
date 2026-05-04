@@ -23,7 +23,7 @@
 
     <style>
         /* 这页现在不再用顶部状态按钮模拟组件状态，
-           而是让用户直接通过真实作答流进入“选择态 / 提交后 / 编辑态”。
+           而是让用户直接通过真实作答流进入"选择态 / 提交后 / 编辑态"。
            因此这里要做的是把可用高度稳定收进 viewport，给底部 pager 留出安全区，
            避免解析展开后题卡继续向下扩张并压到上一页 / 下一页按钮。 */
         .example-card-playground {
@@ -533,9 +533,7 @@
             </div>
 
             <div class="slide-content layout-single example-card-playground" data-scrollable id="exampleCardPlayground">
-                <div class="example-card-playground__host" id="exampleCardPlaygroundHost"></div>
-
-                <template id="exampleCardPlaygroundTemplate">
+                <div class="example-card-playground__host" id="exampleCardPlaygroundHost">
                     <section class="example-card" data-question-type="single" data-card-id="lesson-example-card">
                         <article class="example-card__question is-active" data-question-id="lesson-example-q1" data-question-active="true" data-question-submitted="false">
                             <div class="example-card__main">
@@ -572,7 +570,7 @@
                             <aside class="example-card__analysis" hidden>
                                 <div class="example-card__analysis-title">解析</div>
                                 <div class="example-card__analysis-body" data-edit-id="lesson-example-analysis">
-                                    <p>原文里先说 the backyard was meant to provide fresh vegetables for the kitchen，后面才引出“后来意外吸引来蝴蝶和鸟”。</p>
+                                    <p>原文里先说 the backyard was meant to provide fresh vegetables for the kitchen，后面才引出"后来意外吸引来蝴蝶和鸟"。</p>
                                     <p>因此 B 是直接对应题干问法的原始意图，A 属于后来追加的想法，不是最初计划。</p>
                                 </div>
                             </aside>
@@ -695,7 +693,7 @@
 
                         <article class="example-card__question" data-question-id="lesson-example-q4" data-question-type="blank" data-question-active="false" data-question-submitted="false" hidden aria-hidden="true">
                             <div class="example-card__main">
-                                <div class="example-card__stem" data-edit-id="lesson-example-q4-stem">26. Complete the sentence from the talk: “By late summer, the garden had become a small haven for <span class="example-card__blank" data-blank-id="lesson-example-q4-blank-1" data-correct-answer="butterflies and bees">______</span>.”</div>
+                                <div class="example-card__stem" data-edit-id="lesson-example-q4-stem">26. Complete the sentence from the talk: "By late summer, the garden had become a small haven for <span class="example-card__blank" data-blank-id="lesson-example-q4-blank-1" data-correct-answer="butterflies and bees">______</span>."</div>
                             </div>
 
                             <aside class="example-card__analysis" hidden>
@@ -718,7 +716,7 @@
                             </div>
                         </article>
                     </section>
-                </template>
+                </div>
             </div>
 
             <script type="application/json" class="slide-notes">
@@ -745,22 +743,6 @@
 
     <script>
         (function initLessonExampleCardPlayground() {
-            const playground = document.getElementById('exampleCardPlayground');
-            const host = document.getElementById('exampleCardPlaygroundHost');
-            const template = document.getElementById('exampleCardPlaygroundTemplate');
-
-            function buildFreshCard() {
-                const nextCard = template.content.firstElementChild.cloneNode(true);
-
-                host.replaceChildren(nextCard);
-
-                if (window.ExampleCardRuntime && typeof window.ExampleCardRuntime.initCard === 'function') {
-                    window.ExampleCardRuntime.initCard(nextCard);
-                }
-
-                return nextCard;
-            }
-
             function assertInitialState(card) {
                 if (!card) {
                     throw new Error('例题组件没有正确渲染');
@@ -788,9 +770,13 @@
                     throw new Error('ExampleCardRuntime 未加载');
                 }
 
-                // 这里故意只渲染一次初始题卡，不再在课件页里伪造“提交后态 / 编辑态”的快捷切换。
-                // 这样用户看到的就是组件真实工作流：先在组件内部切题，再分别作答与提交；若要修改标准答案则进入系统编辑模式。
-                assertInitialState(buildFreshCard());
+                var card = document.querySelector('#exampleCardPlaygroundHost .example-card');
+                if (!card) {
+                    throw new Error('例题组件没有找到');
+                }
+
+                window.ExampleCardRuntime.initCard(card);
+                assertInitialState(card);
             } catch (error) {
                 console.error(error);
             }

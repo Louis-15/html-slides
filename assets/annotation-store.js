@@ -15,15 +15,7 @@
   'use strict';
 
   // === 内部状态 ===
-  var _fileHandle = null;
-  var _saveTimer = null;
-  var _hasPendingSave = false;
   var _initData = null;
-  var _permissionGranted = false;  // 真实权限状态追踪
-  var _firstGestureAuthInstalled = false;
-  var _firstGestureAuthAttempted = false;
-  var _exitFlushHookInstalled = false;
-  var _writeChain = Promise.resolve();
 
   // === 文件名推导 ===
 
@@ -32,45 +24,6 @@
     var path = decodeURIComponent(location.pathname);
     var htmlName = path.substring(path.lastIndexOf('/') + 1);
     return htmlName.replace(/\.html?$/i, '') + '.annotations.js';
-  }
-
-  // === IndexedDB：持久化文件句柄 ===
-
-  var DB_NAME = 'AnnotationFileHandles';
-  var DB_VERSION = 1;
-  var STORE_NAME = 'handles';
-
-  function _openDB() {
-    return new Promise(function (resolve, reject) {
-      var req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = function () { req.result.createObjectStore(STORE_NAME); };
-      req.onsuccess = function () { resolve(req.result); };
-      req.onerror = function () { reject(req.error); };
-    });
-  }
-
-  function _getHandleKey() { return 'ann:' + location.pathname; }
-
-  function _getStoredHandle() {
-    return _openDB().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(STORE_NAME, 'readonly');
-        var req = tx.objectStore(STORE_NAME).get(_getHandleKey());
-        req.onsuccess = function () { resolve(req.result || null); };
-        req.onerror = function () { reject(req.error); };
-      });
-    }).catch(function () { return null; });
-  }
-
-  function _storeHandle(handle) {
-    return _openDB().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).put(handle, _getHandleKey());
-        tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { reject(tx.error); };
-      });
-    }).catch(function () { });
   }
 
   // === 读取：本地 file:// 走可靠脚本注入，HTTP(S) 走沙箱 iframe ===
@@ -154,337 +107,6 @@
     });
   }
 
-  // === 写入：File System Access API ===
-
-  function _tryRestoreHandle() {
-    return _getStoredHandle().then(function (handle) {
-      if (!handle) return false;
-      return handle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
-        if (perm === 'granted') {
-          _fileHandle = handle;
-          _permissionGranted = true;
-          return true;
-        }
-        _fileHandle = handle;
-        _permissionGranted = false;
-        // 首次用户手势上的授权尝试交由 quiz-annotation 运行时统一触发，避免重复弹窗。
-        return 'needs-reauth';
-      });
-    }).catch(function () { return false; });
-  }
-
-  function _requestWritePermission() {
-    if (!_fileHandle) return _pickNewFile();
-    return _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
-      if (perm === 'granted') return true;
-      return _pickNewFile();
-    }).catch(function () { return _pickNewFile(); });
-  }
-
-  function _ensureWriteAccess() {
-    if (_fileHandle && _permissionGranted) return Promise.resolve(true);
-
-    return _requestWritePermission().then(function (ok) {
-      if (ok) {
-        _permissionGranted = true;
-        _updateStatus('ready');
-        return true;
-      }
-      _updateStatus('needs-auth');
-      return false;
-    }).catch(function () {
-      _updateStatus('error');
-      return false;
-    });
-  }
-
-  function _pickNewFile() {
-    if (!window.showSaveFilePicker) {
-      console.warn('[AnnotationStore] 浏览器不支持 File System Access API');
-      return Promise.resolve(false);
-    }
-    return window.showSaveFilePicker({
-      suggestedName: _getDataFilename(),
-      types: [{
-        description: '批注数据',
-        accept: { 'application/javascript': ['.js'] }
-      }]
-    }).then(function (handle) {
-      _fileHandle = handle;
-      _permissionGranted = true;
-      return _storeHandle(handle).then(function () { return true; });
-    }).catch(function (e) {
-      if (e.name !== 'AbortError') console.warn('[AnnotationStore] 选择文件失败:', e);
-      return false;
-    });
-  }
-
-  function _writeToFileNow(data) {
-    if (!_fileHandle) return Promise.resolve(false);
-    var jsContent = 'window.__annotationData = ' + JSON.stringify(data, null, 2) + ';\n';
-    return _fileHandle.createWritable().then(function (writable) {
-      return writable.write(jsContent).then(function () { return writable.close(); });
-    }).then(function () {
-      _updateStatus('saved');
-      return true;
-    }).catch(function (e) {
-      console.warn('[AnnotationStore] 写入失败:', e);
-      _updateStatus('error');
-      return false;
-    });
-  }
-
-  function _writeToFile(data) {
-    /* File System Access 的 createWritable() 默认会先截断目标文件。
-       新增批注时会连续触发“立即保存 + debounce 保存 + 退出编辑态冲刷”等多条写链路，
-       如果这里允许它们并发抢同一个 sidecar，后一个 writable 可能在前一个尚未 close 时
-       先把文件清空，最终就会留下 0 字节的 .annotations.js，刷新后所有新增批注都会丢失。
-       因此必须把 sidecar 写入串行化：前一笔彻底结束后，下一笔才能打开新的 writable。 */
-    var writeTask = _writeChain.catch(function () { return false; }).then(function () {
-      return _writeToFileNow(data);
-    });
-    _writeChain = writeTask.catch(function () { return false; });
-    return writeTask;
-  }
-
-  function _flushPendingSave() {
-    if (!_hasPendingSave) return Promise.resolve(false);
-
-    if (_saveTimer) {
-      clearTimeout(_saveTimer);
-      _saveTimer = null;
-    }
-
-    _hasPendingSave = false;
-    var data = _collectData();
-
-    if (_fileHandle && _permissionGranted) {
-      return _writeToFile(data);
-    }
-
-    if (_fileHandle && !_permissionGranted) {
-      return _fileHandle.requestPermission({ mode: 'readwrite' }).then(function (perm) {
-        if (perm === 'granted') {
-          _permissionGranted = true;
-          _updateStatus('ready');
-          return _writeToFile(data);
-        }
-        _updateStatus('needs-auth');
-        return false;
-      }).catch(function () {
-        _updateStatus('needs-auth');
-        return false;
-      });
-    }
-
-    _updateStatus('needs-auth');
-    return Promise.resolve(false);
-  }
-
-  // === 数据收集 ===
-
-  function _stripTransientQuizState(html) {
-    if (!html) return html;
-
-    var needsQuizCleanup = html.indexOf('qa-blank-slot') !== -1;
-    var needsFragmentCleanup = html.indexOf('data-fragment-step') !== -1 || html.indexOf('qa-fragment-visible') !== -1;
-    if (!needsQuizCleanup && !needsFragmentCleanup) return html;
-
-    var temp = document.createElement('div');
-    temp.innerHTML = html;
-
-    if (needsQuizCleanup) {
-      temp.querySelectorAll('.qa-blank-slot[data-correct-answer]').forEach(function (slot) {
-        slot.removeAttribute('data-user-answer');
-        slot.classList.remove('filled', 'slot-answered', 'result-correct', 'result-incorrect', 'show-correct-answer');
-        slot.querySelectorAll('.qa-result-mark, .qa-blank-correct').forEach(function (el) { el.remove(); });
-
-        var answerSpan = slot.querySelector('.qa-blank-answer');
-        if (answerSpan) {
-          answerSpan.textContent = '';
-          answerSpan.style.display = 'none';
-        }
-
-        var userSpan = slot.querySelector('.qa-blank-user');
-        if (userSpan) {
-          var sup = userSpan.querySelector('sup');
-          userSpan.textContent = '';
-          var valueSpan = document.createElement('span');
-          valueSpan.className = 'qa-blank-value';
-          userSpan.appendChild(valueSpan);
-          if (sup) userSpan.appendChild(sup);
-        }
-      });
-    }
-
-    if (needsFragmentCleanup) {
-      temp.querySelectorAll('[data-fragment-step]').forEach(function (fragment) {
-        fragment.classList.remove('qa-fragment-visible');
-        fragment.removeAttribute('data-fragment-manual-reveal');
-      });
-    }
-
-    return temp.innerHTML;
-  }
-
-  function _collectOrdinaryFragmentElements(data) {
-    document.querySelectorAll('.slide').forEach(function (slide) {
-      if (!slide || slide.querySelector('.quiz-annotation')) return;
-
-      var collectedOrdinaryRoots = Object.create(null);
-
-      slide.querySelectorAll('[data-fragment-step="true"]').forEach(function (fragment) {
-        var root = fragment.closest('[data-edit-id]');
-        if (!root || !slide.contains(root) || root.closest('.quiz-annotation')) return;
-
-        var editId = root.getAttribute('data-edit-id');
-        if (!editId) return;
-        if (collectedOrdinaryRoots[editId]) return;
-        collectedOrdinaryRoots[editId] = true;
-
-        /* 普通页面隐藏型标注沿用 AnnotationStore 的 elements[editId] = innerHTML 结构，
-           这里保存的是“拥有 fragment 的最近 ordinary 根块”，而不是祖先根块或单独抽 fragment patch。
-           这样可以和作者态、运行时都统一到同一个 owning root：嵌套 ordinary roots 时，fragment
-           必须归属于最近的 data-edit-id 根块，才能避免 sidecar 粒度漂移到外层祖先，导致恢复结果
-           与页面实际编辑 / 播放链路不一致。 */
-        data.elements[editId] = _stripTransientQuizState(root.innerHTML);
-      });
-    });
-  }
-
-  function _collectData() {
-    var data = {
-      version: 1,
-      timestamp: new Date().toISOString(),
-      title: document.title || '',
-      elements: {},
-      answerKeys: [],
-      deletedNotes: []
-    };
-
-    document.querySelectorAll('.quiz-annotation').forEach(function (qa, qaIndex) {
-      // 先收集删除列表（仅用于清洗，不写入文件）
-      var raw = qa.dataset.deletedNotes;
-      if (raw) {
-        try {
-          JSON.parse(raw).forEach(function (id) {
-            if (data.deletedNotes.indexOf(id) === -1) data.deletedNotes.push(id);
-          });
-        } catch (e) { }
-      }
-
-      // 左侧段落（含 text-anchor 锚点，有 data-edit-id）
-      qa.querySelectorAll('.qa-passage [data-edit-id]').forEach(function (el) {
-        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(_cleanDeletedAnchors(el.innerHTML, data.deletedNotes));
-      });
-
-      // 答题面板中有 data-edit-id 的元素（AI 原生气泡等）
-      qa.querySelectorAll('.qa-answer-panel [data-edit-id]').forEach(function (el) {
-        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(_cleanDeletedAnchors(el.innerHTML, data.deletedNotes));
-      });
-
-      // 批注气泡内容（只保存未删除的）
-      qa.querySelectorAll('.qa-note-bubble .qa-note-content[data-edit-id]').forEach(function (el) {
-        var bubble = el.closest('.qa-note-bubble');
-        var linkId = bubble ? bubble.getAttribute('data-link') : null;
-        if (linkId && data.deletedNotes.indexOf(linkId) !== -1) return;
-        data.elements[el.getAttribute('data-edit-id')] = _stripTransientQuizState(el.innerHTML);
-      });
-
-      // 右侧关联：answer-anchor 在 .qa-option-text 中（没有 data-edit-id）
-      // 格式: "{linkId}-right" → { qaIndex, option, innerHTML }
-      qa.querySelectorAll('.answer-anchor[data-link-answer], .answer-anchor[data-link]').forEach(function (anchor) {
-        var linkId = anchor.getAttribute('data-link-answer') || anchor.getAttribute('data-link');
-        if (!linkId || data.deletedNotes.indexOf(linkId) !== -1) return;
-        var option = anchor.closest('.qa-option');
-        var optionText = anchor.closest('.qa-option-text');
-        if (option && optionText) {
-          data.elements[linkId + '-right'] = {
-            qaIndex: qaIndex,
-            option: option.getAttribute('data-option'),
-            innerHTML: _stripTransientQuizState(optionText.innerHTML)
-          };
-        }
-      });
-
-      // 正确答案配置：选择题保存 data-correct，连线题保存每个空位的 data-correct-answer
-      qa.querySelectorAll('.qa-question').forEach(function (question, questionIndex) {
-        var questionType = question.getAttribute('data-type') || 'single';
-
-        if (questionType === 'matching') {
-          var blanks = [];
-          qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]').forEach(function (slot) {
-            blanks.push({
-              blankId: slot.getAttribute('data-blank-id') || '',
-              correctAnswer: slot.getAttribute('data-correct-answer') || ''
-            });
-          });
-
-          if (blanks.length > 0) {
-            data.answerKeys.push({
-              qaIndex: qaIndex,
-              questionIndex: questionIndex,
-              type: questionType,
-              blanks: blanks
-            });
-          }
-          return;
-        }
-
-        var correctOptions = [];
-        question.querySelectorAll('.qa-option[data-correct="true"]').forEach(function (option) {
-          var optionId = option.getAttribute('data-option');
-          if (optionId) correctOptions.push(optionId);
-        });
-
-        data.answerKeys.push({
-          qaIndex: qaIndex,
-          questionIndex: questionIndex,
-          type: questionType,
-          correctOptions: correctOptions
-        });
-      });
-    });
-
-    _collectOrdinaryFragmentElements(data);
-
-     /* deletedNotes 不能在导出前清空。
-       删除批注时，源码 HTML 里的 text-anchor / answer-anchor / qa-note-bubble 仍然存在；
-       如果 sidecar 不把这份“墓碑列表”写回去，刷新后运行时就不知道哪些源码节点该继续 purge，
-       结果就是当前会话里删掉的批注在重新加载后又从原始 HTML 里复活。 */
-
-    return data;
-  }
-
-  /**
-   * 从 HTML 字符串中清除已删除批注的锚点标记
-   */
-  function _cleanDeletedAnchors(html, deletedIds) {
-    if (!deletedIds || deletedIds.length === 0) return html;
-    var temp = document.createElement('div');
-    temp.innerHTML = html;
-    var changed = false;
-    deletedIds.forEach(function (linkId) {
-      // 清除 text-anchor
-      temp.querySelectorAll('.text-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
-        anchor.querySelectorAll('.note-badge').forEach(function (b) { b.remove(); });
-        var parent = anchor.parentNode;
-        while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
-        parent.removeChild(anchor);
-        changed = true;
-      });
-      // 清除 answer-anchor
-      temp.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
-        anchor.querySelectorAll('.note-badge').forEach(function (b) { b.remove(); });
-        var parent = anchor.parentNode;
-        while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
-        parent.removeChild(anchor);
-        changed = true;
-      });
-    });
-    return changed ? temp.innerHTML : html;
-  }
-
   function _readStoredEditableHTML(editId) {
     var utils = window._editorUtils;
 
@@ -537,7 +159,7 @@
 
         /* localStorage 是当前设备上的最新编辑态快照，sidecar 是跨刷新/跨会话的文件快照。
            当两者同时存在且版本不一致时，如果这里仍无条件套用 sidecar，
-           就会把“刚写进 localStorage 的新富文本标注”重新覆盖成旧文件内容，
+           就会把"刚写进 localStorage 的新富文本标注"重新覆盖成旧文件内容，
            用户看到的表现就是第一次刷新回到旧版本、第二次刷新才恢复。
            因此这里必须对齐普通页面的恢复语义：优先采用 localStorage，sidecar 只做兜底。 */
         var storedHTML = _readStoredEditableHTML(key);
@@ -627,60 +249,6 @@
     });
   }
 
-  function _installFirstGestureAuth() {
-    if (_firstGestureAuthInstalled || _firstGestureAuthAttempted) return;
-    if (_fileHandle && _permissionGranted) return;
-
-    _firstGestureAuthInstalled = true;
-
-    function removeListeners() {
-      if (!_firstGestureAuthInstalled) return;
-      _firstGestureAuthInstalled = false;
-      document.removeEventListener('click', handleFirstGesture, true);
-      document.removeEventListener('keydown', handleFirstGesture, true);
-    }
-
-    function handleFirstGesture() {
-      removeListeners();
-      _firstGestureAuthAttempted = true;
-      /* 本地课件的用户记忆是“打开后第一次真实操作时授权一次，后面自动保存”。
-         这里恢复的是“先拿句柄和写权限”，而不是立刻整包写文件。
-         这样既能保留原来的无感自动保存体验，也能避免在 DOM 仍处于恢复中的时刻
-         把一个尚未完全回放的快照覆盖写回 sidecar。 */
-      _ensureWriteAccess();
-    }
-
-    document.addEventListener('click', handleFirstGesture, true);
-    document.addEventListener('keydown', handleFirstGesture, true);
-  }
-
-  function _installExitFlushHook() {
-    if (_exitFlushHookInstalled) return;
-
-    function registerHook() {
-      if (_exitFlushHookInstalled) return true;
-      if (!window.EditorHooks || typeof window.EditorHooks.register !== 'function') return false;
-
-      _exitFlushHookInstalled = true;
-      window.EditorHooks.register('onEditModeExit', function () {
-        /* 富文本标注目前通过 300ms debounce 写 sidecar。
-           如果用户刚改完就退出编辑模式并立刻刷新，定时器常常还没来得及落盘，
-           第一次刷新就只能读到旧 sidecar，第二次才看见新内容。
-           退出编辑模式是一个明确的“我要结束这轮编辑”的边界，这里直接冲刷待保存队列，
-           让第一次刷新就能看到刚刚新增的标注。 */
-        _flushPendingSave();
-      });
-      return true;
-    }
-
-    if (registerHook()) return;
-    document.addEventListener('editor-utils-ready', function handleEditorUtilsReady() {
-      if (registerHook()) {
-        document.removeEventListener('editor-utils-ready', handleEditorUtilsReady);
-      }
-    });
-  }
-
   // === 初始化 ===
 
   var _readyResolve;
@@ -713,7 +281,7 @@
 
       // annotation-store 在 mixed / quiz deck 中通常先于 editor-utils 加载。
       // 这里不能因为 helper 当下还没注册就直接放弃普通元素恢复，而是要等到 editor-utils
-      // 广播“已就绪”或页面完成后再做一次稳定 id 准备，然后才回放通用 data-edit-id 数据。
+      // 广播"已就绪"或页面完成后再做一次稳定 id 准备，然后才回放通用 data-edit-id 数据。
       document.addEventListener('editor-utils-ready', finalizeApply, { once: true });
       document.addEventListener('DOMContentLoaded', finalizeApply, { once: true });
       window.addEventListener('load', finalizeApply, { once: true });
@@ -721,7 +289,6 @@
   }
 
   function _init() {
-    _installExitFlushHook();
     _loadDataFile().then(function (data) {
       if (data) {
         _initData = data;
@@ -729,16 +296,6 @@
       }
       return null;
     }).then(function () {
-      return _tryRestoreHandle();
-    }).then(function (handleStatus) {
-      if (handleStatus === true) {
-        _updateStatus('ready');
-      } else if (handleStatus === 'needs-reauth') {
-        _updateStatus('needs-auth');
-      }
-      if (!_permissionGranted) {
-        _installFirstGestureAuth();
-      }
       _readyResolve(!!_initData);
     }).catch(function () {
       _readyResolve(false);
@@ -752,41 +309,14 @@
     getInitData: function () { return _initData; },
 
     scheduleSave: function () {
-      _hasPendingSave = true;
-      if (_saveTimer) clearTimeout(_saveTimer);
-      _saveTimer = setTimeout(function () {
-        _saveTimer = null;
-        _flushPendingSave();
-      }, 300);
+      // 标注内容已通过 editor-persistence 的 input 监听器自动存入 localStorage。
+      // 最终保存由 editor-persistence.saveToHTMLFile() 统一完成。
     },
-
-    saveNow: function () {
-      var data = _collectData();
-      if (!_fileHandle) return Promise.resolve(false);
-      return _writeToFile(data);
-    },
-
-    authorizeAndSave: function () {
-      return _ensureWriteAccess().then(function (ok) {
-        if (ok) {
-          var data = _collectData();
-          return _writeToFile(data);
-        }
-        return false;
-      });
-    },
-
-    ensureWriteAccess: function () {
-      return _ensureWriteAccess();
-    },
-
-    flushPendingSave: function () {
-      return _flushPendingSave();
-    },
-
-    hasWriteAccess: function () {
-      return !!_fileHandle && _permissionGranted;
-    }
+    saveNow: function () { return Promise.resolve(false); },
+    authorizeAndSave: function () { return Promise.resolve(false); },
+    ensureWriteAccess: function () { return Promise.resolve(false); },
+    flushPendingSave: function () { return Promise.resolve(false); },
+    hasWriteAccess: function () { return false; }
   };
 
   _init();

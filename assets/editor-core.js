@@ -38,6 +38,26 @@
       '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
     document.body.insertBefore(editToggle, hotzone.nextSibling);
 
+    // 保存按钮
+    var saveToggle = document.createElement("button");
+    saveToggle.className = "edit-toggle save-toggle";
+    saveToggle.id = "saveToggle";
+    saveToggle.title = "保存到 HTML 文件 (Ctrl+S)";
+    saveToggle.style.left = "75px";
+    saveToggle.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>';
+    document.body.insertBefore(saveToggle, editToggle.nextSibling);
+
+    // 读取按钮
+    var loadToggle = document.createElement("button");
+    loadToggle.className = "edit-toggle load-toggle";
+    loadToggle.id = "loadToggle";
+    loadToggle.title = "从 HTML 文件读取存档";
+    loadToggle.style.left = "130px";
+    loadToggle.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>';
+    document.body.insertBefore(loadToggle, saveToggle.nextSibling);
+
     // 富文本工具栏
     var toolbar = document.createElement("div");
     toolbar.className = "rich-toolbar";
@@ -259,10 +279,16 @@
     hotzone.addEventListener("mouseenter", function () {
       clearTimeout(hideTimeout);
       editToggle.classList.add("show");
+      if (saveToggle) saveToggle.classList.add("show");
+      if (loadToggle) loadToggle.classList.add("show");
     });
     hotzone.addEventListener("mouseleave", function () {
       hideTimeout = setTimeout(function () {
-        if (!editorCore.isActive) editToggle.classList.remove("show");
+        if (!editorCore.isActive) {
+          editToggle.classList.remove("show");
+          if (saveToggle) saveToggle.classList.remove("show");
+          if (loadToggle) loadToggle.classList.remove("show");
+        }
       }, 400);
     });
     editToggle.addEventListener("mouseenter", function () {
@@ -270,7 +296,11 @@
     });
     editToggle.addEventListener("mouseleave", function () {
       hideTimeout = setTimeout(function () {
-        if (!editorCore.isActive) editToggle.classList.remove("show");
+        if (!editorCore.isActive) {
+          editToggle.classList.remove("show");
+          if (saveToggle) saveToggle.classList.remove("show");
+          if (loadToggle) loadToggle.classList.remove("show");
+        }
       }, 400);
     });
     editToggle.addEventListener("click", function (e) {
@@ -280,6 +310,31 @@
     hotzone.addEventListener("click", function () {
       editorCore.toggleEditMode();
     });
+    // 保存和读取按钮的悬浮保持
+    if (saveToggle) {
+      saveToggle.addEventListener("mouseenter", function () { clearTimeout(hideTimeout); });
+      saveToggle.addEventListener("mouseleave", function () {
+        hideTimeout = setTimeout(function () {
+          if (!editorCore.isActive) {
+            editToggle.classList.remove("show");
+            if (saveToggle) saveToggle.classList.remove("show");
+            if (loadToggle) loadToggle.classList.remove("show");
+          }
+        }, 400);
+      });
+    }
+    if (loadToggle) {
+      loadToggle.addEventListener("mouseenter", function () { clearTimeout(hideTimeout); });
+      loadToggle.addEventListener("mouseleave", function () {
+        hideTimeout = setTimeout(function () {
+          if (!editorCore.isActive) {
+            editToggle.classList.remove("show");
+            if (saveToggle) saveToggle.classList.remove("show");
+            if (loadToggle) loadToggle.classList.remove("show");
+          }
+        }, 400);
+      });
+    }
   }
 
   // 4. 添加文本框按钮
@@ -303,6 +358,39 @@
       e.stopPropagation();
       var tbar = document.getElementById("richToolbar");
       if (tbar) tbar.classList.remove("visible");
+    });
+  }
+
+  // 6. 保存按钮事件
+  if (saveToggle) {
+    saveToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (window.PersistenceLayer && typeof window.PersistenceLayer.saveToHTMLFile === "function") {
+        window.PersistenceLayer.saveToHTMLFile().then(function (ok) {
+          if (ok) {
+            saveToggle.style.background = "var(--accent-green, #3fb950)";
+            saveToggle.style.borderColor = "var(--accent-green, #3fb950)";
+            saveToggle.style.color = "#fff";
+            setTimeout(function () {
+              saveToggle.style.background = "";
+              saveToggle.style.borderColor = "";
+              saveToggle.style.color = "";
+            }, 1500);
+          }
+        });
+      }
+    });
+  }
+
+  // 7. 读取按钮事件
+  if (loadToggle) {
+    loadToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (confirm("读取存档将放弃当前未保存的修改，并刷新页面。确定继续？")) {
+        if (window.PersistenceLayer && typeof window.PersistenceLayer.loadFromHTMLFile === "function") {
+          window.PersistenceLayer.loadFromHTMLFile();
+        }
+      }
     });
   }
 
@@ -337,7 +425,11 @@
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
         e.preventDefault();
-        PersistenceLayer.exportCleanHTML();
+        if (window.PersistenceLayer && typeof window.PersistenceLayer.saveToHTMLFile === "function") {
+          window.PersistenceLayer.saveToHTMLFile();
+        } else {
+          PersistenceLayer.exportCleanHTML();
+        }
       }
       if (editorCore._navLocked) {
         var navKeys = [

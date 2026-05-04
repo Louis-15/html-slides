@@ -146,9 +146,15 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/example-card-audio.js"></script>
     <script src="./assets/example-card-runtime.js"></script>
 
+    <!-- Example Card: placed directly in DOM (no <template> wrapper) -->
+    <!-- Runtime auto-discovers .example-card elements and initializes them -->
     <script>
-        /* Only per-presentation custom JS stays inline
-           (e.g., Chart.js config, custom interactions) */
+        (function() {
+            var card = document.querySelector('#exampleCardPlaygroundHost .example-card');
+            if (card && window.ExampleCardRuntime) {
+                window.ExampleCardRuntime.initCard(card);
+            }
+        })();
     </script>
 </body>
 </html>

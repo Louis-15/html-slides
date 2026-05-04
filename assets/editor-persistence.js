@@ -15,6 +15,10 @@
     var getAllSlides = utils.getAllSlides;
     var EditorHooks = window.EditorHooks;
 
+    // === 保存到 HTML 文件：File System Access 句柄 ===
+    var _htmlFileHandle = null;
+    var _htmlWriteChain = Promise.resolve();
+
     function stripTransientEditableHTML(html) {
         if (!html) return html;
         if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1) {
@@ -58,6 +62,124 @@
         } catch (e) {
             return null;
         }
+    }
+
+    // ========================================
+    // 保存到 HTML 文件（存档/读档）
+    // ========================================
+
+    function _getHTMLFilename() {
+        var path = decodeURIComponent(location.pathname);
+        var name = path.substring(path.lastIndexOf('/') + 1);
+        return name || 'courseware.html';
+    }
+
+    function _removeDeletedAnnotationNodes(clone) {
+        var allDeleted = [];
+        document.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+            var raw = qa.dataset.deletedNotes;
+            if (raw) {
+                try {
+                    JSON.parse(raw).forEach(function (id) {
+                        if (allDeleted.indexOf(id) === -1) allDeleted.push(id);
+                    });
+                } catch (e) { }
+            }
+        });
+
+        if (allDeleted.length === 0) return;
+
+        allDeleted.forEach(function (linkId) {
+            clone.querySelectorAll('.text-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+                var parent = anchor.parentNode;
+                while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+                parent.removeChild(anchor);
+            });
+            clone.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+                var parent = anchor.parentNode;
+                while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+                parent.removeChild(anchor);
+            });
+        });
+    }
+
+    function _prepareCleanHTML() {
+        var clone = document.documentElement.cloneNode(true);
+
+        // 移除编辑器 UI
+        clone.querySelectorAll([
+            '.rich-toolbar', '.edit-toggle', '.edit-hotzone',
+            '.box-controls', '.rs-handle', '.floating-controls', '.overlay-ctrl',
+            '.qa-annotation-toolbar', '.qa-note-fragment-toolbar', '.page-richtext-fragment-toolbar',
+            '#doodleToolbar', '#doodleToggleBtn', '#doodleLaserPointer'
+        ].join(',')).forEach(function (el) { el.remove(); });
+
+        // 剥离 native-edit-wrap 壳
+        clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
+            while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
+            wrap.remove();
+        });
+
+        // 清除 transient class 和属性
+        clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
+            el.classList.remove('qa-fragment-visible');
+        });
+        clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
+            el.removeAttribute('data-fragment-manual-reveal');
+        });
+
+        // 移除编辑/doodle 模式 class
+        var body = clone.querySelector('body');
+        if (body) {
+            body.classList.remove('editor-mode');
+            body.classList.remove('doodle-mode');
+        }
+        var htmlEl = clone.querySelector('html');
+        if (htmlEl) {
+            htmlEl.classList.remove('editor-mode');
+        }
+
+        // 物理删除已删除批注的锚点节点
+        _removeDeletedAnnotationNodes(clone);
+
+        // 触发导出清洗钩子
+        if (EditorHooks) {
+            EditorHooks.fire('onExportClean', clone);
+        }
+
+        return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    function _requestHTMLFileAccess() {
+        if (!window.showSaveFilePicker) {
+            console.warn('[PersistenceLayer] 浏览器不支持 File System Access API');
+            return Promise.resolve(false);
+        }
+        return window.showSaveFilePicker({
+            suggestedName: _getHTMLFilename(),
+            types: [{
+                description: 'HTML 课件',
+                accept: { 'text/html': ['.html'] }
+            }]
+        }).then(function (handle) {
+            _htmlFileHandle = handle;
+            return true;
+        }).catch(function (e) {
+            if (e.name !== 'AbortError') console.warn('[PersistenceLayer] 选择文件失败:', e);
+            return false;
+        });
+    }
+
+    function _writeHTMLToFile(html) {
+        if (!_htmlFileHandle) return Promise.resolve(false);
+        // 串行化写入，防止并发截断
+        var task = _htmlWriteChain.catch(function () { return false; }).then(function () {
+            return _htmlFileHandle.createWritable().then(function (writable) {
+                return writable.write(html).then(function () { return writable.close(); });
+            });
+        });
+        _htmlWriteChain = task.catch(function () { return false; });
+        return task;
     }
 
     var PersistenceLayer = {
@@ -247,6 +369,40 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(a.href);
+        },
+
+        /** 💾 保存到 HTML 文件（存档） */
+        saveToHTMLFile: function () {
+            var cleanHTML = _prepareCleanHTML();
+
+            if (_htmlFileHandle) {
+                return _htmlFileHandle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+                    if (perm === 'granted') {
+                        return _writeHTMLToFile(cleanHTML);
+                    }
+                    return _requestHTMLFileAccess().then(function (ok) {
+                        return ok ? _writeHTMLToFile(cleanHTML) : false;
+                    });
+                });
+            }
+
+            return _requestHTMLFileAccess().then(function (ok) {
+                return ok ? _writeHTMLToFile(cleanHTML) : false;
+            });
+        },
+
+        /** 📂 从 HTML 文件读取存档（清除草稿并刷新） */
+        loadFromHTMLFile: function () {
+            var prefix = storageKey('');
+            var keysToRemove = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key && key.indexOf(prefix) === 0) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(function (key) { localStorage.removeItem(key); });
+            location.reload();
         }
     };
 
