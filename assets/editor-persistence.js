@@ -19,43 +19,26 @@
     var _htmlFileHandle = null;
     var _htmlWriteChain = Promise.resolve();
 
+    /**
+     * 清洗要存入 localStorage 的 HTML 字符串，只剥离嵌入在 [data-edit-id]
+     * 文本片段内的运行时瞬态标记（fragment 显隐状态）。
+     * 组件的交互状态（selected/flipped/step-active 等）不在 [data-edit-id]
+     * 内部，因此无需在此处理——基线快照方案从架构上保证了它们不会被写入 HTML。
+     * 与主分支保持一致的最小清洗逻辑。
+     */
     function stripTransientEditableHTML(html) {
         if (!html) return html;
-        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1
-            && html.indexOf('selected') === -1 && html.indexOf('result-correct') === -1
-            && html.indexOf('result-incorrect') === -1 && html.indexOf('is-submitted') === -1
-            && html.indexOf('is-active') === -1 && html.indexOf('qa-result-mark') === -1
-            && html.indexOf('data-question-active') === -1 && html.indexOf('data-question-submitted') === -1) {
+        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1) {
             return html;
         }
 
         var temp = document.createElement('div');
         temp.innerHTML = html;
-        // 批注 fragment 瞬态
         temp.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
             el.classList.remove('qa-fragment-visible');
         });
         temp.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
             el.removeAttribute('data-fragment-manual-reveal');
-        });
-        // 例题组件交互瞬态
-        temp.querySelectorAll('.selected').forEach(function (el) {
-            el.classList.remove('selected');
-        });
-        temp.querySelectorAll('.result-correct,.result-incorrect').forEach(function (el) {
-            el.classList.remove('result-correct', 'result-incorrect');
-        });
-        temp.querySelectorAll('.is-submitted,.is-analysis-open').forEach(function (el) {
-            el.classList.remove('is-submitted', 'is-analysis-open');
-        });
-        temp.querySelectorAll('.qa-result-mark').forEach(function (el) {
-            el.remove();
-        });
-        temp.querySelectorAll('[data-question-active]').forEach(function (el) {
-            el.removeAttribute('data-question-active');
-        });
-        temp.querySelectorAll('[data-question-submitted]').forEach(function (el) {
-            el.removeAttribute('data-question-submitted');
         });
         return temp.innerHTML;
     }
@@ -187,66 +170,90 @@
     }
 
     /**
-     * XHR 失败时的回退：克隆当前 DOM 并全面清洗。
-     * 必须删除所有编辑器注入的 UI 元素（hotzone、按钮、toolbar、pager）、
-     * 清除运行时 chrome 状态、去除交互瞬态。与 exportCleanHTML 不同，
-     * 保存流程不注入 safety style，因此不能保留编辑按钮——必须物理删除。
+     * 生成待保存的 HTML 内容。
+     * ★ 架构：白名单模式 —— 只保存 [data-edit-id] 元素的内容+格式。
+     *
+     * 优先使用页面加载时捕获的干净 DOM 基线快照（__BASELINE__），
+     * 它是在所有运行时 JS 执行前克隆的原始 HTML 结构，不含任何
+     * 组件交互状态。在此基线上只覆盖 localStorage 中的编辑内容，
+     * 天然保证不会把任何组件状态写入 HTML 文件。
+     *
+     * 如果没有基线快照（旧课件），则回退到克隆当前 DOM + 清洗的方案。
      */
     function _prepareCleanHTMLFallback() {
-        var clone = document.documentElement.cloneNode(true);
+        // === 路径 A：有基线快照（新课件）—— 白名单模式 ===
+        if (window.__BASELINE__) {
+            var clone = window.__BASELINE__.cloneNode(true);
 
-        // 1. 删除编辑器注入的全部 UI 节点
-        clone.querySelectorAll('.edit-hotzone, .edit-toggle, .rich-toolbar, #slidePager').forEach(function (el) {
+            // 只把用户编辑过的 [data-edit-id] 内容从 localStorage 盖到基线上
+            clone.querySelectorAll('[data-edit-id]').forEach(function (target) {
+                var id = target.getAttribute('data-edit-id');
+                var saved = readStoredValue('e:' + id);
+                if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
+            });
+
+            _removeDeletedAnnotationNodes(clone);
+            clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
+            if (EditorHooks) EditorHooks.fire('onExportClean', clone);
+            return '<!DOCTYPE html>\n' + clone.outerHTML;
+        }
+
+        // === 路径 B：无基线快照（旧课件）—— 回退：克隆当前 DOM 并清洗 ===
+        var clone2 = document.documentElement.cloneNode(true);
+
+        // 删除编辑器注入的全部 UI 节点
+        clone2.querySelectorAll('.edit-hotzone, .edit-toggle, .rich-toolbar, #slidePager').forEach(function (el) {
             el.remove();
         });
 
-        // 2. 清除 <html> 和 <body> 上运行时添加的空 class
-        var htmlEl = clone.querySelector('html');
-        if (htmlEl && htmlEl.getAttribute('class') === '') htmlEl.removeAttribute('class');
-        var bodyEl = clone.querySelector('body');
-        if (bodyEl) {
-            if (bodyEl.getAttribute('class') === '') bodyEl.removeAttribute('class');
-            bodyEl.classList.remove('editor-mode', 'doodle-mode');
+        // 清除 chrome 运行时状态
+        var htmlEl2 = clone2.querySelector('html');
+        if (htmlEl2 && htmlEl2.getAttribute('class') === '') htmlEl2.removeAttribute('class');
+        var bodyEl2 = clone2.querySelector('body');
+        if (bodyEl2) {
+            if (bodyEl2.getAttribute('class') === '') bodyEl2.removeAttribute('class');
+            bodyEl2.classList.remove('editor-mode', 'doodle-mode');
         }
+        var progressEl2 = clone2.querySelector('#progress');
+        if (progressEl2) progressEl2.removeAttribute('style');
+        var particlesEl2 = clone2.querySelector('#particles');
+        if (particlesEl2) particlesEl2.innerHTML = '';
+        var counterEl2 = clone2.querySelector('#counter');
+        if (counterEl2) counterEl2.textContent = '';
+        var nd2 = clone2.querySelector('.nav-dots'); if (nd2) nd2.innerHTML = '';
+        var sn2 = clone2.querySelector('#slideNav'); if (sn2) sn2.innerHTML = '';
+        var doodleStyle2 = clone2.querySelector('#doodle-runtime-styles');
+        if (doodleStyle2) doodleStyle2.remove();
 
-        // 3. 清除 chrome 元素上的运行时状态
-        var progressEl = clone.querySelector('#progress');
-        if (progressEl) progressEl.removeAttribute('style');
-        var particlesEl = clone.querySelector('#particles');
-        if (particlesEl) particlesEl.innerHTML = '';
-        var counterEl = clone.querySelector('#counter');
-        if (counterEl) counterEl.textContent = '';
+        // 清除涂鸦 UI
+        var dt2 = clone2.querySelector('#doodleToolbar'); if (dt2) dt2.remove();
+        var db2 = clone2.querySelector('#doodleToggleBtn'); if (db2) db2.remove();
+        var dp2 = clone2.querySelector('#doodleLaserPointer'); if (dp2) dp2.remove();
 
-        // 4. 清空导航圆点
-        var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
-        var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
+        // 移除浮动控件及注解工具栏
+        clone2.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+        clone2.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
 
-        // 5. 删除运行时注入的样式块
-        var doodleStyle = clone.querySelector('#doodle-runtime-styles');
-        if (doodleStyle) doodleStyle.remove();
-
-        // 6. 清除涂鸦引擎 UI
-        var dt = clone.querySelector('#doodleToolbar'); if (dt) dt.remove();
-        var db = clone.querySelector('#doodleToggleBtn'); if (db) db.remove();
-        var dp = clone.querySelector('#doodleLaserPointer'); if (dp) dp.remove();
-
-        // 7. 移除浮动控件及注解工具栏
-        clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
-        clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
-
-        // 8. 剥离 native-edit-wrap 壳
-        clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
+        // 剥离 native-edit-wrap 壳
+        clone2.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
             while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
             wrap.remove();
         });
 
-        // 9. 清除交互组件瞬态
-        _stripAllTransientStates(clone);
+        // 清除交互组件瞬态（旧课件没有基线，必须用黑名单清洗）
+        _stripAllTransientStates(clone2);
 
-        _removeDeletedAnnotationNodes(clone);
-        clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
-        if (EditorHooks) EditorHooks.fire('onExportClean', clone);
-        return '<!DOCTYPE html>\n' + clone.outerHTML;
+        // 用 localStorage 值覆盖 [data-edit-id]
+        clone2.querySelectorAll('[data-edit-id]').forEach(function (target) {
+            var id = target.getAttribute('data-edit-id');
+            var saved = readStoredValue('e:' + id);
+            if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
+        });
+
+        _removeDeletedAnnotationNodes(clone2);
+        clone2.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
+        if (EditorHooks) EditorHooks.fire('onExportClean', clone2);
+        return '<!DOCTYPE html>\n' + clone2.outerHTML;
     }
 
     function _prepareCleanHTMLFromSource(cleanHTML) {
