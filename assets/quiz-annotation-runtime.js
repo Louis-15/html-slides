@@ -1026,10 +1026,16 @@
   function addDeletedNoteId(qa, linkId) {
     const ids = getDeletedNoteIds(qa);
     ids.add(linkId);
+    const json = JSON.stringify([...ids]);
     // 写入 DOM 属性：historyMgr 快照会自动携带
-    qa.dataset.deletedNotes = JSON.stringify([...ids]);
-    // 保存到 JSON 文件
-    if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
+    qa.dataset.deletedNotes = json;
+    // ★ 同时写入 localStorage，刷新后 purgeDeletedNotes 才能恢复
+    try {
+      var slide = qa.closest('.slide');
+      var slideIdx = slide ? slide.getAttribute('data-slide') : '0';
+      var key = (window._editorUtils && window._editorUtils.storageKey) ? window._editorUtils.storageKey('deleted:' + slideIdx) : null;
+      if (key) window.localStorage.setItem(key, json);
+    } catch (e) {}
   }
 
   function parseNoteNumericId(linkId) {
@@ -1066,13 +1072,27 @@
   /** 清除原始 HTML 中残留的已删除批注的锚点和气泡 */
   function purgeDeletedNotes(qa) {
     // 撤销/重做恢复时：DOM data-deleted-notes 已被 historyMgr 恢复为正确状态
-    // 同步保存到 JSON 文件，然后直接返回（不需要再清除 DOM，因为 DOM 就是权威状态）
     if (window.historyMgr && window.historyMgr.isRestoring) {
-      if (window.AnnotationStore) window.AnnotationStore.scheduleSave();
       return;
     }
 
-    const deletedIds = getDeletedNoteIds(qa);
+    // 优先从 DOM 属性读取，刷新后回退到 localStorage
+    var deletedIds = getDeletedNoteIds(qa);
+    if (deletedIds.size === 0) {
+      try {
+        var slide = qa.closest('.slide');
+        var slideIdx = slide ? slide.getAttribute('data-slide') : '0';
+        var key = (window._editorUtils && window._editorUtils.storageKey) ? window._editorUtils.storageKey('deleted:' + slideIdx) : null;
+        if (key) {
+          var saved = window.localStorage.getItem(key);
+          if (saved) {
+            deletedIds = new Set(JSON.parse(saved));
+            // 回写到 DOM 属性，后续操作可以继续增量更新
+            qa.dataset.deletedNotes = saved;
+          }
+        }
+      } catch (e) {}
+    }
     if (deletedIds.size === 0) return;
 
     for (const linkId of deletedIds) {
@@ -1303,6 +1323,22 @@
           clone.querySelectorAll('.qa-note-bubble[data-link="' + linkId + '"]').forEach(function (bubble) {
             bubble.remove();
           });
+        });
+        // 清除 clone 和实时 DOM 中的 deletedNotes（节点已物理删除，不再需要墓碑）
+        // 同时清除对应的 localStorage 记录
+        document.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+          if (qa.dataset.deletedNotes) {
+            delete qa.dataset.deletedNotes;
+            try {
+              var slide = qa.closest('.slide');
+              var slideIdx = slide ? slide.getAttribute('data-slide') : '0';
+              var key = (window._editorUtils && window._editorUtils.storageKey) ? window._editorUtils.storageKey('deleted:' + slideIdx) : null;
+              if (key) window.localStorage.removeItem(key);
+            } catch (e) {}
+          }
+        });
+        clone.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+          if (qa.getAttribute('data-deleted-notes')) qa.removeAttribute('data-deleted-notes');
         });
 
         // 2. 注入动态气泡（不在 BASELINE 中但存在于实时 DOM）
@@ -3550,6 +3586,7 @@
         e.stopPropagation();
         const bubble = btn.closest('.qa-note-bubble');
         if (!bubble) return;
+        if (!confirm('确定要删除这条批注吗？')) return;
         deleteNote(qa, bubble.dataset.link);
       });
     });
