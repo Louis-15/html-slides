@@ -18,6 +18,9 @@
     var _htmlFileHandle = null;
 
     // 通过 IndexedDB 持久化文件句柄，刷新后自动恢复，无需重新选文件
+    // ★ 按文件路径隔离键名，避免不同课件文件共用同一个句柄导致相互覆盖
+    var _handleDBKey = 'h:' + utils.storageKey('');
+
     (function _restoreHandleFromDB() {
         if (!window.indexedDB) return;
         try {
@@ -25,7 +28,7 @@
             req.onupgradeneeded = function () { req.result.createObjectStore('handles'); };
             req.onsuccess = function () {
                 var tx = req.result.transaction('handles', 'readonly');
-                var getReq = tx.objectStore('handles').get('current');
+                var getReq = tx.objectStore('handles').get(_handleDBKey);
                 getReq.onsuccess = function () {
                     if (getReq.result) _htmlFileHandle = getReq.result;
                 };
@@ -39,7 +42,7 @@
             var req = indexedDB.open('hslides-fs-handle', 1);
             req.onsuccess = function () {
                 var tx = req.result.transaction('handles', 'readwrite');
-                tx.objectStore('handles').put(handle, 'current');
+                tx.objectStore('handles').put(handle, _handleDBKey);
             };
         } catch (e) {}
     }
