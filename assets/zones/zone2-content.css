@@ -296,12 +296,12 @@
 
 .flip-card:not(.flipped):hover,
 .flip-card.step-active:not(.flipped) {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px);
 }
 
 .flip-card.flipped:hover,
 .flip-card.step-active.flipped {
-  transform: rotateY(180deg) translateY(-2px) scale(1.02);
+  transform: rotateY(180deg) translateY(-2px);
 }
 
 .flip-card:hover .flip-front,
@@ -321,7 +321,8 @@
   display: flex;
   flex-direction: column;
   border: 1.5px solid var(--border);
-  transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
+  transition: border-color 0.35s cubic-bezier(.4, 0, .2, 1),
+              box-shadow 0.35s cubic-bezier(.4, 0, .2, 1);
   width: 100%;
   box-sizing: border-box;
 }
