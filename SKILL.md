@@ -81,9 +81,10 @@ When modifying existing courseware, make **minimal changes** — only touch what
 3. First slide has `class="slide active"`, no other slide has `active`
 4. Global `goTo()`, `next()`, `prev()` functions exist
 5. All CSS via external `<link>` references to `./assets/` files (except font CDN imports and small per-presentation `:root` overrides which stay inline)
-6. All JS via external `<script src>` references to `./assets/` files (except CDN libraries and small per-presentation custom scripts which stay inline)
+6. All JS via external `<script defer src>` references to `./assets/` files (except CDN libraries and small per-presentation custom scripts which stay inline). The `<script defer>` attribute is MANDATORY for all external runtime scripts.
 7. No broken numbering gaps after insertions or deletions
 8. `<meta name="generator" content="html-slides v1.0.0">` exists in `<head>`
+9. After ALL deferred `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` — this captures a clean DOM snapshot before any runtime JS executes, which the save-to-HTML feature uses as the baseline to avoid persisting component interaction state.
 
 **If any rule fails after editing, fix it before saving.**
 
@@ -215,10 +216,11 @@ Do NOT include summary for:
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
-- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
+- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script defer src="./assets/slides-runtime.js">`)
 - [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules
 - If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
+- All runtime JS `<script>` tags MUST use `defer` attribute. After the last deferred script, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline.
 - [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor-core.js` and before `doodle-runtime.js`
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
