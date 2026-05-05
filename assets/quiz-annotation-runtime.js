@@ -173,22 +173,7 @@
     }
 
     try {
-      const primaryKey = utils.storageKey(`e:${editId}`);
-      const primaryValue = window.localStorage.getItem(primaryKey);
-      if (primaryValue !== null) {
-        return primaryValue;
-      }
-
-      if (typeof utils.legacyStorageKey !== 'function') {
-        return null;
-      }
-
-      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
-      if (!legacyKey || legacyKey === primaryKey) {
-        return null;
-      }
-
-      return window.localStorage.getItem(legacyKey);
+      return window.localStorage.getItem(utils.storageKey(`e:${editId}`));
     } catch (error) {
       return null;
     }
@@ -217,17 +202,7 @@
     }
 
     try {
-      const primaryKey = utils.storageKey(`e:${editId}`);
-      window.localStorage.removeItem(primaryKey);
-
-      if (typeof utils.legacyStorageKey !== 'function') {
-        return;
-      }
-
-      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
-      if (legacyKey && legacyKey !== primaryKey) {
-        window.localStorage.removeItem(legacyKey);
-      }
+      window.localStorage.removeItem(utils.storageKey(`e:${editId}`));
     } catch (error) {
       // 删除批注时清缓存只是兜底清理，不应因为存储异常阻断真正的删除流程。
     }

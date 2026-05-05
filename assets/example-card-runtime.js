@@ -36,23 +36,7 @@
     }
 
     try {
-      const primaryKey = utils.storageKey(`e:${editId}`);
-      const primaryValue = window.localStorage.getItem(primaryKey);
-
-      if (primaryValue !== null) {
-        return primaryValue;
-      }
-
-      if (typeof utils.legacyStorageKey !== 'function') {
-        return null;
-      }
-
-      const legacyKey = utils.legacyStorageKey(`e:${editId}`);
-      if (!legacyKey || legacyKey === primaryKey) {
-        return null;
-      }
-
-      return window.localStorage.getItem(legacyKey);
+      return window.localStorage.getItem(utils.storageKey(`e:${editId}`));
     } catch (error) {
       return null;
     }

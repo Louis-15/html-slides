@@ -11,7 +11,6 @@
 
     var utils = window._editorUtils;
     var storageKey = utils.storageKey;
-    var legacyStorageKey = utils.legacyStorageKey;
     var getAllSlides = utils.getAllSlides;
     var EditorHooks = window.EditorHooks;
 
@@ -74,24 +73,8 @@
      * 则自动迁移到新的“按路径隔离”命名空间，避免同标题课件互串。
      */
     function readStoredValue(suffix) {
-        var primaryKey = storageKey(suffix);
         try {
-            var saved = localStorage.getItem(primaryKey);
-            if (saved !== null) return saved;
-
-            if (typeof legacyStorageKey !== 'function') return null;
-            var fallbackKey = legacyStorageKey(suffix);
-            if (!fallbackKey || fallbackKey === primaryKey) return null;
-
-            var legacySaved = localStorage.getItem(fallbackKey);
-            if (legacySaved === null) return null;
-
-            try {
-                localStorage.setItem(primaryKey, legacySaved);
-                localStorage.removeItem(fallbackKey);
-            } catch (e) { }
-
-            return legacySaved;
+            return localStorage.getItem(storageKey(suffix));
         } catch (e) {
             return null;
         }
@@ -335,11 +318,7 @@
         return _htmlFileHandle.createWritable().then(function (writable) {
             var blob = new Blob([html], { type: 'text/html' });
             return writable.write(blob).then(function () {
-                // close() 在 Windows + file:// 下会阻塞数秒刷盘。
-                // 这里 fire-and-forget：不等 close，直接返回成功。
-                // alert() 的阻塞效果能给 close 足够时间在后台完成。
                 writable.close();
-                try { localStorage.setItem('hslides-ann-inline:' + decodeURIComponent(location.pathname), '1'); } catch (e) { }
                 return true;
             });
         }).catch(function (err) {

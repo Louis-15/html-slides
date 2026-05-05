@@ -35,10 +35,8 @@
         return pathname || document.title || 'untitled';
     }
 
-    var LEGACY_FILE_HASH = hashTitle(document.title || 'untitled');
     var FILE_HASH = hashTitle(getStorageIdentity());
     function storageKey(suffix) { return 'hslides:' + FILE_HASH + ':' + suffix; }
-    function legacyStorageKey(suffix) { return 'hslides:' + LEGACY_FILE_HASH + ':' + suffix; }
 
     /** 从光标位置向上查找最近的 [data-edit-id] 容器
      *  修复：工具栏按钮点击后焦点转移导致 selection 丢失，
@@ -306,9 +304,7 @@
         hashTitle: hashTitle,
         getStorageIdentity: getStorageIdentity,
         FILE_HASH: FILE_HASH,
-        LEGACY_FILE_HASH: LEGACY_FILE_HASH,
         storageKey: storageKey,
-        legacyStorageKey: legacyStorageKey,
         getActiveEditContainer: getActiveEditContainer,
         getCurrentSlideIndex: getCurrentSlideIndex,
         getAllSlides: getAllSlides,
