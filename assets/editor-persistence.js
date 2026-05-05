@@ -262,6 +262,35 @@
                 if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
             });
 
+            // ★ 动态创建的批注气泡（new-note-*）不在 BASELINE 中，
+            // 需从实时 DOM 注入到 clone，否则保存后读取时气泡内容会丢失
+            var cloneSlides = clone.querySelectorAll('.slide');
+            var liveSlides = document.querySelectorAll('.slide');
+            cloneSlides.forEach(function (cloneSlide, i) {
+                var liveSlide = liveSlides[i];
+                if (!liveSlide) return;
+                var liveQA = liveSlide.querySelector('.quiz-annotation');
+                var cloneQA = cloneSlide.querySelector('.quiz-annotation');
+                if (!liveQA || !cloneQA) return;
+                var liveBubbles = liveQA.querySelectorAll('.qa-note-bubble');
+                liveBubbles.forEach(function (liveBubble) {
+                    var linkId = liveBubble.getAttribute('data-link');
+                    if (!linkId) return;
+                    // 已存在于 clone 中的气泡不重复注入
+                    if (cloneQA.querySelector('.qa-note-bubble[data-link="' + linkId + '"]')) return;
+                    var clonedBubble = liveBubble.cloneNode(true);
+                    // 内容从 localStorage 读取（已清洗），而非实时 DOM
+                    var contentEl = clonedBubble.querySelector('.qa-note-content[data-edit-id]');
+                    if (contentEl) {
+                        var editId = contentEl.getAttribute('data-edit-id');
+                        var saved = readStoredValue('e:' + editId);
+                        if (saved !== null) contentEl.innerHTML = stripTransientEditableHTML(saved);
+                    }
+                    var clonePanel = cloneQA.querySelector('.qa-notes-panel');
+                    if (clonePanel) clonePanel.appendChild(clonedBubble);
+                });
+            });
+
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
             // ★ 用 getAttribute('src') 保留原始相对路径，避免 outerHTML 序列化成绝对 URL
             var cloneBody = clone.querySelector('body');
