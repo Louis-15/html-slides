@@ -377,8 +377,8 @@
     var saveBubble = document.createElement("div");
     saveBubble.className = "save-bubble";
     saveBubble.style.cssText =
-      "display:none;position:fixed;top:60px;left:50%;transform:translate(-50%,-6px);" +
-      "padding:8px 20px;border-radius:10px;font-size:14px;font-weight:600;" +
+      "display:none;position:fixed;top:15px;left:50%;transform:translate(-50%,-6px);" +
+      "padding:6px 16px;border-radius:10px;font-size:13px;font-weight:600;" +
       "z-index:9999;pointer-events:none;white-space:nowrap;" +
       "box-shadow:0 4px 16px rgba(0,0,0,0.35);" +
       "transition:opacity 0.3s,transform 0.3s;opacity:0;";
