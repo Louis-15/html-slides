@@ -1274,6 +1274,68 @@
       window.EditorHooks.register('onEditModeExit', sync);
     }
 
+    // ★ 注册 onExportClean 钩子：保存时清理批注相关的瞬态数据
+    if (window.EditorHooks && typeof window.EditorHooks.register === 'function') {
+      window.EditorHooks.register('onExportClean', function (clone) {
+        // 1. 物理删除已删除批注的锚点和气泡
+        var allDeleted = [];
+        document.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+          var raw = qa.dataset.deletedNotes;
+          if (raw) {
+            try {
+              JSON.parse(raw).forEach(function (id) {
+                if (allDeleted.indexOf(id) === -1) allDeleted.push(id);
+              });
+            } catch (e) { }
+          }
+        });
+        allDeleted.forEach(function (linkId) {
+          clone.querySelectorAll('.text-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+            var parent = anchor.parentNode;
+            while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+            parent.removeChild(anchor);
+          });
+          clone.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+            var parent = anchor.parentNode;
+            while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+            parent.removeChild(anchor);
+          });
+          clone.querySelectorAll('.qa-note-bubble[data-link="' + linkId + '"]').forEach(function (bubble) {
+            bubble.remove();
+          });
+        });
+
+        // 2. 注入动态气泡（不在 BASELINE 中但存在于实时 DOM）
+        var cloneSlides = clone.querySelectorAll('.slide');
+        var liveSlides = document.querySelectorAll('.slide');
+        cloneSlides.forEach(function (cloneSlide, i) {
+          var liveSlide = liveSlides[i];
+          if (!liveSlide) return;
+          var liveQA = liveSlide.querySelector('.quiz-annotation');
+          var cloneQA = cloneSlide.querySelector('.quiz-annotation');
+          if (!liveQA || !cloneQA) return;
+          liveQA.querySelectorAll('.qa-note-bubble').forEach(function (liveBubble) {
+            var linkId = liveBubble.getAttribute('data-link');
+            if (!linkId) return;
+            if (cloneQA.querySelector('.qa-note-bubble[data-link="' + linkId + '"]')) return;
+            var clonedBubble = liveBubble.cloneNode(true);
+            var contentEl = clonedBubble.querySelector('.qa-note-content[data-edit-id]');
+            if (contentEl) {
+              var editId = contentEl.getAttribute('data-edit-id');
+              try {
+                var saved = window.localStorage.getItem((window._editorUtils && window._editorUtils.storageKey ? window._editorUtils.storageKey('e:' + editId) : ''));
+                if (saved && window.PersistenceLayer && typeof window.PersistenceLayer._stripHTML === 'function') {
+                  contentEl.innerHTML = window.PersistenceLayer._stripHTML(saved);
+                }
+              } catch (e) { }
+            }
+            var clonePanel = cloneQA.querySelector('.qa-notes-panel');
+            if (clonePanel) clonePanel.appendChild(clonedBubble);
+          });
+        });
+      });
+    }
+
     if (typeof MutationObserver === 'function' && document.documentElement && document.body) {
       const observer = new MutationObserver(() => {
         const currentEditorMode = isEditorMode();

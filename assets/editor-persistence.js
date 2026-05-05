@@ -131,39 +131,6 @@
         return name || 'courseware.html';
     }
 
-    function _removeDeletedAnnotationNodes(clone) {
-        var allDeleted = [];
-        document.querySelectorAll('.quiz-annotation').forEach(function (qa) {
-            var raw = qa.dataset.deletedNotes;
-            if (raw) {
-                try {
-                    JSON.parse(raw).forEach(function (id) {
-                        if (allDeleted.indexOf(id) === -1) allDeleted.push(id);
-                    });
-                } catch (e) { }
-            }
-        });
-
-        if (allDeleted.length === 0) return;
-
-        allDeleted.forEach(function (linkId) {
-            clone.querySelectorAll('.text-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
-                var parent = anchor.parentNode;
-                while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
-                parent.removeChild(anchor);
-            });
-            clone.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
-                var parent = anchor.parentNode;
-                while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
-                parent.removeChild(anchor);
-            });
-            // 同时移除中栏的批注气泡
-            clone.querySelectorAll('.qa-note-bubble[data-link="' + linkId + '"]').forEach(function (bubble) {
-                bubble.remove();
-            });
-        });
-    }
-
     function _loadCleanHTMLFromDisk() {
         // 用 XHR 重新从磁盘读取 HTML 源文件（干净的原始版本）
         return new Promise(function (resolve) {
@@ -266,35 +233,6 @@
                 if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
             });
 
-            // ★ 动态创建的批注气泡（new-note-*）不在 BASELINE 中，
-            // 需从实时 DOM 注入到 clone，否则保存后读取时气泡内容会丢失
-            var cloneSlides = clone.querySelectorAll('.slide');
-            var liveSlides = document.querySelectorAll('.slide');
-            cloneSlides.forEach(function (cloneSlide, i) {
-                var liveSlide = liveSlides[i];
-                if (!liveSlide) return;
-                var liveQA = liveSlide.querySelector('.quiz-annotation');
-                var cloneQA = cloneSlide.querySelector('.quiz-annotation');
-                if (!liveQA || !cloneQA) return;
-                var liveBubbles = liveQA.querySelectorAll('.qa-note-bubble');
-                liveBubbles.forEach(function (liveBubble) {
-                    var linkId = liveBubble.getAttribute('data-link');
-                    if (!linkId) return;
-                    // 已存在于 clone 中的气泡不重复注入
-                    if (cloneQA.querySelector('.qa-note-bubble[data-link="' + linkId + '"]')) return;
-                    var clonedBubble = liveBubble.cloneNode(true);
-                    // 内容从 localStorage 读取（已清洗），而非实时 DOM
-                    var contentEl = clonedBubble.querySelector('.qa-note-content[data-edit-id]');
-                    if (contentEl) {
-                        var editId = contentEl.getAttribute('data-edit-id');
-                        var saved = readStoredValue('e:' + editId);
-                        if (saved !== null) contentEl.innerHTML = stripTransientEditableHTML(saved);
-                    }
-                    var clonePanel = cloneQA.querySelector('.qa-notes-panel');
-                    if (clonePanel) clonePanel.appendChild(clonedBubble);
-                });
-            });
-
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
             // ★ 用 getAttribute('src') 保留原始相对路径，避免 outerHTML 序列化成绝对 URL
             var cloneBody = clone.querySelector('body');
@@ -304,34 +242,6 @@
                 if (cloneBody) cloneBody.appendChild(ns);
             });
 
-            _removeDeletedAnnotationNodes(clone);
-            // 删除/新增批注后重新排序和编号
-            clone.querySelectorAll('.quiz-annotation').forEach(function (qa) {
-                // 1. 收集左侧原文锚点的 linkId 顺序
-                var orderedIds = [];
-                qa.querySelectorAll('.qa-passage .text-anchor[data-link]').forEach(function (a) {
-                    var lid = a.getAttribute('data-link');
-                    if (lid && orderedIds.indexOf(lid) === -1) orderedIds.push(lid);
-                });
-                // 2. 按原文顺序重排 .qa-notes-panel 中的气泡
-                var panel = qa.querySelector('.qa-notes-panel');
-                if (!panel) return;
-                var bubbleById = {};
-                panel.querySelectorAll('.qa-note-bubble').forEach(function (b) {
-                    bubbleById[b.getAttribute('data-link') || ''] = b;
-                });
-                orderedIds.forEach(function (lid) {
-                    var b = bubbleById[lid];
-                    if (b && b.parentNode) b.parentNode.appendChild(b);
-                });
-                // 3. 重新编号
-                panel.querySelectorAll('.qa-note-bubble').forEach(function (bubble, i) {
-                    var newStep = i + 1;
-                    bubble.setAttribute('data-step', newStep);
-                    var stepEl = bubble.querySelector('.qa-note-step');
-                    if (stepEl) stepEl.textContent = newStep;
-                });
-            });
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
             if (EditorHooks) EditorHooks.fire('onExportClean', clone);
             return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone.outerHTML);
@@ -389,7 +299,6 @@
             if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
         });
 
-        _removeDeletedAnnotationNodes(clone2);
         clone2.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', clone2);
         return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone2.outerHTML);
@@ -407,7 +316,6 @@
             if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
         });
 
-        _removeDeletedAnnotationNodes(div);
         div.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', div);
         return _normalizeSerializedHTML('<!DOCTYPE html>\n' + div.innerHTML);
@@ -465,6 +373,9 @@
     }
 
     var PersistenceLayer = {
+        /** 供外部模块调用的 HTML 清洗函数（对应内部 stripTransientEditableHTML） */
+        _stripHTML: function (html) { return stripTransientEditableHTML(html); },
+
         /** 保存单个可编辑元素的内容 */
         saveElement: function (el) {
             var id = el.getAttribute('data-edit-id');
