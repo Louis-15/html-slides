@@ -192,16 +192,12 @@
             });
 
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
-            // 只追加 body 内的脚本（排除 head 中的 CDN 如 Chart.js）
             var cloneBody = clone.querySelector('body');
             document.querySelectorAll('body script[src]').forEach(function (liveScript) {
                 var ns = document.createElement('script');
                 ns.src = liveScript.src;
                 if (cloneBody) cloneBody.appendChild(ns);
             });
-
-            // ★ 不再追加基线快照 —— 原始克隆中的那份已经足够。
-            // 在外部脚本之前执行的基线才是干净的；追加到末尾的会捕获脏 DOM。
 
             _removeDeletedAnnotationNodes(clone);
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
@@ -309,13 +305,33 @@
         if (!_htmlFileHandle) return Promise.resolve(false);
 
         return _htmlFileHandle.createWritable().then(function (writable) {
-            return writable.write(html).then(function () { return writable.close(); });
-        }).then(function () {
-            try { localStorage.setItem('hslides-ann-inline:' + decodeURIComponent(location.pathname), '1'); } catch (e) { }
-            return true;
+            var blob = new Blob([html], { type: 'text/html' });
+            return writable.write(blob).then(function () {
+                // close() 在 Windows + file:// 下会阻塞数秒刷盘。
+                // 这里 fire-and-forget：不等 close，直接返回成功。
+                // alert() 的阻塞效果能给 close 足够时间在后台完成。
+                writable.close();
+                try { localStorage.setItem('hslides-ann-inline:' + decodeURIComponent(location.pathname), '1'); } catch (e) { }
+                return true;
+            });
         }).catch(function (err) {
             console.warn('[PersistenceLayer] 写入文件失败:', err);
             return false;
+        });
+    }
+
+    function _doWrite(result) {
+        if (_htmlFileHandle) {
+            return _writeHTMLToFile(result).then(function (writeOk) {
+                if (writeOk) return true;
+                _htmlFileHandle = null;
+                return _requestHTMLFileAccess().then(function (ok) {
+                    return ok ? _writeHTMLToFile(result) : false;
+                });
+            });
+        }
+        return _requestHTMLFileAccess().then(function (ok) {
+            return ok ? _writeHTMLToFile(result) : false;
         });
     }
 
@@ -514,29 +530,14 @@
             var currentSlide = document.querySelector('.slide.active');
             if (currentSlide) PersistenceLayer.syncFromDOM(currentSlide);
 
-            return _loadCleanHTMLFromDisk().then(function (cleanHTML) {
-                var result;
-                if (cleanHTML) {
-                    // XHR 成功：以磁盘 HTML 为底本，只从 localStorage 盖 [data-edit-id]
-                    result = _prepareCleanHTMLFromSource(cleanHTML);
-                } else {
-                    // XHR 失败（file:// 协议必然失败）：克隆当前 DOM 并全面清洗
-                    result = _prepareCleanHTMLFallback();
-                }
+            // 有基线快照时直接走白名单路径，跳过 XHR（file:// 下 XHR 必然超时）
+            if (window.__BASELINE__) {
+                return _doWrite(_prepareCleanHTMLFallback());
+            }
 
-                if (_htmlFileHandle) {
-                    return _writeHTMLToFile(result).then(function (writeOk) {
-                        if (writeOk) return true;
-                        // 写入失败（句柄失效），重置后重新请求
-                        _htmlFileHandle = null;
-                        return _requestHTMLFileAccess().then(function (ok) {
-                            return ok ? _writeHTMLToFile(result) : false;
-                        });
-                    });
-                }
-                return _requestHTMLFileAccess().then(function (ok) {
-                    return ok ? _writeHTMLToFile(result) : false;
-                });
+            // 没有基线时尝试 XHR（旧课件兼容）
+            return _loadCleanHTMLFromDisk().then(function (cleanHTML) {
+                return _doWrite(cleanHTML ? _prepareCleanHTMLFromSource(cleanHTML) : _prepareCleanHTMLFallback());
             });
         },
 
