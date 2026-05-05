@@ -59,7 +59,7 @@
 
   /**
    * 收集左栏正文锚点的 linkId 顺序。
-   * 这里以正文中的真实 DOM 先后为准，并去重，作为“自动排序”的唯一来源。
+   * 这里以正文中的真实 DOM 先后为准，并去重，作为"自动排序"的唯一来源。
    */
   function getOrderedPassageLinkIds(qa) {
     if (!qa) return [];
@@ -77,7 +77,7 @@
   }
 
   /**
-   * 统一把中栏气泡顺序拉回“左侧正文顺序优先”的规则：
+   * 统一把中栏气泡顺序拉回"左侧正文顺序优先"的规则：
    * - 只要某条批注已经关联左侧正文，就按正文中的上下文顺序排；
    * - 仍未关联左侧正文的批注保留当前相对顺序，统一放在后面。
    */
@@ -136,7 +136,7 @@
   }
 
   /**
-   * 统一把气泡同步到“一个 linkId，对应左右两个端点”的规范模型。
+   * 统一把气泡同步到"一个 linkId，对应左右两个端点"的规范模型。
    * data-link-answer 只保留为兼容旧结构的派生字段，不再决定运行时行为。
    */
   function normalizeBubbleEndpointState(qa, bubble) {
@@ -215,7 +215,7 @@
     if (!editId) return;
 
     /* 普通页面正文的恢复顺序是本地缓存优先，sidecar 兜底。
-       quiz 的动态气泡如果先吃到旧 sidecar，再吃 localStorage，就会把“第一次刷新里最新的本地改动”压回旧值，
+       quiz 的动态气泡如果先吃到旧 sidecar，再吃 localStorage，就会把"第一次刷新里最新的本地改动"压回旧值，
        于是出现必须刷新两次才能看到最新批注的错觉。这里显式对齐普通页面的恢复优先级。 */
     const persistedHTML = readStoredEditableHTML(editId) ?? getAnnotationStoreElementHTML(editId);
     if (persistedHTML !== null) {
@@ -316,7 +316,7 @@
   let doodlePassthroughBound = false;
   const DOODLE_PASSTHROUGH_BUTTON_SELECTOR = '.qa-divider-btn, .qa-notes-collapse-btn, .note-badge, .qa-note-handle, .qa-note-action-btn, .qa-submit-btn';
 
-  // doodle 层盖在顶上时，用数据属性把“底下其实是可点击控件”传给 doodle 光标逻辑。
+  // doodle 层盖在顶上时，用数据属性把"底下其实是可点击控件"传给 doodle 光标逻辑。
   function syncDoodlePassthroughCursor(target) {
     const passthroughButton = target && target.closest ? target.closest(DOODLE_PASSTHROUGH_BUTTON_SELECTOR) : null;
     let cursorMode = '';
@@ -413,7 +413,7 @@
     /* 新建批注、关联/解绑端点、删除批注都属于离散结构变更。
        如果这里只走 debounce 的 sidecar 保存，用户在这一步后立刻刷新，
        就可能只留下 new-note-* 的内容缓存，却丢掉 passage / answer 上的 anchor 结构，
-       表现成“新批注没了，但再次新建又自动带回旧文字”。
+       表现成"新批注没了，但再次新建又自动带回旧文字"。
        因此这类链路必须先把最近的 data-edit-id 根块立即写入本地，再尽量立即 flush sidecar。 */
     if (persistRoot && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
       window.PersistenceLayer.saveElement(persistRoot);
@@ -580,7 +580,7 @@
 
     /* quiz 的 fragment authoring 也是按钮驱动的离散结构变更，不是持续键入。
        如果这里只走 debounce sidecar 保存，那么用户在退出编辑模式后立刻刷新时，
-       很容易在落盘 Promise 真正完成前读回旧数据，表现成“第一次刷新没生效，第二次才有”。
+       很容易在落盘 Promise 真正完成前读回旧数据，表现成"第一次刷新没生效，第二次才有"。
        因此这里要和普通页面对齐：
        1. 先把最近的 data-edit-id 根块立即写入 localStorage；
        2. 再把 sidecar 尽量在当前手势里立即落盘；
@@ -1158,7 +1158,7 @@
   }
 
   /**
-   * 为锚点补一个只承载“正文文字层”的包裹节点。
+   * 为锚点补一个只承载"正文文字层"的包裹节点。
    * 真实课件里不少锚点会直接把 underline 写进内联 style，且角标 sup 也挂在同一个 anchor 里；
    * 如果把渐变焦点线画在整个 anchor 盒子上，线的位置就会被角标抬高，视觉上像删除线。
    * 这里把除 note-badge 之外的内容都收进 qa-anchor-text，让焦点下划线只跟正文文字对齐。 
@@ -1618,7 +1618,7 @@
   /**
    * 绘制步进连线（旧版持久橙线）。
    * 2026-04 的焦点视觉改版后，这层持久连线已被更克制的端点联动高亮取代，
-   * 因此这里仅保留“清空旧 DOM”的职责，避免激活/滚动链路继续残留历史 connector-step 节点。
+   * 因此这里仅保留"清空旧 DOM"的职责，避免激活/滚动链路继续残留历史 connector-step 节点。
    */
   function drawStepConnectors(qa, bubble) {
     clearStepConnectors(qa);
@@ -2028,7 +2028,7 @@
   }
 
   /**
-   * 连线题的拖拽能力只在“未提交 + 非编辑态”时开放。
+   * 连线题的拖拽能力只在"未提交 + 非编辑态"时开放。
    * 提交后我们仍然允许用户点击右栏里的批注角标与答案锚点做讲解，
    * 但不允许再通过拖拽去改动答案，所以这里把 draggable 作为真正的交互总闸统一收口。
    */
@@ -2131,7 +2131,7 @@
    * - 右栏统一承担学生输入、判分和正确答案展示
    *
    * 这样能避免正文被长答案撑坏，同时让 10 个空位的判分状态全部收口在右栏，
-   * 老师讲题时也更接近真实考试的“题号列表 + 对错反馈”阅读习惯。
+   * 老师讲题时也更接近真实考试的"题号列表 + 对错反馈"阅读习惯。
    */
   function syncBlankAnswerUI(qa) {
     if (!qa) return;
@@ -2197,9 +2197,9 @@
         if (editorMode) {
           slot.dataset.correctAnswer = nextValue;
           passageSlot.dataset.correctAnswer = nextValue;
-          /* 阅读填空的正确答案本质上是“正文 data-edit-id 根块里的结构化作者态”。
+          /* 阅读填空的正确答案本质上是"正文 data-edit-id 根块里的结构化作者态"。
              如果这里只走 debounce 的 scheduleSave，用户改完立刻刷新时，
-             第一次刷新仍可能先读到旧 sidecar，表现成“要刷新两次才生效”。
+             第一次刷新仍可能先读到旧 sidecar，表现成"要刷新两次才生效"。
              这里显式提升到离散 authoring 的即时持久化链：
              1. 先把 passageSlot 所在 data-edit-id 根块立即写入 localStorage；
              2. 再尽量在当前手势里触发一次即时落盘；
@@ -2234,8 +2234,8 @@
 
     clearBlankAnswerResults(qa);
     /* submitted 只应该驱动学生态的判分回显。
-       如果老师在已提交页面上再切回编辑模式，右栏应该回到“可直接改正确答案”的作者态，
-       不能继续挂着 √/×、绿色描边和禁用输入框，否则就会出现用户截图 1 那种“看起来像判分结果页、但又处在编辑模式”的串态。 */
+       如果老师在已提交页面上再切回编辑模式，右栏应该回到"可直接改正确答案"的作者态，
+       不能继续挂着 √/×、绿色描边和禁用输入框，否则就会出现用户截图 1 那种"看起来像判分结果页、但又处在编辑模式"的串态。 */
     if (qa.classList.contains('submitted') && !editorMode) {
       renderBlankAnswerResults(qa);
     }
@@ -2589,7 +2589,7 @@
         const currentSlot = qa.querySelector('.qa-answer-slot[data-blank-id="' + blankId + '"]');
         if (!currentSlot || !currentSlot.classList.contains('filled')) return;
 
-        /* 上方槽位在提交后只保留展示，不再承担“撤销答案”的入口。 */
+        /* 上方槽位在提交后只保留展示，不再承担"撤销答案"的入口。 */
         if (qa.classList.contains('submitted')) return;
 
         clearMatchingAnswerByBlankId(qa, blankId);
@@ -2634,7 +2634,7 @@
         }
         option.classList.toggle('selected');
 
-        // 一旦用户重新作答，立即移除“未作答判错”的即时提示，避免旧反馈残留误导。
+        // 一旦用户重新作答，立即移除"未作答判错"的即时提示，避免旧反馈残留误导。
         clearQuestionUnansweredState(option.closest('.qa-question'));
       });
     });
@@ -2779,7 +2779,7 @@
         blankEl.appendChild(markEl);
       }
 
-      // 连线题未作答时也给出明确文本胶囊，避免只靠红框表达“判错”。
+      // 连线题未作答时也给出明确文本胶囊，避免只靠红框表达"判错"。
       if (!isAnswered) {
         const feedbackEl = document.createElement('span');
         feedbackEl.className = 'qa-slot-feedback unanswered';
@@ -2906,7 +2906,7 @@
     }
   }
 
-  /** 清除普通选择题的“未作答判错”提醒 */
+  /** 清除普通选择题的"未作答判错"提醒 */
   function clearQuestionUnansweredState(question) {
     if (!question) return;
     question.classList.remove('result-unanswered');
@@ -3030,7 +3030,7 @@
     const submitBtn = qa.querySelector('.qa-submit-btn');
     if (submitBtn) submitBtn.disabled = true;
 
-    // 普通选择题在提交时统一重渲染结果，这样“选错”和“未作答判错”能共享同一套反馈入口。
+    // 普通选择题在提交时统一重渲染结果，这样"选错"和"未作答判错"能共享同一套反馈入口。
     renderSelectionQuestionResults(qa);
 
     const hasMatchingQ = qa.querySelector('.qa-question[data-type="matching"]');
@@ -3515,9 +3515,9 @@
     const contentEl = bubble ? bubble.querySelector('.qa-note-content[data-edit-id]') : null;
     const contentEditId = contentEl ? (contentEl.getAttribute('data-edit-id') || '') : '';
 
-    // 删除批注是“整条 note 生命周期结束”，不是单纯断开一边关联。
+    // 删除批注是"整条 note 生命周期结束"，不是单纯断开一边关联。
     // 因此左栏、右栏、中栏气泡和对应的本地恢复缓存都必须在当前页面立即清干净，
-    // 否则就会出现“眼前还留着气泡 / 刷新后一度看似删除 / 再新建又回灌旧内容”的假象。
+    // 否则就会出现"眼前还留着气泡 / 刷新后一度看似删除 / 再新建又回灌旧内容"的假象。
     const passageAnchor = getAnchorByLink(qa, linkId);
     if (passageAnchor) {
       passageAnchor.querySelectorAll('.note-badge').forEach(b => b.remove());
@@ -3795,7 +3795,7 @@
       qa.appendChild(fragmentToolbar);
 
       /* fragment toolbar 左侧标签单独走主题绿色，但按钮和调色板继续保留答题批注组件原有的多色语义。
-         这样普通页与 quiz 的浮动工具条能保持同一视觉壳，同时不会把作者已经习惯的颜色编码误改成“主题色优先”。 */
+         这样普通页与 quiz 的浮动工具条能保持同一视觉壳，同时不会把作者已经习惯的颜色编码误改成"主题色优先"。 */
       const textColors = ['#000000', '#2C3E50', '#7F8C8D', '#FD79A8', '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C', '#3498DB', '#9B59B6'];
       const highlightColors = [
         'rgba(231, 76, 60, 0.4)', 'rgba(230, 126, 34, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(46, 204, 113, 0.4)',
@@ -4153,7 +4153,7 @@
     if (!inPassage && !inAnswer) return;
 
     // 新建批注的 id 不能复用 deletedNotes 里的 tombstone，
-    // 否则刷新时 purgeDeletedNotes 会把这条“新批注”再次当成旧删除记录吞掉。
+    // 否则刷新时 purgeDeletedNotes 会把这条"新批注"再次当成旧删除记录吞掉。
     const newLinkId = getNextNoteLinkId(qa);
 
     // 计算新的 step
@@ -4592,8 +4592,11 @@
     // 扫描孤儿锚点：正文/答题区中存在锚点但批注面板中没有对应气泡 → 自动重建
     rebuildOrphanBubbles(qa);
 
-    // 统一把新旧 HTML 拉回到同一 linkId 双端点模型，避免“先左后右”和“先右后左”语义分裂。
+    // 统一把新旧 HTML 拉回到同一 linkId 双端点模型，避免"先左后右"和"先右后左"语义分裂。
     normalizeAllBubbleEndpointStates(qa);
+
+    // 刷新后可能有孤儿气泡（动态创建的）与源码气泡共存，需统一按原文顺序重排和编号
+    recalcStepNumbers(qa);
 
     // 初始化各子系统
     bindDoodleModePassthrough();

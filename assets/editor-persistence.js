@@ -157,6 +157,10 @@
                 while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
                 parent.removeChild(anchor);
             });
+            // 同时移除中栏的批注气泡
+            clone.querySelectorAll('.qa-note-bubble[data-link="' + linkId + '"]').forEach(function (bubble) {
+                bubble.remove();
+            });
         });
     }
 
@@ -301,6 +305,33 @@
             });
 
             _removeDeletedAnnotationNodes(clone);
+            // 删除/新增批注后重新排序和编号
+            clone.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+                // 1. 收集左侧原文锚点的 linkId 顺序
+                var orderedIds = [];
+                qa.querySelectorAll('.qa-passage .text-anchor[data-link]').forEach(function (a) {
+                    var lid = a.getAttribute('data-link');
+                    if (lid && orderedIds.indexOf(lid) === -1) orderedIds.push(lid);
+                });
+                // 2. 按原文顺序重排 .qa-notes-panel 中的气泡
+                var panel = qa.querySelector('.qa-notes-panel');
+                if (!panel) return;
+                var bubbleById = {};
+                panel.querySelectorAll('.qa-note-bubble').forEach(function (b) {
+                    bubbleById[b.getAttribute('data-link') || ''] = b;
+                });
+                orderedIds.forEach(function (lid) {
+                    var b = bubbleById[lid];
+                    if (b && b.parentNode) b.parentNode.appendChild(b);
+                });
+                // 3. 重新编号
+                panel.querySelectorAll('.qa-note-bubble').forEach(function (bubble, i) {
+                    var newStep = i + 1;
+                    bubble.setAttribute('data-step', newStep);
+                    var stepEl = bubble.querySelector('.qa-note-step');
+                    if (stepEl) stepEl.textContent = newStep;
+                });
+            });
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
             if (EditorHooks) EditorHooks.fire('onExportClean', clone);
             return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone.outerHTML);
