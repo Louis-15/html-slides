@@ -17,7 +17,6 @@
 
     // === 保存到 HTML 文件：File System Access 句柄 ===
     var _htmlFileHandle = null;
-    var _htmlWriteChain = Promise.resolve();
 
     /**
      * 清洗要存入 localStorage 的 HTML 字符串，只剥离嵌入在 [data-edit-id]
@@ -193,17 +192,16 @@
             });
 
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
+            // 只追加 body 内的脚本（排除 head 中的 CDN 如 Chart.js）
             var cloneBody = clone.querySelector('body');
-            document.querySelectorAll('script[src]').forEach(function (liveScript) {
-                var ns = clone.createElement('script');
+            document.querySelectorAll('body script[src]').forEach(function (liveScript) {
+                var ns = document.createElement('script');
                 ns.src = liveScript.src;
                 if (cloneBody) cloneBody.appendChild(ns);
             });
 
-            // 在脚本列表末尾补回基线快照脚本（下一次保存需要它）
-            var baselineClone = clone.createElement('script');
-            baselineClone.textContent = 'window.__BASELINE__=document.documentElement.cloneNode(true)';
-            if (cloneBody) cloneBody.appendChild(baselineClone);
+            // ★ 不再追加基线快照 —— 原始克隆中的那份已经足够。
+            // 在外部脚本之前执行的基线才是干净的；追加到末尾的会捕获脏 DOM。
 
             _removeDeletedAnnotationNodes(clone);
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
@@ -309,18 +307,16 @@
 
     function _writeHTMLToFile(html) {
         if (!_htmlFileHandle) return Promise.resolve(false);
-        // 串行化写入，防止并发截断
-        var task = _htmlWriteChain.catch(function () { return false; }).then(function () {
-            return _htmlFileHandle.createWritable().then(function (writable) {
-                return writable.write(html).then(function () { return writable.close(); });
-            });
+
+        return _htmlFileHandle.createWritable().then(function (writable) {
+            return writable.write(html).then(function () { return writable.close(); });
         }).then(function () {
-            // 标记：标注数据已内联到 HTML，下次加载时不再读取旧 .annotations.js
             try { localStorage.setItem('hslides-ann-inline:' + decodeURIComponent(location.pathname), '1'); } catch (e) { }
             return true;
+        }).catch(function (err) {
+            console.warn('[PersistenceLayer] 写入文件失败:', err);
+            return false;
         });
-        _htmlWriteChain = task.catch(function () { return false; });
-        return task;
     }
 
     var PersistenceLayer = {
@@ -529,8 +525,10 @@
                 }
 
                 if (_htmlFileHandle) {
-                    return _htmlFileHandle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
-                        if (perm === 'granted') return _writeHTMLToFile(result);
+                    return _writeHTMLToFile(result).then(function (writeOk) {
+                        if (writeOk) return true;
+                        // 写入失败（句柄失效），重置后重新请求
+                        _htmlFileHandle = null;
                         return _requestHTMLFileAccess().then(function (ok) {
                             return ok ? _writeHTMLToFile(result) : false;
                         });
