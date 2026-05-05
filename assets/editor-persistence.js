@@ -21,17 +21,41 @@
 
     function stripTransientEditableHTML(html) {
         if (!html) return html;
-        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1) {
+        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1
+            && html.indexOf('selected') === -1 && html.indexOf('result-correct') === -1
+            && html.indexOf('result-incorrect') === -1 && html.indexOf('is-submitted') === -1
+            && html.indexOf('is-active') === -1 && html.indexOf('qa-result-mark') === -1
+            && html.indexOf('data-question-active') === -1 && html.indexOf('data-question-submitted') === -1) {
             return html;
         }
 
         var temp = document.createElement('div');
         temp.innerHTML = html;
+        // 批注 fragment 瞬态
         temp.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
             el.classList.remove('qa-fragment-visible');
         });
         temp.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
             el.removeAttribute('data-fragment-manual-reveal');
+        });
+        // 例题组件交互瞬态
+        temp.querySelectorAll('.selected').forEach(function (el) {
+            el.classList.remove('selected');
+        });
+        temp.querySelectorAll('.result-correct,.result-incorrect').forEach(function (el) {
+            el.classList.remove('result-correct', 'result-incorrect');
+        });
+        temp.querySelectorAll('.is-submitted,.is-analysis-open').forEach(function (el) {
+            el.classList.remove('is-submitted', 'is-analysis-open');
+        });
+        temp.querySelectorAll('.qa-result-mark').forEach(function (el) {
+            el.remove();
+        });
+        temp.querySelectorAll('[data-question-active]').forEach(function (el) {
+            el.removeAttribute('data-question-active');
+        });
+        temp.querySelectorAll('[data-question-submitted]').forEach(function (el) {
+            el.removeAttribute('data-question-submitted');
         });
         return temp.innerHTML;
     }
@@ -103,17 +127,83 @@
         });
     }
 
-    function _prepareCleanHTML() {
+    function _loadCleanHTMLFromDisk() {
+        // 用 XHR 重新从磁盘读取 HTML 源文件（干净的原始版本）
+        return new Promise(function (resolve) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', location.href, true);
+            xhr.onload = function () {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    resolve(xhr.responseText);
+                } else {
+                    resolve(null);
+                }
+            };
+            xhr.onerror = function () { resolve(null); };
+            try { xhr.send(); } catch (e) { resolve(null); }
+        });
+    }
+
+    /**
+     * 清洗整个 DOM 克隆中的全部交互组件瞬态标记。
+     * 这些 class/attribute/element 都是运行时注入的，不应固化到 HTML 源码里。
+     * 与 stripTransientEditableHTML 不同：后者清洗 HTML 字符串片段，
+     * 此函数直接操作 DOM 节点，覆盖非 [data-edit-id] 区域。
+     */
+    function _stripAllTransientStates(clone) {
+        // 批注 fragment 瞬态
+        clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
+            el.classList.remove('qa-fragment-visible');
+        });
+        clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
+            el.removeAttribute('data-fragment-manual-reveal');
+        });
+        // 例题组件交互瞬态
+        clone.querySelectorAll('.selected').forEach(function (el) {
+            el.classList.remove('selected');
+        });
+        clone.querySelectorAll('.result-correct,.result-incorrect').forEach(function (el) {
+            el.classList.remove('result-correct', 'result-incorrect');
+        });
+        clone.querySelectorAll('.is-submitted,.is-analysis-open').forEach(function (el) {
+            el.classList.remove('is-submitted', 'is-analysis-open');
+        });
+        clone.querySelectorAll('.qa-result-mark').forEach(function (el) {
+            el.remove();
+        });
+        clone.querySelectorAll('[data-question-active]').forEach(function (el) {
+            el.removeAttribute('data-question-active');
+        });
+        clone.querySelectorAll('[data-question-submitted]').forEach(function (el) {
+            el.removeAttribute('data-question-submitted');
+        });
+        // 例题组件导航瞬态
+        clone.querySelectorAll('[aria-hidden]').forEach(function (el) {
+            el.removeAttribute('aria-hidden');
+        });
+        clone.querySelectorAll('.is-active').forEach(function (el) {
+            el.classList.remove('is-active');
+        });
+    }
+
+    /**
+     * XHR 失败时的回退：基于当前 DOM 克隆生成干净 HTML。
+     * 先清除编辑器 UI，再清除所有交互组件瞬态，最后用 localStorage 覆盖 [data-edit-id]。
+     */
+    function _prepareCleanHTMLFallback() {
         var clone = document.documentElement.cloneNode(true);
 
-        // 移除编辑器 UI 和运行时动态创建的 UI
-        clone.querySelectorAll([
-            '.rich-toolbar', '.edit-toggle', '.edit-hotzone',
-            '.box-controls', '.rs-handle', '.floating-controls', '.overlay-ctrl',
-            '.qa-annotation-toolbar', '.qa-note-fragment-toolbar', '.page-richtext-fragment-toolbar',
-            '#doodleToolbar', '#doodleToggleBtn', '#doodleLaserPointer',
-            '#slidePager'
-        ].join(',')).forEach(function (el) { el.remove(); });
+        // 清除编辑器 UI（与 exportCleanHTML 保持一致）
+        clone.querySelectorAll('.rich-toolbar, #editToggle, .edit-toggle, #doodleToolbar, .doodle-layer,' +
+            '.floating-controls, .rs-handle, .overlay-ctrl, .box-controls,' +
+            '.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar'
+        ).forEach(function (el) { el.remove(); });
+
+        // 清除涂鸦相关
+        var dt2 = clone.querySelector('#doodleToolbar'); if (dt2) dt2.remove();
+        var db2 = clone.querySelector('#doodleToggleBtn'); if (db2) db2.remove();
+        var dp2 = clone.querySelector('#doodleLaserPointer'); if (dp2) dp2.remove();
+        var bd2 = clone.querySelector('body'); if (bd2) bd2.classList.remove('doodle-mode', 'editor-mode');
 
         // 剥离 native-edit-wrap 壳
         clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
@@ -121,50 +211,43 @@
             wrap.remove();
         });
 
-        // 清除 transient class 和属性
-        clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) {
-            el.classList.remove('qa-fragment-visible');
-        });
-        clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
-            el.removeAttribute('data-fragment-manual-reveal');
-        });
+        // 清除导航圆点
+        var nd2 = clone.querySelector('.nav-dots'); if (nd2) nd2.innerHTML = '';
+        var sn2 = clone.querySelector('#slideNav'); if (sn2) sn2.innerHTML = '';
 
-        // 移除编辑/doodle 模式 class
-        var body = clone.querySelector('body');
-        if (body) {
-            body.classList.remove('editor-mode');
-            body.classList.remove('doodle-mode');
-        }
-        var htmlEl = clone.querySelector('html');
-        if (htmlEl) {
-            htmlEl.classList.remove('editor-mode');
-        }
+        // 清除所有交互组件瞬态
+        _stripAllTransientStates(clone);
 
-        // 强制回首页：active 必须回到第一个 slide
-        var slides = clone.querySelectorAll('.slide[data-slide]');
-        slides.forEach(function (s, i) {
-            if (i === 0) { s.classList.add('active'); } else { s.classList.remove('active'); }
+        // ★ 关键：用 localStorage 中已持久化的值覆盖 [data-edit-id] 元素
+        //   而非从实时 DOM 复制 innerHTML（实时 DOM 可能包含运行时注入内容）
+        clone.querySelectorAll('[data-edit-id]').forEach(function (el) {
+            var id = el.getAttribute('data-edit-id');
+            var saved = readStoredValue('e:' + id);
+            if (saved !== null) el.innerHTML = stripTransientEditableHTML(saved);
         });
 
-        // 清空运行时生成的导航元素（slides-runtime 会在加载时重建）
-        var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
-        var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
-        var sc = clone.querySelector('#counter'); if (sc) sc.innerHTML = '';
-        var pb = clone.querySelector('#progress'); if (pb) { pb.style.width = '0'; }
-
-        // 清空运行时动态生成的粒子
-        var particles = clone.querySelector('#particles');
-        if (particles) particles.innerHTML = '';
-
-        // 物理删除已删除批注的锚点节点
         _removeDeletedAnnotationNodes(clone);
-
-        // 触发导出清洗钩子
-        if (EditorHooks) {
-            EditorHooks.fire('onExportClean', clone);
-        }
-
+        clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
+        if (EditorHooks) EditorHooks.fire('onExportClean', clone);
         return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    function _prepareCleanHTMLFromSource(cleanHTML) {
+        // 从干净的磁盘 HTML 为底本，只把 localStorage 里 [data-edit-id] 的内容盖上去。
+        // 不再从实时 DOM 复制 el.innerHTML —— 实时 DOM 可能包含组件运行时注入的瞬态标记。
+        var div = document.createElement('div');
+        div.innerHTML = cleanHTML.replace(/^<!DOCTYPE[^>]*>\s*/i, '');
+
+        div.querySelectorAll('[data-edit-id]').forEach(function (target) {
+            var id = target.getAttribute('data-edit-id');
+            var saved = readStoredValue('e:' + id);
+            if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
+        });
+
+        _removeDeletedAnnotationNodes(div);
+        div.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
+        if (EditorHooks) EditorHooks.fire('onExportClean', div);
+        return '<!DOCTYPE html>\n' + div.innerHTML;
     }
 
     function _requestHTMLFileAccess() {
@@ -362,8 +445,8 @@
             // 移除浮动控件及编辑器专有图元挂载节点
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
             clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
-            clone.querySelectorAll('.qa-fragment-visible').forEach(function (el) { el.classList.remove('qa-fragment-visible'); });
-            clone.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) { el.removeAttribute('data-fragment-manual-reveal'); });
+            // 清除所有交互组件瞬态（替代原来仅清除 qa-fragment-visible/data-fragment-manual-reveal）
+            _stripAllTransientStates(clone);
 
             // 剥离原生的安全隔离壳 (.native-edit-wrap)
             clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
@@ -394,21 +477,31 @@
 
         /** 💾 保存到 HTML 文件（存档） */
         saveToHTMLFile: function () {
-            var cleanHTML = _prepareCleanHTML();
+            // ★ 保存前先同步当前幻灯片到 localStorage，确保最新编辑内容不会丢失
+            var currentSlide = document.querySelector('.slide.active');
+            if (currentSlide) PersistenceLayer.syncFromDOM(currentSlide);
 
-            if (_htmlFileHandle) {
-                return _htmlFileHandle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
-                    if (perm === 'granted') {
-                        return _writeHTMLToFile(cleanHTML);
-                    }
-                    return _requestHTMLFileAccess().then(function (ok) {
-                        return ok ? _writeHTMLToFile(cleanHTML) : false;
+            return _loadCleanHTMLFromDisk().then(function (cleanHTML) {
+                var result;
+                if (cleanHTML) {
+                    // XHR 成功：以磁盘 HTML 为底本，只从 localStorage 盖 [data-edit-id]
+                    result = _prepareCleanHTMLFromSource(cleanHTML);
+                } else {
+                    // XHR 失败（file:// 协议必然失败）：克隆当前 DOM 并全面清洗
+                    result = _prepareCleanHTMLFallback();
+                }
+
+                if (_htmlFileHandle) {
+                    return _htmlFileHandle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+                        if (perm === 'granted') return _writeHTMLToFile(result);
+                        return _requestHTMLFileAccess().then(function (ok) {
+                            return ok ? _writeHTMLToFile(result) : false;
+                        });
                     });
+                }
+                return _requestHTMLFileAccess().then(function (ok) {
+                    return ok ? _writeHTMLToFile(result) : false;
                 });
-            }
-
-            return _requestHTMLFileAccess().then(function (ok) {
-                return ok ? _writeHTMLToFile(cleanHTML) : false;
             });
         },
 
