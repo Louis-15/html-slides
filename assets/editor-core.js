@@ -28,7 +28,7 @@
     var hotzone = document.createElement("div");
     hotzone.className = "edit-hotzone";
     hotzone.style.width = "190px";
-    hotzone.style.height = "80px";
+    hotzone.style.height = "52px";
     document.body.insertBefore(hotzone, document.body.firstChild);
 
     // 编辑切换按钮
@@ -36,6 +36,7 @@
     editToggle.className = "edit-toggle";
     editToggle.id = "editToggle";
     editToggle.title = "编辑模式 (按E键)";
+    editToggle.style.top = "6px";
     editToggle.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
     document.body.insertBefore(editToggle, hotzone.nextSibling);
@@ -45,6 +46,7 @@
     saveToggle.className = "edit-toggle save-toggle";
     saveToggle.id = "saveToggle";
     saveToggle.title = "保存到 HTML 文件 (Ctrl+S)";
+    saveToggle.style.top = "6px";
     saveToggle.style.left = "75px";
     saveToggle.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>';
@@ -55,6 +57,7 @@
     loadToggle.className = "edit-toggle load-toggle";
     loadToggle.id = "loadToggle";
     loadToggle.title = "从 HTML 文件读取存档";
+    loadToggle.style.top = "6px";
     loadToggle.style.left = "130px";
     loadToggle.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>';
