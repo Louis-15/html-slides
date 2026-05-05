@@ -761,6 +761,7 @@
 
       if (answers) {
         answers.hidden = normalizedType === 'blank';
+        answers.style.display = normalizedType === 'blank' ? 'none' : '';
         answers.setAttribute('aria-hidden', normalizedType === 'blank' ? 'true' : 'false');
       }
     });
