@@ -139,6 +139,12 @@
             htmlEl.classList.remove('editor-mode');
         }
 
+        // 清空运行时生成的导航元素（slides-runtime 会在加载时重建）
+        var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
+        var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
+        var sc = clone.querySelector('#counter'); if (sc) sc.innerHTML = '';
+        var pb = clone.querySelector('#progress'); if (pb) { pb.style.width = '0'; }
+
         // 物理删除已删除批注的锚点节点
         _removeDeletedAnnotationNodes(clone);
 
@@ -177,6 +183,10 @@
             return _htmlFileHandle.createWritable().then(function (writable) {
                 return writable.write(html).then(function () { return writable.close(); });
             });
+        }).then(function () {
+            // 标记：标注数据已内联到 HTML，下次加载时不再读取旧 .annotations.js
+            try { localStorage.setItem('hslides-ann-inline:' + decodeURIComponent(location.pathname), '1'); } catch (e) { }
+            return true;
         });
         _htmlWriteChain = task.catch(function () { return false; });
         return task;

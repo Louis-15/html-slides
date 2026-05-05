@@ -237,6 +237,15 @@
   }
 
   function _init() {
+    // 如果已保存过（标注数据已内联到 HTML），跳过侧挂加载
+    try {
+      var markerKey = 'hslides-ann-inline:' + decodeURIComponent(location.pathname);
+      if (localStorage.getItem(markerKey) === '1') {
+        _readyResolve(false);
+        return;
+      }
+    } catch (e) { }
+
     _loadDataFile().then(function (data) {
       if (data) {
         _initData = data;
