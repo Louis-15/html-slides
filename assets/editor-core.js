@@ -24,9 +24,11 @@
   // 工具栏 HTML 动态注入
   // ========================================
   function _injectEditorUI() {
-    // 编辑热区
+    // 编辑热区（加宽，覆盖三个按钮：编辑20px + 保存75px + 读取130px，每个45px宽）
     var hotzone = document.createElement("div");
     hotzone.className = "edit-hotzone";
+    hotzone.style.width = "190px";
+    hotzone.style.height = "80px";
     document.body.insertBefore(hotzone, document.body.firstChild);
 
     // 编辑切换按钮
@@ -155,6 +157,12 @@
       var toolbar = document.getElementById("richToolbar");
 
       if (this.isActive) {
+        // 编辑模式下隐藏保存/读取按钮
+        var saveToggle = document.getElementById("saveToggle");
+        var loadToggle = document.getElementById("loadToggle");
+        if (saveToggle) { saveToggle.classList.remove("show"); saveToggle.style.display = "none"; }
+        if (loadToggle) { loadToggle.classList.remove("show"); loadToggle.style.display = "none"; }
+
         // 如果涂鸦模式处于开启状态，强制其退出（完全互斥）
         if (window.DoodleManager && window.DoodleManager.isActive) {
           window.DoodleManager.toggleDoodleMode();
@@ -211,6 +219,11 @@
           el.removeAttribute("contenteditable");
         });
         this._navLocked = false;
+        // 退出编辑模式，恢复保存/读取按钮
+        var saveToggleOut = document.getElementById("saveToggle");
+        var loadToggleOut = document.getElementById("loadToggle");
+        if (saveToggleOut) saveToggleOut.style.display = "";
+        if (loadToggleOut) loadToggleOut.style.display = "";
         EditorHooks.fire("onEditModeExit");
       }
     },
@@ -273,67 +286,61 @@
   // 3. 编辑热区交互
   var hotzone = document.querySelector(".edit-hotzone");
   var editToggle = document.getElementById("editToggle");
-  var hideTimeout = null;
+  var editHideTimer = null;
+  var saveHideTimer = null;
+  var loadHideTimer = null;
+
+  function clearAllTimers() {
+    clearTimeout(editHideTimer); editHideTimer = null;
+    clearTimeout(saveHideTimer); saveHideTimer = null;
+    clearTimeout(loadHideTimer); loadHideTimer = null;
+  }
+
+  function showAll() {
+    clearAllTimers();
+    editToggle.classList.add("show");
+    if (saveToggle) saveToggle.classList.add("show");
+    if (loadToggle) loadToggle.classList.add("show");
+  }
+
+  function hideEdit() { editHideTimer = setTimeout(function () { if (!editorCore.isActive) editToggle.classList.remove("show"); }, 300); }
+  function hideSave() { saveHideTimer = setTimeout(function () { if (saveToggle) saveToggle.classList.remove("show"); }, 300); }
+  function hideLoad() { loadHideTimer = setTimeout(function () { if (loadToggle) loadToggle.classList.remove("show"); }, 300); }
 
   if (hotzone && editToggle) {
-    hotzone.addEventListener("mouseenter", function () {
-      clearTimeout(hideTimeout);
-      editToggle.classList.add("show");
-      if (saveToggle) saveToggle.classList.add("show");
-      if (loadToggle) loadToggle.classList.add("show");
-    });
+    // 热区悬浮：三个按钮全部亮起
+    hotzone.addEventListener("mouseenter", showAll);
     hotzone.addEventListener("mouseleave", function () {
-      hideTimeout = setTimeout(function () {
-        if (!editorCore.isActive) {
-          editToggle.classList.remove("show");
-          if (saveToggle) saveToggle.classList.remove("show");
-          if (loadToggle) loadToggle.classList.remove("show");
-        }
-      }, 400);
-    });
-    editToggle.addEventListener("mouseenter", function () {
-      clearTimeout(hideTimeout);
-    });
-    editToggle.addEventListener("mouseleave", function () {
-      hideTimeout = setTimeout(function () {
-        if (!editorCore.isActive) {
-          editToggle.classList.remove("show");
-          if (saveToggle) saveToggle.classList.remove("show");
-          if (loadToggle) loadToggle.classList.remove("show");
-        }
-      }, 400);
-    });
-    editToggle.addEventListener("click", function (e) {
-      e.stopPropagation();
-      editorCore.toggleEditMode();
+      hideEdit(); hideSave(); hideLoad();
     });
     hotzone.addEventListener("click", function () {
       editorCore.toggleEditMode();
     });
-    // 保存和读取按钮的悬浮保持
+
+    // 编辑按钮：自己的悬浮和离开
+    editToggle.addEventListener("mouseenter", function () {
+      clearTimeout(editHideTimer);
+    });
+    editToggle.addEventListener("mouseleave", hideEdit);
+    editToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      editorCore.toggleEditMode();
+    });
+
+    // 保存按钮：独立的显隐定时器
     if (saveToggle) {
-      saveToggle.addEventListener("mouseenter", function () { clearTimeout(hideTimeout); });
-      saveToggle.addEventListener("mouseleave", function () {
-        hideTimeout = setTimeout(function () {
-          if (!editorCore.isActive) {
-            editToggle.classList.remove("show");
-            if (saveToggle) saveToggle.classList.remove("show");
-            if (loadToggle) loadToggle.classList.remove("show");
-          }
-        }, 400);
+      saveToggle.addEventListener("mouseenter", function () {
+        clearTimeout(saveHideTimer);
       });
+      saveToggle.addEventListener("mouseleave", hideSave);
     }
+
+    // 读取按钮：独立的显隐定时器
     if (loadToggle) {
-      loadToggle.addEventListener("mouseenter", function () { clearTimeout(hideTimeout); });
-      loadToggle.addEventListener("mouseleave", function () {
-        hideTimeout = setTimeout(function () {
-          if (!editorCore.isActive) {
-            editToggle.classList.remove("show");
-            if (saveToggle) saveToggle.classList.remove("show");
-            if (loadToggle) loadToggle.classList.remove("show");
-          }
-        }, 400);
+      loadToggle.addEventListener("mouseenter", function () {
+        clearTimeout(loadHideTimer);
       });
+      loadToggle.addEventListener("mouseleave", hideLoad);
     }
   }
 
