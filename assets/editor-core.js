@@ -371,13 +371,49 @@
     });
   }
 
-  // 6. 保存按钮事件
+  // 6. 保存按钮事件 + 通知气泡
   if (saveToggle) {
+    // 创建通知气泡（居中于三个按钮那一行下方）
+    var saveBubble = document.createElement("div");
+    saveBubble.className = "save-bubble";
+    saveBubble.style.cssText =
+      "display:none;position:fixed;top:60px;left:50%;transform:translate(-50%,-6px);" +
+      "padding:8px 20px;border-radius:10px;font-size:14px;font-weight:600;" +
+      "z-index:9999;pointer-events:none;white-space:nowrap;" +
+      "box-shadow:0 4px 16px rgba(0,0,0,0.35);" +
+      "transition:opacity 0.3s,transform 0.3s;opacity:0;";
+    document.body.appendChild(saveBubble);
+
+    var saveBubbleTimer = null;
+    function showSaveBubble(text, isError) {
+      clearTimeout(saveBubbleTimer);
+      saveBubble.textContent = text;
+      saveBubble.style.background = isError ? "#e74c3c" : "var(--accent-green, #3fb950)";
+      saveBubble.style.color = "#fff";
+      saveBubble.style.display = "block";
+      requestAnimationFrame(function () {
+        saveBubble.style.opacity = "1";
+        saveBubble.style.transform = "translate(-50%,0)";
+      });
+      saveBubbleTimer = setTimeout(function () {
+        saveBubble.style.opacity = "0";
+        saveBubble.style.transform = "translate(-50%,-6px)";
+        saveBubbleTimer = setTimeout(function () { saveBubble.style.display = "none"; }, 300);
+      }, 2200);
+    }
+
     saveToggle.addEventListener("click", function (e) {
       e.stopPropagation();
       if (window.PersistenceLayer && typeof window.PersistenceLayer.saveToHTMLFile === "function") {
+        saveToggle.style.opacity = "0.6";
+        saveToggle.style.pointerEvents = "none";
+        showSaveBubble("⏳ 保存中...", false);
         window.PersistenceLayer.saveToHTMLFile().then(function (ok) {
+          saveToggle.style.opacity = "";
+          saveToggle.style.pointerEvents = "";
           if (ok) {
+            try { var popAudio = new Audio("./sound/pop.mp3"); popAudio.volume = 0.5; popAudio.play(); } catch (ex) {}
+            showSaveBubble("💾 保存成功", false);
             saveToggle.style.background = "var(--accent-green, #3fb950)";
             saveToggle.style.borderColor = "var(--accent-green, #3fb950)";
             saveToggle.style.color = "#fff";
@@ -386,6 +422,8 @@
               saveToggle.style.borderColor = "";
               saveToggle.style.color = "";
             }, 1500);
+          } else {
+            showSaveBubble("❌ 保存失败", true);
           }
         });
       }
