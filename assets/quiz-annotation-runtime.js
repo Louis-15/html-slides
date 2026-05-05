@@ -4630,35 +4630,10 @@
 
   /**
    * 创建 AnnotationStore 状态指示器。
-   * 这里不再长期暴露“自动保存”角标，只在首次授权失败或写入异常时提供补救入口。
+   * AnnotationStore sidecar 保存体系已因内联化重构而移除，
+   * _initStoreUI 不再创建任何 UI 元素。保留函数体以防其他模块调用。
    */
-  function _initStoreUI(qa) {
-    if (!window.AnnotationStore) return;
-    const header = qa.querySelector('.qa-notes-header');
-    if (!header) return;
-    if (header.querySelector('.annotation-store-status')) return;
-
-    const statusEl = document.createElement('span');
-    statusEl.className = 'annotation-store-status';
-    statusEl.style.cssText = 'font-size:12px; cursor:pointer; margin-left:8px; transition:opacity 0.3s; display:none; opacity:0;';
-
-    if (hasAnnotationStoreWriteAccess()) {
-      hideAnnotationStoreStatus(statusEl);
-    } else if (annotationStoreFirstGestureAttempted) {
-      showAnnotationStoreStatus(statusEl, 'needs-auth');
-    } else {
-      hideAnnotationStoreStatus(statusEl);
-      installAnnotationStoreFirstGestureAuth();
-    }
-
-    statusEl.addEventListener('click', () => {
-      requestAnnotationStoreAuthorization(true).then((ok) => {
-        if (ok) hideAnnotationStoreStatus(statusEl);
-      });
-    });
-
-    header.appendChild(statusEl);
-  }
+  function _initStoreUI() {}
 
   /**
    * 【灾后净化函数】：剥离所有运行时动态生成的DOM元素
