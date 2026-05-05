@@ -886,7 +886,19 @@
 
     const firstRect = rects[0];
     const qaRect = qa.getBoundingClientRect();
-    toolbar.style.left = `${firstRect.left - qaRect.left}px`;
+    const ans = qa.querySelector('.qa-answer-panel');
+    const inAnswer = ans && ans.contains(range.commonAncestorContainer);
+
+    if (inAnswer) {
+      // 右栏空间局促：改为右对齐，工具栏向左延伸，出现在选中文字的左上方
+      toolbar.style.left = 'auto';
+      toolbar.style.right = `${qaRect.right - firstRect.left}px`;
+    } else {
+      // 左栏：保持左对齐，工具栏向右延伸，出现在选中文字的右上方
+      toolbar.style.left = `${firstRect.left - qaRect.left}px`;
+      toolbar.style.right = 'auto';
+    }
+
     toolbar.style.top = `${firstRect.top - qaRect.top - (offsetY || 45)}px`;
     return true;
   }
