@@ -25,6 +25,7 @@ It also offers a **Vibe mode** with 12 creative themes for non-technical present
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides exports, articles, generic pages) into HTMLSlides format.
 - **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
+- **Inline Editing & Local Save** — Press E to enter edit mode, click any text to modify. Save changes directly to the HTML file (File System Access API), with IndexedDB-based file handle persistence across sessions. Interactive component states auto-reset on refresh. Zero runtime state in saved files. [Dev Docs](开发者文档/本地化保存、读取系统.md)
 
 ## Installation
 

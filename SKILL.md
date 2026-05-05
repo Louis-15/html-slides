@@ -218,9 +218,9 @@ Do NOT include summary for:
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
-- If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules
+- If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules. Note: `annotation-store.js` 已简化为兼容存根，不再加载 `.annotations.js` 侧挂文件。
 - If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
-- Before ALL runtime `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline
+- Before ALL runtime `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline. 详见 [本地化保存、读取系统](开发者文档/本地化保存、读取系统.md)
 - [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor-core.js` and before `doodle-runtime.js`
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
@@ -328,7 +328,7 @@ Follow Phase 2 (Content Analysis) → Phase 3 (Layout Planning) → Phase 4 (Gen
    - File location, slide count
    - Navigation: Arrow keys, Space, scroll/swipe, click nav dots
    - Speaker notes: Open DevTools (F12), detach to separate window
-   - Editing: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save changes to the HTML file, or use the save/load buttons near the edit toggle for archive/restore
+   - Editing: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S or click 💾 to save changes to the HTML file (弹窗提示保存成功 + 音效), 📂 to load archive (清除草稿并刷新). 详见 [本地化保存、读取系统](开发者文档/本地化保存、读取系统.md)
 
 ---
 
