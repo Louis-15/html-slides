@@ -140,11 +140,21 @@
             htmlEl.classList.remove('editor-mode');
         }
 
+        // 强制回首页：active 必须回到第一个 slide
+        var slides = clone.querySelectorAll('.slide[data-slide]');
+        slides.forEach(function (s, i) {
+            if (i === 0) { s.classList.add('active'); } else { s.classList.remove('active'); }
+        });
+
         // 清空运行时生成的导航元素（slides-runtime 会在加载时重建）
         var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
         var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
         var sc = clone.querySelector('#counter'); if (sc) sc.innerHTML = '';
         var pb = clone.querySelector('#progress'); if (pb) { pb.style.width = '0'; }
+
+        // 清空运行时动态生成的粒子
+        var particles = clone.querySelector('#particles');
+        if (particles) particles.innerHTML = '';
 
         // 物理删除已删除批注的锚点节点
         _removeDeletedAnnotationNodes(clone);

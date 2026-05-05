@@ -25,6 +25,8 @@
   max-width: 1300px;
   margin: 0 auto;
   /* 与下方画布保持同轴居中 */
+  isolation: isolate;
+  /* 隔离 backdrop-filter，防止幻灯片切换时上一页残留像素透过毛玻璃形成重影 */
   margin-top: clamp(8px, 1.5vh, 16px);
   /* 顶边距减半，极致紧凑 */
   margin-bottom: 24px;

@@ -1296,6 +1296,14 @@
     renderSubmission(root);
     renderAnalysis(root);
     renderNavigation(root);
+
+    // 强制完成动画，防止 DOM 变动后 CSS 入场动画残留导致 zone1 标题重影
+    var slide = root.closest('.slide');
+    if (slide && slide.getAnimations) {
+      try {
+        slide.getAnimations({ subtree: true }).forEach(function (a) { a.finish(); });
+      } catch (e) { }
+    }
   }
 
   function initAll(scope = document) {
