@@ -1368,6 +1368,29 @@
             var clonePanel = cloneQA.querySelector('.qa-notes-panel');
             if (clonePanel) clonePanel.appendChild(clonedBubble);
           });
+          // 3. 同步实时 DOM 中气泡的 data-link-answer 到 clone
+          //    （取消右侧关联时不仅要去掉气泡属性，还要从 clone 中删除 answer-anchor）
+          cloneQA.querySelectorAll('.qa-note-bubble').forEach(function (cloneBubble) {
+            var linkId = cloneBubble.getAttribute('data-link');
+            if (!linkId) return;
+            var liveBubble = liveQA.querySelector('.qa-note-bubble[data-link="' + linkId + '"]');
+            if (!liveBubble) return;
+            var liveAnswerLink = liveBubble.getAttribute('data-link-answer') || '';
+            var cloneAnswerLink = cloneBubble.getAttribute('data-link-answer') || '';
+            if (liveAnswerLink !== cloneAnswerLink) {
+              if (liveAnswerLink) {
+                cloneBubble.setAttribute('data-link-answer', liveAnswerLink);
+              } else {
+                cloneBubble.removeAttribute('data-link-answer');
+                // 同时删除 clone 中残留的 answer-anchor
+                cloneQA.querySelectorAll('.answer-anchor[data-link-answer="' + cloneAnswerLink + '"], .answer-anchor[data-link="' + cloneAnswerLink + '"]').forEach(function (anchor) {
+                  var parent = anchor.parentNode;
+                  while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+                  parent.removeChild(anchor);
+                });
+              }
+            }
+          });
         });
       });
     }
