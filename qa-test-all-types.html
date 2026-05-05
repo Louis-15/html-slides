@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="generator" content="html-slides v1.0.0">
+    <title>答题与批注组件 — 全题型测试</title>
+
+    <!-- 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- === CSS 外链 === -->
+    <link rel="stylesheet" href="./assets/viewport-base.css">
+    <link rel="stylesheet" href="./assets/themes/xindongfang-green.css">
+    <link rel="stylesheet" href="./assets/components.css">
+    <link rel="stylesheet" href="./assets/zones/zone1-header.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-content.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
+    <link rel="stylesheet" href="./assets/editor.css">
+</head>
+<body>
+    <!-- === Chrome 元素 === -->
+    <div class="progress-bar" id="progress"></div>
+    <div class="particles" id="particles"></div>
+    <div class="branding"><div class="brand-logo"></div></div>
+    <div class="slide-nav" id="slideNav"></div>
+    <div class="slide-counter" id="counter"></div>
+
+    <!-- === 幻灯片容器 === -->
+    <div class="deck" id="deck">
+
+        <!-- ========== SLIDE 0: 封面页 ========== -->
+        <div class="slide active" data-slide="0">
+            <div class="slide-content layout-title">
+                <div class="title-hero">
+                    <p class="title-hero-subject anim-1">答题与批注组件</p>
+                    <h1 class="title-hero-heading anim-2">全题型功能测试</h1>
+                    <div class="title-hero-divider anim-3"></div>
+                    <p class="title-hero-author anim-4">七选五 · 阅读单选 · 阅读填空 · 文章解析</p>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"封面","script":"本测试课件覆盖了答题与批注组件的全部四种题型：阅读七选五、阅读单选、阅读填空和纯文章解析。每种题型都包含双向批注，可以全面测试保存/读取、交互状态和锚点恢复。","notes":["全题型测试课件","覆盖 matching / single / blank / analysis 四种类型"]}
+            </script>
+        </div>
+
+
+        <!-- ========== SLIDE 1: 阅读七选五 ========== -->
+        <div class="slide" data-slide="1">
+            <div class="slide-header banner">
+                <div class="header-module">题型一 · 七选五</div>
+                <div class="header-title">How to Build a Daily Reading Habit</div>
+            </div>
+
+            <div class="slide-content layout-single">
+                <div class="quiz-annotation has-quiz" data-reading-type="matching">
+                    <div class="qa-body">
+                        <svg class="qa-connector-canvas"></svg>
+
+                        <div class="qa-passage" data-scrollable>
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t1-p1">
+                                Building a daily reading habit is one of the most rewarding things you can do for yourself.
+                                <span class="qa-blank-slot" data-blank-id="36" data-correct-answer="F">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">36</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                Reading doesn't have to mean finishing a novel every week — even ten minutes a day can make a huge difference over time.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t1-p2">
+                                <span class="text-anchor" data-link="note-t1-01" data-step="1"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    First, choose books that genuinely interest you.<sup class="note-badge">1</sup>
+                                </span>
+                                <span class="qa-blank-slot" data-blank-id="37" data-correct-answer="A">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">37</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                Many people give up reading because they force themselves to read things they think they "should" read, rather than what they actually enjoy.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t1-p3">
+                                Second, create a fixed reading time.
+                                <span class="qa-blank-slot" data-blank-id="38" data-correct-answer="D">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">38</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                <span class="text-anchor" data-link="note-t1-02" data-step="2"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    A consistent schedule turns reading from a hope into a habit.<sup class="note-badge">2</sup>
+                                </span>
+                                Whether it's right after breakfast or during your commute, pick a slot and protect it.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t1-p4">
+                                Third,
+                                <span class="text-anchor" data-link="note-t1-03" data-step="3"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue);">
+                                    keep a book within arm's reach at all times.<sup class="note-badge">3</sup>
+                                </span>
+                                <span class="qa-blank-slot" data-blank-id="39" data-correct-answer="G">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">39</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                Having a book nearby makes it much easier to choose reading over scrolling through social media during spare moments.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t1-p5">
+                                Finally,
+                                <span class="text-anchor" data-link="note-t1-04" data-step="4"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    track your progress and celebrate small wins.<sup class="note-badge">4</sup>
+                                </span>
+                                <span class="qa-blank-slot" data-blank-id="40" data-correct-answer="B">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">40</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                <span class="text-anchor" data-link="note-t1-05" data-step="5"
+                                      style="text-decoration: underline; text-decoration-color: #3498DB; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    The sense of achievement will keep you motivated for the long run.<sup class="note-badge">5</sup>
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="qa-answer-panel">
+                            <div class="qa-answer-header">
+                                <div class="qa-answer-title">📋 七选五 · 拖拽选项到正文空位</div>
+                                <button class="qa-submit-btn" id="submitBtn1">提交答案</button>
+                            </div>
+                            <div class="qa-answer-content" data-scrollable>
+                                <div class="qa-question" data-type="matching">
+                                    <div class="qa-option" data-option="A" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t1-01" data-step="1" style="text-decoration: underline; text-decoration-color: #2ECC71; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Don't feel obligated to read something because<sup class="note-badge" style="margin-left: 0px;">1</sup></span> it's on a bestseller list.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="B" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t1-05" data-step="5" style="text-decoration: underline; text-decoration-color: #3498DB; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Use a reading journal or an app to record<sup class="note-badge" style="margin-left: 0px;">5</sup></span> what you've read and how you felt.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="C" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text">Book clubs and discussion groups can enrich the reading experience.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="D" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t1-02" data-step="2" style="text-decoration: underline; text-decoration-color: #F1C40F; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Without a regular time slot, reading tends to<sup class="note-badge" style="margin-left: 0px;">2</sup></span> get pushed aside by other priorities.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="E" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">E</span>
+                                        <span class="qa-option-text">Libraries are an excellent free resource for discovering new books.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="F" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">F</span>
+                                        <span class="qa-option-text">It doesn't require hours of free time or a quiet study to get started.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="G" draggable="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">G</span>
+                                        <span class="qa-option-text">The easier it is to pick up a book, the more likely you are to do it.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qa-notes-panel">
+                            <div class="qa-note-bubble" data-link="note-t1-01" data-link-answer="note-t1-01" data-step="1" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t1-note-01">
+                                    <strong>词汇衔接：</strong>"choose books that genuinely interest you" 与选项 A 中的 "Don't feel obligated to read something...on a bestseller list" 形成<em>正反论证</em>关系。一侧说"选你感兴趣的"，另一侧说"不要因为畅销就去读"，逻辑上一体两面。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t1-02" data-link-answer="note-t1-02" data-step="2" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t1-note-02">
+                                    <strong>因果衔接：</strong>"a consistent schedule turns reading from a hope into a habit" 中的 <em>schedule</em> 与选项 D 的 "regular time slot" 构成<em>同义替换</em>。空后 "Whether it's right after breakfast..." 列举了具体时间例子，进一步锁定 D。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t1-03" data-step="3" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">3</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t1-note-03">
+                                    <strong>解释展开：</strong>"keep a book within arm's reach" 的实质就是 <em>降低阅读的门槛</em>。选项 G "The easier it is to pick up a book, the more likely you are to do it" 用通用道理概括了这个具体建议，属于典型的"具体→抽象"逻辑关系。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t1-04" data-step="4" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">4</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t1-note-04">
+                                    <strong>指代与承接：</strong>"track your progress" 这个动作具体化为 B 选项的 "Use a reading journal or an app to record"。<em>progress</em> 对应 <em>what you've read</em>，<em>celebrate</em> 暗示需要记录才能感知进步。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t1-05" data-link-answer="note-t1-05" data-step="5" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">5</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t1-note-05">
+                                    <strong>情绪递进：</strong>最后一段从"track progress"到"sense of achievement"再到"keep you motivated"，形成完整的情绪闭环。做七选五时，段落末尾的情绪词往往是匹配段首主题句的线索。
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /qa-body -->
+                </div><!-- /quiz-annotation -->
+            </div>
+
+            <script type="application/json" class="slide-notes">
+            {"title":"七选五：How to Build a Daily Reading Habit","script":"这篇七选五讲的是如何建立每日阅读习惯。五空分别考查兴趣选择（F-A）、固定时间（D）、降低门槛（G）、跟踪记录（B）等逻辑关系。做题时注意首尾呼应、同义替换和代词衔接。","notes":["36-F：总起句，reading 不需要很多时间","37-A：兴趣优先，不要强迫自己读畅销书","38-D：固定时间，否则阅读容易被挤掉","39-G：降低门槛，书在手边更容易读","40-B：跟踪记录，用 journal 或 app"]}
+            </script>
+        </div>
+
+
+        <!-- ========== SLIDE 2: 阅读单选 ========== -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header banner">
+                <div class="header-module">题型二 · 阅读理解</div>
+                <div class="header-title">The Library of Things</div>
+            </div>
+
+            <div class="slide-content layout-single">
+                <div class="quiz-annotation has-quiz" data-reading-type="single">
+                    <div class="qa-body">
+                        <svg class="qa-connector-canvas"></svg>
+
+                        <div class="qa-passage" data-scrollable>
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t2-p1">
+                                In a small town in Oregon, the public library has started offering something unexpected:
+                                <span class="text-anchor" data-link="note-t2-11" data-step="1"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    a "Library of Things." Instead of just books, patrons can now check out power drills,<sup class="note-badge">1</sup>
+                                </span>
+                                sewing machines, camping gear, and even baking equipment. The program, launched in January 2025, has already attracted over 600 new library card holders.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t2-p2">
+                                <span class="text-anchor" data-link="note-t2-12" data-step="2"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue);">
+                                    The idea behind the program is both practical and environmental.<sup class="note-badge">2</sup>
+                                </span>
+                                Most people use a power drill for less than 15 minutes in its entire lifetime. By sharing tools, the community reduces waste and saves money. Each borrowed item comes with a simple instruction booklet and a QR code linking to a tutorial video.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t2-p3">
+                                According to
+                                <span class="text-anchor" data-link="note-t2-13" data-step="3"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    librarian Sarah Chen, the goal of the program is to fight "underconsumption"<sup class="note-badge">3</sup>
+                                </span>
+                                — the idea that most people already own more than they need. "We want to change the way our community thinks about ownership," Chen said in an interview. "Why buy a cake pan you'll use once a year when you can borrow one?"
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t2-p4">
+                                <span class="text-anchor" data-link="note-t2-14" data-step="4"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    The response has been overwhelmingly positive, but there are challenges.<sup class="note-badge">4</sup>
+                                </span>
+                                Some items return damaged, and the library has had to hire a part-time repair technician. Still, the program is expanding — next month, they plan to add musical instruments and 3D printers to the collection.
+                            </p>
+                        </div>
+
+                        <div class="qa-answer-panel">
+                            <div class="qa-answer-header">
+                                <div class="qa-answer-title">📋 阅读理解 · 选择题</div>
+                                <button class="qa-submit-btn" id="submitBtn2">提交答案</button>
+                            </div>
+                            <div class="qa-answer-content" data-scrollable>
+                                <div class="qa-question" data-type="single">
+                                    <p style="font-weight:600;margin-bottom:8px;">1. What is the "Library of Things"?</p>
+                                    <div class="qa-option" data-option="A">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text">A library that only lends digital books.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="B" data-correct="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t2-11" data-step="1" style="text-decoration: underline; text-decoration-color: #2ECC71; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">A program allowing patrons to borrow tools<sup class="note-badge" style="margin-left: 0px;">1</sup></span> and household items.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="C">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text">A collection of rare books about tools.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="D">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text">A museum exhibition about modern inventions.</span>
+                                    </div>
+                                </div>
+
+                                <div class="qa-question" data-type="single">
+                                    <p style="font-weight:600;margin-bottom:8px;">2. What is the main purpose of the program?</p>
+                                    <div class="qa-option" data-option="A">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text">To attract more library visitors.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="B">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text">To make money for the library.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="C" data-correct="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t2-12" data-step="2" style="text-decoration: underline; text-decoration-color: #F1C40F; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">To reduce waste by sharing rarely-used items.<sup class="note-badge" style="margin-left: 0px;">2</sup></span></span>
+                                    </div>
+                                    <div class="qa-option" data-option="D">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text">To compete with hardware stores.</span>
+                                    </div>
+                                </div>
+
+                                <div class="qa-question" data-type="single">
+                                    <p style="font-weight:600;margin-bottom:8px;">3. What does the word "underconsumption" in paragraph 3 most likely mean?</p>
+                                    <div class="qa-option" data-option="A">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text">Buying more than necessary.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="B" data-correct="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t2-13" data-step="3" style="text-decoration: underline; text-decoration-color: #3498DB; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">The practice of owning only what<sup class="note-badge" style="margin-left: 0px;">3</sup></span> you truly need.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="C">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text">The habit of borrowing from libraries.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="D">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text">The increase in library card registrations.</span>
+                                    </div>
+                                </div>
+
+                                <div class="qa-question" data-type="single">
+                                    <p style="font-weight:600;margin-bottom:8px;">4. What challenge does the program face?</p>
+                                    <div class="qa-option" data-option="A">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text">A lack of community interest.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="B">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text">Not enough storage space.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="C" data-correct="true">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text"><span class="answer-anchor" data-link-answer="note-t2-14" data-step="4" style="text-decoration: underline; text-decoration-color: #E74C3C; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">Some items are returned in damaged<sup class="note-badge" style="margin-left: 0px;">4</sup></span> condition.</span>
+                                    </div>
+                                    <div class="qa-option" data-option="D">
+                                        <span class="qa-status-dot"></span>
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text">The items are too expensive to purchase.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qa-notes-panel">
+                            <div class="qa-note-bubble" data-link="note-t2-11" data-link-answer="note-t2-11" data-step="1" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t2-note-11">
+                                    <strong>主旨定位：</strong>首段直接点出了"Library of Things"是什么——借工具、缝纫机、露营装备的图书馆。第1题的B选项精确复现了这个定义，定位信号是破折号后面的 "Instead of just books, patrons can now check out..."。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t2-12" data-link-answer="note-t2-12" data-step="2" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t2-note-12">
+                                    <strong>目的题：</strong>"practical and environmental" 是第2题的关键词。后文 "reduces waste and saves money" 直接解释了 environmental 的含义。注意目的题的答案通常在首段或次段的首尾句。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t2-13" data-link-answer="note-t2-13" data-step="3" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">3</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t2-note-13">
+                                    <strong>词义猜测：</strong>"underconsumption" 后文紧跟破折号解释——"most people already own more than they need"。这是典型的<em>同位语释义</em>，直接指向"只拥有真正需要的"这一含义。注意 "under-" 前缀的反义关系（over- vs under-）。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t2-14" data-link-answer="note-t2-14" data-step="4" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">4</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t2-note-14">
+                                    <strong>细节推断：</strong>"there are challenges" 是第4题的信号句。具体挑战是 "Some items return damaged"，直接对应 C 选项。注意转折词 "but" 和 "Still" 的对比关系——虽然有挑战，但项目仍在扩张。
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /qa-body -->
+                </div><!-- /quiz-annotation -->
+            </div>
+
+            <script type="application/json" class="slide-notes">
+            {"title":"阅读理解：The Library of Things","script":"这篇阅读理解讲的是一家俄勒冈图书馆推出的'物品图书馆'项目。四道题依次考查主旨大意、写作目的、词义猜测和细节理解，正好覆盖了阅读理解最核心的四种能力。","notes":["第1题：主旨——借工具和家居用品的项目(B)","第2题：目的——减少浪费，共享物品(C)","第3题：猜词——只拥有需要的(B)","第4题：细节——物品损坏归还(C)"]}
+            </script>
+        </div>
+
+
+        <!-- ========== SLIDE 3: 阅读填空 ========== -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header banner">
+                <div class="header-module">题型三 · 语法填空</div>
+                <div class="header-title">The Story of Pencils</div>
+            </div>
+
+            <div class="slide-content layout-single">
+                <div class="quiz-annotation has-quiz" data-reading-type="blank">
+                    <div class="qa-body">
+                        <svg class="qa-connector-canvas"></svg>
+
+                        <div class="qa-passage" data-scrollable>
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t3-p1">
+                                The pencil is a tool that nearly everyone has used,
+                                <span class="qa-blank-slot" data-blank-id="46" data-correct-answer="but">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">46</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                <span class="text-anchor" data-link="note-t3-31" data-step="1"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    few people know its fascinating history.<sup class="note-badge">1</sup>
+                                </span>
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t3-p2">
+                                The modern pencil dates back to the
+                                <span class="qa-blank-slot" data-blank-id="47" data-correct-answer="discovery">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">47</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                <span class="text-anchor" data-link="note-t3-32" data-step="2"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    of a large graphite deposit in England in 1564.<sup class="note-badge">2</sup>
+                                </span>
+                                Local shepherds were the first
+                                <span class="qa-blank-slot" data-blank-id="48" data-correct-answer="to use">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">48</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                the material to mark their sheep.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t3-p3">
+                                <span class="text-anchor" data-link="note-t3-33" data-step="3"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    Graphite is one of the softest minerals on Earth.<sup class="note-badge">3</sup>
+                                </span>
+                                It leaves a dark mark when
+                                <span class="qa-blank-slot" data-blank-id="49" data-correct-answer="rubbed">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">49</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                against paper because its atoms are arranged in thin layers
+                                <span class="qa-blank-slot" data-blank-id="50" data-correct-answer="that">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">50</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                can easily slide off.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t3-p4">
+                                <span class="text-anchor" data-link="note-t3-34" data-step="4"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    By the late 18th century, pencil-making had become a major industry.<sup class="note-badge">4</sup>
+                                </span>
+                                The
+                                <span class="qa-blank-slot" data-blank-id="51" data-correct-answer="most famous">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">51</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                pencil company in the world was Faber-Castell,
+                                <span class="qa-blank-slot" data-blank-id="52" data-correct-answer="founded">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">52</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                in Germany in 1761.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t3-p5">
+                                <span class="text-anchor" data-link="note-t3-35" data-step="5"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    Even in the digital age, pencils remain surprisingly popular.<sup class="note-badge">5</sup>
+                                </span>
+                                More than 14 billion pencils are produced
+                                <span class="qa-blank-slot" data-blank-id="53" data-correct-answer="annually">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">53</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                worldwide. A single cedar tree can yield
+                                <span class="qa-blank-slot" data-blank-id="54" data-correct-answer="enough">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">54</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                wood for
+                                <span class="text-anchor" data-link="note-t3-36" data-step="6"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    approximately 300,000 pencils.<sup class="note-badge">6</sup>
+                                </span>
+                                The pencil remains one of the simplest and
+                                <span class="qa-blank-slot" data-blank-id="55" data-correct-answer="most reliable">
+                                    <span class="qa-blank-user">___<sup style="font-size:0.7em;color:var(--text-dim);">55</sup></span>
+                                    <span class="qa-blank-answer"></span>
+                                </span>
+                                writing tools ever invented.
+                            </p>
+                        </div>
+
+                        <div class="qa-answer-panel">
+                            <div class="qa-answer-header">
+                                <div class="qa-answer-title">阅读填空 · 在右侧横线上填写答案</div>
+                                <button class="qa-submit-btn" id="submitBtn3">提交答案</button>
+                            </div>
+                            <div class="qa-answer-content" data-scrollable>
+                                <div class="qa-question" data-type="blank">
+                                    <p style="font-weight:600;margin-bottom:8px;">46-55. 在右侧横线上填入 1 个适当的单词或括号内单词的正确形式。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qa-notes-panel">
+                            <div class="qa-note-bubble" data-link="note-t3-31" data-step="1" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-31">
+                                    <strong>46 but：</strong>前后两个分句构成转折——"人人都用过" vs "几乎没人知道它的历史"。连词 <strong>but</strong> 连接两个并列分句表示对比。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t3-32" data-step="2" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-32">
+                                    <strong>47 discovery / 48 to use：</strong>47 空前是冠词 the，后面是 of，需要名词作 "date back to" 的宾语 → <strong>discovery</strong>。48 空是 "the first + 名词 + ___" 结构，不定式作定语 → <strong>to use</strong>。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t3-33" data-step="3" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">3</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-33">
+                                    <strong>49 rubbed / 50 that：</strong>49 空 "when + 分词" 结构，graphite 和 rub 是被动关系 → <strong>rubbed</strong>。50 空引导定语从句修饰 layers，且从句缺主语 → <strong>that</strong>（或 which）。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t3-34" data-step="4" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">4</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-34">
+                                    <strong>51 most famous / 52 founded：</strong>51 空在 the 和名词之间，需要形容词最高级 → <strong>most famous</strong>。52 空修饰 Faber-Castell，表示"成立于" → 过去分词 <strong>founded</strong>。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t3-35" data-step="5" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">5</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-35">
+                                    <strong>53 annually：</strong>句义是"每年生产超过140亿支铅笔"，修饰动词 produced 需要副词 → <strong>annually</strong>。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t3-36" data-step="6" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">6</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t3-note-36">
+                                    <strong>54 enough / 55 most reliable：</strong>54 空 "yield + 名词 + for" 的名词结构，表示"足够……" → <strong>enough</strong>。55 空在 simplest and 后面，并列最高级，修饰 writing tools → <strong>most reliable</strong>。
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /qa-body -->
+                </div><!-- /quiz-annotation -->
+            </div>
+
+            <script type="application/json" class="slide-notes">
+            {"title":"阅读填空：The Story of Pencils","script":"这篇语法填空讲的是铅笔的历史。十空覆盖了连词（but）、名词（discovery）、非谓语（to use, rubbed, founded）、定语从句引导词（that）、最高级（most famous, most reliable）、副词（annually）和限定词（enough）等常考考点。","notes":["46 but：转折连词","47 discovery：名词","48 to use：不定式作定语","49 rubbed：过去分词（被动）","50 that：定语从句关系词","51 most famous：形容词最高级","52 founded：过去分词","53 annually：副词","54 enough：名词/限定词","55 most reliable：并列最高级"]}
+            </script>
+        </div>
+
+
+        <!-- ========== SLIDE 4: 纯文章解析 ========== -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header banner">
+                <div class="header-module">题型四 · 文章解析</div>
+                <div class="header-title">Why We Forget Most of What We Learn</div>
+            </div>
+
+            <div class="slide-content layout-single">
+                <div class="quiz-annotation" data-reading-type="analysis">
+                    <div class="qa-body">
+                        <svg class="qa-connector-canvas"></svg>
+
+                        <div class="qa-passage" data-scrollable>
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t4-p1">
+                                In the late 19th century, a German psychologist named Hermann Ebbinghaus
+                                <span class="text-anchor" data-link="note-t4-41" data-step="1"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    made a discovery that still shapes how we understand memory today.<sup class="note-badge">1</sup>
+                                </span>
+                                By testing himself on lists of nonsense syllables and recording how much he remembered over time, he mapped out what became known as the Forgetting Curve.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t4-p2">
+                                The results were startling: within just 20 minutes of learning something new,
+                                <span class="text-anchor" data-link="note-t4-42" data-step="2"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    we forget about 42% of it. After a day, that rises to roughly 67%,<sup class="note-badge">2</sup>
+                                </span>
+                                and after a month, about 79% of the original material has faded. In other words, if left to our natural devices, we only retain about a fifth of what we learn.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t4-p3">
+                                <span class="text-anchor" data-link="note-t4-43" data-step="3"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    However, Ebbinghaus also discovered something hopeful.<sup class="note-badge">3</sup>
+                                </span>
+                                When he reviewed the material at specific intervals — after a day, then a week, then a month — the forgetting curve flattened dramatically. This technique, now called spaced repetition, is one of the most evidence-backed learning strategies in cognitive science.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t4-p4">
+                                Modern research has built on Ebbinghaus's findings.
+                                <span class="text-anchor" data-link="note-t4-44" data-step="4"
+                                      style="text-decoration: underline; text-decoration-color: var(--accent-blue); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    The key insight is not just about repetition, but about retrieval.<sup class="note-badge">4</sup>
+                                </span>
+                                Every time you actively pull information out of your memory — by quizzing yourself, explaining it to someone else, or applying it in a new context — you strengthen the neural pathways that hold that information. The effort of retrieval, it turns out, is itself the learning.
+                            </p>
+
+                            <p style="margin-bottom:14px;text-indent:2em;" data-edit-id="t4-p5">
+                                <span class="text-anchor" data-link="note-t4-45" data-step="5"
+                                      style="text-decoration: underline; text-decoration-color: var(--brand-primary); text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-skip-ink: none;">
+                                    This has profound implications for how we study.<sup class="note-badge">5</sup>
+                                </span>
+                                Rereading a textbook or highlighting passages feels productive but provides little retrieval practice. In contrast, closing the book and trying to recall the main points forces your brain to reconstruct the knowledge, making it much more likely to stick. The science is clear: the struggle to remember is not a sign of failure, but the very mechanism by which memory is built.
+                            </p>
+                        </div>
+
+                        <div class="qa-notes-panel">
+                            <div class="qa-note-bubble" data-link="note-t4-41" data-step="1" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">1</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t4-note-41">
+                                    <strong>背景引入：</strong>Hermann Ebbinghaus（赫尔曼·艾宾浩斯）是记忆研究的先驱。第一段交代了人物、发现和影响，典型的"总起引入"结构。阅读学术性文章时，首段人物 + 发现通常就是作者要展开的核心主题。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t4-42" data-step="2" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">2</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t4-note-42">
+                                    <strong>数据支撑：</strong>42% → 67% → 79% 三个数据构成了<em>时间递增梯度</em>。这种"具体数字+时间节点"的表达方式是学术说明文的典型特征。注意 "In other words" 后面的总结——"只保留了大约五分之一"。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t4-43" data-step="3" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">3</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t4-note-43">
+                                    <strong>转折与突破：</strong>"However" 是全文最重要的转折信号。前两段说的是遗忘有多严重，从第三段开始讲解决方案。spaced repetition（间隔重复）是本文的核心概念，"间隔固定时间复习"让遗忘曲线大幅变平。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t4-44" data-step="4" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">4</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t4-note-44">
+                                    <strong>核心原理：</strong>Retrieval（提取）优于 Repetition（重复）。这是现代认知科学的核心发现之一。"Every time you actively pull information out of your memory" — 提取的动作本身就是学习。破折号后面列举了三种提取方式：自测、讲解、应用。
+                                </div>
+                            </div>
+
+                            <div class="qa-note-bubble" data-link="note-t4-45" data-step="5" draggable="true">
+                                <div class="qa-note-header">
+                                    <div class="qa-note-handle"><span class="qa-note-step">5</span></div>
+                                    <div class="qa-note-actions">
+                                        <button class="qa-note-action-btn action-select" title="选中原文">📌</button>
+                                        <button class="qa-note-action-btn action-delete" title="删除批注">✖</button>
+                                    </div>
+                                </div>
+                                <div class="qa-note-content" data-edit-id="t4-note-45">
+                                    <strong>实践启示：</strong>最后一段是实用落地。"Rereading feels productive but provides little retrieval practice" 推翻了常见的"反复阅读"学习法。真正的学习发生在 "close the book and try to recall"——闭上书、努力回忆。最后一句以鼓舞性的总结收尾，是英文议论文的典型"升华"手法。
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /qa-body -->
+                </div><!-- /quiz-annotation -->
+            </div>
+
+            <script type="application/json" class="slide-notes">
+            {"title":"纯文章解析：Why We Forget Most of What We Learn","script":"这一页是纯文章解析示例。文章讲的是艾宾浩斯遗忘曲线和间隔重复学习法。没有右侧答题栏，单纯通过批注来讲解文章的写作结构、关键数据和核心概念。同学们注意观察学术说明文的结构：背景引入 → 数据支撑 → 提出问题 → 解决方案 → 实践启示。","notes":["艾宾浩斯遗忘曲线：42%→67%→79%","间隔重复法（spaced repetition）","提取练习优于被动重复","关上书回忆是最高效的学习方式"]}
+            </script>
+        </div>
+
+
+        <!-- ========== SLIDE 5: 结尾页 ========== -->
+        <div class="slide" data-slide="5">
+            <div class="slide-content layout-title">
+                <div class="title-hero">
+                    <p class="title-hero-subject anim-1">测试完成</p>
+                    <h1 class="title-hero-heading anim-2">四种题型全收录</h1>
+                    <div class="title-hero-divider anim-3"></div>
+                    <p class="title-hero-author anim-4">七选五 · 阅读单选 · 阅读填空 · 文章解析</p>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"结尾","script":"四种题型全部展示完毕。接下来可以逐一测试保存、读取、批注的增删改、答案的提交与重置等功能。","notes":["测试要点：保存后刷新验证内容完整性","测试要点：答题交互状态不泄露到 HTML 文件","测试要点：批注增删改的 localStorage 持久化"]}
+            </script>
+        </div>
+
+    </div><!-- /deck -->
+
+    <!-- ★ 干净 DOM 基线快照：在所有运行时 JS 执行前捕获 -->
+    <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
+
+    <!-- === JS 外链 === -->
+    <script src="./assets/slides-runtime.js"></script>
+    <script src="./assets/audio-runtime.js"></script>
+    <script src="./assets/annotation-store.js"></script>
+    <script src="./assets/quiz-annotation-audio.js"></script>
+    <script src="./assets/quiz-annotation-runtime.js?v=2"></script>
+    <script src="./assets/editor-utils.js"></script>
+    <script src="./assets/editor-persistence.js"></script>
+    <script src="./assets/editor-history.js"></script>
+    <script src="./assets/editor-box-manager.js"></script>
+    <script src="./assets/editor-rich-text.js"></script>
+    <script src="./assets/editor-core.js"></script>
+    <script src="./assets/page-richtext-annotation-runtime.js"></script>
+    <script src="./assets/doodle-runtime.js"></script>
+</body>
+</html>
