@@ -187,44 +187,61 @@
     }
 
     /**
-     * XHR 失败时的回退：基于当前 DOM 克隆生成干净 HTML。
-     * 先清除编辑器 UI，再清除所有交互组件瞬态，最后用 localStorage 覆盖 [data-edit-id]。
+     * XHR 失败时的回退：克隆当前 DOM 并全面清洗。
+     * 必须删除所有编辑器注入的 UI 元素（hotzone、按钮、toolbar、pager）、
+     * 清除运行时 chrome 状态、去除交互瞬态。与 exportCleanHTML 不同，
+     * 保存流程不注入 safety style，因此不能保留编辑按钮——必须物理删除。
      */
     function _prepareCleanHTMLFallback() {
         var clone = document.documentElement.cloneNode(true);
 
-        // 清除编辑器 UI（与 exportCleanHTML 保持一致）
-        clone.querySelectorAll('.rich-toolbar, #editToggle, .edit-toggle, #doodleToolbar, .doodle-layer,' +
-            '.floating-controls, .rs-handle, .overlay-ctrl, .box-controls,' +
-            '.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar'
-        ).forEach(function (el) { el.remove(); });
+        // 1. 删除编辑器注入的全部 UI 节点
+        clone.querySelectorAll('.edit-hotzone, .edit-toggle, .rich-toolbar, #slidePager').forEach(function (el) {
+            el.remove();
+        });
 
-        // 清除涂鸦相关
-        var dt2 = clone.querySelector('#doodleToolbar'); if (dt2) dt2.remove();
-        var db2 = clone.querySelector('#doodleToggleBtn'); if (db2) db2.remove();
-        var dp2 = clone.querySelector('#doodleLaserPointer'); if (dp2) dp2.remove();
-        var bd2 = clone.querySelector('body'); if (bd2) bd2.classList.remove('doodle-mode', 'editor-mode');
+        // 2. 清除 <html> 和 <body> 上运行时添加的空 class
+        var htmlEl = clone.querySelector('html');
+        if (htmlEl && htmlEl.getAttribute('class') === '') htmlEl.removeAttribute('class');
+        var bodyEl = clone.querySelector('body');
+        if (bodyEl) {
+            if (bodyEl.getAttribute('class') === '') bodyEl.removeAttribute('class');
+            bodyEl.classList.remove('editor-mode', 'doodle-mode');
+        }
 
-        // 剥离 native-edit-wrap 壳
+        // 3. 清除 chrome 元素上的运行时状态
+        var progressEl = clone.querySelector('#progress');
+        if (progressEl) progressEl.removeAttribute('style');
+        var particlesEl = clone.querySelector('#particles');
+        if (particlesEl) particlesEl.innerHTML = '';
+        var counterEl = clone.querySelector('#counter');
+        if (counterEl) counterEl.textContent = '';
+
+        // 4. 清空导航圆点
+        var nd = clone.querySelector('.nav-dots'); if (nd) nd.innerHTML = '';
+        var sn = clone.querySelector('#slideNav'); if (sn) sn.innerHTML = '';
+
+        // 5. 删除运行时注入的样式块
+        var doodleStyle = clone.querySelector('#doodle-runtime-styles');
+        if (doodleStyle) doodleStyle.remove();
+
+        // 6. 清除涂鸦引擎 UI
+        var dt = clone.querySelector('#doodleToolbar'); if (dt) dt.remove();
+        var db = clone.querySelector('#doodleToggleBtn'); if (db) db.remove();
+        var dp = clone.querySelector('#doodleLaserPointer'); if (dp) dp.remove();
+
+        // 7. 移除浮动控件及注解工具栏
+        clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+        clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
+
+        // 8. 剥离 native-edit-wrap 壳
         clone.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
             while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
             wrap.remove();
         });
 
-        // 清除导航圆点
-        var nd2 = clone.querySelector('.nav-dots'); if (nd2) nd2.innerHTML = '';
-        var sn2 = clone.querySelector('#slideNav'); if (sn2) sn2.innerHTML = '';
-
-        // 清除所有交互组件瞬态
+        // 9. 清除交互组件瞬态
         _stripAllTransientStates(clone);
-
-        // ★ 关键：用 localStorage 中已持久化的值覆盖 [data-edit-id] 元素
-        //   而非从实时 DOM 复制 innerHTML（实时 DOM 可能包含运行时注入内容）
-        clone.querySelectorAll('[data-edit-id]').forEach(function (el) {
-            var id = el.getAttribute('data-edit-id');
-            var saved = readStoredValue('e:' + id);
-            if (saved !== null) el.innerHTML = stripTransientEditableHTML(saved);
-        });
 
         _removeDeletedAnnotationNodes(clone);
         clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
