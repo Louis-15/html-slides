@@ -192,6 +192,19 @@
                 if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
             });
 
+            // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
+            var cloneBody = clone.querySelector('body');
+            document.querySelectorAll('script[src]').forEach(function (liveScript) {
+                var ns = clone.createElement('script');
+                ns.src = liveScript.src;
+                if (cloneBody) cloneBody.appendChild(ns);
+            });
+
+            // 在脚本列表末尾补回基线快照脚本（下一次保存需要它）
+            var baselineClone = clone.createElement('script');
+            baselineClone.textContent = 'window.__BASELINE__=document.documentElement.cloneNode(true)';
+            if (cloneBody) cloneBody.appendChild(baselineClone);
+
             _removeDeletedAnnotationNodes(clone);
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
             if (EditorHooks) EditorHooks.fire('onExportClean', clone);

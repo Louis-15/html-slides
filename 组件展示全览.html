@@ -570,21 +570,20 @@
 
     </div><!-- /deck -->
 
-    <!-- 所有运行时 JS 使用 defer：DOM 节点已解析入树但延迟执行 -->
-    <script defer src="./assets/slides-runtime.js"></script>
-    <script defer src="./assets/audio-runtime.js"></script>
-    <script defer src="./assets/example-card-audio.js"></script>
-    <script defer src="./assets/annotation-store.js"></script>
-    <script defer src="./assets/editor-utils.js"></script>
-    <script defer src="./assets/editor-persistence.js"></script>
-    <script defer src="./assets/editor-history.js"></script>
-    <script defer src="./assets/editor-box-manager.js"></script>
-    <script defer src="./assets/editor-rich-text.js"></script>
-    <script defer src="./assets/editor-core.js"></script>
-    <script defer src="./assets/page-richtext-annotation-runtime.js"></script>
-    <script defer src="./assets/doodle-runtime.js"></script>
-    <script defer src="./assets/example-card-runtime.js"></script>
-
-    <!-- ★ 基线快照：上方 defer 脚本已解析为 DOM 节点但未执行，此刻 DOM 完全干净 -->
+    <!-- ★ 干净 DOM 基线快照：在所有运行时 JS 执行前捕获。保存时以此为底板，只覆盖 [data-edit-id] 内容 -->
     <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
+    <script src="./assets/slides-runtime.js"></script>
+    <script src="./assets/audio-runtime.js"></script>
+    <script src="./assets/example-card-audio.js"></script>
+    <script src="./assets/annotation-store.js"></script>
+    <script src="./assets/editor-utils.js"></script>
+    <script src="./assets/editor-persistence.js"></script>
+    <script src="./assets/editor-history.js"></script>
+    <script src="./assets/editor-box-manager.js"></script>
+    <script src="./assets/editor-rich-text.js"></script>
+    <script src="./assets/editor-core.js"></script>
+    <script src="./assets/page-richtext-annotation-runtime.js"></script>
+    <script src="./assets/doodle-runtime.js"></script>
+    <script src="./assets/example-card-runtime.js"></script>
+
 </body></html>

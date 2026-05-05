@@ -121,42 +121,43 @@ Every generated HTML file **must** comply with these rules:
         <!-- More slides... -->
     </div>
 
-    <!-- JS: All runtime scripts use `defer` — DOM nodes parse synchronously but execution
-         is deferred until after document parsing. This enables the clean baseline snapshot below. -->
-    <script defer src="./assets/slides-runtime.js"></script>
+    <!-- ★ Clean DOM baseline snapshot: MUST be placed BEFORE any runtime JS scripts.
+         This script captures document.documentElement as a clone — at this point the
+         body is fully parsed but no external <script src> has executed. The snapshot
+         serves as the "original structure" for save-to-HTML: the editor clones this
+         baseline, patches in [data-edit-id] from localStorage, appends the external
+         <script> tags (from the live DOM), and writes the result. No component
+         interaction state is ever persisteed. -->
+    <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
+
+    <!-- JS: All via external <script src> references. Order matters. -->
+    <script src="./assets/slides-runtime.js"></script>
 
     <!-- Global audio runtime (always include for page-turn / focus / interaction cues) -->
-    <script defer src="./assets/audio-runtime.js"></script>
+    <script src="./assets/audio-runtime.js"></script>
 
     <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
-    <script defer src="./assets/annotation-store.js"></script>
-    <script defer src="./assets/quiz-annotation-audio.js"></script>
-    <script defer src="./assets/quiz-annotation-runtime.js"></script>
+    <script src="./assets/annotation-store.js"></script>
+    <script src="./assets/quiz-annotation-audio.js"></script>
+    <script src="./assets/quiz-annotation-runtime.js"></script>
 
     <!-- Editor modules (always included): strict dependency order -->
-    <script defer src="./assets/editor-utils.js"></script>
-    <script defer src="./assets/editor-persistence.js"></script>
-    <script defer src="./assets/editor-history.js"></script>
-    <script defer src="./assets/editor-box-manager.js"></script>
-    <script defer src="./assets/editor-rich-text.js"></script>
-    <script defer src="./assets/editor-core.js"></script>
-    <script defer src="./assets/page-richtext-annotation-runtime.js"></script>
-    <script defer src="./assets/doodle-runtime.js"></script>
+    <script src="./assets/editor-utils.js"></script>
+    <script src="./assets/editor-persistence.js"></script>
+    <script src="./assets/editor-history.js"></script>
+    <script src="./assets/editor-box-manager.js"></script>
+    <script src="./assets/editor-rich-text.js"></script>
+    <script src="./assets/editor-core.js"></script>
+    <script src="./assets/page-richtext-annotation-runtime.js"></script>
+    <script src="./assets/doodle-runtime.js"></script>
 
     <!-- Example Card runtime stack (include only when the courseware contains .example-card) -->
-    <script defer src="./assets/example-card-audio.js"></script>
-    <script defer src="./assets/example-card-runtime.js"></script>
+    <script src="./assets/example-card-audio.js"></script>
+    <script src="./assets/example-card-runtime.js"></script>
 
     <!-- Example Card: placed directly in DOM (no <template> wrapper).
          Runtime auto-discovers .example-card elements and initializes them via initAll().
          No manual initCard() call needed. -->
-
-    <!-- ★ Clean DOM baseline snapshot: captured AFTER all deferred scripts are parsed
-         into the DOM tree but BEFORE any of them execute. This snapshot serves as the
-         "original HTML structure" for the save-to-HTML-file feature. When saving, the
-         editor takes this baseline and only patches in [data-edit-id] content from
-         localStorage — no component state is ever written to the saved file. -->
-    <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
 </body>
 </html>
 ```
