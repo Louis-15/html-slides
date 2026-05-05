@@ -2222,6 +2222,11 @@
 
   function normalizeBlankAnswer(value) {
     return String(value || '')
+      // 全角拉丁字母/数字/符号 → 半角（解决中文输入法全角模式导致的误判）
+      .replace(/[\uFF01-\uFF5E]/g, function (ch) {
+        return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+      })
+      .replace(/\u3000/g, ' ')  // 全角空格 → 半角空格
       .trim()
       .replace(/\s+/g, ' ')
       .toUpperCase();
@@ -2313,6 +2318,17 @@
       input.setAttribute('aria-label', '第 ' + blankId + ' 题' + (editorMode ? '正确答案' : '答案'));
 
       input.addEventListener('input', () => {
+        // 实时全角转半角：用户用中文输入法全角模式输入时，输入框中即时显示半角字符
+        const rawValue = input.value;
+        const converted = rawValue.replace(/[\uFF01-\uFF5E]/g, function (ch) {
+          return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+        }).replace(/\u3000/g, ' ');
+        if (converted !== rawValue) {
+          // 保持光标位置不变
+          var cursorPos = input.selectionStart;
+          input.value = converted;
+          input.setSelectionRange(cursorPos, cursorPos);
+        }
         const nextValue = input.value;
 
         if (editorMode) {
