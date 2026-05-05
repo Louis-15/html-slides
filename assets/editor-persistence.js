@@ -18,6 +18,33 @@
     // === 保存到 HTML 文件：File System Access 句柄 ===
     var _htmlFileHandle = null;
 
+    // 通过 IndexedDB 持久化文件句柄，刷新后自动恢复，无需重新选文件
+    (function _restoreHandleFromDB() {
+        if (!window.indexedDB) return;
+        try {
+            var req = indexedDB.open('hslides-fs-handle', 1);
+            req.onupgradeneeded = function () { req.result.createObjectStore('handles'); };
+            req.onsuccess = function () {
+                var tx = req.result.transaction('handles', 'readonly');
+                var getReq = tx.objectStore('handles').get('current');
+                getReq.onsuccess = function () {
+                    if (getReq.result) _htmlFileHandle = getReq.result;
+                };
+            };
+        } catch (e) {}
+    })();
+
+    function _persistHandleInDB(handle) {
+        if (!window.indexedDB) return;
+        try {
+            var req = indexedDB.open('hslides-fs-handle', 1);
+            req.onsuccess = function () {
+                var tx = req.result.transaction('handles', 'readwrite');
+                tx.objectStore('handles').put(handle, 'current');
+            };
+        } catch (e) {}
+    }
+
     /**
      * 清洗要存入 localStorage 的 HTML 字符串，只剥离嵌入在 [data-edit-id]
      * 文本片段内的运行时瞬态标记（fragment 显隐状态）。
@@ -294,6 +321,7 @@
             }]
         }).then(function (handle) {
             _htmlFileHandle = handle;
+            _persistHandleInDB(handle);
             return true;
         }).catch(function (e) {
             if (e.name !== 'AbortError') console.warn('[PersistenceLayer] 选择文件失败:', e);
