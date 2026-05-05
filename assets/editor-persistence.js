@@ -48,15 +48,20 @@
     }
 
     /**
-     * 清洗要存入 localStorage 的 HTML 字符串，只剥离嵌入在 [data-edit-id]
-     * 文本片段内的运行时瞬态标记（fragment 显隐状态）。
+     * 清洗要存入 localStorage 的 HTML 字符串，剥离嵌入在 [data-edit-id]
+     * 文本片段内的运行时瞬态标记（fragment 显隐状态 + 答题交互DOM重构）。
      * 组件的交互状态（selected/flipped/step-active 等）不在 [data-edit-id]
      * 内部，因此无需在此处理——基线快照方案从架构上保证了它们不会被写入 HTML。
-     * 与主分支保持一致的最小清洗逻辑。
      */
     function stripTransientEditableHTML(html) {
         if (!html) return html;
-        if (html.indexOf('qa-fragment-visible') === -1 && html.indexOf('data-fragment-manual-reveal') === -1) {
+        if (html.indexOf('qa-fragment-visible') === -1 &&
+            html.indexOf('data-fragment-manual-reveal') === -1 &&
+            html.indexOf('qa-matching-passage-slot') === -1 &&
+            html.indexOf('show-correct-answer') === -1 &&
+            html.indexOf('data-qa-matching-click-bound') === -1 &&
+            html.indexOf('qa-blank-value') === -1 &&
+            html.indexOf('qa-blank-answer') === -1) {
             return html;
         }
 
@@ -67,6 +72,39 @@
         });
         temp.querySelectorAll('[data-fragment-manual-reveal]').forEach(function (el) {
             el.removeAttribute('data-fragment-manual-reveal');
+        });
+        // 答题交互瞬态：七选五拖拽匹配状态
+        temp.querySelectorAll('.qa-blank-slot').forEach(function (el) {
+            el.classList.remove('qa-matching-passage-slot', 'show-correct-answer');
+            el.removeAttribute('data-qa-matching-click-bound');
+        });
+        // 答题交互瞬态：runtime 注入的 qa-blank-value 元素在源文件中不存在，物理删除
+        temp.querySelectorAll('.qa-blank-value').forEach(function (el) {
+            el.remove();
+        });
+        // 答题交互瞬态：runtime 在 renderMatchingPassageSlot 中清空了 qa-blank-user 的 ___ 文本
+        // （line 2701: userSpan.textContent = ''），需恢复源码中的 "___<sup>36</sup>" 结构
+        temp.querySelectorAll('.qa-blank-user').forEach(function (el) {
+            var sup = el.querySelector('sup');
+            if (sup) {
+                // 用 outerHTML 保留 sup 的完整属性，前面补回 ___
+                var supHTML = sup.outerHTML;
+                el.innerHTML = '___' + supHTML;
+            }
+        });
+        // 答题交互瞬态：重置 qa-blank-answer 到源码原始状态
+        temp.querySelectorAll('.qa-blank-answer').forEach(function (el) {
+            if (el.style.display === 'none') el.style.display = '';
+            // 清除残留的 style 属性（如果只剩空串）
+            if (el.getAttribute('style') === '') el.removeAttribute('style');
+        });
+        // 答题交互瞬态：正确/错误标记
+        temp.querySelectorAll('.qa-option').forEach(function (el) {
+            el.classList.remove('selected', 'result-correct', 'result-incorrect');
+            el.removeAttribute('data-question-submitted');
+        });
+        temp.querySelectorAll('.qa-option .qa-status-dot').forEach(function (el) {
+            el.className = 'qa-status-dot';
         });
         return temp.innerHTML;
     }
@@ -192,6 +230,26 @@
      *
      * 如果没有基线快照（旧课件），则回退到克隆当前 DOM + 清洗的方案。
      */
+    /**
+     * outerHTML 序列化产物清理。
+     * clone.outerHTML 在不同浏览器中有不同的序列化行为——
+     * 布尔属性变成空串、URL 中的 & 被 HTML 编码、标签间换行被吞等。
+     * 这些差异对功能无影响，但会让 git diff 显示大量无关改动。
+     */
+    function _normalizeSerializedHTML(html) {
+        return html
+            // 布尔属性：data-scrollable="" → data-scrollable
+            .replace(/\bdata-scrollable=""/g, 'data-scrollable')
+            // URL 中 &amp; → &
+            .replace(/((?:href|src)="[^"]*?)&amp;/g, '$1&')
+            // 连续 script 标签间恢复换行
+            .replace(/<\/script><script/g, '</script>\n<script')
+            // head 到 body 恢复换行
+            .replace(/<\/head><body/g, '</head>\n<body')
+            // 确保文件末尾有换行
+            .replace(/<\/html>$/, '</html>\n');
+    }
+
     function _prepareCleanHTMLFallback() {
         // === 路径 A：有基线快照（新课件）—— 白名单模式 ===
         if (window.__BASELINE__) {
@@ -205,17 +263,18 @@
             });
 
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
+            // ★ 用 getAttribute('src') 保留原始相对路径，避免 outerHTML 序列化成绝对 URL
             var cloneBody = clone.querySelector('body');
             document.querySelectorAll('body script[src]').forEach(function (liveScript) {
                 var ns = document.createElement('script');
-                ns.src = liveScript.src;
+                ns.src = liveScript.getAttribute('src') || liveScript.src;
                 if (cloneBody) cloneBody.appendChild(ns);
             });
 
             _removeDeletedAnnotationNodes(clone);
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
             if (EditorHooks) EditorHooks.fire('onExportClean', clone);
-            return '<!DOCTYPE html>\n' + clone.outerHTML;
+            return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone.outerHTML);
         }
 
         // === 路径 B：无基线快照（旧课件）—— 回退：克隆当前 DOM 并清洗 ===
@@ -273,7 +332,7 @@
         _removeDeletedAnnotationNodes(clone2);
         clone2.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', clone2);
-        return '<!DOCTYPE html>\n' + clone2.outerHTML;
+        return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone2.outerHTML);
     }
 
     function _prepareCleanHTMLFromSource(cleanHTML) {
@@ -291,7 +350,7 @@
         _removeDeletedAnnotationNodes(div);
         div.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', div);
-        return '<!DOCTYPE html>\n' + div.innerHTML;
+        return _normalizeSerializedHTML('<!DOCTYPE html>\n' + div.innerHTML);
     }
 
     function _requestHTMLFileAccess() {
