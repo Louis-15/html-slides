@@ -106,12 +106,13 @@
     function _prepareCleanHTML() {
         var clone = document.documentElement.cloneNode(true);
 
-        // 移除编辑器 UI
+        // 移除编辑器 UI 和运行时动态创建的 UI
         clone.querySelectorAll([
             '.rich-toolbar', '.edit-toggle', '.edit-hotzone',
             '.box-controls', '.rs-handle', '.floating-controls', '.overlay-ctrl',
             '.qa-annotation-toolbar', '.qa-note-fragment-toolbar', '.page-richtext-fragment-toolbar',
-            '#doodleToolbar', '#doodleToggleBtn', '#doodleLaserPointer'
+            '#doodleToolbar', '#doodleToggleBtn', '#doodleLaserPointer',
+            '#slidePager'
         ].join(',')).forEach(function (el) { el.remove(); });
 
         // 剥离 native-edit-wrap 壳
