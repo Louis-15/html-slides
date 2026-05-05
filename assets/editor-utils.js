@@ -22,7 +22,7 @@
     }
 
     /**
-     * localStorage 以“文件路径优先、标题兜底”生成命名空间。
+     * localStorage 以"文件路径优先、标题兜底"生成命名空间。
      * 旧实现只看 document.title，不同课件同标题时会出现串缓存风险。
      */
     function getStorageIdentity() {
@@ -93,7 +93,7 @@
     function getAllSlides() { return document.querySelectorAll('.slide'); }
 
     /* 全量可编辑选择器：覆盖幻灯片内所有承载文本的叶子容器。
-     * 这里上移到 utils，是为了让“稳定 data-edit-id 准备器”能在 editor-core 恢复 localStorage、
+     * 这里上移到 utils，是为了让"稳定 data-edit-id 准备器"能在 editor-core 恢复 localStorage、
      * 以及 annotation-store 回放 sidecar 之前就复用同一套候选范围，避免不同模块各自维护一份名单。 */
     var EDITABLE_SELECTOR = [
         /* 带有显式编辑标记的元素（向后兼容） */
@@ -177,10 +177,11 @@
         'button',
     ].join(', ');
 
-    /* quiz 右侧选项文本仍走组件专属恢复协议。
-     * 如果这里提前塞入通用 data-edit-id，会让 localStorage / sidecar 的通用元素恢复链路
-     * 与 answer-anchor 专属恢复链路发生覆盖顺序竞争，因此稳定 id 准备器需要显式跳过它。 */
-    var STABLE_ID_SKIP_SELECTOR = '.quiz-annotation .qa-option-text';
+    /* quiz 右侧选项文本现已统一走 localStorage 通用恢复协议。
+     * 原 sidecar 专属恢复链路（annotation-store.js）已因内联化重构而移除，
+     * 因此不再需要跳过 qa-option-text 的稳定 id 注入。
+     * 保留变量以供未来可能需要的精细化跳过逻辑，但当前不做任何排除。 */
+    var STABLE_ID_SKIP_SELECTOR = null;
 
     function isExampleCardOptionText(el) {
         return !!(el && el.matches && el.matches('.example-card .qa-option-text'));
@@ -253,11 +254,11 @@
     }
 
     /**
-     * 为缺少源级 data-edit-id 的普通可编辑根块补“确定性稳定 id”。
+     * 为缺少源级 data-edit-id 的普通可编辑根块补"确定性稳定 id"。
      * 目标不是把这些 id 立刻当成作者手写的永久 schema，而是保证：
-     * 1. restoreAllElements / annotation-store 在恢复阶段就能命中普通标题、卡片、总结区等节点；
+     * 1. restoreAllElements 在恢复阶段就能命中普通标题、卡片、总结区等节点；
      * 2. 同一份 deck 在每次重新打开时，生成的 id 都一致，不再依赖 Date.now() 这类瞬时值；
-     * 3. quiz 内仍有组件专属恢复协议的区域，不会被通用链路抢写。
+     * 3. 对于需要精细化排除的特殊区域，仍可通过 STABLE_ID_SKIP_SELECTOR 控制。
      */
     function ensureStableEditableIds(root) {
         getEditableCandidates(root).forEach(function (el) {
