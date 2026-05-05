@@ -4220,7 +4220,7 @@
         </div>
         <div class="qa-note-actions">${actionsHTML}</div>
       </div>
-      <div class="qa-note-content" contenteditable="true" data-edit-id="new-${newLinkId}"></div>
+      <div class="qa-note-content" contenteditable="true" data-edit-id="${newLinkId}"></div>
     `;
     notesList.appendChild(bubble);
 
@@ -4506,7 +4506,7 @@
           </div>
           <div class="qa-note-actions">${actionsHTML}</div>
         </div>
-        <div class="qa-note-content" contenteditable="true" data-edit-id="new-${linkId}"></div>
+        <div class="qa-note-content" contenteditable="true" data-edit-id="${linkId}"></div>
       `;
       notesList.appendChild(bubble);
 
