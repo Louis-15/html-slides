@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="generator" content="html-slides v1.0.0">
+    <title>HTML-Slides 组件展示全览</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="./assets/viewport-base.css">
+    <link rel="stylesheet" href="./assets/themes/xindongfang-green.css">
+    <link rel="stylesheet" href="./assets/components.css">
+    <link rel="stylesheet" href="./assets/zones/zone1-header.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-content.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
+    <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
+    <link rel="stylesheet" href="./assets/editor.css">
+
+    <style>
+        .example-card-playground {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 0;
+            padding-top: 8px;
+            padding-bottom: 44px;
+            overflow: hidden;
+        }
+        .example-card-playground__host {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            align-items: stretch;
+        }
+        .example-card-playground__host > .example-card {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: 100%;
+            max-height: none;
+        }
+        .example-card-playground .example-card__main,
+        .example-card-playground .example-card__analysis {
+            min-height: 0;
+            overflow: auto;
+        }
+        @media (max-width: 768px) {
+            .example-card-playground {
+                padding-top: 6px;
+                padding-bottom: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progress"></div>
+    <div class="particles" id="particles"></div>
+    <div class="branding"><div class="brand-logo"></div></div>
+    <div class="slide-nav" id="slideNav"></div>
+    <div class="slide-counter" id="counter"></div>
+
+    <div class="deck" id="deck">
+
+        <!-- ========== SLIDE 0: 封面 ========== -->
+        <div class="slide active" data-slide="0">
+            <div class="slide-content layout-title" style="overflow: visible;">
+                <div class="title-hero">
+                    <p class="title-hero-subject anim-1" data-edit-id="s0-subject" data-edit-id-auto="true">HTML-Slides</p>
+                    <h1 class="title-hero-heading anim-2" data-edit-id="s0-title" data-edit-id-auto="true">组件展示全览</h1>
+                    <div class="title-hero-divider anim-3"></div>
+                    <p class="title-hero-author anim-4" data-edit-id="s0-author" data-edit-id-auto="true">15 种组件 · 6 种布局 · 一套课件</p>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"封面","script":"欢迎来到 HTML-Slides 组件展示全览。这份课件覆盖了除答题与批注之外的所有组件和布局类型。","notes":["15 种组件","6 种布局","1 个例题组件"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 1: 普通卡片 Card + 内容块 ========== -->
+        <div class="slide" data-slide="1">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s1-module" data-edit-id-auto="true">基础组件</div>
+                <div class="header-title" data-edit-id="s1-title" data-edit-id-auto="true">普通卡片 + 内容块</div>
+            </div>
+            <div class="slide-content layout-3col" style="overflow: visible;">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s1-c1-icon" data-edit-id-auto="true">📦</div>
+                        <div class="card-title" data-edit-id="s1-c1-title">普通卡片</div>
+                        <div class="card-desc" data-edit-id="s1-c1-desc">最基础的卡片组件，支持图标、标题、描述三段式结构。可配合焦点步进逐条展示。</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s1-c2-icon" data-edit-id-auto="true">📝</div>
+                        <div class="card-title" data-edit-id="s1-c2-title">内容块</div>
+                        <div class="card-desc" data-edit-id="s1-c2-desc">适用于正文段落。支持 <strong>粗体</strong>、<em>斜体</em>、<code>代码</code> 等内联样式。</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s1-c3-icon" data-edit-id-auto="true">🎨</div>
+                        <div class="card-title" data-edit-id="s1-c3-title">灵活组合</div>
+                        <div class="card-desc" data-edit-id="s1-c3-desc">卡片可以放在任何布局中：<code>layout-2col</code>、<code>layout-3col</code>、<code>layout-grid-2x2</code>。</div>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"普通卡片 + 内容块","script":"普通卡片是最基础的内容容器，配合 layout-3col 可以展示三列等宽卡片。每张卡片都有图标、标题、描述三段结构。","notes":["Card 是最基础的组件","支持 icon/title/desc 三段","可放入任何布局"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 2: 翻转卡片 + 折叠卡片 ========== -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s2-module" data-edit-id-auto="true">交互组件</div>
+                <div class="header-title" data-edit-id="s2-title" data-edit-id-auto="true">翻转卡片 + 折叠卡片</div>
+            </div>
+            <div class="slide-content layout-2col" style="overflow: visible;">
+                <div class="col">
+                    <div class="flip-card">
+                        <div class="flip-front">
+                            <div class="flip-icon" data-edit-id="s2-flip-icon1" data-edit-id-auto="true">🔄</div>
+                            <div class="flip-title" data-edit-id="s2-flip-title1">翻转卡片</div>
+                            <div class="flip-subtitle" data-edit-id="s2-flip-sub1" data-edit-id-auto="true">点击按钮翻转查看背面</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg></button>
+                        </div>
+                        <div class="flip-back">
+                            <div class="flip-icon-big" data-edit-id="s2-flip-icon2" data-edit-id-auto="true">📖</div>
+                            <div class="flip-detail" data-edit-id="s2-flip-detail">这是翻转卡片的<strong>背面</strong>！适用于概念定义、答案揭示等场景。<br><br>正面放问题，背面放解释。</div>
+                            <button class="flip-action-btn" onclick="this.closest('.flip-card').classList.toggle('flipped')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="collapse-card">
+                        <div class="card-title" data-edit-id="s2-collapse-title">折叠卡片</div>
+                        <div class="card-desc" data-edit-id="s2-collapse-desc">点击按钮展开更多内容。节省空间，适合详细信息。</div>
+                        <div class="card-expand">
+                            <div class="card-expand-inner" data-edit-id="s2-collapse-inner">
+                                <p>这里是折叠卡片展开后的<strong>详细内容</strong>。</p>
+                                <p>可以放段落、列表、甚至嵌套其他组件。</p>
+                                <p><code>collapse-card</code> 的交互由 <code>slides-runtime.js</code> 统一管理。</p>
+                            </div>
+                        </div>
+                        <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"翻转卡片 + 折叠卡片","script":"翻转卡片和折叠卡片是两种轻交互组件。翻转卡片有正反两面，折叠卡片可以展开收起。它们的交互都由 slides-runtime 管理。","notes":["翻转卡片: flip-front + flip-back","折叠卡片: card-expand","交互由 slides-runtime 管理"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 3: 代码窗口 + Highlight 卡片 ========== -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s3-module" data-edit-id-auto="true">展示组件</div>
+                <div class="header-title" data-edit-id="s3-title" data-edit-id-auto="true">代码窗口 + 强调卡片</div>
+            </div>
+            <div class="slide-content layout-2col" style="overflow: visible;">
+                <div class="col">
+                    <div class="code-window">
+                        <div class="code-titlebar">
+                            <div class="code-dot red"></div>
+                            <div class="code-dot yellow"></div>
+                            <div class="code-dot green"></div>
+                            <span class="code-filename">hello.py</span>
+                        </div>
+                        <div class="code-body">
+<span class="ln">1</span><span class="kw">def</span> <span class="fn">greet</span>(name):
+<span class="ln">2</span>    <span class="cm"># 打印问候语</span>
+<span class="ln">3</span>    <span class="kw">return</span> <span class="str">f"Hello, {name}!"</span>
+<span class="ln">4</span>
+<span class="ln">5</span><span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+<span class="ln">6</span>    print(greet(<span class="str">"World"</span>))
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="highlight-card">
+                        <div class="highlight-label" data-edit-id="s3-hl-label" data-edit-id-auto="true">核心概念</div>
+                        <div class="highlight-title" data-edit-id="s3-hl-title" data-edit-id-auto="true">代码窗口</div>
+                        <div class="highlight-text" data-edit-id="s3-hl-text">代码窗口组件模拟 IDE 窗口外观，包含红黄绿三色圆点标题栏和带语法高亮的行号代码体。适用于展示代码片段、配置文件等。</div>
+                    </div>
+                </div>
+            </div>
+            <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')"></button>
+            <div class="summary-panel">
+                <div class="summary-content">
+                    <h3 data-edit-id="s3-summary-h3" data-edit-id-auto="true">📌 本页要点</h3>
+                    <ul>
+                        <li data-edit-id="s3-summary-1" data-edit-id-auto="true">代码窗口: 标题栏 + 行号 + 语法高亮 class</li>
+                        <li data-edit-id="s3-summary-2" data-edit-id-auto="true">强调卡片: label + title + text 三段结构</li>
+                        <li data-edit-id="s3-summary-3" data-edit-id-auto="true">总结面板: 页脚弹出式要点总结</li>
+                    </ul>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"代码窗口 + 强调卡片","script":"代码窗口模拟 IDE 外观，配合强调卡片突出关键概念。本页还演示了总结面板——点击右下角按钮弹起。","notes":["代码窗口: code-window + code-titlebar","强调卡片: highlight-card","总结面板: summary-trigger + summary-panel"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 4: Stat Card 数字卡片 ========== -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s4-module" data-edit-id-auto="true">数据展示</div>
+                <div class="header-title" data-edit-id="s4-title" data-edit-id-auto="true">数字强调卡片 · 2x2 网格</div>
+            </div>
+            <div class="slide-content layout-grid-2x2" style="overflow: visible;">
+                <div class="cell">
+                    <div class="stat-card">
+                        <div class="stat-number green" data-edit-id="s4-n1" data-edit-id-auto="true">85<span>%</span></div>
+                        <div class="stat-label" data-edit-id="s4-l1" data-edit-id-auto="true">满意率</div>
+                        <div class="stat-desc" data-edit-id="s4-d1" data-edit-id-auto="true">用户对功能的整体满意度评分</div>
+                    </div>
+                </div>
+                <div class="cell">
+                    <div class="stat-card">
+                        <div class="stat-number orange" data-edit-id="s4-n2" data-edit-id-auto="true">12<span>个</span></div>
+                        <div class="stat-label" data-edit-id="s4-l2" data-edit-id-auto="true">组件类型</div>
+                        <div class="stat-desc" data-edit-id="s4-d2" data-edit-id-auto="true">涵盖卡片、图表、表格等丰富组件</div>
+                    </div>
+                </div>
+                <div class="cell">
+                    <div class="stat-card">
+                        <div class="stat-number blue" data-edit-id="s4-n3" data-edit-id-auto="true">6<span>种</span></div>
+                        <div class="stat-label" data-edit-id="s4-l3" data-edit-id-auto="true">布局方案</div>
+                        <div class="stat-desc" data-edit-id="s4-d3" data-edit-id-auto="true">title · 2col · 3col · 2x2 · single</div>
+                    </div>
+                </div>
+                <div class="cell">
+                    <div class="stat-card">
+                        <div class="stat-number purple" data-edit-id="s4-n4" data-edit-id-auto="true">100<span>%</span></div>
+                        <div class="stat-label" data-edit-id="s4-l4" data-edit-id-auto="true">可编辑</div>
+                        <div class="stat-desc" data-edit-id="s4-d4" data-edit-id-auto="true">所有文字内容均可进入编辑模式修改</div>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"数字强调卡片 2x2","script":"stat-card 是展示数据和指标的最佳选择。数字可以用不同颜色（green/orange/blue/purple），配合标签和描述，一目了然。layout-grid-2x2 布局适合 4 个等大卡片。","notes":["stat-card: stat-number + stat-label + stat-desc","4 种数字颜色: green/orange/blue/purple","layout-grid-2x2 布局"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 5: 双色条形图 + 时间线 ========== -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s5-module" data-edit-id-auto="true">数据与流程</div>
+                <div class="header-title" data-edit-id="s5-title" data-edit-id-auto="true">双色条形图 + 时间线</div>
+            </div>
+            <div class="slide-content layout-2col" style="overflow: visible;">
+                <div class="col">
+                    <div class="content-block" data-edit-id="s5-cb" data-edit-id-auto="true">
+                        <p class="text">双色条形图用于直观对比两组数据。左右两半显示不同的占比。</p>
+                    </div>
+                    <div class="dual-bar">
+                        <div class="dual-bar-half left"><span data-edit-id="s5-bar-left" data-edit-id-auto="true">正面评价 (78%)</span></div>
+                        <div class="dual-bar-half right"><span data-edit-id="s5-bar-right" data-edit-id-auto="true">待改进 (22%)</span></div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="content-block" data-edit-id="s5-cb2" data-edit-id-auto="true">
+                        <p class="text" data-edit-id="s5-cb2-text">时间线卡片适合展示步骤流程。每个节点有不同颜色的圆点标记。</p>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-dot green"></div>
+                        <div class="timeline-text" data-edit-id="s5-tl1" data-edit-id-auto="true"><strong>Step 1</strong> — 收集需求，明确目标</div>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-dot blue"></div>
+                        <div class="timeline-text" data-edit-id="s5-tl2" data-edit-id-auto="true"><strong>Step 2</strong> — 设计方案，选择组件</div>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-dot orange"></div>
+                        <div class="timeline-text" data-edit-id="s5-tl3" data-edit-id-auto="true"><strong>Step 3</strong> — 编写 HTML，生成课件</div>
+                    </div>
+                    <div class="timeline-card">
+                        <div class="timeline-dot purple"></div>
+                        <div class="timeline-text" data-edit-id="s5-tl4" data-edit-id-auto="true"><strong>Step 4</strong> — 编辑微调，保存发布</div>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"双色条形图 + 时间线","script":"双色条形图适合对比展示，时间线卡片适合展示步骤流程。都是纯 CSS 组件，不需要额外的 JS 运行时。","notes":["双色条形图: dual-bar + left/right","时间线: timeline-card + timeline-dot","时间线圆点颜色: green/blue/orange/purple"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 6: Chart.js 图表 ========== -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s6-module" data-edit-id-auto="true">数据可视化</div>
+                <div class="header-title" data-edit-id="s6-title" data-edit-id-auto="true">Chart.js 柱状图</div>
+            </div>
+            <div class="slide-content layout-single" style="overflow: visible;">
+                <div class="chart-container">
+                    <canvas id="chart-demo"></canvas>
+                    <script type="application/json" data-chart-config="chart-demo">
+                    {
+                        "type": "bar",
+                        "data": {
+                            "labels": ["卡片", "翻页卡", "折叠卡", "代码窗", "统计卡", "强调卡", "条形图", "时间线", "图表", "表格"],
+                            "datasets": [{
+                                "label": "组件使用频率",
+                                "data": [95, 60, 45, 70, 80, 55, 40, 50, 65, 75],
+                                "backgroundColor": "rgba(52, 152, 219, 0.7)",
+                                "borderColor": "rgba(52, 152, 219, 1)",
+                                "borderWidth": 1,
+                                "borderRadius": 4
+                            }]
+                        },
+                        "options": {
+                            "responsive": true,
+                            "maintainAspectRatio": false,
+                            "plugins": {
+                                "legend": { "display": false }
+                            },
+                            "scales": {
+                                "y": {
+                                    "beginAtZero": true,
+                                    "max": 100,
+                                    "ticks": { "callback": "function(v){return v+'%'}" }
+                                }
+                            }
+                        }
+                    }
+                    </script>
+                </div>
+            </div>
+            <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')"></button>
+            <div class="summary-panel">
+                <div class="summary-content">
+                    <h3 data-edit-id="s6-summary-h3" data-edit-id-auto="true">📌 Chart.js 使用说明</h3>
+                    <ul>
+                        <li data-edit-id="s6-summary-1" data-edit-id-auto="true">需引入 Chart.js CDN（v4.4.8）</li>
+                        <li data-edit-id="s6-summary-2" data-edit-id-auto="true">配置通过 <code>data-chart-config</code> 传入 JSON</li>
+                        <li data-edit-id="s6-summary-3" data-edit-id-auto="true">支持 bar / line / pie / doughnut / radar 等类型</li>
+                    </ul>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"Chart.js 柱状图","script":"图表组件基于 Chart.js，通过 data-chart-config 属性传入 JSON 配置。slides-runtime 会自动初始化所有 canvas 图表。支持柱状图、折线图、饼图等多种类型。","notes":["需要 Chart.js CDN","配置通过 data-chart-config 传入","支持多种图表类型"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 7: 表格 ========== -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s7-module" data-edit-id-auto="true">数据展示</div>
+                <div class="header-title" data-edit-id="s7-title" data-edit-id-auto="true">表格组件</div>
+            </div>
+            <div class="slide-content layout-single" style="overflow: visible;">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-edit-id="s7-th1" data-edit-id-auto="true">组件名称</th>
+                                <th data-edit-id="s7-th2" data-edit-id-auto="true">分类</th>
+                                <th data-edit-id="s7-th3" data-edit-id-auto="true">交互方式</th>
+                                <th data-edit-id="s7-th4" data-edit-id-auto="true">CSS 文件</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c1">普通卡片 Card</td>
+                                <td data-edit-id="s7-c1b">展示</td>
+                                <td data-edit-id="s7-c1c">焦点步进</td>
+                                <td class="cell-muted" data-edit-id="s7-c1d">zone2-content.css</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c2">翻转卡片 Flip Card</td>
+                                <td data-edit-id="s7-c2b">轻交互</td>
+                                <td data-edit-id="s7-c2c">点击翻转</td>
+                                <td class="cell-muted" data-edit-id="s7-c2d">zone2-content.css</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c3">折叠卡片 Collapse</td>
+                                <td data-edit-id="s7-c3b">轻交互</td>
+                                <td data-edit-id="s7-c3c">展开/收起</td>
+                                <td class="cell-muted" data-edit-id="s7-c3d">zone2-content.css</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c4">代码窗口 Code</td>
+                                <td data-edit-id="s7-c4b">展示</td>
+                                <td data-edit-id="s7-c4c">无</td>
+                                <td class="cell-muted" data-edit-id="s7-c4d">zone2-content.css</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c5">图表 Chart</td>
+                                <td data-edit-id="s7-c5b">可视化</td>
+                                <td data-edit-id="s7-c5c">Chart.js 渲染</td>
+                                <td class="cell-muted" data-edit-id="s7-c5d">zone2-content.css</td>
+                            </tr>
+                            <tr>
+                                <td class="cell-highlight" data-edit-id="s7-c6">例题组件 Example</td>
+                                <td data-edit-id="s7-c6b">重型交互</td>
+                                <td data-edit-id="s7-c6c">选择 / 提交 / 解析</td>
+                                <td class="cell-muted" data-edit-id="s7-c6d">zone2-example-card.css</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"表格组件","script":"表格组件支持 cell-highlight 和 cell-muted 两种单元格样式。表头和表体自动有区分样式。","notes":["table-wrap 包裹","cell-highlight 高亮首列","cell-muted 弱化末列"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 8: 图片块 ========== -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s8-module" data-edit-id-auto="true">视觉元素</div>
+                <div class="header-title" data-edit-id="s8-title" data-edit-id-auto="true">图片块 + 全貌总结</div>
+            </div>
+            <div class="slide-content layout-2col" style="overflow: visible;">
+                <div class="col">
+                    <div class="image-block">
+                        <div class="image-placeholder" style="width:100%;height:180px;background:linear-gradient(135deg, rgba(52,152,219,0.15), rgba(155,89,182,0.15));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:48px;">🖼️</div>
+                        <p class="image-caption" data-edit-id="s8-caption" data-edit-id-auto="true" style="text-align:center;margin-top:8px;font-size:13px;opacity:0.7;">图片块占位示意（可替换为真实图片）</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="highlight-card">
+                        <div class="highlight-label" data-edit-id="s8-hl-label" data-edit-id-auto="true">全貌总结</div>
+                        <div class="highlight-title" data-edit-id="s8-hl-title" data-edit-id-auto="true">组件体系</div>
+                        <div class="highlight-text" data-edit-id="s8-hl-text">
+                            <strong>展示组件</strong>：卡片、代码窗、统计卡、强调卡、双色条、时间线、图表、表格、图片块<br><br>
+                            <strong>交互组件</strong>：翻转卡、折叠卡、例题组件<br><br>
+                            <strong>布局方案</strong>：title 封面、2col 双栏、3col 三栏、2x2 网格、single 单列
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="summary-trigger" onclick="this.closest('.slide').querySelector('.summary-panel').classList.toggle('visible')"></button>
+            <div class="summary-panel">
+                <div class="summary-content">
+                    <h3 data-edit-id="s8-summary-h3" data-edit-id-auto="true">📌 本页要点</h3>
+                    <ul>
+                        <li data-edit-id="s8-summary-1" data-edit-id-auto="true">图片块支持 screenshot / logo / fullbleed 三种样式</li>
+                        <li data-edit-id="s8-summary-2" data-edit-id-auto="true">共 15 种组件覆盖展示、交互、可视化三类需求</li>
+                        <li data-edit-id="s8-summary-3" data-edit-id-auto="true">6 种布局方案适配不同内容密度</li>
+                    </ul>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"图片块 + 全貌总结","script":"图片块组件支持三种样式变体，可与任意布局配合。到这一页为止，除例题组件和答题批注外的所有组件都已展示完毕。","notes":["图片块: image-block + slide-image","三种变体: screenshot / logo / fullbleed","总结面板可放在任意页"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 9: 例题组件 ========== -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s9-module" data-edit-id-auto="true">例题组件</div>
+                <div class="header-title" data-edit-id="s9-title" data-edit-id-auto="true">例题组件 — 单选 + 多选体验</div>
+            </div>
+            <div class="slide-content layout-single example-card-playground" data-scrollable="" style="overflow: visible;">
+                <div class="example-card-playground__host">
+                    <section class="example-card" data-question-type="single" data-card-id="demo-example-card">
+                        <!-- 第 1 题：单选 -->
+                        <article class="example-card__question" data-question-id="demo-q1" data-question-type="single">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区" hidden="" aria-hidden="true"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" disabled=""></div>
+                                <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint" hidden="">至少选择两个答案</span></div>
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区" aria-hidden="false"><span class="example-card__editor-label">正确答案</span><button type="button" class="example-card__answer-key" data-answer-value="A">A</button><button type="button" class="example-card__answer-key" data-answer-value="B">B</button><button type="button" class="example-card__answer-key" data-answer-value="C">C</button><button type="button" class="example-card__answer-key" data-answer-value="D">D</button></div>
+                                <div class="example-card__stem" data-edit-id="demo-q1-stem" data-question-type-label="单选" data-question-type="single">1. 以下哪个组件需要 Chart.js CDN 支持？</div>
+                                <div class="example-card__answers" aria-hidden="false">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A">
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-a">翻转卡片 Flip Card</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-b">图表 Chart</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-c">代码窗口 Code Window</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-d">折叠卡片 Collapse Card</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <aside class="example-card__analysis" hidden="">
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q1-analysis">
+                                    <p>图表组件基于 Chart.js 库，需要在 HTML 中通过 CDN 引入 <code>chart.js@4.4.8</code>。其他三个组件都是纯 CSS 实现，不需要外部 JS 库。</p>
+                                </div>
+                            </aside>
+                            <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn">上一题</button>
+                                    <button type="button" class="example-card__next-btn">下一题</button>
+                                </div>
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle">查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- 第 2 题：多选 -->
+                        <article class="example-card__question" data-question-id="demo-q2" data-question-type="multi">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区" hidden="" aria-hidden="true"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" disabled=""></div>
+                                <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint">至少选择两个答案</span></div>
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区" aria-hidden="false"><span class="example-card__editor-label">正确答案</span><button type="button" class="example-card__answer-key" data-answer-value="A">A</button><button type="button" class="example-card__answer-key" data-answer-value="B">B</button><button type="button" class="example-card__answer-key" data-answer-value="C">C</button><button type="button" class="example-card__answer-key" data-answer-value="D">D</button></div>
+                                <div class="example-card__stem" data-edit-id="demo-q2-stem" data-question-type-label="多选" data-question-type="multi">2. 以下哪些属于轻交互组件？（多选）</div>
+                                <div class="example-card__answers" aria-hidden="false">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
+                                        <span class="qa-option-label">A</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-a">翻转卡片 Flip Card</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
+                                        <span class="qa-option-label">B</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-b">折叠卡片 Collapse Card</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
+                                        <span class="qa-option-label">C</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-c">普通卡片 Card</span>
+                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
+                                        <span class="qa-option-label">D</span>
+                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-d">时间线卡片 Timeline</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <aside class="example-card__analysis" hidden="">
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q2-analysis">
+                                    <p>翻转卡片和折叠卡片由 slides-runtime.js 管理点击交互，属于轻交互组件。普通卡片和时间线卡片是纯展示组件，无点击交互。</p>
+                                </div>
+                            </aside>
+                            <div class="example-card__footer">
+                                <div class="example-card__nav">
+                                    <button type="button" class="example-card__prev-btn">上一题</button>
+                                    <button type="button" class="example-card__next-btn">下一题</button>
+                                </div>
+                                <div class="example-card__actions">
+                                    <button type="button" class="example-card__analysis-toggle">查看解析</button>
+                                    <button type="button" class="example-card__submit-btn">提交答案</button>
+                                </div>
+                            </div>
+                        </article>
+                    </section>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"例题组件","script":"例题组件是重型交互组件，支持单选和多选两种题型。左下角切换题目，每题独立判分和解析。进入编辑模式可修改正确答案。","notes":["例题组件: example-card","支持 single / multi / flex / blank","每道题独立状态","编辑模式可修改答案"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 10: 结尾页 ========== -->
+        <div class="slide" data-slide="10">
+            <div class="slide-content layout-title" style="overflow: visible;">
+                <p class="slide-tag anim-1" data-edit-id="s10-tag" data-edit-id-auto="true">组件展示</p>
+                <h1 class="anim-2" data-edit-id="s10-title" data-edit-id-auto="true">HTML-Slides<br><span class="rainbow-text">组件全览</span></h1>
+                <p class="subtitle anim-3" data-edit-id="s10-sub" data-edit-id-auto="true">15 种组件 · 6 种布局 · 3 种交互层级 · 100% 可编辑</p>
+                <div class="rainbow-line anim-4"></div>
+                <p class="subtitle anim-5" style="font-size:14px;margin-top:8px;" data-edit-id="s10-footer" data-edit-id-auto="true">感谢观看 · 按 E 进入编辑模式体验编辑功能</p>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"结尾","script":"HTML-Slides 提供了一套完整的教学课件组件体系。从展示到交互到可视化，覆盖了绝大多数教学场景的需求。所有内容都可以通过内置编辑器直接修改并保存。","notes":["15 种组件覆盖展示/交互/可视化","6 种布局方案","100% 可编辑","内置保存/读取机制"]}
+            </script>
+        </div>
+
+    </div><!-- /deck -->
+
+    <script src="./assets/slides-runtime.js"></script>
+    <script src="./assets/audio-runtime.js"></script>
+    <script src="./assets/example-card-audio.js"></script>
+    <script src="./assets/annotation-store.js"></script>
+    <script src="./assets/editor-utils.js"></script>
+    <script src="./assets/editor-persistence.js"></script>
+    <script src="./assets/editor-history.js"></script>
+    <script src="./assets/editor-box-manager.js"></script>
+    <script src="./assets/editor-rich-text.js"></script>
+    <script src="./assets/editor-core.js"></script>
+    <script src="./assets/page-richtext-annotation-runtime.js"></script>
+    <script src="./assets/doodle-runtime.js"></script>
+    <script src="./assets/example-card-runtime.js"></script>
+</body>
+</html>
