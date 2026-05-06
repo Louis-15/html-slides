@@ -1310,12 +1310,16 @@
           }
         });
         allDeleted.forEach(function (linkId) {
+          // ★ 移除 text-anchor 前先清除内部角标，防止泄漏
           clone.querySelectorAll('.text-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+            anchor.querySelectorAll('.note-badge').forEach(function (badge) { badge.remove(); });
             var parent = anchor.parentNode;
             while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
             parent.removeChild(anchor);
           });
+          // ★ 移除 answer-anchor 前先清除内部角标，防止泄漏
           clone.querySelectorAll('.answer-anchor[data-link-answer="' + linkId + '"], .answer-anchor[data-link="' + linkId + '"]').forEach(function (anchor) {
+            anchor.querySelectorAll('.note-badge').forEach(function (badge) { badge.remove(); });
             var parent = anchor.parentNode;
             while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
             parent.removeChild(anchor);
@@ -1382,8 +1386,10 @@
                 cloneBubble.setAttribute('data-link-answer', liveAnswerLink);
               } else {
                 cloneBubble.removeAttribute('data-link-answer');
-                // 同时删除 clone 中残留的 answer-anchor
+                // 同时删除 clone 中残留的 answer-anchor（含内部角标）
                 cloneQA.querySelectorAll('.answer-anchor[data-link-answer="' + cloneAnswerLink + '"], .answer-anchor[data-link="' + cloneAnswerLink + '"]').forEach(function (anchor) {
+                  // ★ 先移除 answer-anchor 内的 note-badge，防止角标泄漏到父节点
+                  anchor.querySelectorAll('.note-badge').forEach(function (badge) { badge.remove(); });
                   var parent = anchor.parentNode;
                   while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
                   parent.removeChild(anchor);
