@@ -2222,11 +2222,6 @@
 
   function normalizeBlankAnswer(value) {
     return String(value || '')
-      // 全角拉丁字母/数字/符号 → 半角（解决中文输入法全角模式导致的误判）
-      .replace(/[\uFF01-\uFF5E]/g, function (ch) {
-        return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-      })
-      .replace(/\u3000/g, ' ')  // 全角空格 → 半角空格
       .trim()
       .replace(/\s+/g, ' ')
       .toUpperCase();
@@ -2332,6 +2327,7 @@
              这样普通页面恢复链读取本地缓存时，第一次刷新就能拿到最新答案。 */
           persistQuizAuthoringChange({ node: passageSlot, immediate: true });
         } else {
+          if (qa.classList.contains('submitted')) return;
           slot.dataset.userAnswer = nextValue;
           passageSlot.dataset.userAnswer = nextValue;
         }
@@ -2348,19 +2344,6 @@
       slot.appendChild(label);
       slot.appendChild(blankWrap);
       slotsContainer.appendChild(slot);
-
-      // 全角转半角：在输入法组合结束后转换，不会干扰普通英文输入
-      input.addEventListener('compositionend', function () {
-        var raw = input.value;
-        var cvt = raw.replace(/[\uFF01-\uFF5E]/g, function (ch) {
-          return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-        }).replace(/\u3000/g, ' ');
-        if (cvt !== raw) {
-          var cp = input.selectionStart;
-          input.value = cvt;
-          input.setSelectionRange(cp, cp);
-        }
-      });
     });
 
     if (divider.parentNode !== answerContent) {
@@ -2785,6 +2768,11 @@
       syncMatchingAnswerUI(qa, {
         resetTransientState: !qa.querySelector('.qa-answer-slots')
       });
+    }
+
+    const blankQuestion = qa.querySelector('.qa-question[data-type="blank"]');
+    if (blankQuestion) {
+      syncBlankAnswerUI(qa);
     }
 
     // — 提交按钮 —
