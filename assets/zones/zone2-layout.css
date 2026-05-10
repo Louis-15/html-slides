@@ -1,0 +1,219 @@
+/* ===========================================
+  ZONE 2: 布局系统 (Layout System)
+  从 zone2-content.css 拆分而来，仅含布局相关样式。
+
+  ┌─────────────────────────────────────────────┐
+  │ 布局系统 (8种 + 1变体)                        │
+  │  0.封面页  1.单列  2.等宽双栏(+对比变体)       │
+  │  3.左宽右窄  4.左窄右宽  5.三栏               │
+  │  6.双行  7.四宫格(动态行高)                    │
+  └─────────────────────────────────────────────┘
+
+  通用组件已迁移到 zone2-components.css。
+
+  架构原则：
+  - 布局系统：负责容器 padding / gap / grid 分区
+  - 不包含任何组件样式（卡片、图表等）
+  =========================================== */
+
+
+/* ===========================================
+   布局系统 (Layout Modes)
+   定义 .slide-content 容器的空间分区方式。
+   =========================================== */
+
+/* -- 内容区基础容器 -- */
+.slide-content {
+  width: 100%;
+  box-sizing: border-box;
+  /* 这里同步扩到 1300，而不是去压缩内部 padding。
+     用户诉求是减少外侧大留白、给 Zone2 更多真实可用宽度；
+     直接放宽标准内容轨道，才能让桌面端左右边距各减少约 100px，同时保留原来的内部呼吸感。 */
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  flex: none;
+  min-height: 0;
+  transition: padding 0.3s ease;
+}
+
+/* 0. layout-title (封面页)
+   全页居中布局，用于总封面和章节封面。 */
+.slide-content.layout-title {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 1. layout-single (单列)
+   纵向堆叠，适合长文本教学内容 */
+.slide-content.layout-single {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+/* 2. layout-2col (等宽双栏)
+   50/50 双列并排 */
+.slide-content.layout-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+/* 2v. layout-2col.compare (对比变体)
+   双栏中间自动插入 VS 圆圈标记 */
+.slide-content.layout-2col.compare {
+  position: relative;
+}
+
+.slide-content.layout-2col.compare::after {
+  content: 'VS';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(163, 113, 247, 0.2), rgba(88, 166, 255, 0.2));
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  z-index: 10;
+  animation: pulseGlow 3s ease infinite;
+}
+
+/* 3. layout-2col-wide-left (左宽右窄)
+   约 65/35 双列 */
+.slide-content.layout-2col-wide-left {
+  display: grid;
+  grid-template-columns: 1.85fr 1fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+/* 4. layout-2col-wide-right (左窄右宽)
+   约 35/65 双列 */
+.slide-content.layout-2col-wide-right {
+  display: grid;
+  grid-template-columns: 1fr 1.85fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+/* 5. layout-3col (三栏)
+   33/33/33 三列等宽 */
+.slide-content.layout-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* 6. layout-2row (双行)
+   上下两行纵向分区 */
+.slide-content.layout-2row {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  justify-content: flex-start;
+}
+
+/* 7. layout-grid-2x2 (四宫格)
+   2×2 网格，行高由内容动态决定 */
+.slide-content.layout-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* 不设 grid-template-rows，行高由内容自动决定 */
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* 插槽容器 (.col / .cell / .row)
+   布局内部的通用子容器 */
+.slide-content.layout-2col>.col,
+.slide-content.layout-2col-wide-left>.col,
+.slide-content.layout-2col-wide-right>.col,
+.slide-content.layout-3col>.col,
+.slide-content.layout-grid-2x2>.cell,
+.slide-content.layout-2row>.row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+/* 确保内部组件（如卡片）自动撑满可用高度 */
+.slide-content>[class*="layout-"]>.col>*,
+.slide-content>[class*="layout-"]>.cell>*,
+.slide-content [class*="col"]>*,
+.slide-content [class*="cell"]>* {
+  flex: 1;
+}
+
+
+/* ===========================================
+   全局自动阶梯进场动画 (Auto-staggering Animations)
+   赋予内容区各分栏或独立卡片自动按顺序滑入的能力
+   =========================================== */
+@keyframes slotFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 当幻灯片被激活时，内部的各项布局插槽（包括它装载的卡片）集体触发动画 */
+.slide.active .layout-single>*,
+.slide.active .layout-2col>.col,
+.slide.active .layout-2col-wide-left>.col,
+.slide.active .layout-2col-wide-right>.col,
+.slide.active .layout-3col>.col,
+.slide.active .layout-grid-2x2>.cell,
+.slide.active .layout-2row>.row {
+  animation: slotFadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 跟随横幅出入的物理规律：整体从 0.35s 起步浮出，凸显从属跟进感 */
+.slide.active [class*="layout-"]>*:nth-child(1) {
+  animation-delay: 0.35s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(2) {
+  animation-delay: 0.45s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(3) {
+  animation-delay: 0.55s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(4) {
+  animation-delay: 0.65s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(5) {
+  animation-delay: 0.75s;
+}
+
+.slide.active [class*="layout-"]>*:nth-child(6) {
+  animation-delay: 0.85s;
+}

@@ -39,7 +39,8 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="./assets/themes/[teaching-theme].css"> <!-- teaching theme -->
     <link rel="stylesheet" href="./assets/components.css">
     <link rel="stylesheet" href="./assets/zones/zone1-header.css">
-    <link rel="stylesheet" href="./assets/zones/zone2-content.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-layout.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-components.css">
     <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
     <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
     <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
@@ -195,7 +196,8 @@ The editing system is powered by external asset files — **all via `<link>` and
 Reference `editor.css` via `<link>`, **after** the Zone CSS chain:
 ```html
 <link rel="stylesheet" href="./assets/zones/zone1-header.css">
-<link rel="stylesheet" href="./assets/zones/zone2-content.css">
+<link rel="stylesheet" href="./assets/zones/zone2-layout.css">
+<link rel="stylesheet" href="./assets/zones/zone2-components.css">
 <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
 <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
 <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
@@ -377,7 +379,8 @@ assets/                        # CSS, JS modules, themes, images
 ├── components.css             # Component CSS
 ├── zones/
 │   ├── zone1-header.css       # Zone 1 header bar
-│   ├── zone2-content.css      # Zone 2 base layouts + common components
+│   ├── zone2-layout.css       # Zone 2 layout modes (8+1)
+│   ├── zone2-components.css   # Zone 2 common components (12)
 │   ├── zone2-immersive-components.css # Zone 2 immersive components
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
 │   ├── zone2-example-card.css         # Zone 2 example-card component

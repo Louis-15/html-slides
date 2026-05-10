@@ -215,7 +215,7 @@ Do NOT include summary for:
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
-- Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
+- Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules. Note: `annotation-store.js` 已简化为兼容存根，不再加载 `.annotations.js` 侧挂文件。
@@ -227,7 +227,7 @@ Do NOT include summary for:
 
 **Key requirements:**
 - HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/`
-- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-content.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css → editor.css`
+- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css → editor.css`
 - **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor-core.js` at runtime
 - Reference the teaching theme CSS + components.css via `<link>`, and slides-runtime.js via `<script>`
 - Custom animations for this courseware → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
@@ -362,7 +362,8 @@ If the user declines, stop here.
 | [component-templates.md](references/component-templates.md) | Component style reference — interactive elements for layout slots | Phase 4 (generation) |
 | [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards | Phase 4 (generation) |
 | [zones/zone1-header.css](assets/zones/zone1-header.css) | Zone 1 标题栏样式 — header bar 的固定结构 | Phase 4 (generation) |
-| [zones/zone2-content.css](assets/zones/zone2-content.css) | Zone 2 基础布局与通用组件 | Phase 4 (generation) |
+| [zones/zone2-layout.css](assets/zones/zone2-layout.css) | Zone 2 布局系统 — 8+1 种布局模式 | Phase 4 (generation) |
+| [zones/zone2-components.css](assets/zones/zone2-components.css) | Zone 2 通用组件 — 12 种卡片与内容组件 | Phase 4 (generation) |
 | [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面与未来沉浸式组件结构 | Phase 4 (generation) |
 | [zones/zone2-quiz-annotation.css](assets/zones/zone2-quiz-annotation.css) | 答题与批注组件专属样式 | Phase 4 (generation) |
 | [zones/zone2-example-card.css](assets/zones/zone2-example-card.css) | 例题组件专属样式 | Phase 4 (when example-card is used) |
