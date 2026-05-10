@@ -132,6 +132,16 @@
               }
             }
           });
+          // 4. 复制选项内 HTML：live DOM 中动态创建的 answer-anchor 包含在 .qa-option 内，
+          //    直接用 data-option 做 key，将 live 的 innerHTML 覆盖到 clone。
+          //    这样动态的 answer-anchor 自动跟随选项内容完整保存。
+          liveQA.querySelectorAll('.qa-option[data-option]').forEach(function (liveOpt) {
+            var optKey = liveOpt.getAttribute('data-option');
+            var cloneOpt = cloneQA.querySelector('.qa-option[data-option="' + optKey + '"]');
+            if (cloneOpt && liveOpt.innerHTML !== cloneOpt.innerHTML) {
+              cloneOpt.innerHTML = liveOpt.innerHTML;
+            }
+          });
         });
       });
     }
