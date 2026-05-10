@@ -153,8 +153,8 @@ Every teaching courseware slide uses the three-zone canvas model:
 <div class="slide" data-slide="[N]">
   <!-- ZONE 1: Header Bar -->
   <div class="slide-header">
-    <div class="header-module">[教学模块名称]</div>
-    <div class="header-title">[当前知识点名称]</div>
+    <div class="header-module">[序号.节号 本节名称]</div>
+    <div class="header-title">[本页知识点名称 — 具体到本页内容]</div>
   </div>
 
   <!-- ZONE 2: Content Area with layout mode -->

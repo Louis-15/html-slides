@@ -15,10 +15,12 @@ Every teaching courseware slide is divided into **three physically separated zon
 <div class="slide active" data-slide="0">
 
   <!-- === ZONE 1: HEADER BAR (标题栏) === -->
-  <!-- Fixed two-line header, does NOT participate in content layout -->
+  <!-- 固定两行，不参与内容区布局 -->
+  <!-- 面包屑行：序号 本节名称 / 知识点名 -->
+  <!-- 标题行：本页具体内容（一个知识点可能分多页） -->
   <div class="slide-header">
-    <div class="header-module">[教学模块名称]</div>
-    <div class="header-title">[当前知识点名称]</div>
+    <div class="header-module"><!-- 面包屑行 --></div>
+    <div class="header-title"><!-- 本页标题 --></div>
   </div>
 
   <!-- === ZONE 2: CONTENT AREA (内容区) === -->
@@ -54,7 +56,7 @@ Every teaching courseware slide is divided into **three physically separated zon
 
 | Zone | Required | Participates in Layout | Notes |
 |------|----------|----------------------|-------|
-| Header Bar | Yes | No — always spans full width at top | Fixed two lines: module name + topic name |
+| Header Bar | Yes | No — always spans full width at top | 面包屑行：序号+本节名称/知识点名；标题行：本页具体内容 |
 | Content Area | Yes | Yes — uses `layout-*` classes | AI chooses layout mode; all content goes here |
 | Summary Component | No — AI decides | No — floats at bottom | Button triggers a panel overlay |
 | Speaker Notes | Yes | No — hidden JSON block | Must be the last child element |
@@ -289,7 +291,7 @@ These rules **replace** the old fixed content limits from `presentation-layer.md
 
 1. **No fixed content cap** — There is no "max N items per slide" rule. The content area can hold as much as fits.
 2. **Full-text preservation** — AI must include every word from the teaching materials. No summarizing, no omitting, no compressing.
-3. **Smart pagination based on available space** — When content exceeds the content area's available height (after subtracting the header bar), split into the next slide. Continue the same header-module/header-title on the continuation slide.
+3. **Smart pagination based on available space** — When content exceeds the content area's available height (after subtracting the header bar), split into the next slide. Continue the same header-module (breadcrumb) on the continuation slide, but update the header-title to reflect the new page's focus.
 4. **Dynamic canvas height** — The canvas height currently adjusts dynamically based on content (e.g., adding line breaks in edit mode expands the canvas). This behavior is preserved.
 
 ---

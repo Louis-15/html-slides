@@ -84,10 +84,10 @@ Every generated HTML file **must** comply with these rules:
 
         <!-- === SLIDE 1: Content Slide (Three-Zone Canvas) === -->
         <div class="slide" data-slide="1">
-            <!-- ZONE 1: Header Bar (fixed two lines) -->
+            <!-- ZONE 1: Header Bar (面包屑 + 本页标题) -->
             <div class="slide-header">
-                <div class="header-module">[教学模块名称]</div>
-                <div class="header-title">[当前知识点名称]</div>
+                <div class="header-module"><!-- 面包屑：序号 本节名称 / 知识点名 --></div>
+                <div class="header-title"><!-- 本页具体内容 --></div>
             </div>
 
             <!-- ZONE 2: Content Area (AI chooses layout mode) -->

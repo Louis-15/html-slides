@@ -88,28 +88,36 @@
   box-shadow: 0 8px 32px -8px var(--_banner-shadow);
 }
 
-/* --- Banner: 子标题 (module 行) --- */
+/* --- Banner: 面包屑行 (breadcrumb 行) ---
+   格式：序号 本节名称 / 知识点名
+   相对于主标题更小巧，使用品牌色凸显导航感。 */
 .slide-header.banner .header-module {
   font-size: clamp(15px, 1.6vw, 18px);
   /* 字号微调放大，增强层级但依然克于主标题之内 */
-  font-weight: 800;
+  font-weight: 700;
   color: var(--_banner-module-color);
-  /* 副标题颜色，跟随主题切换 */
+  /* 面包屑颜色，跟随主题切换 */
   background: transparent;
   /* 彻底移除底色 */
   border: none;
   /* 彻底移除边框 */
   padding: 0;
   /* 回归原始对齐 */
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.03em;
+  /* 轻声字间距，适配中文+数字混排 */
   margin-bottom: 8px;
-  /* 给大标题留出呼吸空间 */
+  /* 给主标题留出呼吸空间 */
   position: relative;
   /* 防御性设定，确保如果在某些情况下挂载，不发生逃逸 */
 }
 
-/* --- Banner: 主标题 --- */
+/* 面包屑中的分隔符“/”左右留空 */
+.slide-header.banner .header-module .breadcrumb-sep {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+
+/* --- Banner: 主标题（本页具体内容）--- */
 .slide-header.banner .header-title {
   font-size: clamp(32px, 4vw, 44px);
   /* 字号微微放大，增强气场 */
@@ -119,6 +127,8 @@
   line-height: 1.25;
   letter-spacing: -0.5px;
   /* 负字间距是现代高端字体的灵魂 */
+  text-wrap: balance;
+  /* 自动平衡换行，避免标题过长时出现孤字 */
 }
 
 /* --- Banner: 发廊灯流动箭头装饰系统 --- */
