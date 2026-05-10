@@ -50,7 +50,28 @@
     return orderedLinkIds;
   };
 
-  /** 统一把中栏气泡顺序拉回"左侧正文顺序优先"的规则 */
+  /** 收集右栏答题锚点的 linkId 顺序（按 DOM 先后，去重） */
+  QA.getOrderedAnswerLinkIds = function (qa) {
+    if (!qa) return [];
+    var orderedLinkIds = [];
+    var seen = new Set();
+
+    qa.querySelectorAll('.qa-answer-panel .answer-anchor[data-link-answer]').forEach(function (anchor) {
+      var linkId = anchor.getAttribute('data-link-answer') || '';
+      if (!linkId || seen.has(linkId)) return;
+      seen.add(linkId);
+      orderedLinkIds.push(linkId);
+    });
+
+    return orderedLinkIds;
+  };
+
+  /**
+   * 统一把中栏气泡顺序拉回"三级排序"规则：
+   * 1. 关联左侧正文的批注 → 按左栏正文锚点 DOM 顺序排
+   * 2. 未关联左侧、只关联右侧的批注 → 按右栏答题锚点 DOM 顺序排
+   * 3. 左右都未关联的批注 → 放在最后
+   */
   QA.syncBubbleOrderToPassageAnchors = function (qa) {
     var notesContainer = QA.getNotesBubbleContainer(qa);
     if (!qa || !notesContainer) return;
@@ -66,19 +87,34 @@
       if (linkId) bubbleByLinkId.set(linkId, bubble);
     });
 
-    var orderedPassageBubbles = [];
     var placed = new Set();
+    var desiredOrder = [];
+
+    // 优先级 1：关联左侧正文的批注
     QA.getOrderedPassageLinkIds(qa).forEach(function (linkId) {
       var bubble = bubbleByLinkId.get(linkId);
       if (!bubble || placed.has(bubble)) return;
       placed.add(bubble);
-      orderedPassageBubbles.push(bubble);
+      desiredOrder.push(bubble);
     });
 
-    var remainingBubbles = bubbles.filter(function (bubble) {
-      return !placed.has(bubble);
+    // 优先级 2：未关联左侧、只关联右侧的批注
+    QA.getOrderedAnswerLinkIds(qa).forEach(function (linkId) {
+      var bubble = bubbleByLinkId.get(linkId);
+      if (!bubble || placed.has(bubble)) return;
+      // 确认该气泡确实没有左侧关联
+      var hasLeftAnchor = !!QA.getAnchorByLink(qa, linkId);
+      if (hasLeftAnchor) return;
+      placed.add(bubble);
+      desiredOrder.push(bubble);
     });
-    var desiredOrder = orderedPassageBubbles.concat(remainingBubbles);
+
+    // 优先级 3：左右都未关联的批注
+    bubbles.forEach(function (bubble) {
+      if (!placed.has(bubble)) {
+        desiredOrder.push(bubble);
+      }
+    });
 
     desiredOrder.forEach(function (bubble) {
       if (bubble.parentNode === notesContainer) {
@@ -327,6 +363,58 @@
   QA.scrollIntoViewSmooth = function (el) {
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  /* =========================================
+     自动排序与序号同步
+     ========================================= */
+
+  /** 清理拖拽场地（已废弃，保留以防外部调用） */
+  QA.cleanupDragArtifacts = function (qa) {
+    if (!qa) return;
+    qa.querySelectorAll('.qa-note-placeholder').forEach(function (placeholder) { placeholder.remove(); });
+    qa.querySelectorAll('.qa-note-bubble.dragging-source').forEach(function (bubble) {
+      bubble.classList.remove('dragging-source');
+      bubble.style.display = '';
+      bubble.setAttribute('draggable', 'false');
+    });
+  };
+
+  /** initDragAndDrop（拖拽功能已移除，保留空入口供 initQuizAnnotation 调用） */
+  QA.initDragAndDrop = function (qa) {
+    if (!qa) return;
+    QA.cleanupDragArtifacts(qa);
+  };
+
+  /** 重算所有气泡的 data-step 序号并同步左右两栏角标（统一序号系统） */
+  QA.recalcStepNumbers = function (qa) {
+    QA.syncBubbleOrderToPassageAnchors(qa);
+
+    var allBubbles = qa.querySelectorAll('.qa-note-bubble');
+    allBubbles.forEach(function (bubble, index) {
+      var newStep = index + 1;
+      bubble.dataset.step = newStep;
+      // 更新气泡内的序号显示
+      var stepEl = bubble.querySelector('.qa-note-step');
+      if (stepEl) stepEl.textContent = newStep;
+
+      // 同步左栏原文锚点的 data-step 和角标
+      var linkId = bubble.dataset.link;
+      var anchor = QA.getAnchorByLink(qa, linkId);
+      if (anchor) {
+        anchor.dataset.step = newStep;
+        var badge = anchor.querySelector('.note-badge');
+        if (badge) badge.textContent = newStep;
+      }
+
+      // 同步右栏答题锚点的角标
+      var answerAnchors = QA.getAnswerAnchorsByLink(qa, linkId);
+      answerAnchors.forEach(function (aa) {
+        aa.dataset.step = newStep;
+        var badge = aa.querySelector('.note-badge');
+        if (badge) badge.textContent = newStep;
+      });
+    });
   };
 
 })();
