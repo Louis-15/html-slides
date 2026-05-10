@@ -7,11 +7,16 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const slidesRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'slides-runtime.js');
 const pageRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'page-richtext-annotation-runtime.js');
 const fragmentCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 
-const slidesRuntimeSource = fs.readFileSync(slidesRuntimePath, 'utf-8');
+const slidesRuntimeSource = [
+  fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'navigation.js'), 'utf-8'),
+  fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'keyboard.js'), 'utf-8'),
+  fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'step-through.js'), 'utf-8'),
+  fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'chart-integration.js'), 'utf-8'),
+  fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'speaker-notes.js'), 'utf-8')
+].join('\n');
 const pageRuntimeSource = fs.existsSync(pageRuntimePath)
   ? fs.readFileSync(pageRuntimePath, 'utf-8')
   : '';

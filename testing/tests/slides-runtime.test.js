@@ -7,7 +7,11 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'slides-runtime.js');
+const navigationPath = path.join(projectRoot, 'assets', 'runtime', 'navigation.js');
+const keyboardPath = path.join(projectRoot, 'assets', 'runtime', 'keyboard.js');
+const stepThroughPath = path.join(projectRoot, 'assets', 'runtime', 'step-through.js');
+const chartIntegrationPath = path.join(projectRoot, 'assets', 'runtime', 'chart-integration.js');
+const speakerNotesPath = path.join(projectRoot, 'assets', 'runtime', 'speaker-notes.js');
 const componentsPath = path.join(projectRoot, 'assets', 'components.css');
 const quizRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'quiz-annotation-runtime.js');
 const exampleCardRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'example-card-runtime.js');
@@ -16,7 +20,13 @@ const zone1HeaderPath = path.join(projectRoot, 'assets', 'zones', 'zone1-header.
 const zone2ContentPath = path.join(projectRoot, 'assets', 'zones', 'zone2-layout.css');
 const zone3SummaryPath = path.join(projectRoot, 'assets', 'zones', 'zone3-summary.css');
 const xindongfangThemePath = path.join(projectRoot, 'assets', 'themes', 'xindongfang-green.css');
-const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
+const runtimeSource = [
+  fs.readFileSync(navigationPath, 'utf-8'),
+  fs.readFileSync(keyboardPath, 'utf-8'),
+  fs.readFileSync(stepThroughPath, 'utf-8'),
+  fs.readFileSync(chartIntegrationPath, 'utf-8'),
+  fs.readFileSync(speakerNotesPath, 'utf-8')
+].join('\n');
 const componentsSource = fs.readFileSync(componentsPath, 'utf-8');
 const quizRuntimeSource = fs.readFileSync(quizRuntimePath, 'utf-8');
 const exampleCardRuntimeSource = fs.readFileSync(exampleCardRuntimePath, 'utf-8');

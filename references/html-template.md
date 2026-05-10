@@ -12,7 +12,7 @@ Every generated HTML file **must** comply with these rules:
 2. Slides are `<div class="slide">` elements (not `<section>`)
 3. First slide has `class="slide active"`
 4. All slides have `data-slide="N"` with sequential numbering from 0
-5. Global `function goTo()`, `function next()`, `function prev()` via external `slides-runtime.js`
+5. Global `function goTo()`, `function next()`, `function prev()` via external `navigation.js` (part of 5-module runtime stack)
 6. All CSS via external `<link>` references to `./assets/` files (except font CDN imports and small per-presentation `:root` overrides inline)
 7. All JS via external `<script src>` references to `./assets/` files (except CDN libraries and small per-presentation custom scripts inline)
 8. Has `<meta name="generator" content="html-slides v1.0.0">` in `<head>`
@@ -132,7 +132,11 @@ Every generated HTML file **must** comply with these rules:
     <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
 
     <!-- JS: All via external <script src> references. Order matters. -->
-    <script src="./assets/runtime/slides-runtime.js"></script>
+    <script src="./assets/runtime/navigation.js"></script>
+    <script src="./assets/runtime/keyboard.js"></script>
+    <script src="./assets/runtime/step-through.js"></script>
+    <script src="./assets/runtime/chart-integration.js"></script>
+    <script src="./assets/runtime/speaker-notes.js"></script>
 
     <!-- Global audio runtime (always include for page-turn / focus / interaction cues) -->
     <script src="./assets/audio/audio-runtime.js"></script>
@@ -220,7 +224,17 @@ All elements get **unified drag/delete controls** (📍✖) via `BoxManager._inj
 
 ### 4. JS Reference
 
-Reference `audio-runtime.js` at the **end of `<body>`**, immediately AFTER `slides-runtime.js`:
+Load the 5-module runtime stack at the **end of `<body>`**, in strict order, immediately before `audio-runtime.js`:
+
+```html
+<script src="./assets/runtime/navigation.js"></script>
+<script src="./assets/runtime/keyboard.js"></script>
+<script src="./assets/runtime/step-through.js"></script>
+<script src="./assets/runtime/chart-integration.js"></script>
+<script src="./assets/runtime/speaker-notes.js"></script>
+```
+
+Then reference `audio-runtime.js` immediately after the runtime stack:
 
 ```html
 <script src="./assets/audio/audio-runtime.js"></script>
@@ -384,15 +398,21 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone2-example-card.css         # Zone 2 example-card component
 │   └── zone3-summary.css      # Zone 3 summary panel
 ├── runtime/
-│   ├── slides-runtime.js              # Navigation JS
-│   ├── audio-runtime.js               # Global audio cue bus (always included)
-│   ├── annotation-store.js            # Quiz annotation sidecar persistence
-│   ├── quiz-annotation-audio.js       # Quiz annotation audio adapter
-│   ├── quiz-annotation-runtime.js     # Quiz annotation runtime
-│   ├── example-card-audio.js          # Example-card audio adapter
-│   ├── example-card-runtime.js        # Example-card runtime
-│   ├── page-richtext-annotation-runtime.js  # Ordinary-page hidden rich-text runtime
-│   └── doodle-runtime.js              # Doodle overlay
+│   ├── navigation.js                # Navigation core (goTo, next, prev)
+│   ├── keyboard.js                  # Keyboard dispatch
+│   ├── step-through.js              # Interaction step-through engine
+│   ├── chart-integration.js         # Chart.js lifecycle
+│   ├── speaker-notes.js             # Speaker notes console output
+│   ├── annotation-store.js          # Quiz annotation sidecar persistence
+│   ├── quiz-annotation-runtime.js   # Quiz annotation runtime
+│   ├── example-card-runtime.js      # Example-card runtime
+│   ├── page-richtext-annotation-runtime.js # Ordinary-page hidden rich-text runtime
+│   └── doodle-runtime.js            # Doodle overlay
+├── audio/
+│   ├── audio-runtime.js             # Global audio cue bus (always included)
+│   ├── quiz-annotation-audio.js     # Quiz annotation audio adapter
+│   ├── example-card-audio.js        # Example-card audio adapter
+│   └── sound/
 ├── editor/
 │   ├── editor.css                 # Editor UI CSS (always included)
 │   ├── editor-utils.js            # Editor base utilities
