@@ -303,17 +303,18 @@
      ========================================= */
 
   QA.arrangeAdjacentBadges = function (qa) {
+    if (!qa) return;
+    /* 先清除所有角标之前设置的 inline marginLeft，防止 HTML 源码中残留的硬编码干扰运行时排版。 */
+    qa.querySelectorAll('.note-badge').forEach(function (b) { b.style.marginLeft = ''; });
     var badges = Array.from(qa.querySelectorAll('.note-badge'));
     for (var i = 1; i < badges.length; i++) {
       var prevBadge = badges[i - 1];
       var currBadge = badges[i];
-
       var prevRect = prevBadge.getBoundingClientRect();
       var currRect = currBadge.getBoundingClientRect();
-
       if (Math.abs(prevRect.top - currRect.top) < 5 &&
         Math.abs(prevRect.right - currRect.left) < 5) {
-        currBadge.style.marginLeft = '22px';
+        currBadge.style.marginLeft = '0px';
       }
     }
   };
