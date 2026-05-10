@@ -11,7 +11,9 @@
 
 .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
 .quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
-  text-decoration: none !important;
+  /* 只用 text-decoration-line: none 杀死下划线的可见性，保留 color/thickness/style 来自内联 style，
+     这样编辑模式恢复时颜色和粗细不受影响 */
+  text-decoration-line: none !important;
   background-color: transparent !important;
   color: inherit !important;
   box-shadow: none !important;

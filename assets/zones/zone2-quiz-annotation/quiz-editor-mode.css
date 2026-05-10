@@ -56,3 +56,20 @@ html.editor-mode .qa-result-mark,
 body.editor-mode .qa-result-mark {
   display: none !important;
 }
+
+/* 编辑模式覆盖答题隔离规则：即使未提交也显示批注角标与锚点样式 */
+html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .note-badge,
+body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .note-badge {
+  display: inline-flex !important;
+}
+
+html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .answer-anchor,
+body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
+  /* 只恢复下划线的可见性，颜色/粗细/style 直接穿透锚点内联 style */
+  text-decoration-line: underline !important;
+  background-color: inherit !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}

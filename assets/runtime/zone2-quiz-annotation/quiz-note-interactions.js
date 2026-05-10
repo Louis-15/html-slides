@@ -153,6 +153,8 @@
     QA.cleanupDragArtifacts(qa);
 
     if (QA.isEditorMode()) {
+      // 编辑模式下：展开中栏面板并显示所有批注
+      qa.classList.add('notes-active');
       QA.expandAllBubbles(qa);
     } else {
       QA.hideAllBubbles(qa);
