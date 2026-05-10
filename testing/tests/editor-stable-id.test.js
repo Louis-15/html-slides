@@ -10,12 +10,10 @@ const projectRoot = path.join(__dirname, '..', '..');
 const editorUtilsPath = path.join(projectRoot, 'assets', 'editor', 'editor-utils.js');
 const editorPersistencePath = path.join(projectRoot, 'assets', 'editor', 'editor-persistence.js');
 const editorCorePath = path.join(projectRoot, 'assets', 'editor', 'editor-core.js');
-const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
 
 const editorUtilsSource = fs.readFileSync(editorUtilsPath, 'utf-8');
 const editorPersistenceSource = fs.readFileSync(editorPersistencePath, 'utf-8');
 const editorCoreSource = fs.readFileSync(editorCorePath, 'utf-8');
-const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
 
 function createDom(bodyHtml, url = 'http://localhost/deck.html') {
   const dom = new JSDOM(
@@ -219,8 +217,8 @@ describe('stable editable ids', () => {
       return originalAppendChild(node);
     };
 
-    window.eval(annotationStoreSource);
-    await Promise.resolve();
+    // annotation-store.js has been removed; skip eval.
+
     await Promise.resolve();
   window.eval(editorUtilsSource);
   await Promise.resolve();

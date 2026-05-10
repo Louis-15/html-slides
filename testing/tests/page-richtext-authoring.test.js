@@ -10,12 +10,15 @@ const projectRoot = path.join(__dirname, '..', '..');
 const editorUtilsPath = path.join(projectRoot, 'assets', 'editor', 'editor-utils.js');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor', 'editor-rich-text.js');
 const editorCssPath = path.join(projectRoot, 'assets', 'editor', 'editor.css');
-const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 
 const editorUtilsSource = fs.readFileSync(editorUtilsPath, 'utf-8');
 const editorRichTextSource = fs.readFileSync(editorRichTextPath, 'utf-8');
 const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
-const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
+var zoneCssDir = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation');
+var zoneCssSource = '';
+['quiz-layout.css','quiz-passage.css','quiz-notes-panel.css','quiz-answer-panel.css','quiz-anchors-bubbles.css','quiz-connectors.css','quiz-dragdrop.css','quiz-isolation.css','quiz-linking.css','quiz-scrollbar.css','quiz-editor-toolbar.css','quiz-responsive.css','quiz-editor-mode.css'].forEach(function(f) {
+  zoneCssSource += fs.readFileSync(path.join(zoneCssDir, f), 'utf-8') + '\n';
+});
 
 function dispatchSelectionChange(window) {
   window.document.dispatchEvent(new window.Event('selectionchange', { bubbles: true }));

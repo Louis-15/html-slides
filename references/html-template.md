@@ -154,7 +154,6 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/audio/audio-runtime.js"></script>
 
     <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
-    <script src="./assets/runtime/annotation-store.js"></script>
     <script src="./assets/audio/quiz-annotation-audio.js"></script>
     <script src="./assets/runtime/zone2-quiz-annotation/quiz-core.js"></script>
     <script src="./assets/runtime/zone2-quiz-annotation/quiz-constants.js"></script>
@@ -285,7 +284,6 @@ Then reference `audio-runtime.js` immediately after the runtime stack:
 If the courseware contains `.quiz-annotation`, reference the quiz runtime stack AFTER `audio-runtime.js` and BEFORE the editor modules, in this order:
 
 ```html
-<script src="./assets/runtime/annotation-store.js"></script>
 <script src="./assets/audio/quiz-annotation-audio.js"></script>
 <script src="./assets/runtime/zone2-quiz-annotation/quiz-init.js"></script>
 ```
@@ -447,7 +445,7 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── step-through.js              # Interaction step-through engine
 │   ├── chart-integration.js         # Chart.js lifecycle
 │   ├── speaker-notes.js             # Speaker notes console output
-│   ├── annotation-store.js          # Quiz annotation sidecar persistence
+│   ├── zone2-quiz-annotation/        # Quiz annotation (13 CSS + 17 JS)
 │   ├── zone2-quiz-annotation/        # Quiz annotation (13 CSS + 17 JS)
 │   ├── example-card-core.js           # Example-card core (state, init, nav)
 │   ├── example-card-authoring.js      # Example-card authoring mode

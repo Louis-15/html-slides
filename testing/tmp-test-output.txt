@@ -1,0 +1,2403 @@
+﻿TAP version 13
+# Subtest: quiz annotation runtime
+    # Subtest: rebuilds note actions inside qa-note-header after history-style strip and re-init
+    ok 1 - rebuilds note actions inside qa-note-header after history-style strip and re-init
+      ---
+      duration_ms: 121.6529
+      type: 'test'
+      ...
+    # Subtest: renders single-choice result marks inside the option label so multi-line answers stay aligned
+    ok 2 - renders single-choice result marks inside the option label so multi-line answers stay aligned
+      ---
+      duration_ms: 40.8389
+      type: 'test'
+      ...
+    # Subtest: adds an entry animation state when a note badge activates its bubble
+    ok 3 - adds an entry animation state when a note badge activates its bubble
+      ---
+      duration_ms: 28.5755
+      type: 'test'
+      ...
+    # Subtest: renders selectable answer chips for single-choice questions in editor mode
+    ok 4 - renders selectable answer chips for single-choice questions in editor mode
+      ---
+      duration_ms: 25.9289
+      type: 'test'
+      ...
+    # Subtest: supports multi-choice correct-answer toggling in editor mode
+    ok 5 - supports multi-choice correct-answer toggling in editor mode
+      ---
+      duration_ms: 24.9208
+      type: 'test'
+      ...
+    # Subtest: renders the correct left-column type pill for all four reading modes
+    ok 6 - renders the correct left-column type pill for all four reading modes
+      ---
+      duration_ms: 103.8884
+      type: 'test'
+      ...
+    # Subtest: builds right-column answer lines for blank questions and grades them on submit
+    ok 7 - builds right-column answer lines for blank questions and grades them on submit
+      ---
+      duration_ms: 30.0526
+      type: 'test'
+      ...
+    # Subtest: shows current blank answers in editor mode and lets the author edit them directly
+    ok 8 - shows current blank answers in editor mode and lets the author edit them directly
+      ---
+      duration_ms: 22.8112
+      type: 'test'
+      ...
+    # Subtest: persists edited blank answers immediately so the first refresh can read the fresh local snapshot
+    ok 9 - persists edited blank answers immediately so the first refresh can read the fresh local snapshot
+      ---
+      duration_ms: 25.4029
+      type: 'test'
+      ...
+    # Subtest: refreshes blank answers when the page switches from student mode into editor mode
+    ok 10 - refreshes blank answers when the page switches from student mode into editor mode
+      ---
+      duration_ms: 23.4578
+      type: 'test'
+      ...
+    # Subtest: keeps blank answers editable when the page enters editor mode after a submit
+    ok 11 - keeps blank answers editable when the page enters editor mode after a submit
+      ---
+      duration_ms: 29.2876
+      type: 'test'
+      ...
+    # Subtest: starts annotation-store authorization from the first page gesture instead of showing a persistent header icon
+    not ok 12 - starts annotation-store authorization from the first page gesture instead of showing a persistent header icon
+      ---
+      duration_ms: 21.905
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1066:3'
+      failureType: 'testCodeFailure'
+      error: 'expected quiz annotation headers to still mount a status element for fallback prompts'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: ~
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1085:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: reveals a manual authorization prompt only after the first-gesture flow is declined
+    not ok 13 - reveals a manual authorization prompt only after the first-gesture flow is declined
+      ---
+      duration_ms: 20.4546
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1095:3'
+      failureType: 'testCodeFailure'
+      error: "Cannot read properties of null (reading 'textContent')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1115:27)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: prefers localStorage over stale AnnotationStore initData when creating dynamic note bubbles
+    not ok 14 - prefers localStorage over stale AnnotationStore initData when creating dynamic note bubbles
+      ---
+      duration_ms: 27.0213
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1119:3'
+      failureType: 'testCodeFailure'
+      error: 'expected quiz initialization to create a dynamic note bubble for the linked anchor'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: ~
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1175:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: persists deleted note tombstones so a refresh can still purge source-side quiz annotations
+    not ok 15 - persists deleted note tombstones so a refresh can still purge source-side quiz annotations
+      ---
+      duration_ms: 21.3883
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1180:3'
+      failureType: 'testCodeFailure'
+      error: "Cannot read properties of undefined (reading 'authorizeAndSave')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        captureAnnotationStoreSave (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:225:46)
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1188:32)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: removes deleted dynamic notes immediately and clears their stale local restore payload before the same linkId is reused
+    not ok 16 - removes deleted dynamic notes immediately and clears their stale local restore payload before the same linkId is reused
+      ---
+      duration_ms: 36.0533
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1204:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        expected delete to clear the local restore payload for the removed dynamic note
+        + actual - expected
+        
+        + 'Deleted note content.'
+        - null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      actual: 'Deleted note content.'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1234:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: persists newly created dynamic note anchors immediately so a refresh keeps the bubble and does not require recreating it to recover content
+    not ok 17 - persists newly created dynamic note anchors immediately so a refresh keeps the bubble and does not require recreating it to recover content
+      ---
+      duration_ms: 27.9201
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1244:3'
+      failureType: 'testCodeFailure'
+      error: 'expected the created dynamic note to expose a stable edit-id'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: ~
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1268:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: persists newly created note anchors into the owning passage root immediately before any later refresh
+    ok 18 - persists newly created note anchors into the owning passage root immediately before any later refresh
+      ---
+      duration_ms: 23.6174
+      type: 'test'
+      ...
+    # Subtest: does not reuse a deleted note tombstone id when creating the next dynamic note
+    ok 19 - does not reuse a deleted note tombstone id when creating the next dynamic note
+      ---
+      duration_ms: 32.7375
+      type: 'test'
+      ...
+    # Subtest: does not hydrate a newly recreated note bubble with the stale content of a previously deleted dynamic note
+    not ok 20 - does not hydrate a newly recreated note bubble with the stale content of a previously deleted dynamic note
+      ---
+      duration_ms: 21.3803
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:1378:3'
+      failureType: 'testCodeFailure'
+      error: 'expected the dynamic note bubble to use the new-note-<linkId> edit-id contract'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: ~
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:1393:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: renders matching answer-key slots in editor mode and syncs the selected correct answer
+    ok 21 - renders matching answer-key slots in editor mode and syncs the selected correct answer
+      ---
+      duration_ms: 28.6902
+      type: 'test'
+      ...
+    # Subtest: keeps matching correct answers unique when the same option is reassigned to another blank
+    ok 22 - keeps matching correct answers unique when the same option is reassigned to another blank
+      ---
+      duration_ms: 25.6699
+      type: 'test'
+      ...
+    # Subtest: keeps a submitted matching answer slot locked and preserves its filled answer
+    ok 23 - keeps a submitted matching answer slot locked and preserves its filled answer
+      ---
+      duration_ms: 23.6818
+      type: 'test'
+      ...
+    # Subtest: keeps a submitted matching passage blank badge locked and preserves its filled answer
+    ok 24 - keeps a submitted matching passage blank badge locked and preserves its filled answer
+      ---
+      duration_ms: 18.9429
+      type: 'test'
+      ...
+    # Subtest: prevents dragging matching options after submit and keeps the graded state intact
+    ok 25 - prevents dragging matching options after submit and keeps the graded state intact
+      ---
+      duration_ms: 29.2844
+      type: 'test'
+      ...
+    # Subtest: opens the reused underline dropdown directly when creating a note in editor mode
+    ok 26 - opens the reused underline dropdown directly when creating a note in editor mode
+      ---
+      duration_ms: 29.6078
+      type: 'test'
+      ...
+    # Subtest: waits until pointerup before showing the underline dropdown for drag selections in editor mode
+    ok 27 - waits until pointerup before showing the underline dropdown for drag selections in editor mode
+      ---
+      duration_ms: 16.7892
+      type: 'test'
+      ...
+    # Subtest: renders the underline dropdown beside the selection from a body-level host so it is not clipped by quiz containers
+    ok 28 - renders the underline dropdown beside the selection from a body-level host so it is not clipped by quiz containers
+      ---
+      duration_ms: 14.9304
+      type: 'test'
+      ...
+    # Subtest: allows arbitrary partial selections when creating a new note anchor
+    ok 29 - allows arbitrary partial selections when creating a new note anchor
+      ---
+      duration_ms: 21.9742
+      type: 'test'
+      ...
+    # Subtest: inserts a newly created left-side note between existing passage-linked notes and renumbers the following notes
+    ok 30 - inserts a newly created left-side note between existing passage-linked notes and renumbers the following notes
+      ---
+      duration_ms: 30.8853
+      type: 'test'
+      ...
+    # Subtest: opens the same reused underline dropdown while linking an existing note to the answer panel
+    ok 31 - opens the same reused underline dropdown while linking an existing note to the answer panel
+      ---
+      duration_ms: 21.9484
+      type: 'test'
+      ...
+    # Subtest: creates a note directly from pointerdown on an opened underline swatch
+    ok 32 - creates a note directly from pointerdown on an opened underline swatch
+      ---
+      duration_ms: 19.1146
+      type: 'test'
+      ...
+    # Subtest: opens the direct underline palette for left-side linking even when terminal punctuation is omitted
+    ok 33 - opens the direct underline palette for left-side linking even when terminal punctuation is omitted
+      ---
+      duration_ms: 20.0064
+      type: 'test'
+      ...
+    # Subtest: allows left-side linking for arbitrary partial selections instead of enforcing whole-sentence matching
+    ok 34 - allows left-side linking for arbitrary partial selections instead of enforcing whole-sentence matching
+      ---
+      duration_ms: 22.3832
+      type: 'test'
+      ...
+    # Subtest: reorders a right-only note into passage order once it gains a left-side anchor
+    ok 35 - reorders a right-only note into passage order once it gains a left-side anchor
+      ---
+      duration_ms: 28.8567
+      type: 'test'
+      ...
+    # Subtest: shows the fragment toolbar for partial selection inside an existing source anchor instead of the note bubble
+    ok 36 - shows the fragment toolbar for partial selection inside an existing source anchor instead of the note bubble
+      ---
+      duration_ms: 19.2977
+      type: 'test'
+      ...
+    # Subtest: adds the hidden-annotation label while keeping the original multicolor buttons and palettes
+    ok 37 - adds the hidden-annotation label while keeping the original multicolor buttons and palettes
+      ---
+      duration_ms: 17.4321
+      type: 'test'
+      ...
+    # Subtest: hides the quiz fragment toolbar immediately when edit mode exits
+    ok 38 - hides the quiz fragment toolbar immediately when edit mode exits
+      ---
+      duration_ms: 18.0129
+      type: 'test'
+      ...
+    # Subtest: applies fragment markup inside the linked source anchor instead of the note bubble
+    ok 39 - applies fragment markup inside the linked source anchor instead of the note bubble
+      ---
+      duration_ms: 21.9715
+      type: 'test'
+      ...
+    # Subtest: persists quiz fragment authoring immediately into the source root and sidecar save path
+    ok 40 - persists quiz fragment authoring immediately into the source root and sidecar save path
+      ---
+      duration_ms: 19.9225
+      type: 'test'
+      ...
+    # Subtest: uses the same ruby icon as the global editor toolbar
+    ok 41 - uses the same ruby icon as the global editor toolbar
+      ---
+      duration_ms: 19.4419
+      type: 'test'
+      ...
+    # Subtest: reveals an authored source fragment on right click in presentation mode after submission
+    ok 42 - reveals an authored source fragment on right click in presentation mode after submission
+      ---
+      duration_ms: 16.765
+      type: 'test'
+      ...
+    # Subtest: reveals all authored layers in the same fragment group with a single right click after submission
+    ok 43 - reveals all authored layers in the same fragment group with a single right click after submission
+      ---
+      duration_ms: 16.6674
+      type: 'test'
+      ...
+    # Subtest: reuses the same fragment group when a second rich-text layer is authored inside an existing fragment
+    ok 44 - reuses the same fragment group when a second rich-text layer is authored inside an existing fragment
+      ---
+      duration_ms: 24.4155
+      type: 'test'
+      ...
+    # Subtest: keeps revealed source fragments visible when the active bubble is clicked again after submission
+    ok 45 - keeps revealed source fragments visible when the active bubble is clicked again after submission
+      ---
+      duration_ms: 17.5928
+      type: 'test'
+      ...
+    # Subtest: preserves a previously focused bubble fragment visibility when focus moves to another bubble
+    ok 46 - preserves a previously focused bubble fragment visibility when focus moves to another bubble
+      ---
+      duration_ms: 22.846
+      type: 'test'
+      ...
+    # Subtest: normalizes an existing bubble to the same bidirectional link model when a restored right anchor already exists
+    ok 47 - normalizes an existing bubble to the same bidirectional link model when a restored right anchor already exists
+      ---
+      duration_ms: 16.2488
+      type: 'test'
+      ...
+    # Subtest: activates both endpoints without drawing persistent connector legs even when the bubble was originally created from the left side
+    ok 48 - activates both endpoints without drawing persistent connector legs even when the bubble was originally created from the left side
+      ---
+      duration_ms: 16.5382
+      type: 'test'
+      ...
+    # Subtest: wraps anchor text into a dedicated visual layer so the focus underline can replace authored underline styles without being offset by note badges
+    ok 49 - wraps anchor text into a dedicated visual layer so the focus underline can replace authored underline styles without being offset by note badges
+      ---
+      duration_ms: 18.3699
+      type: 'test'
+      ...
+    # Subtest: uses high-contrast aurora styling to replace the real underline and restore the focused bubble halo
+    not ok 50 - uses high-contrast aurora styling to replace the real underline and restore the focused bubble halo
+      ---
+      duration_ms: 2.4524
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:2083:3'
+      failureType: 'testCodeFailure'
+      error: 'expected the detached halo pseudo element to be disabled once the glow is moved back onto the bubble shell itself'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual: |-
+        /* ===========================================
+           quiz-layout.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?娌夋蹈寮忛€冮€镐笌涓夋爮 Grid 甯冨眬
+           鍖呭惈锛?4.0 娌夋蹈寮忛€冮€搞€?4.1 鏍瑰鍣ㄣ€?4.2 Grid 涓讳綋銆?4.3 鍒嗗壊绾裤€?4.4 宸︽爮鍩虹
+           =========================================== */
+        
+        /* ===========================================
+           14.0 娌夋蹈寮忛€冮€?(Immersive Override)
+           閫氳繃 :has() 浼被鑷姩闅愯棌 Zone 1 鏍囬鏍忥紝
+           浣?Zone 2 闇稿崰鍏ㄩ〉楂樺害銆?           =========================================== */
+        .slide:has(.quiz-annotation) .slide-header {
+          display: none !important;
+        }
+        
+        .slide:has(.quiz-annotation) .slide-content {
+          margin-top: 0;
+          flex: 1;
+          max-width: none;
+          /* 鎵撶牬 1100px 闄愬锛岄湼鍗犲叏灞?*/
+          padding: 12px 0 0 0;
+          /* 浠呬繚鐣欓《閮?12px 鍛煎惛绌洪棿閬垮紑宸ュ叿鏍忛槾褰憋紝鍏朵綑鏂瑰悜杈硅窛娓呴浂 */
+        }
+        
+        /* --- 14.1 缁勪欢鏍瑰鍣?--- */
+        .quiz-annotation {
+          position: relative;
+          width: 100%;
+          flex: 1;
+          /* 鍗犳弧 slide-content 鍓╀綑绌洪棿 */
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 0;
+          /* 缁勪欢鍐呴儴鍥涙柟鍚戝鍥?padding 鍏ㄩ儴娓呴浂锛岀敱 .slide / .slide-content 缁熺 */
+          padding: 0;
+          /* 鐒︾偣鎬佷娇鐢ㄧ粍浠剁骇鏋佸厜浠ょ墝缁熶竴椹卞姩宸﹀彸绔偣銆佽鏍囦笌涓棿鎵规敞澶存潯锛?             杩欐牱鍚庣画鑻ヨ鏁翠綋璋冨急/璋冩參锛屽彧闇€瑕佸湪杩欓噷鏀逛竴缁勫彉閲忓嵆鍙€?*/
+          --qa-focus-aurora: linear-gradient(120deg,
+              rgba(0, 210, 255, 0.98) 0%,
+              rgba(45, 116, 255, 0.98) 34%,
+              rgba(255, 201, 58, 0.98) 68%,
+              rgba(151, 91, 255, 0.96) 100%);
+          --qa-focus-aurora-soft: linear-gradient(120deg,
+              rgba(0, 210, 255, 0.58) 0%,
+              rgba(45, 116, 255, 0.5) 34%,
+              rgba(255, 201, 58, 0.46) 68%,
+              rgba(151, 91, 255, 0.42) 100%);
+          --qa-focus-aurora-size: 220% 220%;
+          --qa-focus-aurora-duration: 9s;
+          --qa-reading-edge-safe-gutter: 0px;
+        }
+        
+        .quiz-annotation:not(.has-quiz) {
+          --qa-reading-edge-safe-gutter: 36px;
+        }
+        
+        /* --- 14.2 涓讳綋鍖哄煙锛欳SS Grid 涓夋爮甯冨眬 --- */
+        .qa-body {
+          flex: 1;
+          display: grid;
+          /* 榛樿锛氱函鏂囩珷瑙ｆ瀽锛堟棤绛旈鍐呭锛夛紝鍙湁姝ｆ枃 */
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr;
+          overflow: hidden;
+          min-height: 0;
+          position: relative;
+          transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .quiz-annotation:not(.has-quiz) .qa-body {
+          padding-right: var(--qa-reading-edge-safe-gutter);
+          box-sizing: border-box;
+        }
+        
+        /* 鏈夌瓟棰樺唴瀹规椂锛氬乏鏍?+ 鍙虫爮锛堟壒娉ㄩ殣钘忔€侊級 */
+        .quiz-annotation.has-quiz .qa-body {
+          grid-template-columns: 5fr 3fr;
+        }
+        
+        /* 鎵规敞闈㈡澘灞曞紑鏃讹細宸︿腑鍙充笁鏍?*/
+        .quiz-annotation.has-quiz.notes-active .qa-body {
+          grid-template-columns: 5fr 2fr 3fr;
+        }
+        
+        /* 绾枃绔犺В鏋?+ 鎵规敞灞曞紑鏃讹細宸? + 涓? */
+        .quiz-annotation:not(.has-quiz).notes-active .qa-body {
+          grid-template-columns: 2fr 1fr;
+        }
+        
+        /* --- 14.3 鏍忛棿鍒嗗壊绾?--- */
+        .qa-body::before,
+        .qa-body::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 1px;
+          background: rgba(255, 255, 255, 0.08);
+          z-index: 5;
+          pointer-events: none;
+          transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.3s ease;
+        }
+        
+        /* 绗竴鏉″垎鍓茬嚎锛氬乏鏍忓拰涓爮/鍙虫爮涔嬮棿 */
+        .qa-body::before {
+          left: var(--divider-1-left, 62.5%);
+          opacity: 1;
+        }
+        
+        /* 绗簩鏉″垎鍓茬嚎锛氫腑鏍忓拰鍙虫爮涔嬮棿锛堜粎鎵规敞灞曞紑+鏈夌瓟棰樻椂鍙锛?*/
+        .qa-body::after {
+          left: var(--divider-2-left, 70%);
+          opacity: 0;
+        }
+        
+        .quiz-annotation.has-quiz.notes-active .qa-body::after {
+          opacity: 1;
+        }
+        
+        /* 绾枃绔犳棤绛旈鏃讹紝鍙湁涓€鏉″垎鍓茬嚎鍦ㄦ壒娉ㄥ睍寮€鏃跺彲瑙?*/
+        .quiz-annotation:not(.has-quiz):not(.notes-active) .qa-body::before {
+          opacity: 0;
+        }
+        
+        /* 銆愬叧閿瑙変慨澶嶃€戯細鍥犱负姘旀场鏄甫 backdrop-filter 鐨勫崐閫忔槑鐜荤拑鐩掑瓙锛屽鏋滃簳涓嬪瓨鍦ㄥ垎鍓茬嚎锛?           鍗充娇 z-index 鏄墿鐞嗘纭殑锛堝垎鍓茬嚎鍦ㄥ簳涓嬶級锛屼緷鐒朵細鍍忕幓鐠冧竴鏍锋妸鑳屾櫙鐨勭珫绾块€忓嚭鏉ャ€?           鎵€浠ュ綋澶勪簬"鐒︾偣闇稿睆鎬?鏃讹紝鐩存帴鍋氶殣钘忛€€璁╁鐞嗐€?*/
+        .quiz-annotation.has-active-note .qa-body::before,
+        .quiz-annotation.has-active-note .qa-body::after {
+          opacity: 0 !important;
+        }
+        
+        /* --- 14.4 姝ｆ枃/棰樺共鍖哄煙锛堝乏鏍忥級鍩虹 --- */
+        .qa-passage {
+          grid-column: 1;
+          grid-row: 1;
+          overflow-y: auto;
+          padding: 0 20px 0 0;
+          font-size: clamp(16px, 1.6vw, 22px);
+          line-height: 1.9;
+          color: var(--text);
+          scroll-behavior: smooth;
+          min-height: 0;
+          min-width: 0;
+        }
+        
+        /* ===========================================
+           quiz-passage.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?宸︽爮姝ｆ枃涓庨鍨嬭兌鍥?           鍖呭惈锛?4.4 宸︽爮姝ｆ枃瀹屾暣鏍峰紡锛堥鍨嬭兌鍥娿€佺┖浣嶆Ы绛夛級
+           =========================================== */
+        
+        .qa-reading-type-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 30px;
+          margin: 0 0 14px;
+          padding: 0 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(var(--brand-primary-rgb, 0, 163, 85), 0.2);
+          background: linear-gradient(135deg, rgba(var(--brand-primary-rgb, 0, 163, 85), 0.14), rgba(255, 255, 255, 0.2));
+          color: var(--brand-primary, #00A355);
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          box-shadow: 0 8px 22px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.08);
+        }
+        
+        .quiz-annotation[data-reading-type-resolved="analysis"] .qa-reading-type-pill {
+          border-color: rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.22);
+          background: linear-gradient(135deg, rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.12), rgba(255, 255, 255, 0.2));
+          color: var(--brand-secondary, #3a82f6);
+          box-shadow: 0 8px 22px rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.08);
+        }
+        
+        .quiz-annotation[data-reading-type-resolved="matching"] .qa-reading-type-pill {
+          border-color: rgba(243, 152, 0, 0.22);
+          background: linear-gradient(135deg, rgba(243, 152, 0, 0.14), rgba(255, 255, 255, 0.2));
+          color: var(--accent-orange, #f39800);
+          box-shadow: 0 8px 22px rgba(243, 152, 0, 0.1);
+        }
+        
+        .qa-passage .qa-blank-slot {
+          display: inline-block;
+          margin: 0 0.18em 0 0.03em;
+          vertical-align: baseline;
+          line-height: 1;
+          white-space: nowrap;
+          text-indent: 0;
+        }
+        
+        .qa-passage .qa-blank-user {
+          display: inline-grid;
+          grid-auto-flow: column;
+          align-items: end;
+          column-gap: 0.08em;
+          vertical-align: baseline;
+          text-indent: 0;
+        }
+        
+        .qa-passage .qa-blank-value {
+          display: inline-block;
+          min-width: 2.45em;
+          padding: 0 0 0.08em;
+          box-sizing: border-box;
+          border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+          color: transparent;
+          font-weight: 800;
+          line-height: 1.05;
+          text-align: center;
+          white-space: nowrap;
+          text-indent: 0;
+          letter-spacing: 0;
+          transition: color 0.25s ease, border-color 0.25s ease;
+        }
+        
+        .qa-passage .qa-matching-passage-slot .qa-blank-user sup {
+          display: inline-block;
+          margin-right: 0.02em;
+          font-size: 1em !important;
+          font-weight: 800;
+          color: var(--brand-primary, #00A355) !important;
+          line-height: 1;
+          vertical-align: baseline;
+          text-indent: 0;
+        }
+        
+        .qa-passage .qa-blank-slot.show-correct-answer .qa-blank-value {
+          color: var(--brand-primary, #00A355);
+          border-bottom-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.6);
+        }
+        
+        .qa-passage .qa-blank-answer,
+        .qa-passage .qa-matching-passage-slot .qa-result-mark,
+        .qa-passage .qa-matching-passage-slot .qa-blank-correct {
+          display: none !important;
+        }
+        
+        /* ===========================================
+           quiz-notes-panel.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?涓爮鎵规敞闈㈡澘
+           鍖呭惈锛?4.5 鎵规敞闈㈡澘銆佹爮澶淬€佸垪琛ㄥ尯鍩?           =========================================== */
+        
+        /* --- 14.5 鎵规敞闈㈡澘锛堜腑鏍忥級 --- */
+        .qa-notes-panel {
+          grid-row: 1;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          min-width: 0;
+          /* 榛樿闅愯棌 */
+          width: 0;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.35s ease, width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 鎵规敞闈㈡澘灞曞紑鎬?*/
+        .quiz-annotation.notes-active .qa-notes-panel {
+          width: auto;
+          opacity: 1;
+          pointer-events: auto;
+          overflow: visible;
+          position: relative;
+          z-index: 15;
+        }
+        
+        /* 鎵规敞闈㈡澘鍦?grid 涓殑鍒椾綅缃?*/
+        .quiz-annotation.has-quiz .qa-notes-panel {
+          grid-column: 2;
+        }
+        
+        .quiz-annotation:not(.has-quiz) .qa-notes-panel {
+          grid-column: 2;
+        }
+        
+        .quiz-annotation:not(.notes-active) .qa-notes-panel {
+          display: none;
+        }
+        
+        /* --- 14.5.1 鎵规敞闈㈡澘鏍忓ご --- */
+        .qa-notes-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 10px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          flex-shrink: 0;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+        
+        .qa-notes-header-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .qa-notes-header-left svg {
+          width: 14px;
+          height: 14px;
+          opacity: 0.6;
+        }
+        
+        /* 鎶樺彔鎸夐挳 */
+        .qa-notes-collapse-btn {
+          all: unset;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 6px;
+          cursor: pointer;
+          color: var(--text-dim);
+          transition: all 0.2s;
+        }
+        
+        .qa-notes-collapse-btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          color: var(--text);
+        }
+        
+        /* --- 14.5.2 鎵规敞姘旀场鍒楄〃鍖哄煙 --- */
+        .qa-notes-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px 26px 32px 26px;
+          margin: 0 -18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          min-height: 0;
+        }
+        
+        /* ===========================================
+           quiz-answer-panel.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?鍙虫爮绛旈鍖轰笌鍒ゅ垎鍙嶉
+           鍖呭惈锛?4.6 瀹屾暣鍙虫爮鏍峰紡
+           =========================================== */
+        
+        /* --- 14.6 閫夐」/浣滅瓟鍖哄煙锛堝彸鏍忥級 --- */
+        .qa-answer-panel {
+          grid-row: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 0;
+          min-width: 0;
+          padding: 0 0 0 20px;
+        }
+        
+        .quiz-annotation.has-quiz:not(.notes-active) .qa-answer-panel {
+          grid-column: 2;
+        }
+        
+        .quiz-annotation.has-quiz.notes-active .qa-answer-panel {
+          grid-column: 3;
+        }
+        
+        .quiz-annotation:not(.has-quiz) .qa-answer-panel {
+          display: none;
+        }
+        
+        /* --- 14.6.1 閫夐」鍖烘爣棰樹笌鍐呭 --- */
+        .qa-answer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 0;
+          flex-shrink: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+        
+        .qa-answer-header .qa-answer-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .qa-answer-content {
+          flex: 1;
+          padding: 0;
+          overflow-x: hidden;
+          overflow-y: auto;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .qa-answer-options-scroll {
+          flex: 1 1 140px;
+          min-height: clamp(112px, 18vh, 180px);
+          overflow-y: auto;
+          padding-bottom: 4px;
+        }
+        
+        /* --- 14.6.1a 杩炵嚎棰樺彸鏍忕瓟棰樻Ы浣?--- */
+        .qa-answer-slots {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-bottom: 4px;
+          flex-shrink: 0;
+        }
+        
+        .qa-answer-slot {
+          display: grid;
+          grid-template-columns: auto auto auto minmax(0, 1fr);
+          align-items: center;
+          column-gap: 8px;
+          padding: 6px 14px;
+          border-radius: 8px;
+          background-color: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px dashed var(--border-hover, rgba(0, 0, 0, 0.12));
+          transition: all 0.25s ease;
+          min-height: 36px;
+          cursor: default;
+          position: relative;
+        }
+        
+        .qa-answer-slot.drag-over {
+          border-color: var(--accent-orange, #f39800);
+          background-color: rgba(243, 152, 0, 0.08);
+          transform: scale(1.02);
+          box-shadow: 0 0 12px rgba(243, 152, 0, 0.15);
+        }
+        
+        .qa-answer-slot.filled {
+          border-style: solid;
+          border-color: var(--accent-orange, #f39800);
+          background-color: rgba(243, 152, 0, 0.1);
+          cursor: pointer;
+        }
+        
+        .qa-slot-label {
+          font-weight: 700;
+          font-size: 14px;
+          color: var(--text-muted);
+          min-width: 24px;
+          flex-shrink: 0;
+        }
+        
+        .qa-slot-blank {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 24px;
+          min-height: 24px;
+          position: relative;
+          font-size: 17px;
+          font-weight: 800;
+          color: var(--text-dim);
+          letter-spacing: 0;
+        }
+        
+        .qa-answer-slot.filled .qa-slot-blank {
+          color: var(--accent-orange, #f39800);
+          font-weight: 800;
+          letter-spacing: 0;
+        }
+        
+        .qa-slot-value {
+          position: relative;
+          z-index: 1;
+        }
+        
+        /* 妲戒綅鍒ゅ垎鐘舵€?*/
+        .qa-answer-slot.slot-correct {
+          border-color: var(--brand-primary, #00A355);
+          border-style: solid;
+          background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.12);
+        }
+        
+        .qa-answer-slot.slot-correct .qa-slot-blank {
+          color: var(--brand-primary, #00A355);
+        }
+        
+        .qa-answer-slot.slot-incorrect {
+          border-color: var(--accent-red, #ba1a1a);
+          border-style: solid;
+          background-color: rgba(186, 26, 26, 0.1);
+        }
+        
+        .qa-answer-slot.slot-incorrect .qa-slot-blank {
+          color: var(--accent-red, #ba1a1a);
+        }
+        
+        /* 妲戒綅鍒ゅ垎瑙掓爣 鉁撯湕 */
+        .qa-slot-mark {
+          position: absolute;
+          left: calc(100% - 0.22em);
+          top: 58%;
+          transform: translate(-10%, -12%);
+          font-size: 20px;
+          font-weight: 900;
+          line-height: 1;
+          pointer-events: none;
+        }
+        
+        .qa-slot-mark.correct {
+          color: var(--brand-primary, #00A355);
+        }
+        
+        .qa-slot-mark.incorrect {
+          color: var(--accent-red, #ba1a1a);
+        }
+        
+        .qa-slot-correct {
+          grid-column: 4;
+          justify-self: end;
+          color: var(--brand-primary, #00A355);
+          font-weight: 700;
+          font-size: 15px;
+          margin-left: auto;
+        }
+        
+        .qa-slot-feedback {
+          grid-column: 3;
+          justify-self: start;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 22px;
+          padding: 0 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+        
+        .qa-slot-feedback.unanswered {
+          border: 1px solid rgba(186, 26, 26, 0.24);
+          background-color: rgba(186, 26, 26, 0.16);
+          color: var(--accent-red, #ba1a1a);
+        }
+        
+        .qa-slot-correct-prefix {
+          color: var(--text, #1a2e23);
+          font-weight: 600;
+          font-size: 13px;
+        }
+        
+        .qa-answer-key-row {
+          display: none;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin: 0 0 10px;
+        }
+        
+        .qa-answer-key-label {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: 0 10px;
+          border-radius: 999px;
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
+          color: var(--text-dim);
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+        
+        .qa-answer-key-options {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        
+        .qa-answer-key-chip {
+          all: unset;
+          box-sizing: border-box;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background-color: var(--surface-container, rgba(255, 255, 255, 0.05));
+          border: 1px solid var(--border);
+          color: var(--text-muted);
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .qa-answer-key-chip:hover {
+          border-color: var(--accent-orange, #f39800);
+          color: var(--accent-orange, #f39800);
+          transform: translateY(-1px);
+        }
+        
+        .qa-answer-key-chip.is-correct {
+          background-color: var(--brand-primary, #00A355);
+          border-color: var(--brand-primary, #00A355);
+          color: #fff;
+          box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+        }
+        
+        .qa-answer-slot.qa-answer-key-slot {
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: start;
+          row-gap: 6px;
+          padding-top: 8px;
+          padding-bottom: 8px;
+        }
+        
+        .qa-answer-slot.qa-answer-key-slot .qa-slot-label {
+          padding-top: 4px;
+        }
+        
+        .qa-answer-slot.qa-answer-key-slot .qa-answer-key-options {
+          grid-column: 2;
+        }
+        
+        .qa-answer-slots--blank {
+          gap: 10px;
+        }
+        
+        .qa-answer-slot--blank {
+          grid-template-columns: auto minmax(0, 1fr) auto minmax(0, auto);
+          align-items: center;
+          row-gap: 6px;
+          padding-top: 9px;
+          padding-bottom: 9px;
+        }
+        
+        .qa-answer-slot--blank .qa-slot-label {
+          position: relative;
+          min-width: 30px;
+        }
+        
+        .qa-answer-slot--blank .qa-slot-blank {
+          grid-column: 2 / 4;
+          min-width: 0;
+          width: 100%;
+          justify-content: stretch;
+        }
+        
+        .qa-slot-blank-input-wrap {
+          display: flex;
+          align-items: center;
+        }
+        
+        .qa-slot-input {
+          width: 100%;
+          min-width: 0;
+          padding: 2px 0 5px;
+          border: 0;
+          border-bottom: 2px solid rgba(38, 61, 51, 0.35);
+          background: transparent;
+          color: var(--text, #1a2e23);
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.3;
+          outline: none;
+          transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        .qa-slot-input::placeholder {
+          color: var(--text-dim, #7a8b83);
+          font-weight: 600;
+        }
+        
+        .qa-slot-input:focus {
+          border-bottom-color: var(--accent-orange, #f39800);
+        }
+        
+        .qa-slot-input:disabled {
+          opacity: 1;
+          cursor: default;
+        }
+        
+        .qa-answer-slot--blank.slot-correct .qa-slot-input {
+          color: var(--brand-primary, #00A355);
+          border-bottom-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.55);
+        }
+        
+        .qa-answer-slot--blank.slot-incorrect .qa-slot-input {
+          color: var(--accent-red, #ba1a1a);
+          border-bottom-color: rgba(186, 26, 26, 0.45);
+        }
+        
+        .qa-answer-slot--blank .qa-slot-feedback,
+        .qa-answer-slot--blank .qa-slot-correct {
+          grid-column: 4;
+          justify-self: end;
+          text-align: right;
+        }
+        
+        /* 鎻愮ず鍒嗛殧绾?*/
+        .qa-slots-divider {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 0;
+          margin-bottom: 6px;
+          font-size: 12px;
+          color: var(--text-dim);
+          opacity: 0.6;
+          border-top: 1px dashed var(--border);
+          flex-shrink: 0;
+        }
+        
+        /* 宸叉嫋鍏ユЫ浣嶇殑閫夐」鍙樻殫 */
+        .qa-option.used {
+          opacity: 0.4;
+          pointer-events: none;
+          transform: scale(0.97);
+        }
+        
+        .quiz-annotation.submitted .qa-question[data-type="matching"] .qa-option.used {
+          opacity: 1;
+          pointer-events: auto;
+          transform: none;
+        }
+        
+        .qa-option.dragging {
+          opacity: 0.5;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* --- 14.6.2 閫夋嫨棰橀€夐」 --- */
+        .qa-question.result-unanswered {
+          border: 1px solid rgba(186, 26, 26, 0.34);
+          border-radius: 14px;
+          padding: 10px 12px 8px;
+          background-color: rgba(186, 26, 26, 0.08);
+          box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.08);
+          animation: qa-question-unanswered-nudge 220ms ease-out;
+        }
+        
+        .qa-question-feedback {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin: 0 0 10px;
+          font-size: 12.5px;
+          line-height: 1.5;
+        }
+        
+        .qa-question-feedback-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 22px;
+          padding: 0 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(186, 26, 26, 0.24);
+          background-color: rgba(186, 26, 26, 0.16);
+          color: var(--accent-red, #ba1a1a);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+        
+        .qa-question-feedback-text {
+          color: var(--accent-red, #ba1a1a);
+          font-weight: 600;
+        }
+        
+        @keyframes qa-question-unanswered-nudge {
+          0% {
+            transform: translateX(0);
+          }
+          35% {
+            transform: translateX(-4px);
+          }
+          70% {
+            transform: translateX(3px);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+        
+        .qa-option {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 14px;
+          margin-bottom: 6px;
+          border-radius: 10px;
+          background-color: rgba(255, 255, 255, 0.25);
+          backdrop-filter: blur(24px) saturate(120%);
+          -webkit-backdrop-filter: blur(24px) saturate(120%);
+          border: 1px solid var(--border);
+          cursor: pointer;
+          transition: all 0.25s ease;
+          font-size: clamp(14px, 1.4vw, 19px);
+          line-height: 1.5;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+          position: relative;
+        }
+        
+        .qa-option:hover {
+          border-color: var(--border-hover, rgba(255, 255, 255, 0.15));
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        
+        .qa-option.selected {
+          border-color: var(--accent-orange, #f39800);
+          background-color: rgba(243, 152, 0, 0.1);
+          box-shadow: 0 0 0 2px rgba(243, 152, 0, 0.15);
+        }
+        
+        .qa-option-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background-color: var(--surface-container, rgba(255, 255, 255, 0.05));
+          border: 1px solid var(--border);
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--text-muted);
+          flex-shrink: 0;
+          transition: all 0.25s;
+        }
+        
+        .qa-option.selected .qa-option-label {
+          background-color: var(--accent-orange, #f39800);
+          color: #fff;
+          border-color: var(--accent-orange, #f39800);
+        }
+        
+        .qa-status-dot {
+          display: none !important;
+        }
+        
+        /* 閫夐敊鐨勯€夐」绾㈣壊鍗婇€忔槑楂樺厜 */
+        .qa-option.result-incorrect {
+          background-color: rgba(186, 26, 26, 0.15);
+          border-color: var(--accent-red, #ba1a1a);
+          box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.15);
+        }
+        
+        .qa-option.result-incorrect .qa-option-label {
+          background-color: var(--accent-red, #ba1a1a);
+          color: #fff;
+          border-color: var(--accent-red, #ba1a1a);
+        }
+        
+        /* 姝ｇ‘閫夐」缁胯壊楂樺厜 */
+        .qa-option.result-correct {
+          background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+          border-color: var(--brand-primary, #00A355);
+          box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.15);
+        }
+        
+        .qa-option.result-correct .qa-option-label {
+          background-color: var(--brand-primary, #00A355);
+          color: #fff;
+          border-color: var(--brand-primary, #00A355);
+        }
+        
+        /* 閫夋嫨棰樼粨鏋滆鏍囨爣蹇?(鉁?/ 鉁? */
+        .qa-option-label .qa-result-mark {
+          position: absolute;
+          right: -6px;
+          bottom: -9px;
+          left: auto;
+          top: auto;
+          font-size: 20px;
+          font-weight: 900;
+          z-index: 10;
+          opacity: 0;
+          transform: scale(0.5) rotate(-15deg);
+          transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+          text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 1px 1px 2px rgba(255, 255, 255, 0.8), -1px -1px 2px rgba(255, 255, 255, 0.8);
+          pointer-events: none;
+        }
+        
+        .qa-option .qa-result-mark.visible {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+        
+        .qa-option .qa-result-mark.correct {
+          color: var(--brand-primary, #00A355);
+        }
+        
+        .qa-option .qa-result-mark.incorrect {
+          color: var(--accent-red, #ba1a1a);
+        }
+        
+        /* --- 14.6.3 鎻愪氦鎸夐挳 --- */
+        .qa-submit-btn {
+          all: unset;
+          box-sizing: border-box;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 5px 20px;
+          border-radius: 8px;
+          white-space: nowrap;
+          flex-shrink: 0;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          background: linear-gradient(135deg, var(--brand-primary, var(--accent-blue)), var(--accent-blue));
+          color: #fff;
+          border: none;
+          box-shadow: 0 2px 10px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.2);
+          transition: all 0.25s;
+        }
+        
+        .qa-submit-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.35);
+        }
+        
+        .qa-submit-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          transform: none;
+        }
+        
+        /* ===========================================
+           quiz-anchors-bubbles.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?鍘熸枃閿氱偣涓庢壒娉ㄦ皵娉?           鍖呭惈锛?4.7 鍘熸枃閿氱偣 + 瑙掓爣銆?4.8 鎵规敞姘旀场
+           =========================================== */
+        
+        /* --- 14.7 鍘熸枃閿氱偣 + 瑙掓爣 --- */
+        .text-anchor {
+          position: relative;
+          transition: background 0.25s;
+          border-radius: 2px;
+        }
+        
+        .qa-anchor-text {
+          display: inline;
+        }
+        
+        .text-anchor.anchor-active,
+        .answer-anchor.anchor-active {
+          color: inherit;
+          border-radius: 0.22em;
+          text-decoration-color: transparent !important;
+          text-decoration-thickness: 0.12em !important;
+          text-decoration-skip-ink: none !important;
+          text-underline-offset: 0.08em !important;
+          background-image: none;
+        }
+        
+        .text-anchor.anchor-active .qa-anchor-text,
+        .answer-anchor.anchor-active .qa-anchor-text {
+          padding-bottom: 0.14em;
+          border-bottom: 0.162em solid transparent;
+          border-image-source: var(--qa-focus-aurora);
+          border-image-slice: 1;
+          border-image-repeat: stretch;
+          -webkit-box-decoration-break: clone;
+          box-decoration-break: clone;
+        }
+        
+        .note-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          top: -0.6em;
+          width: 20px;
+          height: 20px;
+          padding: 0;
+          margin-left: 2px;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1;
+          color: #fff;
+          background-color: var(--brand-primary, var(--accent-blue));
+          border-radius: 50%;
+          cursor: pointer;
+          transition: all 0.2s;
+          user-select: none;
+          z-index: 5;
+          vertical-align: middle;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          text-indent: 0;
+        }
+        
+        .note-badge:hover {
+          transform: scale(1.15);
+          box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+        }
+        
+        .text-anchor.anchor-active .note-badge,
+        .answer-anchor.anchor-active .note-badge {
+          color: #fff;
+          background-image: var(--qa-focus-aurora);
+          background-size: var(--qa-focus-aurora-size);
+          background-position: 0% 50%;
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+            0 0 12px rgba(45, 116, 255, 0.28),
+            0 0 22px rgba(255, 201, 58, 0.22);
+          animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
+        }
+        
+        @keyframes qaAuroraShift {
+          0%,
+          100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        
+        /* 鍙虫爮绛旈鏉＄洰鐨勯敋鐐硅鏍?鈥?妯悜鎺掑垪 */
+        .answer-anchor {
+          position: relative;
+        }
+        
+        .answer-anchor .note-badge {
+          margin-right: 2px;
+        }
+        
+        /* ===========================================
+           14.8 鎵规敞姘旀场 (.qa-note-bubble)
+           Glassmorphism 椋庢牸锛岀偣鍑诲垏鎹㈡縺娲伙紝鎷栨嫿鎵嬫焺涓庡簭鍙峰悎骞躲€?           =========================================== */
+        .qa-note-bubble {
+          position: relative;
+          background-color: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          font-size: clamp(13px, 1.3vw, 17px);
+          line-height: 1.65;
+          color: var(--text);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          isolation: isolate;
+        }
+        
+        .quiz-annotation.notes-active .qa-note-bubble:not(.note-expanded):not(.note-active) {
+          display: none;
+        }
+        
+        /* 姘旀场婵€娲绘€?*/
+        .qa-note-bubble.note-active {
+          background-color: transparent;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          border-color: rgba(78, 186, 255, 0.42);
+          box-shadow:
+            0 10px 26px rgba(18, 34, 60, 0.16),
+            0 0 8px 1px rgba(78, 186, 255, 0.26),
+            0 0 16px 4px rgba(78, 186, 255, 0.14),
+            0 0 28px 8px rgba(84, 210, 176, 0.06);
+          transform: translateY(-1px);
+          z-index: 10;
+          margin-left: -12px;
+          margin-right: -12px;
+        }
+        
+        .qa-note-bubble.note-active::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 12px;
+          background: linear-gradient(145deg,
+            rgba(228, 244, 255, 0.9) 0%,
+            rgba(226, 247, 239, 0.88) 100%);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(79, 145, 255, 0.46);
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+          pointer-events: none;
+          z-index: -1;
+        }
+        
+        .qa-note-bubble.note-active.note-activating {
+          transform-origin: center top;
+          animation: qa-note-focus-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        
+        .qa-note-bubble.note-expanded:not(.note-active) {
+          opacity: 1;
+          transform: none;
+        }
+        
+        @keyframes qa-note-focus-in {
+          0% {
+            opacity: 0;
+            transform: translateY(18px) scale(0.96);
+          }
+          65% {
+            opacity: 1;
+            transform: translateY(-4px) scale(1.01);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(-2px) scale(1);
+          }
+        }
+        
+        /* 闄嶅櫔锛氭湁婵€娲绘皵娉℃椂锛屽叾浣欐皵娉″崐閫忔槑 + 杞诲井缂╁皬 */
+        .quiz-annotation.has-active-note .qa-note-bubble.note-expanded:not(.note-active) {
+          opacity: 0.72;
+          transform: none;
+        }
+        
+        /* 椤堕儴澶撮儴锛氬寘鍚簭鍙峰拰鎿嶄綔鎸夐挳鐨勬í鏉?*/
+        .qa-note-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 32px;
+          padding: 4px 8px;
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
+          border-bottom: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+          border-radius: 11px 11px 0 0;
+          cursor: grab;
+          transition: background-color 0.2s;
+          user-select: none;
+        }
+        
+        .qa-note-header:hover {
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18);
+        }
+        
+        .qa-note-header:active {
+          cursor: grabbing;
+        }
+        
+        .qa-note-bubble.note-active .qa-note-header {
+          color: #fff;
+          background-image: var(--qa-focus-aurora);
+          background-size: var(--qa-focus-aurora-size);
+          background-position: 0% 50%;
+          animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
+          border-bottom: none;
+        }
+        
+        .qa-note-handle {
+          display: flex;
+          align-items: center;
+          flex: 1;
+        }
+        
+        .qa-note-step {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: var(--brand-primary, var(--accent-blue));
+          color: #fff;
+          font-size: 11px;
+          font-weight: 700;
+          flex-shrink: 0;
+          transition: all 0.2s;
+        }
+        
+        .qa-note-bubble.note-active .qa-note-step {
+          background-color: rgba(255, 255, 255, 0.92);
+          color: rgba(76, 122, 173, 0.96);
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+        }
+        
+        /* 姘旀场鍐呭鍖?*/
+        .qa-note-content {
+          display: block;
+          padding: 8px 12px 12px 12px;
+          outline: none;
+        }
+        
+        .qa-note-bubble:not(.note-active):not(.note-expanded) .qa-note-content {
+          display: -webkit-box;
+          line-clamp: 3;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        /* 鎿嶄綔鎸夐挳缁?*/
+        .qa-note-actions {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 4px;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        
+        .qa-note-bubble:hover .qa-note-actions {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        
+        .qa-note-action-btn {
+          all: unset;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 4px;
+          background-color: rgba(128, 128, 128, 0.15);
+          color: var(--text-muted);
+          font-size: 11px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .qa-note-action-btn:hover {
+          background-color: rgba(255, 255, 255, 0.9);
+          color: var(--brand-primary, #333);
+        }
+        
+        .qa-note-action-btn.link-btn {
+          color: var(--brand-primary, var(--accent-blue));
+        }
+        
+        .qa-note-bubble.note-active .qa-note-action-btn {
+          background-color: rgba(255, 255, 255, 0.25);
+          color: #fff;
+        }
+        
+        .qa-note-bubble.note-active .qa-note-action-btn:hover {
+          background-color: #fff;
+          color: var(--brand-secondary, var(--accent-orange, #f39800));
+        }
+        
+        /* 闈炵紪杈戞ā寮忎笅鐨勬樉闅愰€昏緫锛氬彧鏄剧ず璺宠浆鍘熸枃鍥炬爣 */
+        html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-select-right) {
+          display: none !important;
+        }
+        
+        /* ===========================================
+           quiz-connectors.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?SVG 杩炵嚎
+           鍖呭惈锛?4.9 SVG 杩炵嚎
+           =========================================== */
+        
+        /* --- 14.9 SVG 杩炵嚎 --- */
+        .qa-connector-canvas {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 25;
+          overflow: visible;
+        }
+        
+        .qa-connector-line {
+          fill: none;
+          stroke: var(--brand-primary, var(--accent-blue));
+          stroke-width: 2;
+          stroke-opacity: 0.4;
+          transition: stroke-opacity 0.3s, stroke 0.3s;
+        }
+        
+        .qa-connector-line.connector-step {
+          stroke: var(--brand-secondary, var(--accent-orange, #f39800));
+          stroke-opacity: 0.5;
+        }
+        
+        .qa-connector-line.connector-hover {
+          stroke-opacity: 0.25;
+          stroke-dasharray: 6 3;
+        }
+        
+        /* 杈圭紭閽夊畾绠ご */
+        .qa-edge-arrow {
+          fill: var(--brand-primary, var(--accent-blue));
+          opacity: 0.5;
+          cursor: pointer;
+          pointer-events: auto;
+          transition: opacity 0.2s, fill 0.3s;
+        }
+        
+        .qa-edge-arrow.arrow-step {
+          fill: var(--brand-secondary, var(--accent-orange, #f39800));
+        }
+        
+        .qa-edge-arrow:hover {
+          opacity: 0.8;
+        }
+        
+        /* ===========================================
+           quiz-dragdrop.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?鎷栨嫿鍗犱綅绗?           鍖呭惈锛?4.10 鎷栨嫿鍗犱綅绗?           =========================================== */
+        
+        /* --- 14.10 鎷栨嫿鍗犱綅绗?--- */
+        .qa-note-placeholder {
+          min-height: 60px;
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
+          border: 2px dashed rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+          border-radius: 12px;
+          transition: min-height 0.2s;
+          pointer-events: none;
+        }
+        
+        /* --- 14.11 鍒嗗壊绾挎偓娴寜閽紙鎵规敞闅愯棌鎬佺殑鍏ュ彛锛?--- */
+        .qa-divider-btn {
+          position: absolute;
+          z-index: 30;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
+          border: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+          color: var(--brand-primary, var(--accent-blue));
+          cursor: pointer;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s, transform 0.2s;
+          transform: translateX(-50%);
+        }
+        
+        .qa-divider-btn.visible {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        
+        .qa-divider-btn:hover {
+          background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+          transform: translateX(-50%) scale(1.1);
+        }
+        
+        .qa-divider-btn svg {
+          width: 16px;
+          height: 16px;
+        }
+        
+        .quiz-annotation.notes-active .qa-divider-btn {
+          display: none;
+        }
+        
+        /* ===========================================
+           quiz-isolation.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?绛旈闅旂瑙勫垯
+           鍖呭惈锛?4.12 绛旈闅旂瑙勫垯
+           =========================================== */
+        
+        /* --- 14.12 绛旈闅旂瑙勫垯 --- */
+        .quiz-annotation.has-quiz:not(.submitted) .note-badge {
+          display: none;
+        }
+        
+        .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+        .quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
+          /* 鍙敤 text-decoration-line: none 鏉€姝讳笅鍒掔嚎鐨勫彲瑙佹€э紝淇濈暀 color/thickness/style 鏉ヨ嚜鍐呰仈 style锛?             杩欐牱缂栬緫妯″紡鎭㈠鏃堕鑹插拰绮楃粏涓嶅彈褰卞搷 */
+          text-decoration-line: none !important;
+          background-color: transparent !important;
+          color: inherit !important;
+          box-shadow: none !important;
+        }
+        
+        .quiz-annotation.has-quiz:not(.submitted).notes-active .qa-notes-panel {
+          display: flex !important;
+        }
+        
+        .quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge {
+          display: none;
+        }
+        
+        .quiz-annotation.submitted .note-badge {
+          animation: qaFadeIn 0.5s ease both;
+        }
+        
+        @keyframes qaFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        /* ===========================================
+           quiz-linking.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?鍏宠仈妯″紡鍛煎惛楂樹寒
+           鍖呭惈锛?4.13 鍏宠仈妯″紡瑙嗚鍙嶉
+           =========================================== */
+        
+        /* --- 14.13 鍏宠仈妯″紡瑙嗚鍙嶉 --- */
+        .quiz-annotation.linking-left .qa-passage {
+          box-shadow:
+            inset 0 0 0 12px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.2),
+            0 0 0 2px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.16),
+            0 0 24px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.14);
+          animation: qaLinkingPulse 1.45s ease-in-out infinite;
+        }
+        
+        .quiz-annotation.linking-right .qa-answer-panel {
+          box-shadow:
+            inset 0 0 0 12px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.2),
+            0 0 0 2px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.16),
+            0 0 24px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.14);
+          animation: qaLinkingPulse 1.45s ease-in-out infinite;
+        }
+        
+        @keyframes qaLinkingPulse {
+          0%,
+          100% {
+            box-shadow:
+              inset 0 0 0 10px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.14),
+              0 0 0 2px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08),
+              0 0 14px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08);
+          }
+          50% {
+            box-shadow:
+              inset 0 0 0 14px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.34),
+              0 0 0 2px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.22),
+              0 0 36px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.22);
+          }
+        }
+        
+        /* ===========================================
+           quiz-scrollbar.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?闅愬舰婊氬姩鏉?           鍖呭惈锛?4.14 闅愬舰婊氬姩鏉?           =========================================== */
+        
+        /* --- 14.14 闅愬舰婊氬姩鏉?--- */
+        .qa-passage::-webkit-scrollbar,
+        .qa-answer-content::-webkit-scrollbar,
+        .qa-answer-options-scroll::-webkit-scrollbar,
+        .qa-notes-list::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .qa-passage::-webkit-scrollbar-track,
+        .qa-answer-content::-webkit-scrollbar-track,
+        .qa-answer-options-scroll::-webkit-scrollbar-track,
+        .qa-notes-list::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .qa-passage::-webkit-scrollbar-thumb,
+        .qa-answer-content::-webkit-scrollbar-thumb,
+        .qa-answer-options-scroll::-webkit-scrollbar-thumb,
+        .qa-notes-list::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 4px;
+        }
+        
+        .qa-passage:hover::-webkit-scrollbar-thumb,
+        .qa-answer-content:hover::-webkit-scrollbar-thumb,
+        .qa-answer-options-scroll:hover::-webkit-scrollbar-thumb,
+        .qa-notes-list:hover::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* ===========================================
+           quiz-editor-toolbar.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?娴姩宸ュ叿鏉′笌瀵屾枃鏈墖娈?           鍖呭惈锛?4.15 娴姩宸ュ叿鏉°€佸瘜鏂囨湰鐗囨
+           =========================================== */
+        
+        /* --- 14.15 缂栬緫妯″紡娴姩宸ュ叿鏉?--- */
+        .qa-annotation-toolbar,
+        .qa-note-fragment-toolbar,
+        .page-richtext-fragment-toolbar {
+          z-index: 10005;
+          display: none;
+          align-items: center;
+          gap: 4px;
+          padding: 5px 10px;
+          background-color: #ffffff;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+        
+        .qa-annotation-toolbar {
+          position: fixed;
+        }
+        
+        .qa-note-fragment-toolbar {
+          position: absolute;
+        }
+        
+        .qa-annotation-toolbar.visible,
+        .qa-note-fragment-toolbar.visible,
+        .page-richtext-fragment-toolbar.visible {
+          display: flex;
+        }
+        
+        .qa-annotation-toolbar.qa-annotation-palette {
+          padding: 0;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+        }
+        
+        .qa-annotation-toolbar.qa-annotation-palette .qa-format-dropdown {
+          position: static;
+          width: 0;
+          height: 0;
+        }
+        
+        .qa-annotation-toolbar.qa-annotation-palette .btn-underline {
+          display: none;
+        }
+        
+        .qa-annotation-toolbar.qa-annotation-palette .rt-dropdown-menu {
+          top: 0;
+          left: 0;
+          transform: none;
+          min-width: 220px;
+        }
+        
+        .qa-annotation-toolbar.qa-annotation-palette .rt-dropdown-menu::before {
+          display: none;
+        }
+        
+        .qa-toolbar-label {
+          font-size: 12px;
+          color: #666666;
+          margin-right: 4px;
+          white-space: nowrap;
+        }
+        
+        .fragment-toolbar-label {
+          display: inline-flex;
+          align-items: center;
+          min-height: 28px;
+          padding: 0 10px;
+          border-radius: 999px;
+          margin-right: 2px;
+          background-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.12);
+          color: var(--brand-primary-text, #007A40);
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+        
+        .qa-toolbar-btn {
+          appearance: none;
+          -webkit-appearance: none;
+          background: none;
+          border: 1px solid transparent;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #333333;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+          line-height: 1;
+        }
+        
+        .qa-toolbar-btn:hover {
+          background-color: #f0f0f0;
+          border-color: #d0d0d0;
+        }
+        
+        .qa-toolbar-divider {
+          width: 1px;
+          height: 18px;
+          margin: 0 2px 0 6px;
+          background: #dedede;
+          flex: 0 0 auto;
+        }
+        
+        .qa-annotation-toolbar .qa-format-dropdown,
+        .qa-note-fragment-toolbar .qa-format-dropdown,
+        .page-richtext-fragment-toolbar .qa-format-dropdown {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        
+        .qa-annotation-toolbar .rt-dropdown-menu,
+        .qa-note-fragment-toolbar .rt-dropdown-menu,
+        .page-richtext-fragment-toolbar .rt-dropdown-menu {
+          background: #ffffff;
+          border-color: #e0e0e0;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .qa-annotation-toolbar .rt-dropdown-menu::before,
+        .qa-note-fragment-toolbar .rt-dropdown-menu::before,
+        .page-richtext-fragment-toolbar .rt-dropdown-menu::before {
+          background: #ffffff;
+          border-left-color: #e0e0e0;
+          border-top-color: #e0e0e0;
+        }
+        
+        .qa-annotation-toolbar .rt-dropdown-menu.drop-up,
+        .qa-note-fragment-toolbar .rt-dropdown-menu.drop-up,
+        .page-richtext-fragment-toolbar .rt-dropdown-menu.drop-up {
+          top: auto;
+          bottom: calc(100% + 10px);
+        }
+        
+        .qa-annotation-toolbar .rt-dropdown-menu.drop-up::before,
+        .qa-note-fragment-toolbar .rt-dropdown-menu.drop-up::before,
+        .page-richtext-fragment-toolbar .rt-dropdown-menu.drop-up::before {
+          top: auto;
+          bottom: -6px;
+          transform: translateX(-50%) rotate(225deg);
+        }
+        
+        /* --- 14.15A 鎵规敞姘旀场鍐呭瘜鏂囨湰鐗囨锛堜簩绾ф杩涳級 --- */
+        .qa-note-fragment {
+          border-radius: 0.35em;
+          padding: 0 0.04em;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          transition: color 0.24s ease, background-color 0.24s ease, text-decoration-color 0.24s ease;
+        }
+        
+        .text-anchor [data-fragment-step="true"],
+        .answer-anchor [data-fragment-step="true"],
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"] {
+          color: inherit !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          text-decoration: none !important;
+          text-decoration-color: currentColor !important;
+          filter: none;
+          transform: none;
+          opacity: 1;
+        }
+        
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .text-anchor:hover [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor:hover [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation.submitted .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor:hover [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .text-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor:hover [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .quiz-annotation:not(.has-quiz) .answer-anchor.qa-fragment-hover-proxy [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-page-richtext-hover-eligible="true"]:hover [data-fragment-step="true"],
+        html:not(.editor-mode) body:not(.editor-mode) .page-richtext-fragment-host [data-page-richtext-hover-eligible="true"].page-fragment-hover-proxy [data-fragment-step="true"] {
+          background-color: rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.24) !important;
+          box-shadow: inset 0 0 0 999px rgba(var(--brand-secondary-rgb, 243, 152, 0), 0.08);
+        }
+        
+        .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
+        .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="color"],
+        html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="color"],
+        html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="color"],
+        html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="color"],
+        body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="color"],
+        body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="color"],
+        body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="color"] {
+          color: var(--qa-fragment-color, inherit) !important;
+        }
+        
+        .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
+        .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="highlight"],
+        html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+        html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+        html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="highlight"],
+        body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+        body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="highlight"],
+        body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="highlight"] {
+          background-color: var(--qa-fragment-highlight, transparent) !important;
+        }
+        
+        .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
+        .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="strikethrough"],
+        html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+        html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+        html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="strikethrough"],
+        body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+        body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="strikethrough"],
+        body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="strikethrough"] {
+          text-decoration: line-through !important;
+          text-decoration-color: var(--qa-fragment-strike-color, rgba(186, 26, 26, 0.4)) !important;
+          text-decoration-thickness: var(--qa-fragment-strike-thickness, 0.12em) !important;
+        }
+        
+        .text-anchor[style*="line-through"],
+        .answer-anchor[style*="line-through"] {
+          text-decoration-color: rgba(186, 26, 26, 0.4) !important;
+          text-decoration-thickness: 0.12em !important;
+        }
+        
+        .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt {
+          display: none;
+        }
+        
+        .text-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
+        .answer-anchor [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
+        .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"].qa-fragment-visible[data-fragment-format="ruby"] rt,
+        html.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        html.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        html.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        body.editor-mode .text-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        body.editor-mode .answer-anchor [data-fragment-step="true"][data-fragment-format="ruby"] rt,
+        body.editor-mode .page-richtext-fragment-host [data-edit-id] [data-fragment-step="true"][data-fragment-format="ruby"] rt {
+          display: ruby-text;
+        }
+        
+        /* ===========================================
+           quiz-responsive.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?鍝嶅簲寮忎笌鏃犻殰纰?           鍖呭惈锛?4.16 鍝嶅簲寮忎笌鏃犻殰纰?           =========================================== */
+        
+        /* --- 14.16 鍝嶅簲寮忎笌鏃犻殰纰?--- */
+        @media (prefers-reduced-motion: reduce) {
+          .qa-body,
+          .qa-answer-panel,
+          .qa-notes-panel,
+          .qa-note-bubble,
+          .qa-note-header,
+          .qa-question,
+          .qa-question-feedback,
+          .text-anchor,
+          .qa-anchor-text,
+          .text-anchor.anchor-active,
+          .answer-anchor.anchor-active,
+          .note-badge,
+          .qa-option,
+          .qa-status-dot,
+          .qa-annotation-toolbar,
+          .qa-note-fragment-toolbar,
+          .qa-divider-btn {
+            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important;
+          }
+        }
+        
+        /* ===========================================
+           quiz-editor-mode.css
+           绛旈涓庢壒娉ㄧ粍浠?鈥?缂栬緫妯″紡琛ヤ竵
+           鍖呭惈锛氱紪杈戞ā寮忎笓灞炶瑙夎鐩栬鍒?           =========================================== */
+        
+        /* 绛旈涓庢壒娉ㄧ粍浠朵笓鐢ㄧ殑婧㈠嚭闃茶鍒囨柟妗?*/
+        .editor-mode .quiz-annotation .qa-passage,
+        .editor-mode .quiz-annotation .qa-answer-panel {
+          padding-top: 40px !important;
+        }
+        
+        /* 缂栬緫妯″紡鍏ㄥ眬鍏夋爣瑕嗙洊 */
+        body.editor-mode .qa-note-bubble,
+        body.editor-mode .qa-passage,
+        body.editor-mode .qa-answer-panel,
+        body.editor-mode .qa-option {
+          cursor: url('data:image/svg+xml;utf8,<svg width="12" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M3 2h6M6 2v16M3 18h6" stroke="black" stroke-width="1.5" fill="none"/></svg>') 6 10, text !important;
+          caret-color: #000 !important;
+        }
+        
+        /* 缂栬緫妯″紡涓嬫墍鏈夋皵娉″睍寮€ */
+        html.editor-mode .quiz-annotation.notes-active .qa-note-bubble,
+        body.editor-mode .quiz-annotation.notes-active .qa-note-bubble {
+          display: flex;
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        
+        html.editor-mode .qa-answer-key-row,
+        body.editor-mode .qa-answer-key-row {
+          display: flex;
+        }
+        
+        html.editor-mode .qa-answer-key-chip,
+        body.editor-mode .qa-answer-key-chip {
+          cursor: pointer !important;
+        }
+        
+        html.editor-mode .qa-note-bubble .qa-note-content,
+        body.editor-mode .qa-note-bubble .qa-note-content {
+          display: block !important;
+          line-clamp: unset;
+          -webkit-line-clamp: unset;
+          overflow: visible;
+        }
+        
+        /* 缂栬緫妯″紡涓嬮殣钘忓垽鍒嗙浉鍏冲弽棣?*/
+        html.editor-mode .qa-question-feedback,
+        body.editor-mode .qa-question-feedback,
+        html.editor-mode .qa-slot-feedback,
+        body.editor-mode .qa-slot-feedback,
+        html.editor-mode .qa-slot-correct,
+        body.editor-mode .qa-slot-correct,
+        html.editor-mode .qa-result-mark,
+        body.editor-mode .qa-result-mark {
+          display: none !important;
+        }
+        
+        /* 缂栬緫妯″紡瑕嗙洊绛旈闅旂瑙勫垯锛氬嵆浣挎湭鎻愪氦涔熸樉绀烘壒娉ㄨ鏍囦笌閿氱偣鏍峰紡 */
+        html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .note-badge,
+        body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .note-badge {
+          display: inline-flex !important;
+        }
+        
+        html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+        body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+        html.editor-mode .quiz-annotation.has-quiz:not(.submitted) .answer-anchor,
+        body.editor-mode .quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
+          /* 鍙仮澶嶄笅鍒掔嚎鐨勫彲瑙佹€э紝棰滆壊/绮楃粏/style 鐩存帴绌块€忛敋鐐瑰唴鑱?style */
+          text-decoration-line: underline !important;
+          background-color: inherit !important;
+          color: inherit !important;
+          box-shadow: none !important;
+        }
+        
+        
+      operator: 'match'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:2089:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: uses the theme secondary color token to temporarily fill fragment words on hover in presentation mode
+    ok 51 - uses the theme secondary color token to temporarily fill fragment words on hover in presentation mode
+      ---
+      duration_ms: 0.2554
+      type: 'test'
+      ...
+    # Subtest: reserves a shared right-side safe gutter for no-quiz reading layouts so divider hover and active note glow stay inside the clipped body
+    ok 52 - reserves a shared right-side safe gutter for no-quiz reading layouts so divider hover and active note glow stay inside the clipped body
+      ---
+      duration_ms: 0.3255
+      type: 'test'
+      ...
+    # Subtest: plays one focus sound only when the active bubble actually changes
+    ok 53 - plays one focus sound only when the active bubble actually changes
+      ---
+      duration_ms: 19.7043
+      type: 'test'
+      ...
+    # Subtest: suppresses fragment hover cues before submit and only enables them after submit outside editor mode
+    ok 54 - suppresses fragment hover cues before submit and only enables them after submit outside editor mode
+      ---
+      duration_ms: 17.3654
+      type: 'test'
+      ...
+    # Subtest: still plays fragment hover cues when restored anchors contain old hover-bound marker attributes
+    ok 55 - still plays fragment hover cues when restored anchors contain old hover-bound marker attributes
+      ---
+      duration_ms: 19.8281
+      type: 'test'
+      ...
+    # Subtest: forwards doodle-mode pointer hover and right-click to underlying fragment anchors once the quiz is submitted
+    ok 56 - forwards doodle-mode pointer hover and right-click to underlying fragment anchors once the quiz is submitted
+      ---
+      duration_ms: 18.7829
+      type: 'test'
+      ...
+    # Subtest: keeps right-click fragment reveal suppressed before the quiz is submitted
+    ok 57 - keeps right-click fragment reveal suppressed before the quiz is submitted
+      ---
+      duration_ms: 20.2226
+      type: 'test'
+      ...
+    # Subtest: shows the divider button in doodle mode and forwards clicks through the doodle layer without starting a stroke
+    ok 58 - shows the divider button in doodle mode and forwards clicks through the doodle layer without starting a stroke
+      ---
+      duration_ms: 18.4236
+      type: 'test'
+      ...
+    # Subtest: lets the doodle-layer click pass through to the collapse button without drawing
+    ok 59 - lets the doodle-layer click pass through to the collapse button without drawing
+      ---
+      duration_ms: 16.6129
+      type: 'test'
+      ...
+    # Subtest: forwards doodle-mode clicks to note badges, note handles, and submit buttons, while leaving bubble content drawable
+    ok 60 - forwards doodle-mode clicks to note badges, note handles, and submit buttons, while leaving bubble content drawable
+      ---
+      duration_ms: 27.3973
+      type: 'test'
+      ...
+    # Subtest: uses a deeper translucent red and a 3x-thicker strike line across editor and annotation flows
+    not ok 61 - uses a deeper translucent red and a 3x-thicker strike line across editor and annotation flows
+      ---
+      duration_ms: 1.0264
+      type: 'test'
+      location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:2343:3'
+      failureType: 'testCodeFailure'
+      error: 'annotationStoreSource is not defined'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ReferenceError'
+      stack: |-
+        TestContext.<anonymous> (file:///D:/Projects/html-slides/testing/tests/quiz-annotation-runtime.test.js:2352:25)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments
+    ok 62 - notifies slides runtime when a bubble is activated manually so arrow keys can keep stepping fragments
+      ---
+      duration_ms: 14.8733
+      type: 'test'
+      ...
+    # Subtest: renders a remove-format button at the far right of the fragment toolbar and clears fragment wrappers
+    ok 63 - renders a remove-format button at the far right of the fragment toolbar and clears fragment wrappers
+      ---
+      duration_ms: 20.1832
+      type: 'test'
+      ...
+    # Subtest: keeps hidden source fragments readable by neutralizing authored styles until reveal
+    ok 64 - keeps hidden source fragments readable by neutralizing authored styles until reveal
+      ---
+      duration_ms: 0.3317
+      type: 'test'
+      ...
+    # Subtest: shares one compact white floating-toolbar shell between quiz fragments and ordinary-page fragments
+    ok 65 - shares one compact white floating-toolbar shell between quiz fragments and ordinary-page fragments
+      ---
+      duration_ms: 0.3068
+      type: 'test'
+      ...
+    # Subtest: uses the theme secondary color for linking-mode emphasis instead of the primary green
+    ok 66 - uses the theme secondary color for linking-mode emphasis instead of the primary green
+      ---
+      duration_ms: 0.3256
+      type: 'test'
+      ...
+    # Subtest: keeps submitted matching used options visually clear while still allowing inner badges to receive clicks
+    ok 67 - keeps submitted matching used options visually clear while still allowing inner badges to receive clicks
+      ---
+      duration_ms: 0.4534
+      type: 'test'
+      ...
+    # Subtest: places right-only notes after passage-linked notes and before unlinked orphan bubbles
+    ok 68 - places right-only notes after passage-linked notes and before unlinked orphan bubbles
+      ---
+      duration_ms: 15.2282
+      type: 'test'
+      ...
+    1..68
+not ok 1 - quiz annotation runtime
+  ---
+  duration_ms: 1545.7214
+  type: 'suite'
+  location: 'D:\\Projects\\html-slides\\testing\\tests\\quiz-annotation-runtime.test.js:748:1'
+  failureType: 'subtestsFailed'
+  error: '9 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 68
+# suites 1
+# pass 59
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2525.4834

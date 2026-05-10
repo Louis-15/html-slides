@@ -113,7 +113,7 @@ Build navigation via external `slides-runtime.js`. Generate `goTo()`, `next()`, 
 
 When the slide contains heavy interaction components, the presentation layer must also preserve their resource and keyboard contracts:
 
-- `.quiz-annotation`: include `zone2-quiz-annotation/` (13 CSS files) plus `annotation-store.js → quiz-annotation-audio.js → zone2-quiz-annotation/` (17 JS modules)
+- `.quiz-annotation`: include `zone2-quiz-annotation/` (13 CSS files) plus `quiz-annotation-audio.js → zone2-quiz-annotation/` (17 JS modules)
 .example-card": include `zone2-example-card.css` plus `example-card-audio.js → example-card-core.js → example-card-authoring.js → example-card-student.js`
 - `.example-card` slides remap `ArrowDown / ArrowUp` to previous-question / next-question and pin `ArrowLeft / ArrowRight` to the active `.example-card__main` host
 - `.quiz-annotation` slides keep their own internal stepping and must continue to suppress ordinary-page fragment fallback before submit

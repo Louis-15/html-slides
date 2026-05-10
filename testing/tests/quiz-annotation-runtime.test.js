@@ -31,14 +31,15 @@ const runtimePartFiles = [
 const runtimeSource = runtimePartFiles
   .map(function (f) { return fs.readFileSync(path.join(runtimeDir, f), 'utf-8'); })
   .join('\n');
-const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
-const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 const editorCorePath = path.join(projectRoot, 'assets', 'editor', 'editor-core.js');
 const editorCssPath = path.join(projectRoot, 'assets', 'editor', 'editor.css');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor', 'editor-rich-text.js');
-const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
-const annotationStoreTestSource = annotationStoreSource.replace(/\n\s*_init\(\);\s*\n\s*\}\)\(\);\s*$/, '\n\n})();\n');
-const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
+// 拼接 13 个拆分 CSS 文件（原 zone2-quiz-annotation.css 已拆分）
+var zoneCssDir = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation');
+var zoneCssSource = '';
+['quiz-layout.css','quiz-passage.css','quiz-notes-panel.css','quiz-answer-panel.css','quiz-anchors-bubbles.css','quiz-connectors.css','quiz-dragdrop.css','quiz-isolation.css','quiz-linking.css','quiz-scrollbar.css','quiz-editor-toolbar.css','quiz-responsive.css','quiz-editor-mode.css'].forEach(function(f) {
+  zoneCssSource += fs.readFileSync(path.join(zoneCssDir, f), 'utf-8') + '\n';
+});
 const editorCoreSource = fs.readFileSync(editorCorePath, 'utf-8');
 const editorCssSource = fs.readFileSync(editorCssPath, 'utf-8');
 const editorRichTextSource = fs.readFileSync(editorRichTextPath, 'utf-8');
@@ -199,7 +200,7 @@ function createRuntimeDom(html) {
 }
 
 function installAnnotationStoreForTest(window) {
-  window.eval(annotationStoreTestSource);
+  // annotation-store.js has been removed; this is a no-op.
 }
 
 function parseAnnotationStorePayload(jsContent) {
