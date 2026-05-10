@@ -272,9 +272,15 @@
       wrapper.dataset.fragmentStrikeThickness = '0.12em';
       wrapRangeInAnchor(range, wrapper);
     } else if (formatType === 'ruby') {
-      var rubyText = value || '';
-      wrapper.innerHTML = '<ruby>' + range.toString() + '<rt>' + rubyText + '</rt></ruby>';
-      wrapRangeInAnchor(range, wrapper);
+      if (!value) return;
+      var rubyEl = document.createElement('ruby');
+      var rtEl = document.createElement('rt');
+      rtEl.textContent = value;
+      var fragment = range.extractContents();
+      rubyEl.appendChild(fragment);
+      rubyEl.appendChild(rtEl);
+      wrapper.appendChild(rubyEl);
+      range.insertNode(wrapper);
     }
 
     var state = QA.getNoteFragmentState(bubble);
