@@ -248,8 +248,8 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/example-card-audio.js` | Example-card audio adapter | Phase 3 (when example-card is used) |
 | `assets/example-card-runtime.js` | Example-card runtime, authoring state, and question navigation | Phase 3 (when example-card is used) |
 | `assets/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping and hover runtime | Phase 3 (Pro) |
-| `assets/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
-| `assets/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |
+| `assets/editor/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
+| `assets/editor/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |
 | `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
 | `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
 | `scripts/deploy.sh` | Deploy to Vercel | Phase 7 (sharing) |

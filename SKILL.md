@@ -219,16 +219,16 @@ Do NOT include summary for:
 - [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
 - [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules. Note: `annotation-store.js` 已简化为兼容存根，不再加载 `.annotations.js` 侧挂文件。
-- If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
+- If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor/editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
 - Before ALL runtime `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline. 详见 [本地化保存、读取系统](开发者文档/本地化保存、读取系统.md)
-- [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor-core.js` and before `doodle-runtime.js`
+- [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor/editor-core.js` and before `doodle-runtime.js`
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
 - HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/`
-- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css → editor.css`
-- **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor-core.js` at runtime
+- CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css → editor/editor.css`
+- **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor/editor-core.js` at runtime
 - Reference the teaching theme CSS + components.css via `<link>`, and slides-runtime.js via `<script>`
 - Custom animations for this courseware → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
 - Per-courseware `:root` variable overrides may stay inline in a small `<style>` block
@@ -236,7 +236,7 @@ Do NOT include summary for:
 - Add detailed comments explaining each section
 - Every section needs a clear `/* === SECTION NAME === */` comment block
 - **Always generate speaker notes** — see Speaker Notes below
-- Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor-utils.js → editor-persistence.js → editor-history.js → editor-box-manager.js → editor-rich-text.js → editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js → [example-card-audio.js → example-card-runtime.js if needed]`
+- Always load runtime scripts in this order: `slides-runtime.js → audio-runtime.js → [annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js if needed] → editor/editor-utils.js → editor/editor-persistence.js → editor/editor-history.js → editor/editor-box-manager.js → editor/editor-rich-text.js → editor/editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js → [example-card-audio.js → example-card-runtime.js if needed]`
 - On ordinary pages, `ArrowUp/ArrowDown` own top-level focus and page turns; `ArrowLeft/ArrowRight` only step fragments inside the currently focused host. Do not generate inline `onclick` handlers to manage `.flip-card`, `.collapse-card`, or `.summary-trigger` state.
 - On slides that contain `.example-card`, `ArrowUp/ArrowDown` are reserved for previous-question / next-question inside the active card, and `ArrowLeft/ArrowRight` must stay pinned to the active `.example-card__main` host.
 - **Example-card content is placed directly in the slide DOM** (not inside `<template>`). The `.example-card` element is a child of the host div. The runtime's `initAll()` auto-discovers and initializes it — no manual `initCard()` call is needed in inline scripts.
@@ -377,9 +377,9 @@ If the user declines, stop here.
 | [quiz-annotation-runtime.js](assets/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
 | [example-card-audio.js](assets/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
 | [example-card-runtime.js](assets/example-card-runtime.js) | 例题组件运行时逻辑 | Phase 4 (when example-card is used) |
-| [editor-*.js](assets/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
+| [editor/editor-*.js](assets/editor/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
 | [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
-| [editor.css](assets/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |
+| [editor/editor.css](assets/editor/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |
 | [doodle-runtime.js](assets/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 4 (always included) |
 | [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js, anime.js, Chart.js | Phase 4 (when content needs them) |
 | [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 8 validation rules | Phase 4 (reference) |

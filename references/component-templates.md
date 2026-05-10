@@ -552,7 +552,7 @@ Full-page composite component for reading comprehension, cloze tests, and annota
 
 Compact teaching card for single-question or multi-question walkthroughs. Unlike `.quiz-annotation`, this is **not** a three-column reading system. It is a single glass card that can reveal analysis after submit and can chain multiple questions with previous/next navigation. Recommended for `layout-single` or other full-width slots. Avoid placing it inside narrow multi-column grids because the card itself already owns an internal left/right split when analysis opens.
 
-**Must load `zone2-example-card.css`, `audio-runtime.js`, `example-card-audio.js`, and `example-card-runtime.js`.** For a stable editor contract, `example-card-runtime.js` should be loaded **after** `editor-core.js`, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js`.
+**Must load `zone2-example-card.css`, `audio-runtime.js`, `example-card-audio.js`, and `example-card-runtime.js`.** For a stable editor contract, `example-card-runtime.js` should be loaded **after** `editor/editor-core.js`, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js`.
 
 ```html
 <section class="example-card" data-card-id="ec-01" data-question-type="single">

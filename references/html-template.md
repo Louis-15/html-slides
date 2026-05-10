@@ -45,7 +45,7 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
     <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
     <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
-    <link rel="stylesheet" href="./assets/editor.css"> <!-- always included and loaded after Zone CSS -->
+    <link rel="stylesheet" href="./assets/editor/editor.css"> <!-- always included and loaded after Zone CSS -->
     <link rel="stylesheet" href="./assets/slide-animations.css"> <!-- custom animations -->
 
     <style>
@@ -143,12 +143,12 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/quiz-annotation-runtime.js"></script>
 
     <!-- Editor modules (always included): strict dependency order -->
-    <script src="./assets/editor-utils.js"></script>
-    <script src="./assets/editor-persistence.js"></script>
-    <script src="./assets/editor-history.js"></script>
-    <script src="./assets/editor-box-manager.js"></script>
-    <script src="./assets/editor-rich-text.js"></script>
-    <script src="./assets/editor-core.js"></script>
+    <script src="./assets/editor/editor-utils.js"></script>
+    <script src="./assets/editor/editor-persistence.js"></script>
+    <script src="./assets/editor/editor-history.js"></script>
+    <script src="./assets/editor/editor-box-manager.js"></script>
+    <script src="./assets/editor/editor-rich-text.js"></script>
+    <script src="./assets/editor/editor-core.js"></script>
     <script src="./assets/page-richtext-annotation-runtime.js"></script>
     <script src="./assets/doodle-runtime.js"></script>
 
@@ -193,7 +193,7 @@ The editing system is powered by external asset files — **all via `<link>` and
 
 ### 1. CSS Reference
 
-Reference `editor.css` via `<link>`, **after** the Zone CSS chain:
+Reference `editor/editor.css` via `<link>`, **after** the Zone CSS chain:
 ```html
 <link rel="stylesheet" href="./assets/zones/zone1-header.css">
 <link rel="stylesheet" href="./assets/zones/zone2-layout.css">
@@ -202,14 +202,12 @@ Reference `editor.css` via `<link>`, **after** the Zone CSS chain:
 <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
 <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
 <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
-<link rel="stylesheet" href="./assets/editor.css">
+<link rel="stylesheet" href="./assets/editor/editor.css">
 ```
 
 ### 2. Toolbar HTML (Dynamic Injection)
 
-**The toolbar HTML is NOT in the template.** It is dynamically injected by `editor-core.js` at runtime. No toolbar HTML needs to be written in the presentation file.
-
-### 3. Editable Elements
+**The toolbar HTML is NOT in the template.** It is dynamically injected by `editor/editor-core.js` at runtime. No toolbar HTML needs to be written in the presentation file.
 
 Every text element that should be editable MUST have a unique `data-edit-id` attribute:
 ```html
@@ -236,7 +234,7 @@ If the courseware contains `.quiz-annotation`, reference the quiz runtime stack 
 <script src="./assets/quiz-annotation-runtime.js"></script>
 ```
 
-If the courseware contains `.example-card`, reference the example-card stack AFTER `doodle-runtime.js` so the runtime can patch `editor-core.js` and talk to the ordinary page fragment host safely:
+If the courseware contains `.example-card`, reference the example-card stack AFTER `doodle-runtime.js` so the runtime can patch `editor/editor-core.js` and talk to the ordinary page fragment host safely:
 
 ```html
 <script src="./assets/example-card-audio.js"></script>
@@ -246,17 +244,17 @@ If the courseware contains `.example-card`, reference the example-card stack AFT
 Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js` in **strict dependency order**:
 
 ```html
-<script src="./assets/editor-utils.js"></script>
-<script src="./assets/editor-persistence.js"></script>
-<script src="./assets/editor-history.js"></script>
-<script src="./assets/editor-box-manager.js"></script>
-<script src="./assets/editor-rich-text.js"></script>
-<script src="./assets/editor-core.js"></script>
+<script src="./assets/editor/editor-utils.js"></script>
+<script src="./assets/editor/editor-persistence.js"></script>
+<script src="./assets/editor/editor-history.js"></script>
+<script src="./assets/editor/editor-box-manager.js"></script>
+<script src="./assets/editor/editor-rich-text.js"></script>
+<script src="./assets/editor/editor-core.js"></script>
 <script src="./assets/page-richtext-annotation-runtime.js"></script>
 <script src="./assets/doodle-runtime.js"></script>
 ```
 
-> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor-utils.js` must be first in the editor chain; `editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-runtime.js` must load after `editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
+> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor/editor-utils.js` must be first in the editor chain; `editor/editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-runtime.js` must load after `editor/editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
 
 ### 5. Plugin Hook System (for future extensions)
 
@@ -385,7 +383,8 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
 │   ├── zone2-example-card.css         # Zone 2 example-card component
 │   └── zone3-summary.css      # Zone 3 summary panel
-├── editor.css                 # Editor UI CSS (always included)
+├── editor/
+│   ├── editor.css                 # Editor UI CSS (always included)
 ├── slides-runtime.js          # Navigation JS
 ├── audio-runtime.js           # Global audio cue bus (always included)
 ├── annotation-store.js        # Quiz annotation sidecar persistence (when quiz-annotation is used)
@@ -393,12 +392,13 @@ assets/                        # CSS, JS modules, themes, images
 ├── quiz-annotation-runtime.js # Quiz annotation runtime (when quiz-annotation is used)
 ├── example-card-audio.js      # Example-card audio adapter (when .example-card is used)
 ├── example-card-runtime.js    # Example-card runtime (when .example-card is used)
-├── editor-utils.js            # Editor base utilities
-├── editor-persistence.js      # localStorage + export
-├── editor-history.js          # Undo/redo
-├── editor-box-manager.js      # Text/image box management
-├── editor-rich-text.js        # Rich text toolbar logic
-├── editor-core.js             # Editor orchestrator + dynamic toolbar injection
+├── editor/
+│   ├── editor-utils.js            # Editor base utilities
+│   ├── editor-persistence.js      # localStorage + export
+│   ├── editor-history.js          # Undo/redo
+│   ├── editor-box-manager.js      # Text/image box management
+│   ├── editor-rich-text.js        # Rich text toolbar logic
+│   └── editor-core.js             # Editor orchestrator + dynamic toolbar injection
 ├── page-richtext-annotation-runtime.js # Ordinary-page hidden rich-text runtime
 ├── doodle-runtime.js          # Doodle overlay
 ├── slide-animations.css       # Custom animations for this courseware
