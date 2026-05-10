@@ -134,7 +134,6 @@
           });
           // 4. 复制选项内 HTML：live DOM 中动态创建的 answer-anchor 包含在 .qa-option 内，
           //    直接用 data-option 做 key，将 live 的 innerHTML 覆盖到 clone。
-          //    这样动态的 answer-anchor 自动跟随选项内容完整保存。
           liveQA.querySelectorAll('.qa-option[data-option]').forEach(function (liveOpt) {
             var optKey = liveOpt.getAttribute('data-option');
             var cloneOpt = cloneQA.querySelector('.qa-option[data-option="' + optKey + '"]');
@@ -142,6 +141,58 @@
               cloneOpt.innerHTML = liveOpt.innerHTML;
             }
           });
+          // 5. 恢复答案配置到 clone：将 localStorage 中最新答案属性（data-correct、
+          //    data-correct-answer、data-user-answer）覆盖到 clone 上。
+          //    遵循"编辑时→localStorage，保存时→localStorage→HTML"的原则，
+          //    不从 live DOM 读取，确保 localStorage 是唯一数据源。
+          var answerConfigKey = null;
+          var utils = window._editorUtils;
+          if (utils && typeof utils.storageKey === 'function') {
+            var slide = liveSlide;
+            var slideIdx = slide ? slide.getAttribute('data-slide') : '0';
+            answerConfigKey = utils.storageKey('quiz-answer-config:' + slideIdx);
+          }
+          if (answerConfigKey) {
+            try {
+              var raw = window.localStorage.getItem(answerConfigKey);
+              if (raw) {
+                var config = JSON.parse(raw);
+                if (config && Array.isArray(config.questions)) {
+                  var cloneQuestions = cloneQA.querySelectorAll('.qa-question');
+                  config.questions.forEach(function (qConfig, idx) {
+                    var cloneQuestion = cloneQuestions[idx];
+                    if (!cloneQuestion) return;
+                    var type = cloneQuestion.getAttribute('data-type') || '';
+
+                    // 选择题：恢复 data-correct
+                    if ((type === 'single' || type === 'multi') && Array.isArray(qConfig.correct)) {
+                      cloneQuestion.querySelectorAll('.qa-option').forEach(function (opt) {
+                        var optId = opt.getAttribute('data-option');
+                        if (optId && qConfig.correct.indexOf(optId) !== -1) {
+                          opt.setAttribute('data-correct', 'true');
+                        } else if (optId) {
+                          opt.removeAttribute('data-correct');
+                        }
+                      });
+                    }
+
+                    // 连线题/填空：恢复 data-correct-answer 和 data-user-answer
+                    if ((type === 'matching' || type === 'blank') && Array.isArray(qConfig.blanks)) {
+                      qConfig.blanks.forEach(function (blank) {
+                        if (blank.blankId) {
+                          var cloneSlot = cloneQA.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blank.blankId + '"]');
+                          if (cloneSlot) {
+                            if (blank.correctAnswer) cloneSlot.setAttribute('data-correct-answer', blank.correctAnswer);
+                            if (blank.userAnswer) cloneSlot.setAttribute('data-user-answer', blank.userAnswer);
+                          }
+                        }
+                      });
+                    }
+                  });
+                }
+              }
+            } catch (e) {}
+          }
         });
       });
     }
