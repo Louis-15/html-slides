@@ -302,6 +302,10 @@
     function doInit() {
       QA.bindEditorModeSync();
       document.querySelectorAll('.quiz-annotation').forEach(function (qa) {
+        // 标记 data-steppable 使 step-through.js 能匹配到 annotation 步进策略
+        if (!qa.hasAttribute('data-steppable')) {
+          qa.setAttribute('data-steppable', 'annotation');
+        }
         QA.initQuizAnnotation(qa);
       });
     }
