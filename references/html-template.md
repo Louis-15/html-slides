@@ -42,7 +42,19 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="./assets/zones/zone2-layout.css">
     <link rel="stylesheet" href="./assets/zones/zone2-components.css">
     <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
-    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-layout.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-passage.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-notes-panel.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-answer-panel.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-anchors-bubbles.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-connectors.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-dragdrop.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-isolation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-linking.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-scrollbar.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-toolbar.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-responsive.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-mode.css">
     <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
     <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
     <link rel="stylesheet" href="./assets/editor/editor.css"> <!-- always included and loaded after Zone CSS -->
@@ -144,7 +156,23 @@ Every generated HTML file **must** comply with these rules:
     <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
     <script src="./assets/runtime/annotation-store.js"></script>
     <script src="./assets/audio/quiz-annotation-audio.js"></script>
-    <script src="./assets/runtime/quiz-annotation-runtime.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-core.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-constants.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-fragments.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-persistence.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-connectors.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-panel.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-header.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-linking.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-activation.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-stepping.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-base.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-single.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-matching.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-blank.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-note-interactions.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-toolbar.js"></script>
+    <script src="./assets/runtime/zone2-quiz-annotation/quiz-init.js"></script>
 
     <!-- Editor modules (always included): strict dependency order -->
     <script src="./assets/editor/editor-utils.js"></script>
@@ -205,7 +233,19 @@ Reference `editor/editor.css` via `<link>`, **after** the Zone CSS chain:
 <link rel="stylesheet" href="./assets/zones/zone2-layout.css">
 <link rel="stylesheet" href="./assets/zones/zone2-components.css">
 <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
-<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-layout.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-passage.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-notes-panel.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-answer-panel.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-anchors-bubbles.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-connectors.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-dragdrop.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-isolation.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-linking.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-scrollbar.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-toolbar.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-responsive.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-mode.css">
 <link rel="stylesheet" href="./assets/zones/zone2-example-card.css">
 <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
 <link rel="stylesheet" href="./assets/editor/editor.css">
@@ -247,7 +287,7 @@ If the courseware contains `.quiz-annotation`, reference the quiz runtime stack 
 ```html
 <script src="./assets/runtime/annotation-store.js"></script>
 <script src="./assets/audio/quiz-annotation-audio.js"></script>
-<script src="./assets/runtime/quiz-annotation-runtime.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-init.js"></script>
 ```
 
 If the courseware contains `.example-card`, reference the example-card stack AFTER `doodle-runtime.js` so the runtime can patch `editor/editor-core.js` and talk to the ordinary page fragment host safely:
@@ -408,7 +448,7 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── chart-integration.js         # Chart.js lifecycle
 │   ├── speaker-notes.js             # Speaker notes console output
 │   ├── annotation-store.js          # Quiz annotation sidecar persistence
-│   ├── quiz-annotation-runtime.js   # Quiz annotation runtime
+│   ├── zone2-quiz-annotation/        # Quiz annotation (13 CSS + 17 JS)
 │   ├── example-card-core.js           # Example-card core (state, init, nav)
 │   ├── example-card-authoring.js      # Example-card authoring mode
 │   ├── example-card-student.js        # Example-card student interaction
