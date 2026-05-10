@@ -241,6 +241,7 @@
     }
 
     QA.recordHistorySnapshot();
+    QA.saveQuizAnswerConfigAfterAuthoring(persistRoot ? persistRoot.closest('.quiz-annotation') : null);
   };
 
   /* =========================================
@@ -351,6 +352,116 @@
       var bubble = qa.querySelector('.qa-note-bubble[data-link="' + linkId + '"]');
       if (bubble) bubble.remove();
     });
+  };
+
+  /* =========================================
+     答题答案配置持久化
+     将正确答案、用户答案等结构化数据写入 localStorage，
+     确保刷新后编辑的答案不会丢失（与 PersistenceLayer.saveElement 互补，
+     后者只保存 [data-edit-id] 的 innerHTML）。
+     ========================================= */
+
+  /** 获取当前 QA 的答案配置存储 key */
+  function getAnswerConfigKey(qa) {
+    var utils = window._editorUtils;
+    if (!qa || !utils || typeof utils.storageKey !== 'function') return '';
+    var slide = qa.closest('.slide');
+    var slideIdx = slide ? slide.getAttribute('data-slide') : '0';
+    return utils.storageKey('quiz-answer-config:' + slideIdx);
+  }
+
+  /** 保存当前 QA 的所有答案配置到 localStorage */
+  QA.saveQuizAnswerConfig = function (qa) {
+    var key = getAnswerConfigKey(qa);
+    if (!key) return;
+
+    var config = {
+      questions: []
+    };
+
+    qa.querySelectorAll('.qa-question').forEach(function (question) {
+      var type = question.getAttribute('data-type') || '';
+      var qConfig = { type: type, correct: [], blanks: [], userAnswers: [] };
+
+      // 选择题：收集 data-correct
+      if (type === 'single' || type === 'multi') {
+        question.querySelectorAll('.qa-option[data-correct="true"]').forEach(function (opt) {
+          var optId = opt.getAttribute('data-option');
+          if (optId) qConfig.correct.push(optId);
+        });
+      }
+
+      // 连线题/填空：收集 data-correct-answer 和 data-user-answer
+      if (type === 'matching' || type === 'blank') {
+        qa.querySelectorAll('.qa-passage .qa-blank-slot[data-blank-id]').forEach(function (slot) {
+          var blankId = slot.getAttribute('data-blank-id') || '';
+          var correctAnswer = slot.getAttribute('data-correct-answer') || '';
+          var userAnswer = slot.getAttribute('data-user-answer') || '';
+          qConfig.blanks.push({ blankId: blankId, correctAnswer: correctAnswer, userAnswer: userAnswer });
+        });
+      }
+
+      config.questions.push(qConfig);
+    });
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify(config));
+    } catch (e) {}
+  };
+
+  /** 从 localStorage 恢复答案配置 */
+  QA.restoreQuizAnswerConfig = function (qa) {
+    var key = getAnswerConfigKey(qa);
+    if (!key) return;
+
+    try {
+      var raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      var config = JSON.parse(raw);
+      if (!config || !Array.isArray(config.questions)) return;
+
+      // 收集 DOM 中所有 .qa-question（按 DOM 顺序），与 config 索引一一对应
+      var domQuestions = qa.querySelectorAll('.qa-question');
+      config.questions.forEach(function (qConfig, idx) {
+        var question = domQuestions[idx];
+        if (!question) return;
+        var type = question.getAttribute('data-type') || '';
+
+        // 选择题：恢复 data-correct
+        if ((type === 'single' || type === 'multi') && Array.isArray(qConfig.correct)) {
+          question.querySelectorAll('.qa-option').forEach(function (opt) {
+            var optId = opt.getAttribute('data-option');
+            if (optId && qConfig.correct.indexOf(optId) !== -1) {
+              opt.setAttribute('data-correct', 'true');
+            } else if (optId) {
+              opt.removeAttribute('data-correct');
+            }
+          });
+        }
+
+        // 连线题/填空：恢复 data-correct-answer 和 data-user-answer
+        if ((type === 'matching' || type === 'blank') && Array.isArray(qConfig.blanks)) {
+          qConfig.blanks.forEach(function (blank) {
+            if (blank.blankId) {
+              var passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blank.blankId + '"]');
+              if (passageSlot) {
+                if (blank.correctAnswer) passageSlot.setAttribute('data-correct-answer', blank.correctAnswer);
+                if (blank.userAnswer) passageSlot.setAttribute('data-user-answer', blank.userAnswer);
+              }
+            }
+          });
+        }
+      });
+    } catch (e) {}
+  };
+
+  /** 在 persistQuizAuthoringChange 末尾调用，确保答案配置也写入 localStorage */
+  QA.saveQuizAnswerConfigAfterAuthoring = function (qa) {
+    if (!qa) {
+      // 没有传入 qa 时尝试找当前活跃的
+      qa = QA.getActiveQA();
+    }
+    if (qa) QA.saveQuizAnswerConfig(qa);
   };
 
 })();

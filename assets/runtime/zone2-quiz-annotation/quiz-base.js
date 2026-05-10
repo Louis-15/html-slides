@@ -164,6 +164,9 @@
      ========================================= */
 
   QA.initQuizSystem = function (qa) {
+    // 从 localStorage 恢复答案配置（正确答案、用户答案等）
+    QA.restoreQuizAnswerConfig(qa);
+
     // 检测是否有答题内容
     var answerContent = qa.querySelector('.qa-answer-content');
     if (answerContent && answerContent.children.length > 0) {
