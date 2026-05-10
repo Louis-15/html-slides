@@ -1,5 +1,8 @@
 ﻿# 答题与批注组件代码拆分实施计划
 
+> **项目根目录**：`d:\Projects\html-slides`
+> **校验脚本**：`scripts/verify-split.js`（已创建，可直接使用）
+
 ## 概述
 
 将 `quiz-annotation-runtime.js`（~4125 行）和 `zone2-quiz-annotation.css`（~1684 行）按功能模块拆分为多个小文件，零行为变更。
@@ -54,9 +57,9 @@ assets/zones/
 
 ## 旧文件的保留与最终删除
 
-```
-assets/runtime/quiz-annotation-runtime.js     ← 拆分过程中逐渐瘦身，不删除
-assets/zones/zone2-quiz-annotation.css         ← 拆分过程中逐渐瘦身，不删除
+```bash
+assets/runtime/quiz-annotation-runtime.js     ← 拆分完成后删除
+assets/zones/zone2-quiz-annotation.css         ← 拆分完成后删除
 ```
 
 > **关键原则（重要）**：
@@ -98,10 +101,84 @@ assets/zones/zone2-quiz-annotation.css         ← 拆分过程中逐渐瘦身�
 
 ### 阶段 0：校验脚本
 
-- [ ] **Step 0.1**: 创建 `scripts/verify-split.js`
+- [x] **Step 0.1**: 创建 `scripts/verify-split.js` ✅ **已完成**
+  - 校验脚本已就绪，位于 `d:\Projects\html-slides\scripts\verify-split.js`
   - 功能：比对原文件与新文件的函数定义、行数守恒、自执行代码迁移
-  - 用法：`node scripts/verify-split.js --original <原文件> --parts <模块名列表> --outdir <目标目录>`
-  - 校验项：行数守恒、函数完整性、无重复定义、自执行代码迁移
+  - 用法示例：
+    ```bash
+    # 在项目根目录执行：
+    node scripts/verify-split.js \
+      --original assets/runtime/quiz-annotation-runtime.js \
+      --parts quiz-core,quiz-constants,...,quiz-init \
+      --outdir assets/runtime/zone2-quiz-annotation
+    ```
+
+## JS 文件编写模板
+
+每个拆分后的 JS 文件使用统一模板，通过 `window.QA` 共享状态：
+
+```javascript
+/* ===========================================
+   quiz-xxx.js
+   答题与批注组件 — [模块说明]
+   依赖：quiz-core.js（通过 window.QA 访问）
+   =========================================== */
+
+(function () {
+  'use strict';
+  var QA = window.QA = window.QA || {};
+
+  /* === 模块级变量 === */
+  var internalVar = null;   // 仅本模块可见
+
+  /* === 公开函数 === */
+  QA.functionName = function (param1, param2) {
+    // 实现...
+  };
+
+  /* === 私有函数（仅本模块内部调用） === */
+  function privateHelper() {
+    // 跨模块调用的函数挂到 QA，仅内部用的保留 function
+  }
+
+})();
+```
+
+## 完整的 JS `<script>` 加载顺序（可直接复制到 HTML）
+
+以下按依赖拓扑排列，必须严格保持此顺序：
+
+```html
+<!-- 层级1：无依赖 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-core.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-constants.js"></script>
+
+<!-- 层级2：依赖层级1 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-fragments.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-persistence.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-connectors.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-panel.js"></script>
+
+<!-- 层级3：依赖层级1-2 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-dragdrop.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-header.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-linking.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-activation.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-stepping.js"></script>
+
+<!-- 层级4：答题系统 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-base.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-single.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-matching.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-blank.js"></script>
+
+<!-- 层级5：交互 UI -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-note-interactions.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-toolbar.js"></script>
+
+<!-- 层级6：初始化总控（必须最后加载） -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-init.js"></script>
+```
 
 ### 阶段 1：JS 拆分
 
@@ -184,6 +261,8 @@ assets/zones/zone2-quiz-annotation.css         ← 拆分过程中逐渐瘦身�
   - 搬运：`applyNoteFragmentFormat`、`clearNoteFragmentFormat`
   - 搬运：`bindFloatingToolbarButtons`、`openAnchorToolbarDropdown`、`clearToolbarDropdownMenus`、`positionAnchorToolbarBesideSelection`、`positionFloatingToolbar`
   - 搬运：工具栏相关 DOM 创建和所有下拉调色板逻辑
+  - 搬运：`REMOVE_FORMAT_TOOL_ICON` SVG 字符串常量（在 quiz-annotation-runtime.js 中约 632 行）
+  - 搬运：`getSelectionRootNode`、`getNodeDepth`、`selectionIntersectsNode`、`unwrapFragmentNode`（编辑器下划线处理工具）
 
 - [ ] **Step 1.18**: 创建 `quiz-init.js`
   - 搬运：`initQuizAnnotation`、`stripDynamicElements`、`autoInit`
@@ -244,6 +323,41 @@ CSS 引用顺序（也是加载顺序）：
 - [ ] **Step 2.13**: 创建 `quiz-editor-mode.css`
   - 搬运：编辑模式专属补丁（光标覆盖、气泡展开、答案键显示等）
 
+### 中间验证
+
+- [ ] **Step 2.14**: 所有 CSS 文件创建完毕 + 所有 JS 文件创建完毕后，运行校验脚本：
+  ```bash
+  cd d:\Projects\html-slides
+  node scripts/verify-split.js \
+    --original assets/runtime/quiz-annotation-runtime.js \
+    --parts quiz-core,quiz-constants,quiz-fragments,quiz-persistence,quiz-connectors,quiz-panel,quiz-dragdrop,quiz-header,quiz-linking,quiz-activation,quiz-stepping,quiz-base,quiz-single,quiz-matching,quiz-blank,quiz-note-interactions,quiz-toolbar,quiz-init \
+    --outdir assets/runtime/zone2-quiz-annotation
+
+  node scripts/verify-split.js \
+    --original assets/zones/zone2-quiz-annotation.css \
+    --parts quiz-layout,quiz-passage,quiz-notes-panel,quiz-answer-panel,quiz-anchors-bubbles,quiz-connectors,quiz-dragdrop,quiz-isolation,quiz-linking,quiz-scrollbar,quiz-editor-toolbar,quiz-responsive,quiz-editor-mode \
+    --outdir assets/zones/zone2-quiz-annotation
+  ```
+  - 预期：全部 4 项校验通过（行数守恒、函数完整性、无重复定义、自执行代码迁移）
+
+## 完整的 CSS `<link>` 加载顺序（可直接复制到 HTML）
+
+```html
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-layout.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-passage.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-notes-panel.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-answer-panel.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-anchors-bubbles.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-connectors.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-dragdrop.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-isolation.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-linking.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-scrollbar.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-toolbar.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-responsive.css">
+<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-mode.css">
+```
+
 ### 阶段 3：更新测试文件
 
 - [ ] **Step 3.1**: 更新 `testing/tests/quiz-annotation-runtime.test.js`
@@ -256,10 +370,16 @@ CSS 引用顺序（也是加载顺序）：
 
 ### 阶段 4：更新 HTML 引用
 
+> **替换策略**：删除旧文件的 `<link>` / `<script>` 引用行，替换为上述“完整加载顺序”中的对应行。
+> 
+> 当前 `qa-test-all-types.html` 中与 quiz 相关的旧引用：
+> - CSS（1 行）：`<link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">`
+> - JS（1 行）：`<script src="./assets/runtime/quiz-annotation-runtime.js?v=2"></script>`
+
 - [ ] **Step 4.1**: 更新 `qa-test-all-types.html`
-  - CSS：从 1 行 `<link>` 变为 13 行（严格按阶段 2 列出的顺序）
-  - JS：从 1 行 `<script>` 变为 18 行（严格按阶段 1 加载顺序）
-  - 更新缓存版本号
+  - 删除旧 CSS `<link>` 行，替换为 13 行 CSS `<link>`（见上方"完整的 CSS link 加载顺序"）
+  - 删除旧 JS `<script>` 行，替换为 18 行 JS `<script>`（见上方"完整的 JS script 加载顺序"）
+  - 将缓存版本号 `?v=2` 更新为 `?v=3`（在 quiz-init.js 的引用上）
 - [ ] **Step 4.2**: 更新 `组件展示全览.html`
   - 如果当前未引用 quiz-annotation，无需修改
 
