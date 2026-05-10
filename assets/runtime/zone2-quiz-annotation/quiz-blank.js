@@ -53,6 +53,14 @@
     var passageSlots = Array.from(qa.querySelectorAll('.qa-passage .qa-blank-slot[data-correct-answer]'));
     if (!passageSlots.length) return;
 
+    /* 将正文空位统一为七选五的匹配格式：qa-matching-passage-slot 结构，
+       序号（sup）在前、横线（qa-blank-value）在后，均为绿色。 */
+    passageSlots.forEach(function (slot) {
+      if (typeof QA.ensureMatchingPassageSlotStructure === 'function') {
+        QA.ensureMatchingPassageSlotStructure(slot);
+      }
+    });
+
     var divider = answerContent.querySelector('.qa-slots-divider.qa-slots-divider--blank');
     if (!divider) {
       divider = document.createElement('div');
@@ -190,6 +198,18 @@
       correctEl.className = 'qa-slot-correct';
       correctEl.innerHTML = '<span class="qa-slot-correct-prefix">正确答案：</span>' + correctAnswer;
       slot.appendChild(correctEl);
+
+      /* 将正确答案填入正文空位，使用主题绿色（class show-correct-answer 控制颜色） */
+      var blankId = slot.dataset.blankId;
+      if (blankId) {
+        var passageSlot = qa.querySelector('.qa-passage .qa-blank-slot[data-blank-id="' + blankId + '"]');
+        if (passageSlot) {
+          passageSlot.classList.add('show-correct-answer');
+          // 将正确答案文本填入 qa-blank-value
+          var valueSpan = passageSlot.querySelector('.qa-blank-value');
+          if (valueSpan) valueSpan.textContent = correctAnswer;
+        }
+      }
     });
   };
 
