@@ -246,7 +246,7 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | `assets/audio/audio-runtime.js` | Global audio cue bus for page turns, focus, and interaction cues | Phase 3 (Pro) |
 | `assets/zones/zone2-example-card.css` | Example-card visual system | Phase 3 (when example-card is used) |
 | `assets/example-card-audio.js` | Example-card audio adapter | Phase 3 (when example-card is used) |
-| `assets/runtime/example-card-runtime.js` | Example-card runtime, authoring state, and question navigation | Phase 3 (when example-card is used) |
+| `assets/runtime/example-card-core.js` + `example-card-authoring.js` + `example-card-student.js` | Example-card runtime, authoring state, and question navigation | Phase 3 (when example-card is used) |
 | `assets/runtime/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping and hover runtime | Phase 3 (Pro) |
 | `assets/editor/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
 | `assets/editor/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |

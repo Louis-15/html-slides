@@ -7,7 +7,6 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'example-card-runtime.js');
 const exampleCardCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-example-card.css');
 const exampleCardCssSource = fs.readFileSync(exampleCardCssPath, 'utf-8');
 
@@ -86,22 +85,18 @@ function createExampleCardDom(bodyHtml, options = {}) {
   }
 
   // 这里直接读取待实现运行时，确保红灯阶段的失败会明确指向新能力缺失。
-  let runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
+  let runtimeSource = [
+    fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'example-card-core.js'), 'utf-8'),
+    fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'example-card-authoring.js'), 'utf-8'),
+    fs.readFileSync(path.join(projectRoot, 'assets', 'runtime', 'example-card-student.js'), 'utf-8')
+  ].join('\n');
 
   if (options.exposeRuntimeState === true) {
     // 正式运行时不暴露闭包内状态；测试里注入只读 getter，
     // 这样既能验证 submitCard 是否写入卡片级判分结果，也不会把内部状态变成公开 API。
     const instrumentedSource = runtimeSource.replace(
-      /  window\.ExampleCardRuntime = \{\r?\n    initAll,\r?\n    initCard\r?\n  \};/,
-      [
-        '  window.ExampleCardRuntime = {',
-        '    initAll,',
-        '    initCard,',
-        '    __getState(root) {',
-        '      return stateMap.get(root);',
-        '    }',
-        '  };'
-      ].join('\n')
+      /var RT = window\.ExampleCardRuntime;/,
+      'var RT = Object.assign(window.ExampleCardRuntime, { __getState: function(root) { return stateMap.get(root); } });'
     );
 
     assert.notEqual(instrumentedSource, runtimeSource, '测试注入运行时状态钩子失败，请同步更新测试夹具');

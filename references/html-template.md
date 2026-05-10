@@ -158,7 +158,9 @@ Every generated HTML file **must** comply with these rules:
 
     <!-- Example Card runtime stack (include only when the courseware contains .example-card) -->
     <script src="./assets/audio/example-card-audio.js"></script>
-    <script src="./assets/runtime/example-card-runtime.js"></script>
+    <script src="./assets/runtime/example-card-core.js"></script>
+    <script src="./assets/runtime/example-card-authoring.js"></script>
+    <script src="./assets/runtime/example-card-student.js"></script>
 
     <!-- Example Card: placed directly in DOM (no <template> wrapper).
          Runtime auto-discovers .example-card elements and initializes them via initAll().
@@ -252,7 +254,9 @@ If the courseware contains `.example-card`, reference the example-card stack AFT
 
 ```html
 <script src="./assets/audio/example-card-audio.js"></script>
-<script src="./assets/runtime/example-card-runtime.js"></script>
+<script src="./assets/runtime/example-card-core.js"></script>
+<script src="./assets/runtime/example-card-authoring.js"></script>
+<script src="./assets/runtime/example-card-student.js"></script>
 ```
 
 Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js` in **strict dependency order**:
@@ -268,7 +272,7 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="./assets/runtime/doodle-runtime.js"></script>
 ```
 
-> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor/editor-utils.js` must be first in the editor chain; `editor/editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-runtime.js` must load after `editor/editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
+> **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor/editor-utils.js` must be first in the editor chain; `editor/editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-core.js` → `example-card-authoring.js` → `example-card-student.js` must load after `editor/editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
 
 ### 5. Plugin Hook System (for future extensions)
 
@@ -405,7 +409,9 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── speaker-notes.js             # Speaker notes console output
 │   ├── annotation-store.js          # Quiz annotation sidecar persistence
 │   ├── quiz-annotation-runtime.js   # Quiz annotation runtime
-│   ├── example-card-runtime.js      # Example-card runtime
+│   ├── example-card-core.js           # Example-card core (state, init, nav)
+│   ├── example-card-authoring.js      # Example-card authoring mode
+│   ├── example-card-student.js        # Example-card student interaction
 │   ├── page-richtext-annotation-runtime.js # Ordinary-page hidden rich-text runtime
 │   └── doodle-runtime.js            # Doodle overlay
 ├── audio/
