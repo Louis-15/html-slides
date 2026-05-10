@@ -457,102 +457,106 @@
         <div class="slide" data-slide="9">
             <div class="slide-header banner">
                 <div class="header-module" data-edit-id="s9-module" data-edit-id-auto="true">4.1 例题演练 <span class="breadcrumb-sep">/</span> 例题组件</div>
-                <div class="header-title" data-edit-id="s9-title" data-edit-id-auto="true">单选与多选题的作答体验</div>
+                <div class="header-title" data-edit-id="s9-title" data-edit-id-auto="true">四种题型的完整作答体验</div>
             </div>
             <div class="slide-content layout-single example-card-playground" data-scrollable="" style="overflow: visible;">
                 <div class="example-card-playground__host">
                     <section class="example-card" data-question-type="single" data-card-id="demo-example-card">
-                        <!-- 第 1 题：单选 -->
+
+                        <!--===== 第 1 题：单选题（single） =====-->
                         <article class="example-card__question" data-question-id="demo-q1" data-question-type="single">
                             <div class="example-card__main">
                                 <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区" hidden="" aria-hidden="true"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" disabled=""></div>
                                 <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint" hidden="">至少选择两个答案</span></div>
                                 <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区" aria-hidden="false"><span class="example-card__editor-label">正确答案</span><button type="button" class="example-card__answer-key" data-answer-value="A">A</button><button type="button" class="example-card__answer-key" data-answer-value="B">B</button><button type="button" class="example-card__answer-key" data-answer-value="C">C</button><button type="button" class="example-card__answer-key" data-answer-value="D">D</button></div>
-                                <div class="example-card__stem" data-edit-id="demo-q1-stem" data-question-type-label="单选" data-question-type="single">1. 以下哪个组件需要 Chart.js CDN 支持？</div>
+                                <div class="example-card__stem" data-edit-id="demo-q1-stem" data-question-type-label="单选" data-question-type="single">1.（单选）以下哪个组件需要 Chart.js CDN 支持？</div>
                                 <div class="example-card__answers" aria-hidden="false">
-                                    <button type="button" class="qa-option example-card__option" data-option-value="A">
-                                        <span class="qa-option-label">A</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-a">翻转卡片 Flip Card</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
-                                        <span class="qa-option-label">B</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-b">图表 Chart</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
-                                        <span class="qa-option-label">C</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-c">代码窗口 Code Window</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
-                                        <span class="qa-option-label">D</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q1-opt-d">折叠卡片 Collapse Card</span>
-                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A"><span class="qa-option-label">A</span><span class="qa-option-text" data-edit-id="demo-q1-opt-a">翻转卡片 Flip Card</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true"><span class="qa-option-label">B</span><span class="qa-option-text" data-edit-id="demo-q1-opt-b">图表 Chart</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C"><span class="qa-option-label">C</span><span class="qa-option-text" data-edit-id="demo-q1-opt-c">代码窗口 Code Window</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D"><span class="qa-option-label">D</span><span class="qa-option-text" data-edit-id="demo-q1-opt-d">折叠卡片 Collapse Card</span></button>
                                 </div>
                             </div>
                             <aside class="example-card__analysis" hidden="">
                                 <div class="example-card__analysis-title">解析</div>
-                                <div class="example-card__analysis-body" data-edit-id="demo-q1-analysis">
-                                    <p>图表组件基于 Chart.js 库，需要在 HTML 中通过 CDN 引入 <code>chart.js@4.4.8</code>。其他三个组件都是纯 CSS 实现，不需要外部 JS 库。</p>
-                                </div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q1-analysis"><p>图表组件基于 Chart.js 库，需要在 HTML 中通过 CDN 引入 <code>chart.js@4.4.8</code>。其他三个组件都是纯 CSS 实现，不需要外部 JS 库。</p></div>
                             </aside>
                             <div class="example-card__footer">
-                                <div class="example-card__nav">
-                                    <button type="button" class="example-card__prev-btn">上一题</button>
-                                    <button type="button" class="example-card__next-btn">下一题</button>
-                                </div>
-                                <div class="example-card__actions">
-                                    <button type="button" class="example-card__analysis-toggle">查看解析</button>
-                                    <button type="button" class="example-card__submit-btn">提交答案</button>
-                                </div>
+                                <div class="example-card__nav"><button type="button" class="example-card__prev-btn">上一题</button><button type="button" class="example-card__next-btn">下一题</button></div>
+                                <div class="example-card__actions"><button type="button" class="example-card__analysis-toggle">查看解析</button><button type="button" class="example-card__submit-btn">提交答案</button></div>
                             </div>
                         </article>
-                        <!-- 第 2 题：多选 -->
+
+                        <!--===== 第 2 题：多选题（multi） =====-->
                         <article class="example-card__question" data-question-id="demo-q2" data-question-type="multi">
                             <div class="example-card__main">
                                 <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区" hidden="" aria-hidden="true"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" disabled=""></div>
                                 <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint">至少选择两个答案</span></div>
                                 <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区" aria-hidden="false"><span class="example-card__editor-label">正确答案</span><button type="button" class="example-card__answer-key" data-answer-value="A">A</button><button type="button" class="example-card__answer-key" data-answer-value="B">B</button><button type="button" class="example-card__answer-key" data-answer-value="C">C</button><button type="button" class="example-card__answer-key" data-answer-value="D">D</button></div>
-                                <div class="example-card__stem" data-edit-id="demo-q2-stem" data-question-type-label="多选" data-question-type="multi">2. 以下哪些属于轻交互组件？（多选）</div>
+                                <div class="example-card__stem" data-edit-id="demo-q2-stem" data-question-type-label="多选" data-question-type="multi">2.（多选）以下哪些属于轻交互组件？</div>
                                 <div class="example-card__answers" aria-hidden="false">
-                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true">
-                                        <span class="qa-option-label">A</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-a">翻转卡片 Flip Card</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true">
-                                        <span class="qa-option-label">B</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-b">折叠卡片 Collapse Card</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="C">
-                                        <span class="qa-option-label">C</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-c">普通卡片 Card</span>
-                                    </button>
-                                    <button type="button" class="qa-option example-card__option" data-option-value="D">
-                                        <span class="qa-option-label">D</span>
-                                        <span class="qa-option-text" data-edit-id="demo-q2-opt-d">时间线卡片 Timeline</span>
-                                    </button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true"><span class="qa-option-label">A</span><span class="qa-option-text" data-edit-id="demo-q2-opt-a">翻转卡片 Flip Card</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true"><span class="qa-option-label">B</span><span class="qa-option-text" data-edit-id="demo-q2-opt-b">折叠卡片 Collapse Card</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C"><span class="qa-option-label">C</span><span class="qa-option-text" data-edit-id="demo-q2-opt-c">普通卡片 Card</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D"><span class="qa-option-label">D</span><span class="qa-option-text" data-edit-id="demo-q2-opt-d">时间线卡片 Timeline</span></button>
                                 </div>
                             </div>
                             <aside class="example-card__analysis" hidden="">
                                 <div class="example-card__analysis-title">解析</div>
-                                <div class="example-card__analysis-body" data-edit-id="demo-q2-analysis">
-                                    <p>翻转卡片和折叠卡片由 slides-runtime.js 管理点击交互，属于轻交互组件。普通卡片和时间线卡片是纯展示组件，无点击交互。</p>
-                                </div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q2-analysis"><p>翻转卡片和折叠卡片由 slides-runtime.js 管理点击交互，属于轻交互组件。普通卡片和时间线卡片是纯展示组件，无点击交互。</p></div>
                             </aside>
                             <div class="example-card__footer">
-                                <div class="example-card__nav">
-                                    <button type="button" class="example-card__prev-btn">上一题</button>
-                                    <button type="button" class="example-card__next-btn">下一题</button>
-                                </div>
-                                <div class="example-card__actions">
-                                    <button type="button" class="example-card__analysis-toggle">查看解析</button>
-                                    <button type="button" class="example-card__submit-btn">提交答案</button>
-                                </div>
+                                <div class="example-card__nav"><button type="button" class="example-card__prev-btn">上一题</button><button type="button" class="example-card__next-btn">下一题</button></div>
+                                <div class="example-card__actions"><button type="button" class="example-card__analysis-toggle">查看解析</button><button type="button" class="example-card__submit-btn">提交答案</button></div>
                             </div>
                         </article>
+
+                        <!--===== 第 3 题：不定项选择题（flex） =====-->
+                        <article class="example-card__question" data-question-id="demo-q3" data-question-type="flex">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区" hidden="" aria-hidden="true"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" disabled=""></div>
+                                <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint" hidden="">至少选择两个答案</span></div>
+                                <div class="example-card__editor-answer-key" data-editor-only="true" aria-label="正确答案编辑区" aria-hidden="false"><span class="example-card__editor-label">正确答案</span><button type="button" class="example-card__answer-key" data-answer-value="A">A</button><button type="button" class="example-card__answer-key" data-answer-value="B">B</button><button type="button" class="example-card__answer-key" data-answer-value="C">C</button><button type="button" class="example-card__answer-key" data-answer-value="D">D</button></div>
+                                <div class="example-card__stem" data-edit-id="demo-q3-stem" data-question-type-label="不定项选择" data-question-type="flex">3.（不定项）以下哪些是 HTML-Slides 支持的布局模式？</div>
+                                <div class="example-card__answers" aria-hidden="false">
+                                    <button type="button" class="qa-option example-card__option" data-option-value="A" data-correct="true"><span class="qa-option-label">A</span><span class="qa-option-text" data-edit-id="demo-q3-opt-a">layout-2col</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="B" data-correct="true"><span class="qa-option-label">B</span><span class="qa-option-text" data-edit-id="demo-q3-opt-b">layout-3col</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="C"><span class="qa-option-label">C</span><span class="qa-option-text" data-edit-id="demo-q3-opt-c">layout-sidebar</span></button>
+                                    <button type="button" class="qa-option example-card__option" data-option-value="D" data-correct="true"><span class="qa-option-label">D</span><span class="qa-option-text" data-edit-id="demo-q3-opt-d">layout-grid-2x2</span></button>
+                                </div>
+                            </div>
+                            <aside class="example-card__analysis" hidden="">
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q3-analysis"><p>HTML-Slides 支持 <code>layout-2col</code>、<code>layout-3col</code>、<code>layout-grid-2x2</code> 等8+1种布局模式。<code>layout-sidebar</code> 不是标准布局。</p></div>
+                            </aside>
+                            <div class="example-card__footer">
+                                <div class="example-card__nav"><button type="button" class="example-card__prev-btn">上一题</button><button type="button" class="example-card__next-btn">下一题</button></div>
+                                <div class="example-card__actions"><button type="button" class="example-card__analysis-toggle">查看解析</button><button type="button" class="example-card__submit-btn">提交答案</button></div>
+                            </div>
+                        </article>
+
+                        <!--===== 第 4 题：填空题（blank） =====-->
+                        <article class="example-card__question" data-question-id="demo-q4" data-question-type="blank">
+                            <div class="example-card__main">
+                                <div class="example-card__editor-blank-answer" data-editor-only="true" aria-label="填空答案编辑区"><span class="example-card__editor-label">正确答案</span><input type="text" class="example-card__blank-answer-input" placeholder="请输入填空答案" autocomplete="off" spellcheck="false" value="milkweed"></div>
+                                <div class="example-card__editor-type-picker" data-editor-only="true"><span class="example-card__editor-label">题型</span><button type="button" class="example-card__type-button" data-question-type-value="single">单选</button><button type="button" class="example-card__type-button" data-question-type-value="multi">多选</button><button type="button" class="example-card__type-button" data-question-type-value="flex">不定项选择</button><button type="button" class="example-card__type-button" data-question-type-value="blank">填空</button><span class="example-card__editor-multi-hint" hidden="">至少选择两个答案</span></div>
+                                <div class="example-card__stem" data-edit-id="demo-q4-stem" data-question-type-label="填空" data-question-type="blank">4.（填空）Monarch butterflies lay their eggs on <span class="example-card__blank" data-correct-answer="milkweed" data-blank-id="demo-q4-blank-1">______</span> plants.</div>
+                            </div>
+                            <aside class="example-card__analysis" hidden="">
+                                <div class="example-card__analysis-title">解析</div>
+                                <div class="example-card__analysis-body" data-edit-id="demo-q4-analysis"><p>帝王蝶（Monarch butterfly）只在乳草属（milkweed）植物上产卵，因为其幼虫只能以 milkweed 为食。</p></div>
+                            </aside>
+                            <div class="example-card__footer">
+                                <div class="example-card__nav"><button type="button" class="example-card__prev-btn">上一题</button><button type="button" class="example-card__next-btn">下一题</button></div>
+                                <div class="example-card__actions"><button type="button" class="example-card__analysis-toggle">查看解析</button><button type="button" class="example-card__submit-btn">提交答案</button></div>
+                            </div>
+                        </article>
+
                     </section>
                 </div>
             </div>
             <script type="application/json" class="slide-notes">
-            {"title":"例题组件","script":"例题组件是重型交互组件，支持单选和多选两种题型。左下角切换题目，每题独立判分和解析。进入编辑模式可修改正确答案。","notes":["例题组件: example-card","支持 single / multi / flex / blank","每道题独立状态","编辑模式可修改答案"]}
+            {"title":"例题组件","script":"例题组件支持单选、多选、不定项选择、填空四种题型。左右切换题目，每题独立判分和解析。进入编辑模式可修改正确答案。","notes":["例题组件: example-card","四种题型: single/multi/flex/blank","每道题独立状态","编辑模式可修改答案"]}
             </script>
         </div>
 
