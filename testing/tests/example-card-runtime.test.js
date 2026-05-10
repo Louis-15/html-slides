@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'example-card-runtime.js');
+const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'example-card-runtime.js');
 const exampleCardCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-example-card.css');
 const exampleCardCssSource = fs.readFileSync(exampleCardCssPath, 'utf-8');
 

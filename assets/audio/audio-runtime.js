@@ -13,7 +13,7 @@
   };
 
   function resolveSoundUrl(fileName) {
-    const baseUrl = runtimeScriptUrl ? new URL('../sound/', runtimeScriptUrl) : new URL('./sound/', window.location.href);
+    const baseUrl = runtimeScriptUrl ? new URL('./sound/', runtimeScriptUrl) : new URL('./assets/audio/sound/', window.location.href);
     return new URL(fileName, baseUrl).href;
   }
 

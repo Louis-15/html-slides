@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const doodleRuntimePath = path.join(projectRoot, 'assets', 'doodle-runtime.js');
+const doodleRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'doodle-runtime.js');
 const doodleRuntimeSource = fs.readFileSync(doodleRuntimePath, 'utf-8');
 
 function createDoodleDom() {

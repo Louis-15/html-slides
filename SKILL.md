@@ -216,12 +216,12 @@ Do NOT include summary for:
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation.css → zone2-example-card.css → zone3-summary.css`
-- [slides-runtime.js](assets/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/slides-runtime.js">`)
-- [audio-runtime.js](assets/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
+- [slides-runtime.js](assets/runtime/slides-runtime.js) — Navigation JS (reference via `<script src="./assets/runtime/slides-runtime.js">`)
+- [audio-runtime.js](assets/audio/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `annotation-store.js → quiz-annotation-audio.js → quiz-annotation-runtime.js` after `audio-runtime.js` and before the editor modules. Note: `annotation-store.js` 已简化为兼容存根，不再加载 `.annotations.js` 侧挂文件。
 - If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-runtime.js` must be loaded after `editor/editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
 - Before ALL runtime `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline. 详见 [本地化保存、读取系统](开发者文档/本地化保存、读取系统.md)
-- [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor/editor-core.js` and before `doodle-runtime.js`
+- [page-richtext-annotation-runtime.js](assets/runtime/page-richtext-annotation-runtime.js) — Ordinary-page hidden rich-text runtime; reference after `editor/editor-core.js` and before `doodle-runtime.js`
 - [libraries.md](references/libraries.md) — CDN libraries for diagrams and charts (use when content needs them)
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
@@ -370,17 +370,17 @@ If the user declines, stop here.
 | [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 4 (generation) |
 | [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |
 | [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
-| [slides-runtime.js](assets/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 4 (generation) |
-| [audio-runtime.js](assets/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 4 (always included) |
-| [annotation-store.js](assets/annotation-store.js) | 旧版 sidecar 兼容加载器（新课件标注数据直接内联在 HTML 元素中） | Phase 4 (always included for backward compat) |
-| [quiz-annotation-audio.js](assets/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
-| [quiz-annotation-runtime.js](assets/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
-| [example-card-audio.js](assets/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
-| [example-card-runtime.js](assets/example-card-runtime.js) | 例题组件运行时逻辑 | Phase 4 (when example-card is used) |
+| [slides-runtime.js](assets/runtime/slides-runtime.js) | Navigation JS — reference via `<script src>` | Phase 4 (generation) |
+| [audio-runtime.js](assets/audio/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 4 (always included) |
+| [annotation-store.js](assets/runtime/annotation-store.js) | 旧版 sidecar 兼容加载器（新课件标注数据直接内联在 HTML 元素中） | Phase 4 (always included for backward compat) |
+| [quiz-annotation-audio.js](assets/audio/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
+| [quiz-annotation-runtime.js](assets/runtime/quiz-annotation-runtime.js) | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
+| [example-card-audio.js](assets/audio/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
+| [example-card-runtime.js](assets/runtime/example-card-runtime.js) | 例题组件运行时逻辑 | Phase 4 (when example-card is used) |
 | [editor/editor-*.js](assets/editor/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
-| [page-richtext-annotation-runtime.js](assets/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
+| [page-richtext-annotation-runtime.js](assets/runtime/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
 | [editor/editor.css](assets/editor/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |
-| [doodle-runtime.js](assets/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 4 (always included) |
+| [doodle-runtime.js](assets/runtime/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 4 (always included) |
 | [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js, anime.js, Chart.js | Phase 4 (when content needs them) |
 | [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 8 validation rules | Phase 4 (reference) |
 | [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide | Phase 4 (generation) |

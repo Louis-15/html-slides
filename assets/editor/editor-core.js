@@ -412,7 +412,7 @@
           saveToggle.style.opacity = "";
           saveToggle.style.pointerEvents = "";
           if (ok) {
-            try { var popAudio = new Audio("./sound/pop.mp3"); popAudio.volume = 0.5; popAudio.play(); } catch (ex) {}
+            try { var popAudio = new Audio("./assets/audio/sound/pop.mp3"); popAudio.volume = 0.5; popAudio.play(); } catch (ex) {}
             showSaveBubble("💾 保存成功", false);
             saveToggle.style.background = "var(--accent-green, #3fb950)";
             saveToggle.style.borderColor = "var(--accent-green, #3fb950)";

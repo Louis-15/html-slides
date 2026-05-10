@@ -7,9 +7,9 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const editorUtilsPath = path.join(projectRoot, 'assets', 'editor-utils.js');
-const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
-const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
+const editorUtilsPath = path.join(projectRoot, 'assets', 'editor', 'editor-utils.js');
+const editorRichTextPath = path.join(projectRoot, 'assets', 'editor', 'editor-rich-text.js');
+const editorCssPath = path.join(projectRoot, 'assets', 'editor', 'editor.css');
 const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 
 const editorUtilsSource = fs.readFileSync(editorUtilsPath, 'utf-8');

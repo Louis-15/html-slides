@@ -7,12 +7,12 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
-const annotationStorePath = path.join(projectRoot, 'assets', 'annotation-store.js');
+const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'quiz-annotation-runtime.js');
+const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
 const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
-const editorCorePath = path.join(projectRoot, 'assets', 'editor-core.js');
-const editorCssPath = path.join(projectRoot, 'assets', 'editor.css');
-const editorRichTextPath = path.join(projectRoot, 'assets', 'editor-rich-text.js');
+const editorCorePath = path.join(projectRoot, 'assets', 'editor', 'editor-core.js');
+const editorCssPath = path.join(projectRoot, 'assets', 'editor', 'editor.css');
+const editorRichTextPath = path.join(projectRoot, 'assets', 'editor', 'editor-rich-text.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
 const annotationStoreTestSource = annotationStoreSource.replace(/\n\s*_init\(\);\s*\n\s*\}\)\(\);\s*$/, '\n\n})();\n');

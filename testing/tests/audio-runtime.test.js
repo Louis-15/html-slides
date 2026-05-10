@@ -7,9 +7,9 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'audio-runtime.js');
-const qaAudioPath = path.join(projectRoot, 'assets', 'quiz-annotation-audio.js');
-const exampleCardAudioPath = path.join(projectRoot, 'assets', 'example-card-audio.js');
+const runtimePath = path.join(projectRoot, 'assets', 'audio', 'audio-runtime.js');
+const qaAudioPath = path.join(projectRoot, 'assets', 'audio', 'quiz-annotation-audio.js');
+const exampleCardAudioPath = path.join(projectRoot, 'assets', 'audio', 'example-card-audio.js');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const qaAudioSource = fs.readFileSync(qaAudioPath, 'utf-8');
 const exampleCardAudioSource = fs.readFileSync(exampleCardAudioPath, 'utf-8');

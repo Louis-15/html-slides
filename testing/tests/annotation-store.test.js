@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const annotationStorePath = path.join(projectRoot, 'assets', 'annotation-store.js');
+const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
 const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
 
 function parseAnnotationPayload(jsContent) {

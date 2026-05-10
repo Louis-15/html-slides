@@ -7,8 +7,8 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const slidesRuntimePath = path.join(projectRoot, 'assets', 'slides-runtime.js');
-const pageRuntimePath = path.join(projectRoot, 'assets', 'page-richtext-annotation-runtime.js');
+const slidesRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'slides-runtime.js');
+const pageRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'page-richtext-annotation-runtime.js');
 const fragmentCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 
 const slidesRuntimeSource = fs.readFileSync(slidesRuntimePath, 'utf-8');

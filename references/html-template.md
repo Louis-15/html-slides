@@ -132,15 +132,15 @@ Every generated HTML file **must** comply with these rules:
     <script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>
 
     <!-- JS: All via external <script src> references. Order matters. -->
-    <script src="./assets/slides-runtime.js"></script>
+    <script src="./assets/runtime/slides-runtime.js"></script>
 
     <!-- Global audio runtime (always include for page-turn / focus / interaction cues) -->
-    <script src="./assets/audio-runtime.js"></script>
+    <script src="./assets/audio/audio-runtime.js"></script>
 
     <!-- Quiz & Annotation runtime stack (include only when the courseware contains .quiz-annotation) -->
-    <script src="./assets/annotation-store.js"></script>
-    <script src="./assets/quiz-annotation-audio.js"></script>
-    <script src="./assets/quiz-annotation-runtime.js"></script>
+    <script src="./assets/runtime/annotation-store.js"></script>
+    <script src="./assets/audio/quiz-annotation-audio.js"></script>
+    <script src="./assets/runtime/quiz-annotation-runtime.js"></script>
 
     <!-- Editor modules (always included): strict dependency order -->
     <script src="./assets/editor/editor-utils.js"></script>
@@ -149,12 +149,12 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/editor/editor-box-manager.js"></script>
     <script src="./assets/editor/editor-rich-text.js"></script>
     <script src="./assets/editor/editor-core.js"></script>
-    <script src="./assets/page-richtext-annotation-runtime.js"></script>
-    <script src="./assets/doodle-runtime.js"></script>
+    <script src="./assets/runtime/page-richtext-annotation-runtime.js"></script>
+    <script src="./assets/runtime/doodle-runtime.js"></script>
 
     <!-- Example Card runtime stack (include only when the courseware contains .example-card) -->
-    <script src="./assets/example-card-audio.js"></script>
-    <script src="./assets/example-card-runtime.js"></script>
+    <script src="./assets/audio/example-card-audio.js"></script>
+    <script src="./assets/runtime/example-card-runtime.js"></script>
 
     <!-- Example Card: placed directly in DOM (no <template> wrapper).
          Runtime auto-discovers .example-card elements and initializes them via initAll().
@@ -223,22 +223,22 @@ All elements get **unified drag/delete controls** (📍✖) via `BoxManager._inj
 Reference `audio-runtime.js` at the **end of `<body>`**, immediately AFTER `slides-runtime.js`:
 
 ```html
-<script src="./assets/audio-runtime.js"></script>
+<script src="./assets/audio/audio-runtime.js"></script>
 ```
 
 If the courseware contains `.quiz-annotation`, reference the quiz runtime stack AFTER `audio-runtime.js` and BEFORE the editor modules, in this order:
 
 ```html
-<script src="./assets/annotation-store.js"></script>
-<script src="./assets/quiz-annotation-audio.js"></script>
-<script src="./assets/quiz-annotation-runtime.js"></script>
+<script src="./assets/runtime/annotation-store.js"></script>
+<script src="./assets/audio/quiz-annotation-audio.js"></script>
+<script src="./assets/runtime/quiz-annotation-runtime.js"></script>
 ```
 
 If the courseware contains `.example-card`, reference the example-card stack AFTER `doodle-runtime.js` so the runtime can patch `editor/editor-core.js` and talk to the ordinary page fragment host safely:
 
 ```html
-<script src="./assets/example-card-audio.js"></script>
-<script src="./assets/example-card-runtime.js"></script>
+<script src="./assets/audio/example-card-audio.js"></script>
+<script src="./assets/runtime/example-card-runtime.js"></script>
 ```
 
 Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and `doodle-runtime.js` in **strict dependency order**:
@@ -250,8 +250,8 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="./assets/editor/editor-box-manager.js"></script>
 <script src="./assets/editor/editor-rich-text.js"></script>
 <script src="./assets/editor/editor-core.js"></script>
-<script src="./assets/page-richtext-annotation-runtime.js"></script>
-<script src="./assets/doodle-runtime.js"></script>
+<script src="./assets/runtime/page-richtext-annotation-runtime.js"></script>
+<script src="./assets/runtime/doodle-runtime.js"></script>
 ```
 
 > **WARNING:** Loading order is critical. `audio-runtime.js` must load before any runtime that plays cues; `editor/editor-utils.js` must be first in the editor chain; `editor/editor-core.js` must finish before `page-richtext-annotation-runtime.js` binds ordinary-page fragment hooks; `example-card-runtime.js` must load after `editor/editor-core.js` because it patches the editor-mode exit guard for multi-answer validation.
@@ -383,26 +383,32 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
 │   ├── zone2-example-card.css         # Zone 2 example-card component
 │   └── zone3-summary.css      # Zone 3 summary panel
+├── runtime/
+│   ├── slides-runtime.js              # Navigation JS
+│   ├── audio-runtime.js               # Global audio cue bus (always included)
+│   ├── annotation-store.js            # Quiz annotation sidecar persistence
+│   ├── quiz-annotation-audio.js       # Quiz annotation audio adapter
+│   ├── quiz-annotation-runtime.js     # Quiz annotation runtime
+│   ├── example-card-audio.js          # Example-card audio adapter
+│   ├── example-card-runtime.js        # Example-card runtime
+│   ├── page-richtext-annotation-runtime.js  # Ordinary-page hidden rich-text runtime
+│   └── doodle-runtime.js              # Doodle overlay
 ├── editor/
 │   ├── editor.css                 # Editor UI CSS (always included)
-├── slides-runtime.js          # Navigation JS
-├── audio-runtime.js           # Global audio cue bus (always included)
-├── annotation-store.js        # Quiz annotation sidecar persistence (when quiz-annotation is used)
-├── quiz-annotation-audio.js   # Quiz annotation audio adapter (when quiz-annotation is used)
-├── quiz-annotation-runtime.js # Quiz annotation runtime (when quiz-annotation is used)
-├── example-card-audio.js      # Example-card audio adapter (when .example-card is used)
-├── example-card-runtime.js    # Example-card runtime (when .example-card is used)
-├── editor/
 │   ├── editor-utils.js            # Editor base utilities
 │   ├── editor-persistence.js      # localStorage + export
 │   ├── editor-history.js          # Undo/redo
 │   ├── editor-box-manager.js      # Text/image box management
 │   ├── editor-rich-text.js        # Rich text toolbar logic
 │   └── editor-core.js             # Editor orchestrator + dynamic toolbar injection
-├── page-richtext-annotation-runtime.js # Ordinary-page hidden rich-text runtime
-├── doodle-runtime.js          # Doodle overlay
-├── slide-animations.css       # Custom animations for this courseware
-└── [images]                   # Any courseware images
+├── audio/
+│   ├── audio-runtime.js               # Global audio cue bus (always included)
+│   ├── quiz-annotation-audio.js       # Quiz annotation audio adapter
+│   ├── example-card-audio.js          # Example-card audio adapter
+│   └── sound/
+│       ├── pop.mp3                # UI sound effects
+│       ├── turn_page.mp3
+│       └── ...
 ```
 
 Multiple courseware files sharing one project:

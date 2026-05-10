@@ -7,13 +7,13 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'slides-runtime.js');
+const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'slides-runtime.js');
 const componentsPath = path.join(projectRoot, 'assets', 'components.css');
-const quizRuntimePath = path.join(projectRoot, 'assets', 'quiz-annotation-runtime.js');
-const exampleCardRuntimePath = path.join(projectRoot, 'assets', 'example-card-runtime.js');
-const pageRichTextRuntimePath = path.join(projectRoot, 'assets', 'page-richtext-annotation-runtime.js');
+const quizRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'quiz-annotation-runtime.js');
+const exampleCardRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'example-card-runtime.js');
+const pageRichTextRuntimePath = path.join(projectRoot, 'assets', 'runtime', 'page-richtext-annotation-runtime.js');
 const zone1HeaderPath = path.join(projectRoot, 'assets', 'zones', 'zone1-header.css');
-const zone2ContentPath = path.join(projectRoot, 'assets', 'zones', 'zone2-content.css');
+const zone2ContentPath = path.join(projectRoot, 'assets', 'zones', 'zone2-layout.css');
 const zone3SummaryPath = path.join(projectRoot, 'assets', 'zones', 'zone3-summary.css');
 const xindongfangThemePath = path.join(projectRoot, 'assets', 'themes', 'xindongfang-green.css');
 const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');

@@ -7,10 +7,10 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const editorUtilsPath = path.join(projectRoot, 'assets', 'editor-utils.js');
-const editorPersistencePath = path.join(projectRoot, 'assets', 'editor-persistence.js');
-const editorCorePath = path.join(projectRoot, 'assets', 'editor-core.js');
-const annotationStorePath = path.join(projectRoot, 'assets', 'annotation-store.js');
+const editorUtilsPath = path.join(projectRoot, 'assets', 'editor', 'editor-utils.js');
+const editorPersistencePath = path.join(projectRoot, 'assets', 'editor', 'editor-persistence.js');
+const editorCorePath = path.join(projectRoot, 'assets', 'editor', 'editor-core.js');
+const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
 
 const editorUtilsSource = fs.readFileSync(editorUtilsPath, 'utf-8');
 const editorPersistenceSource = fs.readFileSync(editorPersistencePath, 'utf-8');

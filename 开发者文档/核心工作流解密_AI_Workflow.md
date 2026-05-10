@@ -43,7 +43,7 @@
    受限于“单 HTML 原则”，Agent 将多个底层文件强行进行合并（Minify & Inject）：
    - 将负责自适应视口的重置样式 **`assets/viewport-base.css`** 及通用组件样式 **`assets/components.css`**，直接插入至 `<style>` 标签的根部。
    - 插入所选主题的 CSS 变量注册表（如 **`assets/themes/editorial-light.css`**）。
-   - 将提供前端 DOM 事件监听和基础页面控制引擎的 **`assets/slides-runtime.js`** 直接挂载到页面底部的 `<script>` 中。
+   - 将提供前端 DOM 事件监听和基础页面控制引擎的 **`assets/runtime/slides-runtime.js`** 直接挂载到页面底部的 `<script>` 中。
 
 3. **演讲者备注序列化注入 (Speaker Notes Backend JSON)**：
    这是针对商业场景极其关键的一步。Agent 根据幻灯片的可视内容，自己推演出符合演讲人临场语气的串词，并将这些信息序列化成 JSON 字典：
