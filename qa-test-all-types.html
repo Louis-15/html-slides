@@ -16,7 +16,19 @@
     <link rel="stylesheet" href="./assets/zones/zone2-layout.css">
     <link rel="stylesheet" href="./assets/zones/zone2-components.css">
     <link rel="stylesheet" href="./assets/zones/zone2-immersive-components.css">
-    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-layout.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-passage.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-notes-panel.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-answer-panel.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-anchors-bubbles.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-connectors.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-dragdrop.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-isolation.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-linking.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-scrollbar.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-toolbar.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-responsive.css">
+    <link rel="stylesheet" href="./assets/zones/zone2-quiz-annotation/quiz-editor-mode.css">
     <link rel="stylesheet" href="./assets/zones/zone3-summary.css">
     <link rel="stylesheet" href="./assets/editor/editor.css">
 </head>
@@ -777,7 +789,35 @@
 <script src="./assets/audio/audio-runtime.js"></script>
 <script src="./assets/runtime/annotation-store.js"></script>
 <script src="./assets/audio/quiz-annotation-audio.js"></script>
-<script src="./assets/runtime/quiz-annotation-runtime.js?v=2"></script>
+<!-- 层级1：无依赖 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-core.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-constants.js"></script>
+
+<!-- 层级2：依赖层级1 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-fragments.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-persistence.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-connectors.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-panel.js"></script>
+
+<!-- 层级3：依赖层级1-2 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-dragdrop.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-header.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-linking.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-activation.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-stepping.js"></script>
+
+<!-- 层级4：答题系统 -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-base.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-single.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-matching.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-blank.js"></script>
+
+<!-- 层级5：交互 UI -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-note-interactions.js"></script>
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-toolbar.js"></script>
+
+<!-- 层级6：初始化总控（必须最后加载） -->
+<script src="./assets/runtime/zone2-quiz-annotation/quiz-init.js?v=3"></script>
 <script src="./assets/editor/editor-utils.js"></script>
 <script src="./assets/editor/editor-persistence.js"></script>
 <script src="./assets/editor/editor-history.js"></script>

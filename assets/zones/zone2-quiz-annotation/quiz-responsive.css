@@ -1,0 +1,29 @@
+/* ===========================================
+   quiz-responsive.css
+   答题与批注组件 — 响应式与无障碍
+   包含：14.16 响应式与无障碍
+   =========================================== */
+
+/* --- 14.16 响应式与无障碍 --- */
+@media (prefers-reduced-motion: reduce) {
+  .qa-body,
+  .qa-answer-panel,
+  .qa-notes-panel,
+  .qa-note-bubble,
+  .qa-note-header,
+  .qa-question,
+  .qa-question-feedback,
+  .text-anchor,
+  .qa-anchor-text,
+  .text-anchor.anchor-active,
+  .answer-anchor.anchor-active,
+  .note-badge,
+  .qa-option,
+  .qa-status-dot,
+  .qa-annotation-toolbar,
+  .qa-note-fragment-toolbar,
+  .qa-divider-btn {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

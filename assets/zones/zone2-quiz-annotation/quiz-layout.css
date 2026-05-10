@@ -1,0 +1,147 @@
+/* ===========================================
+   quiz-layout.css
+   答题与批注组件 — 沉浸式逃逸与三栏 Grid 布局
+   包含：14.0 沉浸式逃逸、14.1 根容器、14.2 Grid 主体、14.3 分割线、14.4 左栏基础
+   =========================================== */
+
+/* ===========================================
+   14.0 沉浸式逃逸 (Immersive Override)
+   通过 :has() 伪类自动隐藏 Zone 1 标题栏，
+   使 Zone 2 霸占全页高度。
+   =========================================== */
+.slide:has(.quiz-annotation) .slide-header {
+  display: none !important;
+}
+
+.slide:has(.quiz-annotation) .slide-content {
+  margin-top: 0;
+  flex: 1;
+  max-width: none;
+  /* 打破 1100px 限宽，霸占全屏 */
+  padding: 12px 0 0 0;
+  /* 仅保留顶部 12px 呼吸空间避开工具栏阴影，其余方向边距清零 */
+}
+
+/* --- 14.1 组件根容器 --- */
+.quiz-annotation {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  /* 占满 slide-content 剩余空间 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  /* 组件内部四方向外围 padding 全部清零，由 .slide / .slide-content 统管 */
+  padding: 0;
+  /* 焦点态使用组件级极光令牌统一驱动左右端点、角标与中间批注头条，
+     这样后续若要整体调弱/调慢，只需要在这里改一组变量即可。 */
+  --qa-focus-aurora: linear-gradient(120deg,
+      rgba(0, 210, 255, 0.98) 0%,
+      rgba(45, 116, 255, 0.98) 34%,
+      rgba(255, 201, 58, 0.98) 68%,
+      rgba(151, 91, 255, 0.96) 100%);
+  --qa-focus-aurora-soft: linear-gradient(120deg,
+      rgba(0, 210, 255, 0.58) 0%,
+      rgba(45, 116, 255, 0.5) 34%,
+      rgba(255, 201, 58, 0.46) 68%,
+      rgba(151, 91, 255, 0.42) 100%);
+  --qa-focus-aurora-size: 220% 220%;
+  --qa-focus-aurora-duration: 9s;
+  --qa-reading-edge-safe-gutter: 0px;
+}
+
+.quiz-annotation:not(.has-quiz) {
+  --qa-reading-edge-safe-gutter: 36px;
+}
+
+/* --- 14.2 主体区域：CSS Grid 三栏布局 --- */
+.qa-body {
+  flex: 1;
+  display: grid;
+  /* 默认：纯文章解析（无答题内容），只有正文 */
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quiz-annotation:not(.has-quiz) .qa-body {
+  padding-right: var(--qa-reading-edge-safe-gutter);
+  box-sizing: border-box;
+}
+
+/* 有答题内容时：左栏 + 右栏（批注隐藏态） */
+.quiz-annotation.has-quiz .qa-body {
+  grid-template-columns: 5fr 3fr;
+}
+
+/* 批注面板展开时：左中右三栏 */
+.quiz-annotation.has-quiz.notes-active .qa-body {
+  grid-template-columns: 5fr 2fr 3fr;
+}
+
+/* 纯文章解析 + 批注展开时：左2 + 中1 */
+.quiz-annotation:not(.has-quiz).notes-active .qa-body {
+  grid-template-columns: 2fr 1fr;
+}
+
+/* --- 14.3 栏间分割线 --- */
+.qa-body::before,
+.qa-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 5;
+  pointer-events: none;
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+}
+
+/* 第一条分割线：左栏和中栏/右栏之间 */
+.qa-body::before {
+  left: var(--divider-1-left, 62.5%);
+  opacity: 1;
+}
+
+/* 第二条分割线：中栏和右栏之间（仅批注展开+有答题时可见） */
+.qa-body::after {
+  left: var(--divider-2-left, 70%);
+  opacity: 0;
+}
+
+.quiz-annotation.has-quiz.notes-active .qa-body::after {
+  opacity: 1;
+}
+
+/* 纯文章无答题时，只有一条分割线在批注展开时可见 */
+.quiz-annotation:not(.has-quiz):not(.notes-active) .qa-body::before {
+  opacity: 0;
+}
+
+/* 【关键视觉修复】：因为气泡是带 backdrop-filter 的半透明玻璃盒子，如果底下存在分割线，
+   即使 z-index 是物理正确的（分割线在底下），依然会像玻璃一样把背景的竖线透出来。
+   所以当处于"焦点霸屏态"时，直接做隐藏退让处理。 */
+.quiz-annotation.has-active-note .qa-body::before,
+.quiz-annotation.has-active-note .qa-body::after {
+  opacity: 0 !important;
+}
+
+/* --- 14.4 正文/题干区域（左栏）基础 --- */
+.qa-passage {
+  grid-column: 1;
+  grid-row: 1;
+  overflow-y: auto;
+  padding: 0 20px 0 0;
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.9;
+  color: var(--text);
+  scroll-behavior: smooth;
+  min-height: 0;
+  min-width: 0;
+}

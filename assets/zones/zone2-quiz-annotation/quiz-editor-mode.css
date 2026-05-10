@@ -1,0 +1,58 @@
+/* ===========================================
+   quiz-editor-mode.css
+   答题与批注组件 — 编辑模式补丁
+   包含：编辑模式专属视觉覆盖规则
+   =========================================== */
+
+/* 答题与批注组件专用的溢出防裁切方案 */
+.editor-mode .quiz-annotation .qa-passage,
+.editor-mode .quiz-annotation .qa-answer-panel {
+  padding-top: 40px !important;
+}
+
+/* 编辑模式全局光标覆盖 */
+body.editor-mode .qa-note-bubble,
+body.editor-mode .qa-passage,
+body.editor-mode .qa-answer-panel,
+body.editor-mode .qa-option {
+  cursor: url('data:image/svg+xml;utf8,<svg width="12" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M3 2h6M6 2v16M3 18h6" stroke="black" stroke-width="1.5" fill="none"/></svg>') 6 10, text !important;
+  caret-color: #000 !important;
+}
+
+/* 编辑模式下所有气泡展开 */
+html.editor-mode .quiz-annotation.notes-active .qa-note-bubble,
+body.editor-mode .quiz-annotation.notes-active .qa-note-bubble {
+  display: flex;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.editor-mode .qa-answer-key-row,
+body.editor-mode .qa-answer-key-row {
+  display: flex;
+}
+
+html.editor-mode .qa-answer-key-chip,
+body.editor-mode .qa-answer-key-chip {
+  cursor: pointer !important;
+}
+
+html.editor-mode .qa-note-bubble .qa-note-content,
+body.editor-mode .qa-note-bubble .qa-note-content {
+  display: block !important;
+  line-clamp: unset;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* 编辑模式下隐藏判分相关反馈 */
+html.editor-mode .qa-question-feedback,
+body.editor-mode .qa-question-feedback,
+html.editor-mode .qa-slot-feedback,
+body.editor-mode .qa-slot-feedback,
+html.editor-mode .qa-slot-correct,
+body.editor-mode .qa-slot-correct,
+html.editor-mode .qa-result-mark,
+body.editor-mode .qa-result-mark {
+  display: none !important;
+}

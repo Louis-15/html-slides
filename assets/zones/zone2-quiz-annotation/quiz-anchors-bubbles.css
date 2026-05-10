@@ -1,0 +1,322 @@
+/* ===========================================
+   quiz-anchors-bubbles.css
+   答题与批注组件 — 原文锚点与批注气泡
+   包含：14.7 原文锚点 + 角标、14.8 批注气泡
+   =========================================== */
+
+/* --- 14.7 原文锚点 + 角标 --- */
+.text-anchor {
+  position: relative;
+  transition: background 0.25s;
+  border-radius: 2px;
+}
+
+.qa-anchor-text {
+  display: inline;
+}
+
+.text-anchor.anchor-active,
+.answer-anchor.anchor-active {
+  color: inherit;
+  border-radius: 0.22em;
+  text-decoration-color: transparent !important;
+  text-decoration-thickness: 0.12em !important;
+  text-decoration-skip-ink: none !important;
+  text-underline-offset: 0.08em !important;
+  background-image: none;
+}
+
+.text-anchor.anchor-active .qa-anchor-text,
+.answer-anchor.anchor-active .qa-anchor-text {
+  padding-bottom: 0.14em;
+  border-bottom: 0.162em solid transparent;
+  border-image-source: var(--qa-focus-aurora);
+  border-image-slice: 1;
+  border-image-repeat: stretch;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.note-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: -0.6em;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background-color: var(--brand-primary, var(--accent-blue));
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  z-index: 5;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  text-indent: 0;
+}
+
+.note-badge:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+}
+
+.text-anchor.anchor-active .note-badge,
+.answer-anchor.anchor-active .note-badge {
+  color: #fff;
+  background-image: var(--qa-focus-aurora);
+  background-size: var(--qa-focus-aurora-size);
+  background-position: 0% 50%;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 0 12px rgba(45, 116, 255, 0.28),
+    0 0 22px rgba(255, 201, 58, 0.22);
+  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
+}
+
+@keyframes qaAuroraShift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* 右栏答题条目的锚点角标 — 横向排列 */
+.answer-anchor {
+  position: relative;
+}
+
+.answer-anchor .note-badge {
+  margin-right: 2px;
+}
+
+/* ===========================================
+   14.8 批注气泡 (.qa-note-bubble)
+   Glassmorphism 风格，点击切换激活，拖拽手柄与序号合并。
+   =========================================== */
+.qa-note-bubble {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(13px, 1.3vw, 17px);
+  line-height: 1.65;
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  isolation: isolate;
+}
+
+.quiz-annotation.notes-active .qa-note-bubble:not(.note-expanded):not(.note-active) {
+  display: none;
+}
+
+/* 气泡激活态 */
+.qa-note-bubble.note-active {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(78, 186, 255, 0.42);
+  box-shadow:
+    0 10px 26px rgba(18, 34, 60, 0.16),
+    0 0 8px 1px rgba(78, 186, 255, 0.26),
+    0 0 16px 4px rgba(78, 186, 255, 0.14),
+    0 0 28px 8px rgba(84, 210, 176, 0.06);
+  transform: translateY(-1px);
+  z-index: 10;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+.qa-note-bubble.note-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(145deg,
+    rgba(228, 244, 255, 0.9) 0%,
+    rgba(226, 247, 239, 0.88) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(79, 145, 255, 0.46);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.qa-note-bubble.note-active.note-activating {
+  transform-origin: center top;
+  animation: qa-note-focus-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes qa-note-focus-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
+  }
+}
+
+/* 降噪：有激活气泡时，其余气泡半透明 + 轻微缩小 */
+.quiz-annotation.has-active-note .qa-note-bubble.note-expanded:not(.note-active) {
+  opacity: 0.72;
+  transform: none;
+}
+
+/* 顶部头部：包含序号和操作按钮的横条 */
+.qa-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 4px 8px;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.08);
+  border-bottom: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.15);
+  border-radius: 11px 11px 0 0;
+  cursor: grab;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.qa-note-header:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.18);
+}
+
+.qa-note-header:active {
+  cursor: grabbing;
+}
+
+.qa-note-bubble.note-active .qa-note-header {
+  color: #fff;
+  background-image: var(--qa-focus-aurora);
+  background-size: var(--qa-focus-aurora-size);
+  background-position: 0% 50%;
+  animation: qaAuroraShift var(--qa-focus-aurora-duration) ease-in-out infinite;
+  border-bottom: none;
+}
+
+.qa-note-handle {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.qa-note-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--brand-primary, var(--accent-blue));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.qa-note-bubble.note-active .qa-note-step {
+  background-color: rgba(255, 255, 255, 0.92);
+  color: rgba(76, 122, 173, 0.96);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+}
+
+/* 气泡内容区 */
+.qa-note-content {
+  display: block;
+  padding: 8px 12px 12px 12px;
+  outline: none;
+}
+
+.qa-note-bubble:not(.note-active):not(.note-expanded) .qa-note-content {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 操作按钮组 */
+.qa-note-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.qa-note-bubble:hover .qa-note-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qa-note-action-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: rgba(128, 128, 128, 0.15);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qa-note-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--brand-primary, #333);
+}
+
+.qa-note-action-btn.link-btn {
+  color: var(--brand-primary, var(--accent-blue));
+}
+
+.qa-note-bubble.note-active .qa-note-action-btn {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.qa-note-bubble.note-active .qa-note-action-btn:hover {
+  background-color: #fff;
+  color: var(--brand-secondary, var(--accent-orange, #f39800));
+}
+
+/* 非编辑模式下的显隐逻辑：只显示跳转原文图标 */
+html:not(.editor-mode) .qa-note-action-btn:not(.action-select-left):not(.action-select-right) {
+  display: none !important;
+}

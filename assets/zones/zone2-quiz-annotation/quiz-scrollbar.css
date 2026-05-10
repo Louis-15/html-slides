@@ -1,0 +1,35 @@
+/* ===========================================
+   quiz-scrollbar.css
+   答题与批注组件 — 隐形滚动条
+   包含：14.14 隐形滚动条
+   =========================================== */
+
+/* --- 14.14 隐形滚动条 --- */
+.qa-passage::-webkit-scrollbar,
+.qa-answer-content::-webkit-scrollbar,
+.qa-answer-options-scroll::-webkit-scrollbar,
+.qa-notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.qa-passage::-webkit-scrollbar-track,
+.qa-answer-content::-webkit-scrollbar-track,
+.qa-answer-options-scroll::-webkit-scrollbar-track,
+.qa-notes-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.qa-passage::-webkit-scrollbar-thumb,
+.qa-answer-content::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll::-webkit-scrollbar-thumb,
+.qa-notes-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.qa-passage:hover::-webkit-scrollbar-thumb,
+.qa-answer-content:hover::-webkit-scrollbar-thumb,
+.qa-answer-options-scroll:hover::-webkit-scrollbar-thumb,
+.qa-notes-list:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}

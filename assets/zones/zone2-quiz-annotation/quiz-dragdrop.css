@@ -1,0 +1,54 @@
+/* ===========================================
+   quiz-dragdrop.css
+   答题与批注组件 — 拖拽占位符
+   包含：14.10 拖拽占位符
+   =========================================== */
+
+/* --- 14.10 拖拽占位符 --- */
+.qa-note-placeholder {
+  min-height: 60px;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.05);
+  border: 2px dashed rgba(var(--brand-primary-rgb, 88, 166, 255), 0.3);
+  border-radius: 12px;
+  transition: min-height 0.2s;
+  pointer-events: none;
+}
+
+/* --- 14.11 分割线悬浮按钮（批注隐藏态的入口） --- */
+.qa-divider-btn {
+  position: absolute;
+  z-index: 30;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.12);
+  border: 1px solid rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+  color: var(--brand-primary, var(--accent-blue));
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  transform: translateX(-50%);
+}
+
+.qa-divider-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qa-divider-btn:hover {
+  background-color: rgba(var(--brand-primary-rgb, 88, 166, 255), 0.25);
+  transform: translateX(-50%) scale(1.1);
+}
+
+.qa-divider-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.quiz-annotation.notes-active .qa-divider-btn {
+  display: none;
+}

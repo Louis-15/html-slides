@@ -1,0 +1,41 @@
+/* ===========================================
+   quiz-isolation.css
+   答题与批注组件 — 答题隔离规则
+   包含：14.12 答题隔离规则
+   =========================================== */
+
+/* --- 14.12 答题隔离规则 --- */
+.quiz-annotation.has-quiz:not(.submitted) .note-badge {
+  display: none;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .text-anchor,
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor {
+  text-decoration: none !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted).notes-active .qa-notes-panel {
+  display: flex !important;
+}
+
+.quiz-annotation.has-quiz:not(.submitted) .answer-anchor .note-badge {
+  display: none;
+}
+
+.quiz-annotation.submitted .note-badge {
+  animation: qaFadeIn 0.5s ease both;
+}
+
+@keyframes qaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

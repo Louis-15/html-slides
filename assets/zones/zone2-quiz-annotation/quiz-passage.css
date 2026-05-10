@@ -1,0 +1,92 @@
+/* ===========================================
+   quiz-passage.css
+   答题与批注组件 — 左栏正文与题型胶囊
+   包含：14.4 左栏正文完整样式（题型胶囊、空位槽等）
+   =========================================== */
+
+.qa-reading-type-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  margin: 0 0 14px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--brand-primary-rgb, 0, 163, 85), 0.2);
+  background: linear-gradient(135deg, rgba(var(--brand-primary-rgb, 0, 163, 85), 0.14), rgba(255, 255, 255, 0.2));
+  color: var(--brand-primary, #00A355);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 22px rgba(var(--brand-primary-rgb, 0, 163, 85), 0.08);
+}
+
+.quiz-annotation[data-reading-type-resolved="analysis"] .qa-reading-type-pill {
+  border-color: rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.22);
+  background: linear-gradient(135deg, rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.12), rgba(255, 255, 255, 0.2));
+  color: var(--brand-secondary, #3a82f6);
+  box-shadow: 0 8px 22px rgba(var(--brand-secondary-rgb, 58, 130, 246), 0.08);
+}
+
+.quiz-annotation[data-reading-type-resolved="matching"] .qa-reading-type-pill {
+  border-color: rgba(243, 152, 0, 0.22);
+  background: linear-gradient(135deg, rgba(243, 152, 0, 0.14), rgba(255, 255, 255, 0.2));
+  color: var(--accent-orange, #f39800);
+  box-shadow: 0 8px 22px rgba(243, 152, 0, 0.1);
+}
+
+.qa-passage .qa-blank-slot {
+  display: inline-block;
+  margin: 0 0.18em 0 0.03em;
+  vertical-align: baseline;
+  line-height: 1;
+  white-space: nowrap;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-user {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: end;
+  column-gap: 0.08em;
+  vertical-align: baseline;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-value {
+  display: inline-block;
+  width: 2.45em;
+  padding: 0 0 0.08em;
+  box-sizing: border-box;
+  border-bottom: 2px solid rgba(38, 61, 51, 0.45);
+  color: transparent;
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+  text-indent: 0;
+  letter-spacing: 0;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.qa-passage .qa-matching-passage-slot .qa-blank-user sup {
+  display: inline-block;
+  margin-right: 0.02em;
+  font-size: 1em !important;
+  font-weight: 800;
+  color: var(--brand-primary, #00A355) !important;
+  line-height: 1;
+  vertical-align: baseline;
+  text-indent: 0;
+}
+
+.qa-passage .qa-blank-slot.show-correct-answer .qa-blank-value {
+  color: var(--brand-primary, #00A355);
+  border-bottom-color: rgba(var(--brand-primary-rgb, 0, 163, 85), 0.6);
+}
+
+.qa-passage .qa-blank-answer,
+.qa-passage .qa-matching-passage-slot .qa-result-mark,
+.qa-passage .qa-matching-passage-slot .qa-blank-correct {
+  display: none !important;
+}

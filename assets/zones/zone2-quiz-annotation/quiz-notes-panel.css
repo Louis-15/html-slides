@@ -1,0 +1,100 @@
+/* ===========================================
+   quiz-notes-panel.css
+   答题与批注组件 — 中栏批注面板
+   包含：14.5 批注面板、栏头、列表区域
+   =========================================== */
+
+/* --- 14.5 批注面板（中栏） --- */
+.qa-notes-panel {
+  grid-row: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  /* 默认隐藏 */
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 批注面板展开态 */
+.quiz-annotation.notes-active .qa-notes-panel {
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  overflow: visible;
+  position: relative;
+  z-index: 15;
+}
+
+/* 批注面板在 grid 中的列位置 */
+.quiz-annotation.has-quiz .qa-notes-panel {
+  grid-column: 2;
+}
+
+.quiz-annotation:not(.has-quiz) .qa-notes-panel {
+  grid-column: 2;
+}
+
+.quiz-annotation:not(.notes-active) .qa-notes-panel {
+  display: none;
+}
+
+/* --- 14.5.1 批注面板栏头 --- */
+.qa-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.qa-notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qa-notes-header-left svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+/* 折叠按钮 */
+.qa-notes-collapse-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+
+.qa-notes-collapse-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+/* --- 14.5.2 批注气泡列表区域 --- */
+.qa-notes-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 26px 32px 26px;
+  margin: 0 -18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}

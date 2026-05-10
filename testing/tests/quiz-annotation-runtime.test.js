@@ -7,13 +7,36 @@ import { JSDOM } from 'jsdom';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..', '..');
-const runtimePath = path.join(projectRoot, 'assets', 'runtime', 'quiz-annotation-runtime.js');
+const runtimeDir = path.join(projectRoot, 'assets', 'runtime', 'zone2-quiz-annotation');
+// 拆分为 18 个文件，按依赖拓扑排序
+const runtimePartFiles = [
+  'quiz-core.js',          // 层级1：无依赖
+  'quiz-constants.js',     // 层级1：无依赖
+  'quiz-fragments.js',     // 层级2
+  'quiz-persistence.js',   // 层级2
+  'quiz-connectors.js',    // 层级2
+  'quiz-panel.js',         // 层级2
+  'quiz-dragdrop.js',      // 层级3
+  'quiz-header.js',        // 层级3
+  'quiz-linking.js',       // 层级3
+  'quiz-activation.js',    // 层级3
+  'quiz-stepping.js',      // 层级3
+  'quiz-base.js',          // 层级4
+  'quiz-single.js',        // 层级4
+  'quiz-matching.js',      // 层级4
+  'quiz-blank.js',         // 层级4
+  'quiz-note-interactions.js', // 层级5
+  'quiz-toolbar.js',       // 层级5
+  'quiz-init.js'           // 层级6（最后加载）
+];
+const runtimeSource = runtimePartFiles
+  .map(function (f) { return fs.readFileSync(path.join(runtimeDir, f), 'utf-8'); })
+  .join('\n');
 const annotationStorePath = path.join(projectRoot, 'assets', 'runtime', 'annotation-store.js');
 const zoneCssPath = path.join(projectRoot, 'assets', 'zones', 'zone2-quiz-annotation.css');
 const editorCorePath = path.join(projectRoot, 'assets', 'editor', 'editor-core.js');
 const editorCssPath = path.join(projectRoot, 'assets', 'editor', 'editor.css');
 const editorRichTextPath = path.join(projectRoot, 'assets', 'editor', 'editor-rich-text.js');
-const runtimeSource = fs.readFileSync(runtimePath, 'utf-8');
 const annotationStoreSource = fs.readFileSync(annotationStorePath, 'utf-8');
 const annotationStoreTestSource = annotationStoreSource.replace(/\n\s*_init\(\);\s*\n\s*\}\)\(\);\s*$/, '\n\n})();\n');
 const zoneCssSource = fs.readFileSync(zoneCssPath, 'utf-8');
