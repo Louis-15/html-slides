@@ -121,8 +121,8 @@
    left 的百分比是相对于 .slide-content 的 padding-box 宽度计算的，
    但 grid 1fr 轨道是在 content-box（扣除了两端 padding）内分配的。
    所以实际缝隙中心比 33.333%/66.667% 更靠近中间，需要微调：
-   - 第1个缝隙中心 = 33.333% + 12px（gap 32px 时的值）
-   - 第2个缝隙中心 = 66.667% - 12px
+   - 第1个缝隙中心 = 33.333% + 10px（gap 32px 时的值）
+   - 第2个缝隙中心 = 66.667% - 10px
    gap 改为 40px 后缝隙宽度变大，VS 位置需重新微调。 */
 .slide-content.layout-3col.compare {
   position: relative;
