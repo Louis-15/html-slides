@@ -310,23 +310,23 @@ Image display component. No padding, fills the slot naturally.
 
 ### 12. Content Block / 内容块 (`.content-block`)
 
-Plain text container. Title is handled by Zone 1 header.
+纯文本容器，无边框装饰。标题由 Zone 1 负责。正文段落首行缩进2个汉字。
 
 ```html
 <div class="content-block">
-  <p class="text">[PARAGRAPH_TEXT with <span class="accent">emphasized phrases</span>]</p>
+  <p class="text" data-edit-id="[UNIQUE_ID]">[PARAGRAPH_TEXT with <span class="accent">emphasized phrases</span>]</p>
 </div>
 ```
 
-**Key Quote variant** (left border emphasis):
+**.callout variant** (重点内容 — 居中，带绿色圆形矩形框线):
 ```html
 <div class="content-block">
-  <h1>[KEY_POINT_TEXT]</h1>
-  <div class="cb-detail">[SUPPORTING_DETAIL]</div>
+  <div class="callout" data-edit-id="[UNIQUE_ID]">[KEY_POINT_TEXT]</div>
+  <p class="cb-detail" data-edit-id="[UNIQUE_ID]">[SUPPORTING_DETAIL]</p>
 </div>
 ```
 
-> **NOTE**: The old `.cb-wrap`, `.cb-heading`, `.cb-body`, `.cb-accent`, `.cb-number`, `.cb-pair`, `.cb-card`, `.cb-keyquote` are **replaced** by `.content-block`, `.text`, `.accent`, `.cb-detail`.
+> **NOTE**: The old `.cb-wrap`, `.cb-heading`, `.cb-body`, `.cb-accent`, `.cb-number`, `.cb-pair`, `.cb-card`, `.cb-keyquote`, and `h1` left-border quote are **replaced** by `.content-block`, `.text`, `.accent`, `.cb-detail`, and `.callout`. The `.callout` replaces the old `h1` key-quote style with a centered green-bordered box.
 
 **When to use**: General text content, key quotes, reading passages. The fallback when no other component fits.
 
