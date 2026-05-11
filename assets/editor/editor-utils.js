@@ -127,8 +127,9 @@
         '.table-wrap td',
         '.table-wrap th',
         /* 内容块与排版元素 */
-        '.content-block',
         '.text',
+        '.callout',
+        '.cb-detail',
         /* 封面标题组 */
         '.title-hero-subject',
         '.title-hero-heading',
