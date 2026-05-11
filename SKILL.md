@@ -185,6 +185,7 @@ For each slide, select from the 8 layout modes (+1 variant) based on content:
 | `layout-2col-wide-left` | Main text/passage + auxiliary notes |
 | `layout-2col-wide-right` | Labels/icons + main visual/text |
 | `layout-3col` | Three parallel concepts, three-step process |
+| `layout-3col.compare` | Same as 3col but with automatic "VS" circles between each column pair (variant, add `.compare` class) |
 | `layout-2row` | Sequential steps, before/after |
 | `layout-grid-2x2` | Four related concepts, 2×2 matrix |
 

@@ -2,12 +2,12 @@
   ZONE 2: 布局系统 (Layout System)
   从 zone2-content.css 拆分而来，仅含布局相关样式。
 
-  ┌─────────────────────────────────────────────┐
-  │ 布局系统 (8种 + 1变体)                        │
-  │  0.封面页  1.单列  2.等宽双栏(+对比变体)       │
-  │  3.左宽右窄  4.左窄右宽  5.三栏               │
-  │  6.双行  7.四宫格(动态行高)                    │
-  └─────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────┐
+  │ 布局系统 (8种 + 2变体)                         │
+  │  0.封面页  1.单列  2.等宽双栏(+对比变体)        │
+  │  3.左宽右窄  4.左窄右宽  5.三栏(+三栏对比变体)  │
+  │  6.双行  7.四宫格(动态行高)                     │
+  └──────────────────────────────────────────────┘
 
   通用组件已迁移到 zone2-components.css。
 
@@ -122,6 +122,41 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   align-items: stretch;
+}
+
+/* 5v. layout-3col.compare (三栏对比变体)
+   三栏之间自动插入两个 VS 圆圈标记（col1↔col2、col2↔col3） */
+.slide-content.layout-3col.compare {
+  position: relative;
+}
+
+.slide-content.layout-3col.compare::before,
+.slide-content.layout-3col.compare::after {
+  content: 'VS';
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(163, 113, 247, 0.2), rgba(88, 166, 255, 0.2));
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  z-index: 10;
+  animation: pulseGlow 3s ease infinite;
+}
+
+.slide-content.layout-3col.compare::before {
+  left: calc(100% / 3);          /* 位于第1与第2栏之间 */
+}
+
+.slide-content.layout-3col.compare::after {
+  left: calc(100% / 3 * 2);      /* 位于第2与第3栏之间 */
 }
 
 /* 6. layout-2row (双行)
