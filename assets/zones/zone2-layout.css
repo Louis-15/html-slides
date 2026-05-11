@@ -71,9 +71,10 @@
 }
 
 /* 2v. layout-2col.compare (对比变体)
-   双栏中间自动插入 VS 圆圈标记 */
+   双栏中间自动插入 VS 文字标记。gap 加宽到 40px 给 VS 留出呼吸空间。 */
 .slide-content.layout-2col.compare {
   position: relative;
+  gap: 40px;
 }
 
 .slide-content.layout-2col.compare::after {
@@ -82,19 +83,10 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 18px;
   font-weight: 800;
-  background: linear-gradient(135deg, rgba(163, 113, 247, 0.2), rgba(88, 166, 255, 0.2));
-  border: 1px solid var(--border);
   color: var(--text-dim);
   z-index: 10;
-  animation: pulseGlow 3s ease infinite;
 }
 
 /* 3. layout-2col-wide-left (左宽右窄)
@@ -125,9 +117,16 @@
 }
 
 /* 5v. layout-3col.compare (三栏对比变体)
-   三栏之间自动插入两个 VS 圆圈标记（col1↔col2、col2↔col3） */
+   三栏之间自动插入两个 VS 文字标记。gap 加宽到 40px 给 VS 留出呼吸空间。
+   left 的百分比是相对于 .slide-content 的 padding-box 宽度计算的，
+   但 grid 1fr 轨道是在 content-box（扣除了两端 padding）内分配的。
+   所以实际缝隙中心比 33.333%/66.667% 更靠近中间，需要微调：
+   - 第1个缝隙中心 = 33.333% + 12px（gap 32px 时的值）
+   - 第2个缝隙中心 = 66.667% - 12px
+   gap 改为 40px 后缝隙宽度变大，VS 位置需重新微调。 */
 .slide-content.layout-3col.compare {
   position: relative;
+  gap: 40px;
 }
 
 .slide-content.layout-3col.compare::before,
@@ -136,27 +135,20 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 18px;
   font-weight: 800;
-  background: linear-gradient(135deg, rgba(163, 113, 247, 0.2), rgba(88, 166, 255, 0.2));
-  border: 1px solid var(--border);
   color: var(--text-dim);
   z-index: 10;
-  animation: pulseGlow 3s ease infinite;
 }
 
 .slide-content.layout-3col.compare::before {
-  left: calc(100% / 3);          /* 位于第1与第2栏之间 */
+  /* 第1与第2栏之间 */
+  left: calc(33.333% + 10px);
 }
 
 .slide-content.layout-3col.compare::after {
-  left: calc(100% / 3 * 2);      /* 位于第2与第3栏之间 */
+  /* 第2与第3栏之间 */
+  left: calc(66.667% - 10px);
 }
 
 /* 6. layout-2row (双行)

@@ -455,18 +455,103 @@
                     <h3 data-edit-id="s8-summary-h3" data-edit-id-auto="true">📌 本页要点</h3>
                     <ul>
                         <li data-edit-id="s8-summary-1" data-edit-id-auto="true">图片块支持 screenshot / logo / fullbleed 三种样式</li>
-                        <li data-edit-id="s8-summary-2" data-edit-id-auto="true">共 15 种组件覆盖展示、交互、可视化三类需求</li>
+                        <li data-edit-id="s8-summary-2" data-edit-id-auto="true">共 18 种组件（含2种对比变体）覆盖展示、交互、可视化三类需求</li>
                         <li data-edit-id="s8-summary-3" data-edit-id-auto="true">6 种布局方案适配不同内容密度</li>
                     </ul>
                 </div>
             </div>
             <script type="application/json" class="slide-notes">
-            {"title":"图片块 + 全貌总结","script":"图片块组件支持三种样式变体，可与任意布局配合。到这一页为止，除例题组件和答题批注外的所有组件都已展示完毕。","notes":["图片块: image-block + slide-image","三种变体: screenshot / logo / fullbleed","总结面板可放在任意页"]}
+            {"title":"图片块 + 全貌总结","script":"图片块组件支持三种样式变体，可与任意布局配合。到这一页为止，除答题批注外的所有组件都已展示完毕。","notes":["图片块: image-block + slide-image","三种变体: screenshot / logo / fullbleed","总结面板可放在任意页"]}
             </script>
         </div>
 
-        <!-- ========== SLIDE 9: 例题组件 ========== -->
+        <!-- ========== SLIDE 9: 双栏对比变体 ========== -->
         <div class="slide" data-slide="9">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s-cmp2-module" data-edit-id-auto="true">3.2 布局变体 <span class="breadcrumb-sep">/</span> 双栏对比 VS</div>
+                <div class="header-title" data-edit-id="s-cmp2-title" data-edit-id-auto="true">layout-2col.compare：双栏之间自动插入 VS 圆圈</div>
+            </div>
+            <div class="slide-content layout-2col compare" style="overflow: visible;">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s-cmp2-c1-icon" data-edit-id-auto="true">📚</div>
+                        <div class="card-title" data-edit-id="s-cmp2-c1-title" data-edit-id-auto="true">传统教学</div>
+                        <div class="card-desc" data-edit-id="s-cmp2-c1-desc" data-edit-id-auto="true">教师为中心，单向讲授。学生被动接收知识，互动与反馈有限。</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s-cmp2-c2-icon" data-edit-id-auto="true">💡</div>
+                        <div class="card-title" data-edit-id="s-cmp2-c2-title" data-edit-id-auto="true">互动教学</div>
+                        <div class="card-desc" data-edit-id="s-cmp2-c2-desc" data-edit-id-auto="true">学生为中心，探究式学习。通过问答、讨论、实践主动建构知识。</div>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"双栏对比变体","script":"layout-2col.compare 在标准双栏布局的基础上，通过 ::after 伪元素在两栏中间自动绘制一个带脉冲光晕动画的 VS 圆圈，不需要额外 DOM 元素。","notes":["对比变体: layout-2col.compare","VS 圆圈由 CSS ::after 实现","适合两种方案对比、前后对比"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 10: 三栏对比变体 ========== -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s-cmp3-module" data-edit-id-auto="true">3.3 布局变体 <span class="breadcrumb-sep">/</span> 三栏对比 VS</div>
+                <div class="header-title" data-edit-id="s-cmp3-title" data-edit-id-auto="true">layout-3col.compare：三栏之间自动插入两个 VS 圆圈</div>
+            </div>
+            <div class="slide-content layout-3col compare" style="overflow: visible;">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s-cmp3-c1-icon" data-edit-id-auto="true">👁️</div>
+                        <div class="card-title" data-edit-id="s-cmp3-c1-title" data-edit-id-auto="true">视觉型</div>
+                        <div class="card-desc" data-edit-id="s-cmp3-c1-desc" data-edit-id-auto="true">偏好通过图表、图示、思维导图等视觉方式获取信息。占比约 65%。</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s-cmp3-c2-icon" data-edit-id-auto="true">👂</div>
+                        <div class="card-title" data-edit-id="s-cmp3-c2-title" data-edit-id-auto="true">听觉型</div>
+                        <div class="card-desc" data-edit-id="s-cmp3-c2-desc" data-edit-id-auto="true">偏好通过讲解、讨论、音频等方式获取信息。占比约 30%。</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-icon" data-edit-id="s-cmp3-c3-icon" data-edit-id-auto="true">✋</div>
+                        <div class="card-title" data-edit-id="s-cmp3-c3-title" data-edit-id-auto="true">动觉型</div>
+                        <div class="card-desc" data-edit-id="s-cmp3-c3-desc" data-edit-id-auto="true">偏好通过动手操作、角色扮演等实践方式学习。占比约 5%。</div>
+                    </div>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"三栏对比变体","script":"layout-3col.compare 在三栏等宽布局的基础上，通过 ::before 和 ::after 两个伪元素分别在 col1↔col2 和 col2↔col3 之间绘制 VS 圆圈，适合三方对比场景。","notes":["三栏对比: layout-3col.compare","两个 VS 圆圈: ::before + ::after","适合三向方案对比"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 11: 内容块组件 ========== -->
+        <div class="slide" data-slide="11">
+            <div class="slide-header banner">
+                <div class="header-module" data-edit-id="s-cb-module" data-edit-id-auto="true">3.4 文本组件 <span class="breadcrumb-sep">/</span> 内容块</div>
+                <div class="header-title" data-edit-id="s-cb-title" data-edit-id-auto="true">内容块组件（.content-block）的四种文本格式</div>
+            </div>
+            <div class="slide-content layout-single" style="overflow: visible;">
+                <div class="content-block">
+                    <p class="text" data-edit-id="s-cb-paragraph">内容块组件是纯文本容器，无边框装饰。这是<strong>正文段落</strong>（<code>.text</code>）样式——用于承载课件的主体教学内容，支持 <strong>粗体</strong>、<em>斜体</em>、<code>代码</code> 等内联格式。内容块可放入任何布局插槽，包括 <code>layout-single</code>、<code>layout-2col</code>、<code>layout-3col</code> 等。</p>
+
+                    <p class="text" data-edit-id="s-cb-accent">这是<strong>文内强调</strong>（<code>.accent</code>）样式：<span class="accent">通过 .accent 类突出显示关键词句</span>，在不改变整体排版的前提下吸引注意，适合标注定义、术语或重点数据。</p>
+
+                    <h1 data-edit-id="s-cb-quote">内容块组件可以嵌入任意布局插槽，由布局系统统一管理间距。</h1>
+
+                    <p class="cb-detail" data-edit-id="s-cb-detail">以上是<strong>重点引用</strong>（<code>h1</code> + 左侧竖线）的展示效果。竖线颜色自动继承主题品牌色（<code>--brand-primary</code>）。补充说明文字通过 <code>.cb-detail</code> 类呈现，字号略小于正文，适合跟随引用后提供扩展说明或出处来源。</p>
+
+                    <p class="text" data-edit-id="s-cb-note"><strong>提示：</strong>内容块既可以独立占用一整页（<code>layout-single</code>），也可以放在双栏或三栏的某个插槽中与其他组件搭配使用，完全由布局系统控制空间分配。</p>
+                </div>
+            </div>
+            <script type="application/json" class="slide-notes">
+            {"title":"内容块组件","script":"内容块组件提供四种文本格式：正文段落、文内强调、重点引用（左侧竖线大字）、引用后的补充文字。它不含边框或卡片外观，适合纯文本段落。","notes":["四种文本格式: text/accent/h1/cb-detail","可嵌入任何布局插槽","无边框纯文本容器"]}
+            </script>
+        </div>
+
+        <!-- ========== SLIDE 12: 例题组件 ========== -->
+        <div class="slide" data-slide="12">
             <div class="slide-header banner">
                 <div class="header-module" data-edit-id="s9-module" data-edit-id-auto="true">4.1 例题演练 <span class="breadcrumb-sep">/</span> 例题组件</div>
                 <div class="header-title" data-edit-id="s9-title" data-edit-id-auto="true">四种题型的完整作答体验</div>
@@ -572,17 +657,17 @@
             </script>
         </div>
 
-        <!-- ========== SLIDE 10: 结尾页 ========== -->
-        <div class="slide" data-slide="10">
+        <!-- ========== SLIDE 13: 结尾页 ========== -->
+        <div class="slide" data-slide="13">
             <div class="slide-content layout-title" style="overflow: visible;">
                 <p class="slide-tag anim-1" data-edit-id="s10-tag" data-edit-id-auto="true">组件展示</p>
                 <h1 class="anim-2" data-edit-id="s10-title" data-edit-id-auto="true">HTML-Slides<br><span class="rainbow-text">组件全览</span></h1>
-                <p class="subtitle anim-3" data-edit-id="s10-sub" data-edit-id-auto="true">15 种组件 · 6 种布局 · 3 种交互层级 · 100% 可编辑</p>
+                <p class="subtitle anim-3" data-edit-id="s10-sub" data-edit-id-auto="true">18 种组件 · 8 种布局 + 2 种对比变体 · 3 种交互层级 · 100% 可编辑</p>
                 <div class="rainbow-line anim-4"></div>
                 <p class="subtitle anim-5" style="font-size:14px;margin-top:8px;" data-edit-id="s10-footer" data-edit-id-auto="true">感谢观看 · 按 E 进入编辑模式体验编辑功能</p>
             </div>
             <script type="application/json" class="slide-notes">
-            {"title":"结尾","script":"HTML-Slides 提供了一套完整的教学课件组件体系。从展示到交互到可视化，覆盖了绝大多数教学场景的需求。所有内容都可以通过内置编辑器直接修改并保存。","notes":["15 种组件覆盖展示/交互/可视化","6 种布局方案","100% 可编辑","内置保存/读取机制"]}
+            {"title":"结尾","script":"HTML-Slides 提供了一套完整的教学课件组件体系。从展示到交互到可视化，覆盖了绝大多数教学场景的需求。所有内容都可以通过内置编辑器直接修改并保存。","notes":["18 种组件覆盖展示/交互/可视化","8 种布局模式 + 2 种对比变体","100% 可编辑","内置保存/读取机制"]}
             </script>
         </div>
 
