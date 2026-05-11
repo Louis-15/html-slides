@@ -538,15 +538,15 @@
 
                     <p class="text" data-edit-id="s-cb-accent">这是<strong>文内强调</strong>（<code>.accent</code>）样式：<span class="accent">通过 .accent 类突出显示关键词句</span>，在不改变整体排版的前提下吸引注意，适合标注定义、术语或重点数据。</p>
 
-                    <h1 data-edit-id="s-cb-quote">内容块组件可以嵌入任意布局插槽，由布局系统统一管理间距。</h1>
+                    <div class="callout" data-edit-id="s-cb-quote">内容块组件可以嵌入任意布局插槽，由布局系统统一管理间距。</div>
 
-                    <p class="cb-detail" data-edit-id="s-cb-detail">以上是<strong>重点引用</strong>（<code>h1</code> + 左侧竖线）的展示效果。竖线颜色自动继承主题品牌色（<code>--brand-primary</code>）。补充说明文字通过 <code>.cb-detail</code> 类呈现，字号略小于正文，适合跟随引用后提供扩展说明或出处来源。</p>
+                    <p class="cb-detail" data-edit-id="s-cb-detail">以上是<strong>重点内容</strong>（<code>.callout</code>）的展示效果。带圆角的绿色矩形框线，配合品牌色光晕，适合突出显示课件中的核心概念或金句。</p>
 
                     <p class="text" data-edit-id="s-cb-note"><strong>提示：</strong>内容块既可以独立占用一整页（<code>layout-single</code>），也可以放在双栏或三栏的某个插槽中与其他组件搭配使用，完全由布局系统控制空间分配。</p>
                 </div>
             </div>
             <script type="application/json" class="slide-notes">
-            {"title":"内容块组件","script":"内容块组件提供四种文本格式：正文段落、文内强调、重点引用（左侧竖线大字）、引用后的补充文字。它不含边框或卡片外观，适合纯文本段落。","notes":["四种文本格式: text/accent/h1/cb-detail","可嵌入任何布局插槽","无边框纯文本容器"]}
+            {"title":"内容块组件","script":"内容块组件提供四种文本格式：正文段落、文内强调、重点内容（带框线光晕）、补充说明。它不含边框或卡片外观，适合纯文本段落。","notes":["四种文本格式: text/accent/callout/cb-detail","可嵌入任何布局插槽","无边框纯文本容器"]}
             </script>
         </div>
 
