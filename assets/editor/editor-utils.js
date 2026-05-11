@@ -94,7 +94,7 @@
 
     /* 全量可编辑选择器：覆盖幻灯片内所有承载文本的叶子容器。
      * 这里上移到 utils，是为了让"稳定 data-edit-id 准备器"能在 editor-core 恢复 localStorage、
-     * 以及 annotation-store 回放 sidecar 之前就复用同一套候选范围，避免不同模块各自维护一份名单。 */
+     * 在 editor-core 恢复 localStorage 之前就复用同一套候选范围，避免不同模块各自维护一份名单。 */
     var EDITABLE_SELECTOR = [
         /* 带有显式编辑标记的元素（向后兼容） */
         '[data-edit-id]',

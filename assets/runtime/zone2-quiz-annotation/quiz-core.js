@@ -225,9 +225,8 @@
     var editId = contentEl.getAttribute('data-edit-id') || '';
     if (!editId) return;
 
-    /* 普通页面正文的恢复顺序是本地缓存优先，sidecar 兜底。
-       quiz 的动态气泡如果先吃到旧 sidecar，再吃 localStorage，就会把"第一次刷新里最新的本地改动"压回旧值，
-       于是出现必须刷新两次才能看到最新批注的错觉。这里显式对齐普通页面的恢复优先级。 */
+    /* 普通页面正文的恢复顺序是本地缓存优先，再尝试 AnnotationStore 的 getInitData 兜底。
+       虽然 AnnotationStore 运行时已经删除，但测试中仍可能定义该存根，保留此链路确保兼容。 */
     var persistedHTML = QA.readStoredEditableHTML(editId) ?? QA.getAnnotationStoreElementHTML(editId);
     if (persistedHTML !== null) {
       contentEl.innerHTML = persistedHTML;

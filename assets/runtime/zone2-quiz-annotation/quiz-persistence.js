@@ -151,40 +151,12 @@
     var immediate = !!(persistOptions && persistOptions.immediate === true);
 
     /* 新建批注、关联/解绑端点、删除批注都属于离散结构变更。
-       如果这里只走 debounce 的 sidecar 保存，用户在这一步后立刻刷新，
+       如果这里只走 debounce 保存，用户在这一步后立刻刷新，
        就可能只留下 new-note-* 的内容缓存，却丢掉 passage / answer 上的 anchor 结构，
        表现成"新批注没了，但再次新建又自动带回旧文字"。
-       因此这类链路必须先把最近的 data-edit-id 根块立即写入本地，再尽量立即 flush sidecar。 */
+       因此这类链路必须先把最近的 data-edit-id 根块立即写入本地，再尽快落盘。 */
     if (persistRoot && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
       window.PersistenceLayer.saveElement(persistRoot);
-    }
-
-    if (immediate && window.AnnotationStore) {
-      var canScheduleAnnotationSave = typeof window.AnnotationStore.scheduleSave === 'function';
-      var canSaveAnnotationImmediately = typeof window.AnnotationStore.saveNow === 'function';
-      var canEnsureAnnotationWriteAccess = typeof window.AnnotationStore.ensureWriteAccess === 'function';
-      var canAuthorizeAnnotationSave = typeof window.AnnotationStore.authorizeAndSave === 'function';
-      var hasAnnotationWriteAccess = typeof window.AnnotationStore.hasWriteAccess === 'function'
-        ? window.AnnotationStore.hasWriteAccess()
-        : true;
-
-      if (!hasAnnotationWriteAccess && canEnsureAnnotationWriteAccess) {
-        window.AnnotationStore.ensureWriteAccess().then(function (ok) {
-          if (!ok) return;
-          if (canSaveAnnotationImmediately) {
-            window.AnnotationStore.saveNow();
-          } else if (canScheduleAnnotationSave) {
-            window.AnnotationStore.scheduleSave();
-          }
-        }).catch(function () {});
-      } else if (!hasAnnotationWriteAccess && canAuthorizeAnnotationSave) {
-        window.AnnotationStore.authorizeAndSave().catch(function () {});
-      } else if (canSaveAnnotationImmediately) {
-        window.AnnotationStore.saveNow();
-      } else if (canScheduleAnnotationSave) {
-        window.AnnotationStore.scheduleSave();
-      }
-      return;
     }
 
     QA.scheduleAnnotationSave();
@@ -201,44 +173,15 @@
         : null);
 
     /* quiz 的 fragment authoring 也是按钮驱动的离散结构变更，不是持续键入。
-       如果这里只走 debounce sidecar 保存，那么用户在退出编辑模式后立刻刷新时，
+       如果这里只走 debounce 保存，那么用户在退出编辑模式后立刻刷新时，
        很容易在落盘 Promise 真正完成前读回旧数据，表现成"第一次刷新没生效，第二次才有"。
-       因此这里要和普通页面对齐：
-       1. 先把最近的 data-edit-id 根块立即写入 localStorage；
-       2. 再把 sidecar 尽量在当前手势里立即落盘；
-       3. 只有非离散事务才继续使用 scheduleSave 的 debounce 语义。 */
+       因此这里要和普通页面对齐：先把最近的 data-edit-id 根块立即写入 localStorage，
+       只有非离散事务才继续使用 scheduleSave 的 debounce 语义。 */
     if (persistRoot && window.PersistenceLayer && typeof window.PersistenceLayer.saveElement === 'function') {
       window.PersistenceLayer.saveElement(persistRoot);
     }
 
-    if (persistOptions && persistOptions.immediate === true && window.AnnotationStore) {
-      var canScheduleAnnotationSave = typeof window.AnnotationStore.scheduleSave === 'function';
-      var canSaveAnnotationImmediately = typeof window.AnnotationStore.saveNow === 'function';
-      var canEnsureAnnotationWriteAccess = typeof window.AnnotationStore.ensureWriteAccess === 'function';
-      var canAuthorizeAnnotationSave = typeof window.AnnotationStore.authorizeAndSave === 'function';
-      var hasAnnotationWriteAccess = typeof window.AnnotationStore.hasWriteAccess === 'function'
-        ? window.AnnotationStore.hasWriteAccess()
-        : true;
-
-      if (!hasAnnotationWriteAccess && canEnsureAnnotationWriteAccess) {
-        window.AnnotationStore.ensureWriteAccess().then(function (ok) {
-          if (!ok) return;
-          if (canSaveAnnotationImmediately) {
-            window.AnnotationStore.saveNow();
-          } else if (canScheduleAnnotationSave) {
-            window.AnnotationStore.scheduleSave();
-          }
-        }).catch(function () {});
-      } else if (!hasAnnotationWriteAccess && canAuthorizeAnnotationSave) {
-        window.AnnotationStore.authorizeAndSave().catch(function () {});
-      } else if (canSaveAnnotationImmediately) {
-        window.AnnotationStore.saveNow();
-      } else if (canScheduleAnnotationSave) {
-        window.AnnotationStore.scheduleSave();
-      }
-    } else {
-      QA.scheduleAnnotationSave();
-    }
+    QA.scheduleAnnotationSave();
 
     QA.recordHistorySnapshot();
     QA.saveQuizAnswerConfigAfterAuthoring(persistRoot ? persistRoot.closest('.quiz-annotation') : null);

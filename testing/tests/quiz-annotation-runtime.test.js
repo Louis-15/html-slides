@@ -946,9 +946,6 @@ describe('quiz annotation runtime', () => {
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
     const savedRoots = [];
-    const ensureWriteAccessCalls = [];
-    const saveNowCalls = [];
-    const scheduleSaveCalls = [];
 
     window._editorUtils = {
       storageKey(suffix) {
@@ -965,21 +962,7 @@ describe('quiz annotation runtime', () => {
         window.localStorage.setItem(`test:e:${editId}`, root.innerHTML);
       }
     };
-    window.AnnotationStore = {
-      hasWriteAccess() {
-        return false;
-      },
-      ensureWriteAccess() {
-        ensureWriteAccessCalls.push('called');
-        return Promise.resolve(true);
-      },
-      saveNow() {
-        saveNowCalls.push('saved');
-      },
-      scheduleSave() {
-        scheduleSaveCalls.push('scheduled');
-      }
-    };
+    window.AnnotationStore = {};
     window.historyMgr = {
       isRestoring: false,
       recordState() {}
@@ -997,9 +980,6 @@ describe('quiz annotation runtime', () => {
     const persistedPassageHtml = window.localStorage.getItem('test:e:passage-01') || '';
 
     assert.deepEqual(savedRoots, ['passage-01'], 'expected blank-answer authoring to immediately persist the owning passage root into localStorage');
-    assert.equal(ensureWriteAccessCalls.length, 1, 'expected blank-answer authoring to request AnnotationStore write access before the first immediate save');
-    assert.equal(saveNowCalls.length, 1, 'expected blank-answer authoring to flush the updated DOM immediately so the first refresh sees the new answer');
-    assert.equal(scheduleSaveCalls.length, 0, 'expected blank-answer authoring not to fall back to the debounced scheduleSave path when saveNow is available');
     assert.match(persistedPassageHtml, /data-correct-answer="that"/, 'expected the local snapshot for passage-01 to already contain the edited blank answer before any second refresh');
     assert.doesNotMatch(persistedPassageHtml, /data-correct-answer="which"/, 'expected the stale blank answer to be removed from the first local snapshot');
   });
@@ -1305,8 +1285,6 @@ describe('quiz annotation runtime', () => {
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
     const savedRoots = [];
-    const saveNowCalls = [];
-    const ensureWriteAccessCalls = [];
 
     window.PersistenceLayer = {
       saveElement(element) {
@@ -1314,19 +1292,7 @@ describe('quiz annotation runtime', () => {
       }
     };
 
-    window.AnnotationStore = {
-      hasWriteAccess() {
-        return false;
-      },
-      ensureWriteAccess() {
-        ensureWriteAccessCalls.push('ensure');
-        return Promise.resolve(true);
-      },
-      saveNow() {
-        saveNowCalls.push('save-now');
-      },
-      scheduleSave() {}
-    };
+    window.AnnotationStore = {};
 
     window.document.documentElement.classList.add('editor-mode');
     window.document.body.classList.add('editor-mode');
@@ -1337,8 +1303,6 @@ describe('quiz annotation runtime', () => {
 
     return Promise.resolve().then(() => {
       assert.deepEqual(savedRoots, ['passage-01'], 'expected creating a new note to immediately persist the owning passage root into localStorage');
-      assert.equal(ensureWriteAccessCalls.length, 1, 'expected creating a new note to request AnnotationStore write access before flushing the structural change');
-      assert.equal(saveNowCalls.length, 1, 'expected creating a new note to flush the current DOM immediately so the first refresh keeps the new anchor');
     });
   });
 
@@ -1864,35 +1828,18 @@ describe('quiz annotation runtime', () => {
     assert.equal(qa.querySelector('.qa-note-content [data-fragment-step="true"]'), null, 'expected note bubble text not to receive step fragments');
   });
 
-  it('persists quiz fragment authoring immediately into the source root and sidecar save path', async () => {
+  it('persists quiz fragment authoring immediately into the source root and persist immediately', async () => {
     const dom = createBubbleEditorDom();
     const { window } = dom;
     const qa = window.document.querySelector('.quiz-annotation');
     const savedRoots = [];
-    const saveNowCalls = [];
-    const ensureWriteAccessCalls = [];
-    const scheduleSaveCalls = [];
 
     window.PersistenceLayer = {
       saveElement(root) {
         savedRoots.push(root.getAttribute('data-edit-id'));
       }
     };
-    window.AnnotationStore = {
-      hasWriteAccess() {
-        return false;
-      },
-      ensureWriteAccess() {
-        ensureWriteAccessCalls.push('called');
-        return Promise.resolve(true);
-      },
-      saveNow() {
-        saveNowCalls.push('saved');
-      },
-      scheduleSave() {
-        scheduleSaveCalls.push('scheduled');
-      }
-    };
+    window.AnnotationStore = {};
     window.historyMgr = {
       isRestoring: false,
       recordState() {}
@@ -1909,9 +1856,6 @@ describe('quiz annotation runtime', () => {
     await Promise.resolve();
 
     assert.deepEqual(savedRoots, ['passage-01'], 'expected quiz fragment authoring to immediately persist the nearest source root into localStorage');
-    assert.equal(ensureWriteAccessCalls.length, 1, 'expected the first quiz fragment authoring change to request AnnotationStore write access before saving');
-    assert.equal(saveNowCalls.length, 1, 'expected quiz fragment authoring to write the current DOM change immediately once write access is available');
-    assert.equal(scheduleSaveCalls.length, 0, 'expected button-driven quiz fragment authoring not to fall back to the debounced scheduleSave path when saveNow is available');
   });
 
   it('uses the same ruby icon as the global editor toolbar', () => {
