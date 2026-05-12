@@ -437,7 +437,9 @@
                     var ts = slides[db.si];
                     if (ts) {
                         if (db.type === 'image') {
-                            window.BoxManager.createImageBox(db.id, db.l, db.t, db.w, db.h, db.c, ts);
+                            if (typeof window.ImageManager !== 'undefined') {
+                                window.ImageManager.createImageBox(db.id, db.l, db.t, db.w, db.h, db.c, ts);
+                            }
                         } else {
                             window.BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
                         }

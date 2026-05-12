@@ -1,9 +1,12 @@
 /* ===========================================
    EDITOR-BOX-MANAGER.JS
-   HTML-Slides 编辑器 — 统一文本框/图片框管理
+   HTML-Slides 编辑器 — 文本框编辑管理（已拆离图片功能）
    依赖：editor-utils.js (window._editorUtils)
    运行时依赖：window.PersistenceLayer, window.editorCore, window.historyMgr
    暴露：window.BoxManager
+
+   注意：本文件仅负责文本框管理。图片编辑相关功能已迁移到
+   editor-images.js（window.ImageManager），请同步加载该文件。
    =========================================== */
 
 (function () {
@@ -24,12 +27,15 @@
         // 它们原本没有源码级 id，如果现在就注入 wrapper，会把“首次进入编辑模式才套壳”的旧行为提前到页面初始加载，
         // 进而放大 DOM 抖动与动画重播风险。因此这里继续只处理显式 id 元素，自动 id 交给 _ensureWrappersReady 接管。
         if (el.hasAttribute("data-edit-id-auto")) return;
+        // 图片元素由 ImageManager.init() 管理
+        if (el.tagName === "IMG") return;
         self._injectControls(el);
       });
     },
 
     /**
-     * 为目标元素注入 📍✖ 控件条（如果尚未注入）
+     * 为目标文本元素注入 📍✖ 控件条（如果尚未注入）
+     * 不包含图片缩放逻辑，图片控件见 ImageManager._injectControls()
      */
     _injectControls: function (el) {
       var self = this;
@@ -38,10 +44,12 @@
       // 批注气泡本身自带完整的控制界面（拖拽、删除、关联等），无需套壳与注入通用控件
       if (el.closest(".qa-note-bubble")) return;
 
+      // 图片元素由 ImageManager 管理
+      if (el.tagName === "IMG") return;
+
       // 为原生的文本编辑块安全隔离一层 wrapper，使悬浮控制条不被内部 contenteditable 吃掉和误删
       if (
         !wrap &&
-        el.tagName !== "IMG" &&
         el.tagName !== "TD" &&
         el.tagName !== "TH" &&
         !el.closest(".native-edit-wrap")
@@ -63,14 +71,6 @@
 
       var target = wrap || el;
 
-      // 修复原生图片标签：IMG 不能拥有子节点
-      if (el.tagName === "IMG" && !wrap) {
-        target =
-          el.closest(".image-frame") ||
-          el.closest(".image-fullbleed") ||
-          el.parentNode;
-      }
-
       // 暴力清理从 innerHTML (撤销操作/重水化) 恢复回来的死节点
       if (target && target.querySelectorAll) {
         var zombies = target.querySelectorAll(".box-controls, .rs-handle");
@@ -79,7 +79,7 @@
         });
       }
 
-      // td 元素不注入（表格单元格拖不动）
+      // td/th 元素不注入（表格单元格拖不动）
       if (el.tagName === "TD" || el.tagName === "TH") return;
 
       // 让原生元素也具备 position: relative 以便控件绝对定位
@@ -96,27 +96,11 @@
 
       if (target) target.appendChild(controls);
 
-      // 注入八爪鱼缩放点
-      var isResizable =
-        (wrap && wrap.classList.contains("image-box")) || el.tagName === "IMG";
-      if (isResizable && target && !target.querySelector(".rs-se")) {
-        var corners = ["nw", "ne", "sw", "se", "n", "s", "w", "e"];
-        corners.forEach(function (dir) {
-          var r = document.createElement("div");
-          r.className = "rs-handle rs-" + dir;
-          r.setAttribute("data-dir", dir);
-          r.setAttribute("contenteditable", "false");
-          target.appendChild(r);
-          self._bindResize(r, target);
-        });
-        target.style.resize = "none";
-      }
-
       this._bindDrag(controls.querySelector(".drag-handle"), el, wrap);
       this._bindDelete(controls.querySelector(".del-btn"), el, wrap);
     },
 
-    /** 绑定拖拽逻辑（统一使用 PointerEvent） */
+    /** 绑定拖拽逻辑（统一使用 PointerEvent）— 文本框专用 */
     _bindDrag: function (handle, el, wrap) {
       var dragState = null;
       var isCustom = wrap && wrap.classList.contains("custom-box");
@@ -128,12 +112,6 @@
         handle.setPointerCapture(e.pointerId);
 
         if (isCustom) {
-          if (!wrap.classList.contains("text-box")) {
-            if (!wrap.style.width || wrap.style.width === "auto")
-              wrap.style.width = wrap.offsetWidth + "px";
-            if (!wrap.style.height || wrap.style.height === "auto")
-              wrap.style.height = wrap.offsetHeight + "px";
-          }
           dragState = {
             target: wrap,
             startX: e.clientX,
@@ -144,11 +122,6 @@
           };
         } else {
           var dragTarget = el;
-          if (el.tagName === "IMG")
-            dragTarget =
-              el.closest(".image-frame") ||
-              el.closest(".image-fullbleed") ||
-              el.parentNode;
           var tx = BoxManager._parseTranslate(dragTarget);
           dragState = {
             target: dragTarget,
@@ -187,93 +160,14 @@
       });
     },
 
-    /** 专门绑定 8 点缩放逻辑 */
-    _bindResize: function (handle, target) {
-      var rsState = null;
-      handle.addEventListener("pointerdown", function (e) {
-        if (!window.editorCore || !window.editorCore.isActive) return;
-        e.preventDefault();
-        e.stopPropagation();
-        handle.setPointerCapture(e.pointerId);
-
-        var cs = window.getComputedStyle(target);
-        if (cs.position === "static") target.style.position = "relative";
-        target.style.maxWidth = "none";
-        target.style.maxHeight = "none";
-        target.style.flexShrink = "0";
-
-        var innerImg = target.querySelector("img.slide-image");
-        if (innerImg) {
-          innerImg.style.width = "100%";
-          innerImg.style.height = "100%";
-          innerImg.style.maxHeight = "none";
-        }
-
-        var currLeft = parseFloat(target.style.left) || 0;
-        var currTop = parseFloat(target.style.top) || 0;
-
-        rsState = {
-          target: target,
-          dir: handle.getAttribute("data-dir"),
-          startX: e.clientX,
-          startY: e.clientY,
-          w: target.offsetWidth,
-          h: target.offsetHeight,
-          cLeft: currLeft,
-          cTop: currTop,
-        };
-      });
-
-      handle.addEventListener("pointermove", function (e) {
-        if (!rsState) return;
-        var dx = e.clientX - rsState.startX;
-        var dy = e.clientY - rsState.startY;
-        var t = rsState.target;
-
-        if (rsState.dir.indexOf("e") > -1)
-          t.style.width = Math.max(20, rsState.w + dx) + "px";
-        if (rsState.dir.indexOf("s") > -1)
-          t.style.height = Math.max(20, rsState.h + dy) + "px";
-        if (rsState.dir.indexOf("w") > -1) {
-          var pw = Math.max(20, rsState.w - dx);
-          if (pw > 20) {
-            t.style.width = pw + "px";
-            t.style.left = rsState.cLeft + (rsState.w - pw) + "px";
-          }
-        }
-        if (rsState.dir.indexOf("n") > -1) {
-          var ph = Math.max(20, rsState.h - dy);
-          if (ph > 20) {
-            t.style.height = ph + "px";
-            t.style.top = rsState.cTop + (rsState.h - ph) + "px";
-          }
-        }
-      });
-
-      handle.addEventListener("pointerup", function () {
-        if (!rsState) return;
-        rsState = null;
-        window.PersistenceLayer.saveCustomBoxes();
-        window.PersistenceLayer.saveNativeMods();
-        window.historyMgr.recordState(true);
-      });
-    },
-
-    /** 绑定删除/隐藏逻辑 */
+    /** 绑定删除/隐藏逻辑 — 文本框专用（图片删除见 ImageManager） */
     _bindDelete: function (btn, el, wrap) {
       btn.addEventListener("click", function () {
         if (!window.editorCore || !window.editorCore.isActive) return;
         var isCustom = wrap && wrap.classList.contains("custom-box");
-        var isImage = wrap
-          ? wrap.classList.contains("image-box")
-          : el.tagName === "IMG";
         var msg = isCustom
-          ? isImage
-            ? "确定要删除这张图片吗？"
-            : "确定要删除这个文本框吗？"
-          : isImage
-            ? "确定要隐藏这张原版图片吗？"
-            : "确定要隐藏此元素吗？";
+          ? "确定要删除这个文本框吗？"
+          : "确定要隐藏此元素吗？";
         if (!confirm(msg)) return;
 
         if (isCustom) {
@@ -284,13 +178,7 @@
           } catch (e) {}
           window.PersistenceLayer.saveCustomBoxes();
         } else {
-          var delTarget = el;
-          if (el.tagName === "IMG")
-            delTarget =
-              el.closest(".image-frame") ||
-              el.closest(".image-fullbleed") ||
-              el.parentNode;
-          delTarget.style.display = "none";
+          el.style.display = "none";
           window.PersistenceLayer.saveNativeMods();
         }
         window.historyMgr.recordState(true);
@@ -337,71 +225,29 @@
       if (window.editorCore) window.editorCore.refreshEditables();
     },
 
-    /** 创建自定义图片图元 */
-    createImageBox: function (id, left, top, width, height, src, targetSlide) {
-      var container =
-        targetSlide.querySelector(".slide-content") || targetSlide;
-      var wrap = document.createElement("div");
-      wrap.className = "editable-wrap custom-box image-box image-frame";
-      if (left === "center") {
-        left = "50%";
-        top = "30%";
-        wrap.style.transform = "translateX(-50%)";
-      }
-      wrap.style.left = left;
-      wrap.style.top = top;
-      if (width) wrap.style.width = width;
-      if (height) wrap.style.height = height;
-
-      var img = document.createElement("img");
-      img.setAttribute("data-edit-id", id);
-      img.setAttribute("src", src);
-      img.className = "slide-image";
-
-      wrap.appendChild(img);
-      container.appendChild(wrap);
-      this._injectControls(img);
-
-      if (typeof ResizeObserver !== "undefined") {
-        var ro = new ResizeObserver(function () {
-          if (window.editorCore && window.editorCore.isActive) {
-            window.PersistenceLayer.saveCustomBoxes();
-          }
-        });
-        ro.observe(wrap);
-      }
-    },
-
-    /** DOM 恢复后重新绑定事件 */
+    /**
+     * DOM 恢复后重新绑定事件 — 文本框专用。
+     * 图片元素的恢复见 ImageManager.rehydrateSlide()
+     */
     rehydrateSlide: function (slideEl) {
       if (!slideEl) return;
       var self = this;
       slideEl.querySelectorAll("[data-edit-id]").forEach(function (el) {
+        // 图片元素由 ImageManager.rehydrateSlide() 处理
+        if (el.tagName === "IMG") return;
         self._injectControls(el);
       });
       slideEl
-        .querySelectorAll(".editable-wrap.custom-box")
+        .querySelectorAll(".editable-wrap.custom-box.text-box")
         .forEach(function (wrap) {
           var editArea = wrap.querySelector("[data-edit-id]");
-          if (!editArea) return;
-          if (
-            editArea.tagName === "IMG" &&
-            typeof ResizeObserver !== "undefined"
-          ) {
-            var ro = new ResizeObserver(function () {
-              if (window.editorCore && window.editorCore.isActive) {
-                window.PersistenceLayer.saveCustomBoxes();
-              }
-            });
-            ro.observe(wrap);
-          } else if (editArea.tagName !== "IMG") {
-            editArea.addEventListener("input", function () {
-              if (window.editorCore && window.editorCore.isActive) {
-                window.PersistenceLayer.saveElement(editArea);
-                window.PersistenceLayer.saveCustomBoxes();
-              }
-            });
-          }
+          if (!editArea || editArea.tagName === "IMG") return;
+          editArea.addEventListener("input", function () {
+            if (window.editorCore && window.editorCore.isActive) {
+              window.PersistenceLayer.saveElement(editArea);
+              window.PersistenceLayer.saveCustomBoxes();
+            }
+          });
         });
     },
   };

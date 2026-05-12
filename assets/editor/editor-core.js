@@ -2,7 +2,7 @@
    EDITOR-CORE.JS
    HTML-Slides 编辑器 — 编辑模式总控 + 初始化引导 + 工具栏HTML注入
    依赖：editor-utils.js, editor-persistence.js, editor-history.js,
-         editor-box-manager.js, editor-rich-text.js
+         editor-box-manager.js, editor-images.js, editor-rich-text.js
    暴露：window.editorCore, window.historyMgr, window.richToolbar, window.boxManager
    =========================================== */
 
@@ -283,6 +283,12 @@
 
   BoxManager.init();
   window.boxManager = BoxManager;
+
+  // 初始化图片管理器（从 editor-box-manager.js 拆分而来）
+  if (typeof ImageManager !== 'undefined') {
+    ImageManager.init();
+    window.imageManager = ImageManager;
+  }
 
   PersistenceLayer.loadCustomBoxes();
 
@@ -637,15 +643,17 @@
       var slides = getAllSlides();
       var cs = slides[getCurrentSlideIndex()];
       if (!cs) return;
-      BoxManager.createImageBox(
-        "img-" + Date.now(),
-        "center",
-        "center",
-        null,
-        null,
-        url,
-        cs,
-      );
+      if (typeof ImageManager !== 'undefined') {
+        ImageManager.createImageBox(
+          "img-" + Date.now(),
+          "center",
+          "center",
+          null,
+          null,
+          url,
+          cs,
+        );
+      }
       PersistenceLayer.saveCustomBoxes();
       historyMgr.recordState(true);
       RichTextToolbar.closeDropdowns();
@@ -692,15 +700,17 @@
           var slides = getAllSlides();
           var cs = slides[getCurrentSlideIndex()];
           if (cs) {
-            BoxManager.createImageBox(
-              "img-" + Date.now(),
-              "center",
-              "center",
-              null,
-              null,
-              b64,
-              cs,
-            );
+            if (typeof ImageManager !== 'undefined') {
+              ImageManager.createImageBox(
+                "img-" + Date.now(),
+                "center",
+                "center",
+                null,
+                null,
+                b64,
+                cs,
+              );
+            }
             PersistenceLayer.saveCustomBoxes();
             historyMgr.recordState(true);
             RichTextToolbar.closeDropdowns();

@@ -73,6 +73,9 @@
                 slide.innerHTML = html;
                 if (window.editorCore) window.editorCore.refreshEditables();
                 window.BoxManager.rehydrateSlide(slide);
+                if (typeof window.ImageManager !== 'undefined') {
+                    window.ImageManager.rehydrateSlide(slide);
+                }
                 window.PersistenceLayer.syncFromDOM(slide);
                 // innerHTML 替换导致浏览器重新触发入场动画，瞬间完成它们
                 if (slide.getAnimations) {

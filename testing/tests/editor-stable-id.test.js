@@ -64,7 +64,12 @@ function installEditorCoreStubs(window) {
     init() {},
     _injectControls() {},
     createTextBox() {},
+  };
+  window.ImageManager = {
+    init() {},
+    _injectControls() {},
     createImageBox() {},
+    rehydrateSlide() {},
   };
 }
 
