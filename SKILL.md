@@ -214,7 +214,7 @@ Do NOT include summary for:
 - [layout-system.md](references/layout-system.md) — Canvas structure and 8+1 layout modes
 - [component-templates.md](references/component-templates.md) — Component style reference for interactive elements
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
-- [components.css](assets/components.css) — Shared component CSS (reference via `<link href="./assets/components.css">`)
+- [components.css](assets/components.css) — Shared component CSS (reference via `<link href="../../assets/components.css">` from generated courseware)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation/quiz-layout.css → zone2-quiz-annotation/quiz-passage.css → zone2-quiz-annotation/quiz-notes-panel.css → zone2-quiz-annotation/quiz-answer-panel.css → zone2-quiz-annotation/quiz-anchors-bubbles.css → zone2-quiz-annotation/quiz-connectors.css → zone2-quiz-annotation/quiz-dragdrop.css → zone2-quiz-annotation/quiz-isolation.css → zone2-quiz-annotation/quiz-linking.css → zone2-quiz-annotation/quiz-scrollbar.css → zone2-quiz-annotation/quiz-editor-toolbar.css → zone2-quiz-annotation/quiz-responsive.css → zone2-quiz-annotation/quiz-editor-mode.css → zone2-example-card.css → zone3-summary.css`
 - [navigation.js](assets/runtime/navigation.js) + [keyboard.js](assets/runtime/keyboard.js) + [step-through.js](assets/runtime/step-through.js) + [chart-integration.js](assets/runtime/chart-integration.js) + [speaker-notes.js](assets/runtime/speaker-notes.js) — 导航核心、键盘控制、交互步进、Chart.js 集成、讲者备注（按顺序引用）
@@ -227,8 +227,28 @@ Do NOT include summary for:
 - If any slides use **Chart** components, add Chart.js CDN in `<head>`: `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>`
 
 **Key requirements:**
-- HTML file with all CSS/JS as external `<link>`/`<script>` references to `./assets/`
+- HTML file with all CSS/JS as external `<link>`/`<script>` references to `../../assets/` (relative to `课件/<课件名>/<课件名>.html`)
 - CSS loading order follows `viewport-base.css → theme → components.css → zone1-header.css → zone2-layout.css → zone2-components.css → zone2-immersive-components.css → zone2-quiz-annotation/quiz-layout.css → zone2-quiz-annotation/quiz-passage.css → zone2-quiz-annotation/quiz-notes-panel.css → zone2-quiz-annotation/quiz-answer-panel.css → zone2-quiz-annotation/quiz-anchors-bubbles.css → zone2-quiz-annotation/quiz-connectors.css → zone2-quiz-annotation/quiz-dragdrop.css → zone2-quiz-annotation/quiz-isolation.css → zone2-quiz-annotation/quiz-linking.css → zone2-quiz-annotation/quiz-scrollbar.css → zone2-quiz-annotation/quiz-editor-toolbar.css → zone2-quiz-annotation/quiz-responsive.css → zone2-quiz-annotation/quiz-editor-mode.css → zone2-example-card.css → zone3-summary.css → editor/editor.css`
+
+### 📁 课件保存规范（所有生成的课件必须遵守）
+
+所有由本 skill 生成的课件 HTML 文件必须存放在 `课件/` 目录下，遵循以下结构：
+
+```
+课件/
+  └── <课件英文名>/                  # 与 HTML 文件名一致（不含 .html）
+      ├── <课件英文名>.html           # 主课件文件
+      ├── images/                     # 课件用到的图片文件
+      │   ├── image-01.png
+      │   └── ...
+      └── *.doodle                    # 导出的涂鸦板书文件（可选）
+```
+
+**规则：**
+1. **文件夹名 = 文件名**：课件文件夹名称必须与 HTML 文件名（不含 `.html`）完全一致。例如 `课件/组件展示全览/组件展示全览.html`。
+2. **引用路径**：HTML 中所有对 `assets/` 目录的引用使用 `../../assets/...` 相对路径（从 `课件/<课件名>/<课件名>.html` 上溯两级到项目根）。
+3. **图片目录**：插入课件的图片统一存储在 `课件/<课件名>/images/` 下，HTML 中以 `images/xxx.png` 引用。
+4. **涂鸦文件**：导出的 `.doodle` 文件保存在课件文件夹根目录，与 HTML 文件平级。
 - **Toolbar HTML is NOT in the template** — it is dynamically injected by `editor/editor-core.js` at runtime
 - Reference the teaching theme CSS + components.css via `<link>`, and navigation.js via `<script>` (the first of the 5 runtime modules)
 - Custom animations for this courseware → write to a separate `./assets/slide-animations.css` file and reference via `<link>`
