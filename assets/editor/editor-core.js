@@ -618,11 +618,6 @@
       RichTextToolbar.toggleDropdown("ulColorDropdown");
     });
 
-  // 插入简单图片框 — 逻辑已拆分到 editor-core-image.js
-  if (typeof ImageInsertHandler !== 'undefined') {
-    ImageInsertHandler.init();
-  }
-
   var linkToggle2 = document.getElementById("linkToggle");
   if (linkToggle2)
     linkToggle2.addEventListener("pointerdown", function (e) {

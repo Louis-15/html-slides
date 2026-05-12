@@ -153,4 +153,7 @@
   };
 
   window.ImageInsertHandler = ImageInsertHandler;
+
+  // 自初始化（必须在 editor-core.js 之后加载，确保工具栏 HTML 已注入）
+  ImageInsertHandler.init();
 })();
