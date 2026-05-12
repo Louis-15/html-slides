@@ -97,6 +97,7 @@
           'background:rgba(0,0,0,0.65);' +
           'backdrop-filter:blur(6px);' +
           'cursor:grab;' +
+          '-webkit-user-select:none;user-select:none;' +
           'display:flex;align-items:center;justify-content:center;';
 
         overlayImg = document.createElement('img');
@@ -107,6 +108,7 @@
           'box-shadow:0 24px 80px rgba(0,0,0,0.5);' +
           'pointer-events:none;' +  /* 让鼠标事件穿透到 overlay，由拖拽逻辑统一处理 */
           'display:block;' +
+          '-webkit-user-select:none;user-select:none;' +  /* 防止拖动时选中图片 */
           'transform-origin:center center;';
         overlayImg.draggable = false;
         overlay.appendChild(overlayImg);
