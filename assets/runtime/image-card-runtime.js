@@ -14,13 +14,16 @@
 
   var ImageCardRuntime = {
 
-    /** 初始化：为所有 .image-card 注入编辑控件 */
+    /** 初始化：为所有 .image-card 注入编辑控件，并同步空态 */
     init: function () {
       var self = this;
       document.querySelectorAll('.image-card').forEach(function (block) {
         if (block._imageCardInitialized) return;
         block._imageCardInitialized = true;
         self._ensureStructure(block);
+        // ⭐ _ensureStructure 有早期返回分支（.image-actions 已存在时跳过），
+        //    但 _syncEmptyState 必须始终执行以匹配当前 DOM 状态
+        self._syncEmptyState(block);
       });
     },
 
@@ -62,7 +65,8 @@
     /** 同步空态标记 */
     _syncEmptyState: function (block) {
       var img = block.querySelector('.slide-image');
-      var isEmpty = !img || !img.getAttribute('src') || img.getAttribute('src') === '';
+      // 同时检查 display:none（清空操作会隐藏 img 但不一定有 src）
+      var isEmpty = !img || !img.getAttribute('src') || img.getAttribute('src') === '' || img.style.display === 'none';
       block.classList.toggle('is-empty', isEmpty);
     },
 
@@ -148,11 +152,14 @@
         block.classList.add('is-empty');
 
         // 更新 localStorage
+        // ★ 将空状态写回 localStorage（而非只删除 key），
+        //   确保保存到 HTML 文件时基线中的 img src 能被清除。
+        //   参见 restoreEditIdFromStorage 中 'src' in parsed 的处理。
         if (window.PersistenceLayer) {
           var editId = img && img.getAttribute('data-edit-id');
           if (editId) {
             try {
-              localStorage.removeItem(storageKey('e:' + editId));
+              localStorage.setItem(storageKey('e:' + editId), JSON.stringify({ html: '', src: '' }));
             } catch (e) {}
           }
         }
@@ -169,6 +176,7 @@
       slideEl.querySelectorAll('.image-card').forEach(function (block) {
         block._imageCardInitialized = false;
         self._ensureStructure(block);
+        self._syncEmptyState(block);
       });
     },
   };

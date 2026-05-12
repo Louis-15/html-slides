@@ -67,8 +67,13 @@
         try { parsed = JSON.parse(saved); } catch (e) { parsed = null; }
         if (parsed && typeof parsed === 'object' && 'html' in parsed) {
             target.innerHTML = stripTransientEditableHTML(parsed.html);
-            if (target.tagName === 'IMG' && parsed.src) {
-                target.setAttribute('src', parsed.src);
+            if (target.tagName === 'IMG') {
+                if ('src' in parsed && parsed.src) {
+                    target.setAttribute('src', parsed.src);
+                } else if ('src' in parsed) {
+                    // src 显式设为空串（清除操作），从 DOM 和 HTML 中移除 src 属性
+                    target.removeAttribute('src');
+                }
             }
         } else {
             target.innerHTML = stripTransientEditableHTML(saved);
@@ -421,16 +426,21 @@
                     try { parsed = JSON.parse(saved); } catch (e) { parsed = null; }
                     if (parsed && typeof parsed === 'object' && 'html' in parsed) {
                         el.innerHTML = stripTransientEditableHTML(parsed.html);
-                        // IMG 元素恢复 src 属性
-                        if (el.tagName === 'IMG' && parsed.src) {
-                            el.setAttribute('src', parsed.src);
-                            // 清除清空操作残留的 display:none
-                            if (el.style.display === 'none') {
-                                el.style.display = '';
+                        // IMG 元素恢复/清除 src 属性
+                        if (el.tagName === 'IMG') {
+                            if ('src' in parsed && parsed.src) {
+                                el.setAttribute('src', parsed.src);
+                                // 清除清空操作残留的 display:none（仅在有图时）
+                                if (el.style.display === 'none') {
+                                    el.style.display = '';
+                                }
+                                // 如果是图片卡片内部的 img，同步空态
+                                var card = el.closest('.image-card');
+                                if (card) card.classList.remove('is-empty');
+                            } else if ('src' in parsed) {
+                                // src 显式设为空串（清除操作），移除 src 属性
+                                el.removeAttribute('src');
                             }
-                            // 如果是图片卡片内部的 img，同步空态
-                            var card = el.closest('.image-card');
-                            if (card) card.classList.remove('is-empty');
                         }
                     } else {
                         el.innerHTML = stripTransientEditableHTML(saved);
