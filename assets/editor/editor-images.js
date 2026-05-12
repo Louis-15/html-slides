@@ -5,7 +5,7 @@
    运行时依赖：window.PersistenceLayer, window.editorCore, window.historyMgr
    暴露：window.ImageManager
 
-   注意：本文件从 editor-box-manager.js 拆分而来，专门负责
+   注意：本文件从 editor-text-manager.js（原名 editor-box-manager.js）拆分而来，专门负责
    图片插入、拖拽、缩放、删除等编辑操作。后续将大幅重构
    图片插入与修改相关功能。
    =========================================== */

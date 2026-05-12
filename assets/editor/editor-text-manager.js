@@ -1,6 +1,6 @@
 /* ===========================================
-   EDITOR-BOX-MANAGER.JS
-   HTML-Slides 编辑器 — 文本框编辑管理（已拆离图片功能）
+   EDITOR-TEXT-MANAGER.JS
+   HTML-Slides 编辑器 — 文本框编辑管理（从 editor-box-manager.js 重命名而来）
    依赖：editor-utils.js (window._editorUtils)
    运行时依赖：window.PersistenceLayer, window.editorCore, window.historyMgr
    暴露：window.BoxManager

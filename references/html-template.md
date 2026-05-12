@@ -177,7 +177,7 @@ Every generated HTML file **must** comply with these rules:
     <script src="./assets/editor/editor-utils.js"></script>
     <script src="./assets/editor/editor-persistence.js"></script>
     <script src="./assets/editor/editor-history.js"></script>
-    <script src="./assets/editor/editor-box-manager.js"></script>
+    <script src="./assets/editor/editor-text-manager.js"></script>
     <script src="./assets/editor/editor-images.js"></script>
     <script src="./assets/editor/editor-rich-text.js"></script>
     <script src="./assets/editor/editor-core.js"></script>
@@ -304,7 +304,7 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="./assets/editor/editor-utils.js"></script>
 <script src="./assets/editor/editor-persistence.js"></script>
 <script src="./assets/editor/editor-history.js"></script>
-<script src="./assets/editor/editor-box-manager.js"></script>
+<script src="./assets/editor/editor-text-manager.js"></script>
 <script src="./assets/editor/editor-images.js"></script>
 <script src="./assets/editor/editor-rich-text.js"></script>
 <script src="./assets/editor/editor-core.js"></script>
@@ -464,8 +464,8 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── editor-utils.js            # Editor base utilities
 │   ├── editor-persistence.js      # localStorage + export
 │   ├── editor-history.js          # Undo/redo
-│   ├── editor-box-manager.js      # Text box management
-│   ├── editor-images.js           # Image box management (split from editor-box-manager.js)
+│   ├── editor-text-manager.js     # Text box management
+│   ├── editor-images.js           # Image box management (split from editor-text-manager.js)
 │   ├── editor-rich-text.js        # Rich text toolbar logic
 │   └── editor-core.js             # Editor orchestrator + dynamic toolbar injection
 ├── audio/
