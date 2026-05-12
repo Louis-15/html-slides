@@ -3,6 +3,7 @@
    HTML-Slides 编辑器 — 编辑模式总控 + 初始化引导 + 工具栏HTML注入
    依赖：editor-utils.js, editor-persistence.js, editor-history.js,
          editor-inline-boxes.js, editor-rich-text.js
+   子文件：editor-core-image.js（简单图片框插入逻辑）
    暴露：window.editorCore, window.historyMgr, window.richToolbar, window.boxManager
    =========================================== */
 
@@ -617,131 +618,9 @@
       RichTextToolbar.toggleDropdown("ulColorDropdown");
     });
 
-  // 插入简单图片框按钮
-  var addSimpleImageBtn = document.getElementById('addSimpleImageBtn');
-  if (addSimpleImageBtn) {
-    addSimpleImageBtn.addEventListener('click', function () {
-      var slides = getAllSlides();
-      var cs = slides[getCurrentSlideIndex()];
-      if (!cs) return;
-
-      // 找到当前焦点所在的一级宿主组件
-      var focusedEl = typeof window.__slideRuntime__ !== 'undefined' &&
-        typeof window.__slideRuntime__.getFocusedInteractionElement === 'function'
-        ? window.__slideRuntime__.getFocusedInteractionElement() : null;
-
-      var targetParent = focusedEl || cs.querySelector('.slide-content') || cs;
-
-      // ===== 折叠卡片特殊处理：让用户选择插入到初始内容区还是展开内容区 =====
-      var collapseCard = targetParent.closest('.collapse-card');
-      if (!collapseCard && targetParent.querySelector) {
-        collapseCard = targetParent.querySelector('.collapse-card');
-      }
-      if (collapseCard) {
-        var expandInner = collapseCard.querySelector('.card-expand-inner');
-        if (expandInner) {
-          // 创建自定义选择面板
-          var picker = document.createElement('div');
-          picker.className = 'image-insert-picker';
-          picker.style.cssText =
-            'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-            'z-index:99998;background:var(--bg-card,#fff);' +
-            'border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,0.3);' +
-            'padding:20px 24px;display:flex;flex-direction:column;gap:12px;' +
-            'min-width:280px;';
-
-          var title = document.createElement('div');
-          title.textContent = '请选择图片插入位置：';
-          title.style.cssText = 'font-size:14px;font-weight:600;color:var(--text,#333);margin-bottom:4px;';
-          picker.appendChild(title);
-
-          var btnInitial = document.createElement('button');
-          btnInitial.textContent = '📄 插入到初始内容区';
-          btnInitial.style.cssText =
-            'padding:10px 16px;border-radius:8px;border:1px solid var(--border,#ddd);' +
-            'background:var(--bg-card-hover,#f5f5f5);cursor:pointer;font-size:13px;text-align:left;';
-          btnInitial.addEventListener('click', function () {
-            targetParent = collapseCard;
-            // 插入到 .card-expand 之前（初始内容区末尾）
-            var expandDiv = collapseCard.querySelector('.card-expand');
-            if (expandDiv) {
-              // 创建一个初始内容容器（如果还没有的话）
-              var initialContainer = collapseCard.querySelector('.card-initial-content');
-              if (!initialContainer) {
-                initialContainer = document.createElement('div');
-                initialContainer.className = 'card-initial-content';
-                collapseCard.insertBefore(initialContainer, expandDiv);
-              }
-              targetParent = initialContainer;
-            }
-            picker.remove();
-            overlay.remove();
-            // 弹出文件选择器
-            triggerFilePicker(targetParent);
-          });
-          picker.appendChild(btnInitial);
-
-          var btnExpand = document.createElement('button');
-          btnExpand.textContent = '📂 插入到展开内容区';
-          btnExpand.style.cssText =
-            'padding:10px 16px;border-radius:8px;border:1px solid var(--border,#ddd);' +
-            'background:var(--bg-card-hover,#f5f5f5);cursor:pointer;font-size:13px;text-align:left;';
-          btnExpand.addEventListener('click', function () {
-            targetParent = expandInner;
-            picker.remove();
-            overlay.remove();
-            triggerFilePicker(targetParent);
-          });
-          picker.appendChild(btnExpand);
-
-          // 背景遮罩
-          var overlay = document.createElement('div');
-          overlay.style.cssText =
-            'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.3);';
-          overlay.addEventListener('click', function () { picker.remove(); overlay.remove(); });
-          document.body.appendChild(overlay);
-          document.body.appendChild(picker);
-          return;  // 等待用户选择
-        }
-      }
-
-      // 非折叠卡片：直接弹出文件选择器
-      triggerFilePicker(targetParent);
-    });
-  }
-
-  // 文件选择器逻辑提取为独立函数，供折叠卡片选择面板复用
-  function triggerFilePicker(insertTarget) {
-    var fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    document.body.appendChild(fileInput);
-
-    fileInput.addEventListener('change', function (e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var fileName = file.name;
-      if (!fileName || fileName.indexOf('.') === -1) {
-        alert('选择的文件没有扩展名，请确认文件格式。');
-        fileInput.remove();
-        return;
-      }
-      var relativePath = 'images/' + fileName;
-
-      if (typeof BoxManager !== 'undefined') {
-        BoxManager.createSimpleImageBox(
-          'simple-img-' + Date.now(),
-          relativePath,
-          insertTarget
-        );
-        PersistenceLayer.saveCustomBoxes();
-        historyMgr.recordState(true);
-      }
-      fileInput.remove();
-    });
-
-    fileInput.click();
+  // 插入简单图片框 — 逻辑已拆分到 editor-core-image.js
+  if (typeof ImageInsertHandler !== 'undefined') {
+    ImageInsertHandler.init();
   }
 
   var linkToggle2 = document.getElementById("linkToggle");

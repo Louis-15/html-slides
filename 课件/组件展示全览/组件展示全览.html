@@ -152,15 +152,15 @@
                     </div>
                 </div>
                 <div class="col">
-                    <div class="collapse-card step-active" data-steppable="collapse">
+                    <div class="collapse-card expanded step-active" data-steppable="collapse">
                         <div class="card-title" data-edit-id="s2-collapse-title">折叠卡片</div>
                         <div class="card-desc" data-edit-id="s2-collapse-desc">点击按钮展开更多内容。节省空间，适合详细信息。</div>
-                        <div class="card-initial-content"><div class="simple-image-box editable-wrap" style="display: inline-block; vertical-align: top; width: 100%; max-width: 100%;"><img data-edit-id="simple-img-1778587092010" class="simple-image" src="images/15种爱情线模式.png" style="max-width: 100%; display: block; width: 100%; height: auto;"></div></div><div class="card-expand">
+                        <div class="card-initial-content"></div><div class="card-expand">
                             <div class="card-expand-inner" data-edit-id="s2-collapse-inner">
                                 <p>这里是折叠卡片展开后的<strong>详细内容</strong>。</p>
                                 <p>可以放段落、列表、甚至嵌套其他组件。</p>
                                 <p><code>collapse-card</code> 的交互由 <code>slides-runtime.js</code> 统一管理。</p>
-                            </div>
+                            <div class="simple-image-box editable-wrap" style="display: inline-block; vertical-align: top; width: 100%; max-width: 100%;"><img data-edit-id="simple-img-1778587329178" class="simple-image" src="images/15种爱情线模式.png" style="max-width: 100%; display: block; width: 100%; height: auto;"><div class="box-controls" contenteditable="false"><span class="drag-handle" title="按住拖动📍">📍</span><span class="del-btn" title="删除/隐藏">✖</span></div></div></div>
                         </div>
                         <button class="collapse-action-btn" onclick="this.closest('.collapse-card').classList.toggle('expanded')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>
                     </div>
@@ -692,11 +692,13 @@
     <script src="../../assets/runtime/image-card-runtime.js"></script>
     <script src="../../assets/editor/editor-rich-text.js"></script>
     <script src="../../assets/editor/editor-core.js"></script>
+    <script src="../../assets/editor/editor-core-image.js"></script>
     <script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
     <script src="../../assets/runtime/doodle-runtime.js"></script>
     <script src="../../assets/runtime/example-card-core.js"></script>
     <script src="../../assets/runtime/example-card-authoring.js"></script>
     <script src="../../assets/runtime/example-card-student.js"></script>
+
 
 
 

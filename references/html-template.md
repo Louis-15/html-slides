@@ -182,6 +182,7 @@ Every generated HTML file **must** comply with these rules:
     <script src="../../assets/runtime/image-card-runtime.js"></script>
     <script src="../../assets/editor/editor-rich-text.js"></script>
     <script src="../../assets/editor/editor-core.js"></script>
+    <script src="../../assets/editor/editor-core-image.js"></script>
     <script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
     <script src="../../assets/runtime/doodle-runtime.js"></script>
 
@@ -309,8 +310,7 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="../../assets/editor/editor-inline-boxes.js"></script>
 <script src="../../assets/runtime/image-card-runtime.js"></script>
 <script src="../../assets/editor/editor-rich-text.js"></script>
-<script src="../../assets/editor/editor-core.js"></script>
-<script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
+<script src="../../assets/editor/editor-core.js"></script><script src="../../assets/editor/editor-core-image.js"></script><script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
 <script src="../../assets/runtime/doodle-runtime.js"></script>
 ```
 
@@ -468,7 +468,8 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── editor-persistence.js      # localStorage + export
 │   ├── editor-history.js          # Undo/redo
 │   ├── editor-inline-boxes.js     # Text box + simple image box unified management
-│   ├── image-card-runtime.js      # Image card runtime (replace/clear buttons, file picker)
+│   ├── image-card-runtime.js      # Image card runtime (replace/clear buttons, file picker, lightbox)
+│   ├── editor-core-image.js       # Simple image box insertion (collapsible card picker, file chooser)
 │   ├── editor-rich-text.js        # Rich text toolbar logic
 │   └── editor-core.js             # Editor orchestrator + dynamic toolbar injection
 ├── audio/
