@@ -434,8 +434,8 @@ These rules **replace** the old fixed content limits from `presentation-layer.md
 
 ```html
 <div class="slide-content layout-single">
-  <div class="image-block">
-    <img src="assets/diagram.png" alt="语法结构图" class="slide-image">
+  <div class="image-card">
+    <img src="images/diagram.png" alt="语法结构图" class="slide-image">
   </div>
 </div>
 ```
@@ -451,8 +451,8 @@ These rules **replace** the old fixed content limits from `presentation-layer.md
   </div>
   <div class="col">
     <!-- 图片自然充满栏位 -->
-    <div class="image-block">
-      <img src="assets/scene.jpg" alt="课文插图" class="slide-image">
+    <div class="image-card">
+      <img src="images/scene.jpg" alt="课文插图" class="slide-image">
     </div>
   </div>
 </div>

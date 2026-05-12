@@ -280,7 +280,7 @@
         var dp2 = clone2.querySelector('#doodleLaserPointer'); if (dp2) dp2.remove();
 
         // 移除浮动控件及注解工具栏
-        clone2.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+        clone2.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle, .image-actions').forEach(function (el) { el.remove(); });
         clone2.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
 
         // 剥离 native-edit-wrap 壳
@@ -437,8 +437,9 @@
                     var ts = slides[db.si];
                     if (ts) {
                         if (db.type === 'image') {
-                            if (typeof window.ImageManager !== 'undefined') {
-                                window.ImageManager.createImageBox(db.id, db.l, db.t, db.w, db.h, db.c, ts);
+                            if (typeof window.BoxManager !== 'undefined') {
+                                var targetParent = ts.querySelector('.slide-content') || ts;
+                                window.BoxManager.createSimpleImageBox(db.id, db.c, targetParent);
                             }
                         } else {
                             window.BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
@@ -513,7 +514,7 @@
                 '/* Portable Safety Net */\n' +
                 '.rich-toolbar, .page-richtext-fragment-toolbar, .box-controls, .rt-dropdown-menu,\n' +
                 '#editToggle, .edit-toggle, #doodleToolbar, .doodle-layer,\n' +
-                '.floating-controls, .rs-handle {\n' +
+                '.floating-controls, .rs-handle, .image-actions {\n' +
                 '    display: none !important;\n' +
                 '    visibility: hidden !important;\n' +
                 '    pointer-events: none !important;\n' +
@@ -534,7 +535,7 @@
             if (bd) bd.classList.remove('editor-mode');
 
             // 移除浮动控件及编辑器专有图元挂载节点
-            clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle').forEach(function (el) { el.remove(); });
+            clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle, .image-actions').forEach(function (el) { el.remove(); });
             clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
             // 清除所有交互组件瞬态（替代原来仅清除 qa-fragment-visible/data-fragment-manual-reveal）
             _stripAllTransientStates(clone);

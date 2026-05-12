@@ -41,6 +41,7 @@ Every generated HTML file **must** comply with these rules:
     <link rel="stylesheet" href="../../assets/zones/zone1-header.css">
     <link rel="stylesheet" href="../../assets/zones/zone2-layout.css">
     <link rel="stylesheet" href="../../assets/zones/zone2-components.css">
+    <link rel="stylesheet" href="../../assets/zones/zone2-image-card.css">
     <link rel="stylesheet" href="../../assets/zones/zone2-immersive-components.css">
     <link rel="stylesheet" href="../../assets/zones/zone2-quiz-annotation/quiz-layout.css">
     <link rel="stylesheet" href="../../assets/zones/zone2-quiz-annotation/quiz-passage.css">
@@ -177,8 +178,8 @@ Every generated HTML file **must** comply with these rules:
     <script src="../../assets/editor/editor-utils.js"></script>
     <script src="../../assets/editor/editor-persistence.js"></script>
     <script src="../../assets/editor/editor-history.js"></script>
-    <script src="../../assets/editor/editor-text-manager.js"></script>
-    <script src="../../assets/editor/editor-images.js"></script>
+    <script src="../../assets/editor/editor-inline-boxes.js"></script>
+    <script src="../../assets/runtime/image-card-runtime.js"></script>
     <script src="../../assets/editor/editor-rich-text.js"></script>
     <script src="../../assets/editor/editor-core.js"></script>
     <script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
@@ -232,6 +233,7 @@ Reference `editor/editor.css` via `<link>`, **after** the Zone CSS chain:
 <link rel="stylesheet" href="../../assets/zones/zone1-header.css">
 <link rel="stylesheet" href="../../assets/zones/zone2-layout.css">
 <link rel="stylesheet" href="../../assets/zones/zone2-components.css">
+<link rel="stylesheet" href="../../assets/zones/zone2-image-card.css">
 <link rel="stylesheet" href="../../assets/zones/zone2-immersive-components.css">
 <link rel="stylesheet" href="../../assets/zones/zone2-quiz-annotation/quiz-layout.css">
 <link rel="stylesheet" href="../../assets/zones/zone2-quiz-annotation/quiz-passage.css">
@@ -262,7 +264,7 @@ Every text element that should be editable MUST have a unique `data-edit-id` att
 ```
 **Naming:** `s{slideNumber}-{type}{index}` (e.g., `s3-l2` for slide 3, list item 2).
 
-All elements get **unified drag/delete controls** (📍✖) at runtime. Text elements via `BoxManager._injectControls()`, image elements via `ImageManager._injectControls()` (from the split `editor-images.js`). No separate CSS wrappers needed for native elements.
+All elements get **unified drag/delete controls** (📍✖) at runtime. Text and simple image elements via `BoxManager._injectControls()`, image-card via `ImageCardRuntime` (from `image-card-runtime.js`). No separate CSS wrappers needed for native elements.
 
 ### 4. JS Reference
 
@@ -304,8 +306,8 @@ Then reference the 6 editor JS files, `page-richtext-annotation-runtime.js`, and
 <script src="../../assets/editor/editor-utils.js"></script>
 <script src="../../assets/editor/editor-persistence.js"></script>
 <script src="../../assets/editor/editor-history.js"></script>
-<script src="../../assets/editor/editor-text-manager.js"></script>
-<script src="../../assets/editor/editor-images.js"></script>
+<script src="../../assets/editor/editor-inline-boxes.js"></script>
+<script src="../../assets/runtime/image-card-runtime.js"></script>
 <script src="../../assets/editor/editor-rich-text.js"></script>
 <script src="../../assets/editor/editor-core.js"></script>
 <script src="../../assets/runtime/page-richtext-annotation-runtime.js"></script>
@@ -437,6 +439,7 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone1-header.css       # Zone 1 header bar
 │   ├── zone2-layout.css       # Zone 2 layout modes (8+1)
 │   ├── zone2-components.css   # Zone 2 common components (12)
+│   ├── zone2-image-card.css    # Zone 2 image card styles (extracted from zone2-components.css)
 │   ├── zone2-immersive-components.css # Zone 2 immersive components
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
 │   ├── zone2-example-card.css         # Zone 2 example-card component
@@ -464,8 +467,8 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── editor-utils.js            # Editor base utilities
 │   ├── editor-persistence.js      # localStorage + export
 │   ├── editor-history.js          # Undo/redo
-│   ├── editor-text-manager.js     # Text box management
-│   ├── editor-images.js           # Image box management (split from editor-text-manager.js)
+│   ├── editor-inline-boxes.js     # Text box + simple image box unified management
+│   ├── image-card-runtime.js      # Image card runtime (replace/clear buttons, file picker)
 │   ├── editor-rich-text.js        # Rich text toolbar logic
 │   └── editor-core.js             # Editor orchestrator + dynamic toolbar injection
 ├── audio/

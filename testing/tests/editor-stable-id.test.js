@@ -65,12 +65,7 @@ function installEditorCoreStubs(window) {
     _injectControls() {},
     createTextBox() {},
   };
-  window.ImageManager = {
-    init() {},
-    _injectControls() {},
-    createImageBox() {},
-    rehydrateSlide() {},
-  };
+  // editor-images.js 已删除，功能合并到 editor-inline-boxes.js（BoxManager）
 }
 
 describe('stable editable ids', () => {

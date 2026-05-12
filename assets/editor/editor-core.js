@@ -2,7 +2,7 @@
    EDITOR-CORE.JS
    HTML-Slides 编辑器 — 编辑模式总控 + 初始化引导 + 工具栏HTML注入
    依赖：editor-utils.js, editor-persistence.js, editor-history.js,
-         editor-text-manager.js, editor-images.js, editor-rich-text.js
+         editor-inline-boxes.js, editor-rich-text.js
    暴露：window.editorCore, window.historyMgr, window.richToolbar, window.boxManager
    =========================================== */
 
@@ -102,18 +102,9 @@
       "</div>" +
       "</div>" +
       "</div>" +
-      '<div class="rt-dropdown" title="插入图片">' +
-      '<button class="rt-btn" id="imageToggle"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></button>' +
-      '<div class="rt-dropdown-menu" id="imageDropdown" style="width: 260px;">' +
-      '<div class="rt-input-group">' +
-      '<input type="url" id="imageUrlInput" placeholder="输入图片 URL">' +
-      '<button class="rt-input-btn" id="applyImageBtn">插入网络图片</button>' +
-      '<div style="text-align:center;font-size:12px;color:var(--editor-text-muted);margin:4px 0;">或</div>' +
-      '<input type="file" id="imageFileInput" accept="image/*" style="display:none;">' +
-      '<button class="rt-input-btn secondary" id="triggerImageFileBtn">\ud83d\udcc2 浏览本地图片...</button>' +
-      "</div>" +
-      "</div>" +
-      "</div>" +
+      '<button class="rt-btn" id="addSimpleImageBtn" title="插入简单图片框">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>' +
+      '</button>' +
       '<button class="rt-btn" id="addTextBoxBtn" title="添加文本框"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><path d="M8 8h8"/><path d="M12 8v8"/><path d="M10 16h4"/></svg></button>' +
       '<div class="rt-divider"></div>' +
       '<button class="rt-btn" id="hideToolbarBtn" title="收起工具条"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-top-close-icon lucide-panel-top-close"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="m9 16 3-3 3 3"/></svg></button>';
@@ -281,13 +272,13 @@
   RichTextToolbar.init();
   window.richToolbar = RichTextToolbar;
 
+  // 初始化内联框管理器（文本框 + 简单图片框）
   BoxManager.init();
   window.boxManager = BoxManager;
 
-  // 初始化图片管理器（从 editor-text-manager.js 拆分而来）
-  if (typeof ImageManager !== 'undefined') {
-    ImageManager.init();
-    window.imageManager = ImageManager;
+  // 初始化图片卡片运行时（类型A：图片卡片编辑按钮）
+  if (typeof ImageCardRuntime !== 'undefined') {
+    ImageCardRuntime.init();
   }
 
   PersistenceLayer.loadCustomBoxes();
@@ -626,100 +617,31 @@
       RichTextToolbar.toggleDropdown("ulColorDropdown");
     });
 
-  var imageToggle = document.getElementById("imageToggle");
-  if (imageToggle)
-    imageToggle.addEventListener("pointerdown", function (e) {
-      e.preventDefault();
-      RichTextToolbar.toggleDropdown("imageDropdown");
-    });
-
-  var applyImageBtn = document.getElementById("applyImageBtn");
-  var imageUrlInput = document.getElementById("imageUrlInput");
-  if (applyImageBtn && imageUrlInput) {
-    applyImageBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      var url = imageUrlInput.value.trim();
-      if (!url) return;
+  // 插入简单图片框按钮
+  var addSimpleImageBtn = document.getElementById('addSimpleImageBtn');
+  if (addSimpleImageBtn) {
+    addSimpleImageBtn.addEventListener('click', function () {
       var slides = getAllSlides();
       var cs = slides[getCurrentSlideIndex()];
       if (!cs) return;
-      if (typeof ImageManager !== 'undefined') {
-        ImageManager.createImageBox(
-          "img-" + Date.now(),
-          "center",
-          "center",
-          null,
-          null,
-          url,
-          cs,
+
+      // 找到当前焦点所在的一级宿主组件
+      var focusedEl = typeof window.__slideRuntime__ !== 'undefined' &&
+        typeof window.__slideRuntime__.getFocusedInteractionElement === 'function'
+        ? window.__slideRuntime__.getFocusedInteractionElement() : null;
+
+      var targetParent = focusedEl || cs.querySelector('.slide-content') || cs;
+
+      // 简单图片框已合并到 BoxManager
+      if (typeof BoxManager !== 'undefined') {
+        BoxManager.createSimpleImageBox(
+          'simple-img-' + Date.now(),
+          null,  // src = null（空框，用户后续通过文件选择器填充）
+          targetParent
         );
+        PersistenceLayer.saveCustomBoxes();
+        historyMgr.recordState(true);
       }
-      PersistenceLayer.saveCustomBoxes();
-      historyMgr.recordState(true);
-      RichTextToolbar.closeDropdowns();
-      imageUrlInput.value = "";
-    });
-  }
-
-  var triggerImageFileBtn = document.getElementById("triggerImageFileBtn");
-  var imageFileInput = document.getElementById("imageFileInput");
-  if (triggerImageFileBtn && imageFileInput) {
-    triggerImageFileBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      imageFileInput.click();
-    });
-    imageFileInput.addEventListener("change", function (e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (evt) {
-        var img = new Image();
-        img.onload = function () {
-          var canvas = document.createElement("canvas");
-          var maxW = 1000;
-          var maxH = 1000;
-          var w = img.width;
-          var h = img.height;
-          if (w > maxW) {
-            h *= maxW / w;
-            w = maxW;
-          }
-          if (h > maxH) {
-            w *= maxH / h;
-            h = maxH;
-          }
-          canvas.width = w;
-          canvas.height = h;
-          var ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, w, h);
-          var b64 = canvas.toDataURL(
-            file.type === "image/jpeg" ? "image/jpeg" : "image/webp",
-            0.85,
-          );
-
-          var slides = getAllSlides();
-          var cs = slides[getCurrentSlideIndex()];
-          if (cs) {
-            if (typeof ImageManager !== 'undefined') {
-              ImageManager.createImageBox(
-                "img-" + Date.now(),
-                "center",
-                "center",
-                null,
-                null,
-                b64,
-                cs,
-              );
-            }
-            PersistenceLayer.saveCustomBoxes();
-            historyMgr.recordState(true);
-            RichTextToolbar.closeDropdowns();
-          }
-        };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
-      imageFileInput.value = "";
     });
   }
 

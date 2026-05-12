@@ -50,7 +50,7 @@ Speaker notes are part of the **slide structure**, not the component. They go in
 
 Core content components are defined in `zones/zone2-components.css`. Immersive components such as `title-hero` are defined in `zones/zone2-immersive-components.css`. The Quiz & Annotation component (#14) is defined in `zones/zone2-quiz-annotation/` (13 CSS files + 17 JS modules), uses `layout-single` exclusively, and requires the runtime stack `slides-runtime.js` → `audio-runtime.js` → `quiz-annotation-audio.js` → `zone2-quiz-annotation/` modules (see `qa-test-all-types.html` for the exact loading order). The Example Card component (#15) is defined in `zones/zone2-example-card.css`, is designed for full-width teaching cards, and requires `example-card-audio.js` plus `example-card-core.js` → `example-card-authoring.js` → `example-card-student.js` after the editor/page-richtext runtime chain.
 
-> **ORDINARY PAGE INTERACTION CONTRACT (2026-04-25)**: On ordinary pages, `↑/↓` move the top-level focus across component roots before turning pages. Passive components such as `.card`, `.stat-card`, `.timeline-card`, `.chart-container`, `.table-wrap`, `.code-window`, `.image-block`, `.dual-bar`, and `.content-block` still participate in this top-level focus order and show `.step-active`, but they have no own forward action. Interactive hosts such as `.flip-card`, `.collapse-card`, and `.summary-trigger` use a focus-first model: first `ArrowDown` focuses the host, second `ArrowDown` performs the interaction, and `ArrowUp` first rolls the interaction back before leaving. `←/→` are reserved for fragment stepping inside the currently focused host.
+> **ORDINARY PAGE INTERACTION CONTRACT (2026-04-25)**: On ordinary pages, `↑/↓` move the top-level focus across component roots before turning pages. Passive components such as `.card`, `.stat-card`, `.timeline-card`, `.chart-container`, `.table-wrap`, `.code-window`, `.image-card`, `.dual-bar`, and `.content-block` still participate in this top-level focus order and show `.step-active`, but they have no own forward action. Interactive hosts such as `.flip-card`, `.collapse-card`, and `.summary-trigger` use a focus-first model: first `ArrowDown` focuses the host, second `ArrowDown` performs the interaction, and `ArrowUp` first rolls the interaction back before leaving. `←/→` are reserved for fragment stepping inside the currently focused host.
 
 ### 1. Card / 普通卡片 (`.card`)
 
@@ -292,19 +292,30 @@ Styled data table with header row and hover highlights.
 Use `cell-highlight` for emphasis, `cell-muted` for secondary values.
 **When to use**: Feature comparisons, pricing tables, spec sheets.
 
-### 11. Image Block / 图片块 (`.image-block`)
+### 11. Image Card / 图片卡片 (`.image-card`)
 
 Image display component. No padding, fills the slot naturally.
 
 ```html
-<div class="image-block">
-  <img src="assets/[IMAGE_FILE]" alt="[ALT_TEXT]" class="slide-image">
+<!--
+  data-image-slot="true" 表示这个图片框可以由用户在编辑模式下替换图片。
+  当 src 为空时，运行时自动显示占位符；有图时显示图片。
+  图片文件应放在 课件/<课件名>/images/ 目录下。
+-->
+<div class="image-card is-empty" data-image-slot="true">
+  <div class="image-placeholder-icon">🖼️</div>
+  <div class="image-placeholder-text">图片占位（编辑模式下点击 🖼️ 按钮替换）</div>
 </div>
+<!-- 有图时的结构（编辑模式下由 runtime 自动切换）：
+<div class="image-card">
+  <img src="images/diagram.png" alt="说明图" class="slide-image">
+</div>
+-->
 ```
 
 **Variants:** `image-screenshot` (border + shadow), `image-logo` (smaller), `image-fullbleed` (absolute positioned background).
 
-> **NOTE**: The old `.image-frame` class is **renamed** to `.image-block`.
+> **HISTORY**: Formerly `.image-block`, renamed to `.image-card` in v1.0.0 image system refactor (2026-05-12) to distinguish from the simple `.simple-image-box` component.
 
 **When to use**: Product screenshots, architecture diagrams, photos, logos.
 

@@ -667,7 +667,7 @@ function createPassiveComponentAuditDom() {
               <tbody><tr><td>Value</td></tr></tbody>
             </table>
           </div>
-          <div class="image-block audit-image-block">
+          <div class="image-card audit-image-card">
             <img class="slide-image" alt="audit" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">
           </div>
           <div class="dual-bar audit-dual-bar">
@@ -706,7 +706,7 @@ function createPassiveComponentAuditDom() {
       { label: 'code-window', element: window.document.querySelector('.audit-code-window') },
       { label: 'chart-container', element: window.document.querySelector('.audit-chart-container') },
       { label: 'table-wrap', element: window.document.querySelector('.audit-table-wrap') },
-      { label: 'image-block', element: window.document.querySelector('.audit-image-block') },
+      { label: 'image-card', element: window.document.querySelector('.audit-image-card') },
       { label: 'dual-bar', element: window.document.querySelector('.audit-dual-bar') },
       { label: 'content-block', element: window.document.querySelector('.audit-content-block') }
     ]
@@ -1139,7 +1139,7 @@ describe('slides runtime', () => {
     assert.match(zone2ContentSource, /\.code-window\.step-active[\s\S]*transform:\s*translateY\(-2px\);/, 'expected code-window to keep a visible top-level focus lift when keyboard stepping lands on it');
     assert.match(zone2ContentSource, /\.chart-container\.step-active[\s\S]*box-shadow:\s*0 12px 40px rgba\(0, 0, 0, 0\.3\);/, 'expected chart-container to expose a visible step-active shell instead of hover-only chrome');
     assert.match(zone2ContentSource, /\.table-wrap\.step-active[\s\S]*box-shadow:\s*0 12px 40px rgba\(0, 0, 0, 0\.3\);/, 'expected table-wrap to keep a visible focus shell when it becomes the active top-level host');
-    assert.match(zone2ContentSource, /\.image-block\.step-active\s+\.slide-image[\s\S]*transform:\s*scale\(1\.01\);/, 'expected image-block to project its focus state onto the slide image itself so keyboard focus remains visible');
+    assert.match(zone2ContentSource, /\.image-card\.step-active\s+\.slide-image[\s\S]*transform:\s*scale\(1\.01\);/, 'expected image-card to project its focus state onto the slide image itself so keyboard focus remains visible');
     assert.match(zone2ContentSource, /\.dual-bar\.step-active[\s\S]*box-shadow:/, 'expected dual-bar to expose its own visible focus shell instead of only letting the halves react on hover');
     assert.match(zone2ContentSource, /\.content-block\.step-active[\s\S]*(box-shadow:|background:|background-color:)/, 'expected content-block to keep a visible keyboard focus treatment because it also participates in the top-level queue');
   });
