@@ -105,10 +105,11 @@
       // td/th 元素不注入（表格单元格拖不动）
       if (el.tagName === "TD" || el.tagName === "TH") return;
 
-      // 让原生元素也具备 position: relative 以便控件绝对定位
-      if (!wrap && target) {
-        var cs = window.getComputedStyle(target);
-        if (cs.position === "static") target.style.position = "relative";
+      // 确保目标容器有 position:relative 以便控件绝对定位
+      var posTarget = wrap || target;
+      if (posTarget) {
+        var cs = window.getComputedStyle(posTarget);
+        if (cs.position === "static") posTarget.style.position = "relative";
       }
 
       var controls = document.createElement("div");

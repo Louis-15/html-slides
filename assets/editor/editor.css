@@ -476,6 +476,13 @@ body.editor-mode {
     margin: 0;
 }
 
+/* 简单图片框：也保持 100% 宽度继承 */
+.editable-wrap.simple-image-box {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
 /* 修复紧凑型内联/固定尺寸的排版组件（如：选项序号）被统一的 100% 强行拉宽的问题 */
 .editable-wrap.native-edit-wrap:has(> .qa-option-label),
 .editable-wrap.native-edit-wrap:has(> .qa-drag-option) {
@@ -493,13 +500,29 @@ body.editor-mode {
     min-width: max-content;
 }
 
-/* 编辑模式下悬停/聚焦显示虚线边框 */
+/* 编辑模式下悬停/聚焦显示虚线边框（所有 .editable-wrap 共享） */
 .editor-mode .editable-wrap:hover {
     outline-color: var(--editor-outline-idle);
 }
 
 .editor-mode .editable-wrap:focus-within {
     outline-color: var(--editor-outline-focus);
+}
+
+/* 简单图片框：带上下间距，与相邻文本拉开距离 */
+.simple-image-box {
+    margin: 10px 0;
+    /* outline-offset 继承自 .editable-wrap (-2px)，但图片本身无内边距，
+       虚线框会被图片盖住，这里重置为 0 使虚线框包在图片外沿可见 */
+    outline-offset: 0;
+}
+
+/* 简单图片框内的图片适配容器宽度 */
+.simple-image-box img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
 }
 
 /* ===========================================
