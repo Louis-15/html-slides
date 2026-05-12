@@ -40,14 +40,14 @@
       var replaceBtn = document.createElement('button');
       replaceBtn.className = 'image-card-replace-btn';
       replaceBtn.title = '插入/替换图片';
-      replaceBtn.innerHTML = '🖼️';
+      replaceBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-up-icon lucide-image-up"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21"/><path d="m14 19.5 3-3 3 3"/><path d="M17 22v-5.5"/><circle cx="9" cy="9" r="2"/></svg>';
       replaceBtn.setAttribute('contenteditable', 'false');
 
       // 🗑️ 清空图片按钮（保留框，与简单图片框的 ✖ 不同）
       var clearBtn = document.createElement('button');
       clearBtn.className = 'image-card-clear-btn';
       clearBtn.title = '清空图片（保留框）';
-      clearBtn.innerHTML = '🗑️';
+      clearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
       clearBtn.setAttribute('contenteditable', 'false');
 
       actions.appendChild(replaceBtn);
