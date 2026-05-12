@@ -276,7 +276,7 @@
 }
 
 .collapse-card.expanded .card-expand {
-  max-height: 140px;
+  max-height: none;
   opacity: 1;
   margin-top: 12px;
 }
