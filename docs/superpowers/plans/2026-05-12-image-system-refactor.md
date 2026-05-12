@@ -31,10 +31,15 @@
 | `assets/zones/zone2-components.css` | 修改 | 移除 `.image-card` 及其变体、`.image-fullbleed`、`.image-overlay` |
 | `assets/editor/editor-core.js` | 修改 | 工具栏"插入图片"→改为"插入简单图片框"；移除 URL 输入+大图压缩逻辑 |
 | `assets/editor/editor-persistence.js` | 修改 | `loadCustomBoxes` 中的图片框恢复适配新路径 |
-| `references/component-templates.md` | 修改 | 更新 `.image-card` 模板为带 `data-image-slot` 的新结构 |
-| `references/html-template.md` | 修改 | 加载顺序 + 文件清单更新 |
+| `references/component-templates.md` | 修改 | 更新 `.image-block` → `.image-card`（模板 + 交互合同说明 + 旧历史注释） |
+| `references/layout-system.md` | 修改 | 更新两处 `.image-block` 示例类名为 `.image-card` |
+| `references/html-template.md` | 修改 | 加载顺序 + 文件清单 + 删除 `ImageManager` 说明 |
 | `SKILL.md` | 修改 | 加载顺序 + 文件清单更新 |
-| `课件/组件展示全览/组件展示全览.html` | 修改 | 加载顺序更新（`editor-images.js`→`editor-inline-boxes.js`） |
+| `assets/editor/editor-core.js` | 修改 | 文件头依赖注释 + 工具栏改造 + 初始化代码 |
+| `assets/editor/editor-persistence.js` | 修改 | `loadCustomBoxes` 中的图片框恢复适配新路径 |
+| `testing/tests/editor-stable-id.test.js` | 修改 | 删除 `window.ImageManager` mock，改为 `BoxManager` |
+| `testing/tests/slides-runtime.test.js` | 修改 | 更新 `image-block` → `image-card` 测试类名 |
+| `课件/组件展示全览/组件展示全览.html` | 修改 | 加载顺序更新（`editor-images.js` → `editor-inline-boxes.js`） |
 | `课件/qa-test-all-types/qa-test-all-types.html` | 修改 | 同上 |
 
 ---
@@ -53,7 +58,7 @@
 
 ```css
 /* ====== 图片卡片空态（无图时保留布局位置） ====== */
-.image-block.is-empty {
+.image-card.is-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -68,13 +73,13 @@
   margin: 0;
 }
 
-.image-block.is-empty .image-placeholder-icon {
+.image-card.is-empty .image-placeholder-icon {
   font-size: 32px;
   opacity: 0.3;
   margin-bottom: 4px;
 }
 
-.image-block.is-empty .image-placeholder-text {
+.image-card.is-empty .image-placeholder-text {
   font-size: 13px;
   color: var(--text-dim);
   opacity: 0.5;
@@ -159,7 +164,7 @@
 
 从文件末尾附近删除以下内容：
 - `/* ====== 组件 11: 图片卡片 (.image-card) ====== */` 注释
-- `.image-card` 及其全部子选择器
+- `.image-card` 及其全部子选择器（含 `.image-card.step-active .slide-image` 第 788 行）
 - `.image-fullbleed` 及其子选择器
 - `.image-overlay` 及其子选择器
 - 代码块结尾后多余的空白行
@@ -196,8 +201,8 @@
     init: function () {
       var self = this;
       document.querySelectorAll('.image-card').forEach(function (block) {
-        if (block._imageBlockInitialized) return;
-        block._imageBlockInitialized = true;
+        if (block._imageCardInitialized) return;
+        block._imageCardInitialized = true;
         self._ensureStructure(block);
         self._injectControls(block);
       });
@@ -285,6 +290,11 @@
 
       // 构建相对于 HTML 文件的路径：images/<文件名>
       var fileName = file.name;
+      // 校验：文件必须有扩展名，否则提示用户
+      if (!fileName || fileName.indexOf('.') === -1) {
+        alert('选择的文件没有扩展名，请确认文件格式。');
+        return;
+      }
       var relativePath = 'images/' + fileName;
 
       img.setAttribute('src', relativePath);
@@ -337,7 +347,7 @@
       if (!slideEl) return;
       var self = this;
       slideEl.querySelectorAll('.image-card').forEach(function (block) {
-        block._imageBlockInitialized = false;
+        block._imageCardInitialized = false;
         self._ensureStructure(block);
       });
     },
@@ -625,6 +635,18 @@ Remove-Item "d:\Projects\html-slides\assets\editor\editor-images.js"
 
 检查 `editor-core.js` 和 `editor-persistence.js` 中所有对 `ImageManager` 的引用，改为 `BoxManager`（简单图片框已合并）或 `ImageCardRuntime`（图片卡片已独立）。
 
+- [ ] **Step 10: 更新 `editor-core.js` 文件头依赖注释**
+
+```javascript
+/* ===========================================
+   EDITOR-CORE.JS
+   HTML-Slides 编辑器 — 编辑模式总控 + 初始化引导 + 工具栏HTML注入
+   依赖：editor-utils.js, editor-persistence.js, editor-history.js,
+         editor-inline-boxes.js, editor-rich-text.js
+   暴露：window.editorCore, window.historyMgr, window.richToolbar, window.boxManager
+   =========================================== */
+```
+
 ---
 
 ## Task 5：更新 `editor-core.js` — 改造工具栏图片按钮
@@ -753,7 +775,7 @@ clone.querySelectorAll('.image-actions').forEach(function (el) { el.remove(); })
 将旧的模板：
 
 ```html
-<div class="image-block">
+<div class="image-card">
   <img src="assets/[IMAGE_FILE]" alt="[ALT_TEXT]" class="slide-image">
 </div>
 ```
@@ -766,12 +788,12 @@ clone.querySelectorAll('.image-actions').forEach(function (el) { el.remove(); })
   当 src 为空时，运行时自动显示占位符；有图时显示图片。
   图片文件应放在 课件/<课件名>/images/ 目录下。
 -->
-<div class="image-block is-empty" data-image-slot="true">
+<div class="image-card is-empty" data-image-slot="true">
   <div class="image-placeholder-icon">🖼️</div>
   <div class="image-placeholder-text">图片占位（编辑模式下点击 🖼️ 按钮替换）</div>
 </div>
 <!-- 有图时的结构（编辑模式下由 runtime 自动切换）：
-<div class="image-block">
+<div class="image-card">
   <img src="images/diagram.png" alt="说明图" class="slide-image">
 </div>
 -->
@@ -813,6 +835,97 @@ clone.querySelectorAll('.image-actions').forEach(function (el) { el.remove(); })
 
 ---
 
+## Task 9：补充文档与测试文件更新
+
+**说明：** 名称变更波及多个参考文档和测试文件，它们不是核心实施步骤，但漏掉会导致编译错误或测试失败。
+
+**Files:**
+- Modify: `references/component-templates.md`, `references/layout-system.md`, `references/html-template.md`
+- Modify: `testing/tests/editor-stable-id.test.js`, `testing/tests/slides-runtime.test.js`
+
+- [ ] **Step 1: 更新 `references/component-templates.md`**
+
+三处需要修改：
+
+① 第 53 行交互合同中的类名 `.image-block` → `.image-card`（无需改代码逻辑，只类名变更）
+
+```markdown
+> **ORDINARY PAGE INTERACTION CONTRACT (2026-04-25)**: ...Passive components such as `.card`, `.stat-card`, `.timeline-card`, `.chart-container`, `.table-wrap`, `.code-window`, `.image-card`, `.dual-bar`, and `.content-block` still participate in this top-level focus order...
+```
+
+② 第 295 行标题：`Image Block / 图片块 (`.image-block`)` → `Image Card / 图片卡片 (`.image-card`)`
+
+③ 第 300 行模板内容已由 Task 7 Step 1 覆盖
+
+④ 第 307 行历史备注和旧模板删除，替换为：
+
+```markdown
+> **HISTORY**: Formerly `.image-block`, renamed to `.image-card` in v1.0.0 image system refactor (2026-05-12) to distinguish from the simple `.simple-image-box` component.
+```
+
+- [ ] **Step 2: 更新 `references/layout-system.md`**
+
+两处 `.image-block` 示例类名改为 `.image-card`：
+
+```html
+<div class="image-card">
+  <img src="images/diagram.png" alt="语法结构图" class="slide-image">
+</div>
+```
+
+```html
+<div class="image-card">
+  <img src="images/scene.jpg" alt="课文插图" class="slide-image">
+</div>
+```
+
+- [ ] **Step 3: 更新 `references/html-template.md` 中的说明文字**
+
+第 265 行的控件说明改为：
+
+```markdown
+All elements get **unified drag/delete controls** (📍✖) at runtime. Text and simple image elements via `BoxManager._injectControls()`, image-card via `ImageCardRuntime` (from `image-card-runtime.js`). No separate CSS wrappers needed for native elements.
+```
+
+同时删除以下两行代码引用：
+- `<script src="../../assets/editor/editor-images.js"></script>`（共 2 处，第 181 和 308 行）
+- 文件清单中的 `editor-images.js` 条目
+
+替换为 `editor-inline-boxes.js`（此时 `editor-text-manager.js` 已重命名）。
+
+- [ ] **Step 4: 更新 `testing/tests/editor-stable-id.test.js`**
+
+删除 `window.ImageManager` mock，因为 `editor-images.js` 已删除：
+
+```javascript
+  // ❌ 删除以下代码块
+  window.ImageManager = {
+    init() {},
+    _injectControls() {},
+    createImageBox() {},
+    rehydrateSlide() {},
+  };
+```
+
+`BoxManager` mock 保持不变即可（它现在同时管文本框和简单图片框）。
+
+- [ ] **Step 5: 更新 `testing/tests/slides-runtime.test.js`**
+
+三处引用 `.image-block` 类名需改为 `.image-card`：
+
+```javascript
+// 第 670 行
+<div class="image-card audit-image-card">
+
+// 第 709 行
+{ label: 'image-card', element: window.document.querySelector('.audit-image-card') },
+
+// 第 1142 行的 step-active 选择器断言
+assert.match(zone2ContentSource, /\.image-card\.step-active\s+\.slide-image[\s\S]*transform:\s*scale\(1\.01\);/, ...);
+```
+
+---
+
 ## 自审检查
 
 ### 1. 需求覆盖
@@ -830,7 +943,12 @@ clone.querySelectorAll('.image-actions').forEach(function (el) { el.remove(); })
 | 路径纳入 localStorage | Task 3 Step 1 `saveElement` 调用 |
 | 工具栏改造 | Task 5 |
 | 持久化适配 | Task 6 |
-| 文档更新 | Task 7 + Task 8 |
+| 文档更新 | Task 7 + Task 8 + Task 9 |
+| 测试文件类名同步 | Task 9 Step 4 + Step 5 |
+| `references/layout-system.md` 示例同步 | Task 9 Step 2 |
+| `references/html-template.md` 说明同步 | Task 9 Step 3 |
+| 图片路径容错校验 | Task 3 `_applyImageFile` |
+| `editor-core.js` 依赖注释同步 | Task 4 Step 10 |
 
 ### 2. 占位符检查
 
@@ -857,3 +975,7 @@ clone.querySelectorAll('.image-actions').forEach(function (el) { el.remove(); })
 | `ImageManager.createImageBox(...)` | `BoxManager.createSimpleImageBox(...)` |
 | `ImageManager.init()` | `BoxManager.init()`（已包含 IMG 扫描） |
 | `ImageManager.rehydrateSlide()` | `BoxManager.rehydrateSlide()`（已包含 IMG 恢复） |
+| `.image-block`（CSS 类名） | `.image-card` |
+| `.image-block.step-active`（CSS 选择器） | `.image-card.step-active` |
+| `window.ImageManager` mock（测试文件） | 删除（`editor-images.js` 已删除） |
+| `ImageManager._injectControls()`（html-template.md 说明） | `BoxManager._injectControls()` / `ImageCardRuntime` |
