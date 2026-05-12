@@ -425,17 +425,22 @@
             </script>
         </div>
 
-        <!-- ========== SLIDE 8: 图片块 ========== -->
+        <!-- ========== SLIDE 8: 图片卡片 ========== -->
         <div class="slide" data-slide="8">
             <div class="slide-header banner">
-                <div class="header-module" data-edit-id="s8-module" data-edit-id-auto="true">3.1 视觉元素 <span class="breadcrumb-sep">/</span> 图片块与体系总结</div>
-                <div class="header-title" data-edit-id="s8-title" data-edit-id-auto="true">图片展示配合组件体系总览</div>
+                <div class="header-module" data-edit-id="s8-module" data-edit-id-auto="true">3.1 视觉元素 <span class="breadcrumb-sep">/</span> 图片卡片与体系总结</div>
+                <div class="header-title" data-edit-id="s8-title" data-edit-id-auto="true">图片卡片展示配合组件体系总览</div>
             </div>
             <div class="slide-content layout-2col" style="overflow: visible;">
                 <div class="col">
-                    <div class="image-block">
-                        <div class="image-placeholder" style="width:100%;height:180px;background:linear-gradient(135deg, rgba(52,152,219,0.15), rgba(155,89,182,0.15));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:48px;">🖼️</div>
-                        <p class="image-caption" data-edit-id="s8-caption" data-edit-id-auto="true" style="text-align:center;margin-top:8px;font-size:13px;opacity:0.7;">图片块占位示意（可替换为真实图片）</p>
+                    <!--
+                      data-image-slot="true" 表示这个图片框可以由用户在编辑模式下替换图片。
+                      当 src 为空时，运行时自动显示占位符；有图时显示图片。
+                      图片文件应放在 课件/组件展示全览/images/ 目录下。
+                    -->
+                    <div class="image-card is-empty" data-image-slot="true">
+                        <div class="image-placeholder-icon">🖼️</div>
+                        <div class="image-placeholder-text">图片占位（编辑模式下点击 🖼️ 按钮替换）</div>
                     </div>
                 </div>
                 <div class="col">
@@ -443,7 +448,7 @@
                         <div class="highlight-label" data-edit-id="s8-hl-label" data-edit-id-auto="true">全貌总结</div>
                         <div class="highlight-title" data-edit-id="s8-hl-title" data-edit-id-auto="true">组件体系</div>
                         <div class="highlight-text" data-edit-id="s8-hl-text">
-                            <strong>展示组件</strong>：卡片、代码窗、统计卡、强调卡、双色条、时间线、图表、表格、图片块<br><br>
+                            <strong>展示组件</strong>：卡片、代码窗、统计卡、强调卡、双色条、时间线、图表、表格、图片卡片<br><br>
                             <strong>交互组件</strong>：翻转卡、折叠卡、例题组件<br><br>
                             <strong>布局方案</strong>：title 封面、2col 双栏、3col 三栏、2x2 网格、single 单列
                         </div>
@@ -455,14 +460,14 @@
                 <div class="summary-content">
                     <h3 data-edit-id="s8-summary-h3" data-edit-id-auto="true">📌 本页要点</h3>
                     <ul>
-                        <li data-edit-id="s8-summary-1" data-edit-id-auto="true">图片块支持 screenshot / logo / fullbleed 三种样式</li>
+                        <li data-edit-id="s8-summary-1" data-edit-id-auto="true">图片卡片（.image-card）支持空态占位，编辑模式下可插入/替换/清空图片</li>
                         <li data-edit-id="s8-summary-2" data-edit-id-auto="true">共 18 种组件（含2种对比变体）覆盖展示、交互、可视化三类需求</li>
                         <li data-edit-id="s8-summary-3" data-edit-id-auto="true">6 种布局方案适配不同内容密度</li>
                     </ul>
                 </div>
             </div>
             <script type="application/json" class="slide-notes">
-            {"title":"图片块 + 全貌总结","script":"图片块组件支持三种样式变体，可与任意布局配合。到这一页为止，除答题批注外的所有组件都已展示完毕。","notes":["图片块: image-block + slide-image","三种变体: screenshot / logo / fullbleed","总结面板可放在任意页"]}
+            {"title":"图片卡片 + 全貌总结","script":"图片卡片是重构后的类型A图片组件，编辑模式下空态显示占位符，按 🖼️ 按钮可通过文件选择器插入图片。图片文件放在 课件/组件展示全览/images/ 目录下。","notes":["图片卡片: .image-card.is-empty + ImageCardRuntime","空态占位保留布局高度","编辑模式下插入/替换","图片路径: images/xxx.png"]}
             </script>
         </div>
 

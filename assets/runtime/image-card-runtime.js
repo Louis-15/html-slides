@@ -21,7 +21,6 @@
         if (block._imageCardInitialized) return;
         block._imageCardInitialized = true;
         self._ensureStructure(block);
-        self._injectControls(block);
       });
     },
 

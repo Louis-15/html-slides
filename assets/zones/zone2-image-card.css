@@ -113,6 +113,12 @@
   opacity: 0.5;
 }
 
+/* ====== 有图时隐藏占位符文本 ====== */
+.image-card:not(.is-empty) .image-placeholder-icon,
+.image-card:not(.is-empty) .image-placeholder-text {
+  display: none;
+}
+
 /* ====== 图片卡片编辑按钮 ====== */
 .image-card .image-actions {
   position: absolute;
