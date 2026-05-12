@@ -53,6 +53,28 @@
      * 组件的交互状态（selected/flipped/step-active 等）不在 [data-edit-id]
      * 内部，因此无需在此处理——基线快照方案从架构上保证了它们不会被写入 HTML。
      */
+    /**
+     * 从 localStorage 恢复 [data-edit-id] 元素的内容（支持 IMG 元素的 JSON 格式）。
+     * IMG 元素存的是 {html, src} JSON，非 IMG 元素存的是纯 HTML 字符串。
+     */
+    function restoreEditIdFromStorage(target) {
+        var id = target.getAttribute('data-edit-id');
+        if (!id) return;
+        var saved = readStoredValue('e:' + id);
+        if (saved === null) return;
+        // 尝试解析为 JSON（IMG 元素存储格式），回退为普通 HTML 字符串
+        var parsed;
+        try { parsed = JSON.parse(saved); } catch (e) { parsed = null; }
+        if (parsed && typeof parsed === 'object' && 'html' in parsed) {
+            target.innerHTML = stripTransientEditableHTML(parsed.html);
+            if (target.tagName === 'IMG' && parsed.src) {
+                target.setAttribute('src', parsed.src);
+            }
+        } else {
+            target.innerHTML = stripTransientEditableHTML(saved);
+        }
+    }
+
     function stripTransientEditableHTML(html) {
         if (!html) return html;
         if (html.indexOf('qa-fragment-visible') === -1 &&
@@ -227,11 +249,7 @@
             var clone = window.__BASELINE__.cloneNode(true);
 
             // 只把用户编辑过的 [data-edit-id] 内容从 localStorage 盖到基线上
-            clone.querySelectorAll('[data-edit-id]').forEach(function (target) {
-                var id = target.getAttribute('data-edit-id');
-                var saved = readStoredValue('e:' + id);
-                if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
-            });
+            clone.querySelectorAll('[data-edit-id]').forEach(restoreEditIdFromStorage);
 
             // 基线捕获时外部 <script> 标签尚未解析入 DOM，需从实时 DOM 补回
             // ★ 用 getAttribute('src') 保留原始相对路径，避免 outerHTML 序列化成绝对 URL
@@ -293,11 +311,7 @@
         _stripAllTransientStates(clone2);
 
         // 用 localStorage 值覆盖 [data-edit-id]
-        clone2.querySelectorAll('[data-edit-id]').forEach(function (target) {
-            var id = target.getAttribute('data-edit-id');
-            var saved = readStoredValue('e:' + id);
-            if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
-        });
+        clone2.querySelectorAll('[data-edit-id]').forEach(restoreEditIdFromStorage);
 
         clone2.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', clone2);
@@ -310,11 +324,7 @@
         var div = document.createElement('div');
         div.innerHTML = cleanHTML.replace(/^<!DOCTYPE[^>]*>\s*/i, '');
 
-        div.querySelectorAll('[data-edit-id]').forEach(function (target) {
-            var id = target.getAttribute('data-edit-id');
-            var saved = readStoredValue('e:' + id);
-            if (saved !== null) target.innerHTML = stripTransientEditableHTML(saved);
-        });
+        div.querySelectorAll('[data-edit-id]').forEach(restoreEditIdFromStorage);
 
         div.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
         if (EditorHooks) EditorHooks.fire('onExportClean', div);
@@ -380,7 +390,18 @@
         saveElement: function (el) {
             var id = el.getAttribute('data-edit-id');
             if (!id) return;
-            try { localStorage.setItem(storageKey('e:' + id), stripTransientEditableHTML(el.innerHTML)); } catch (e) { }
+            try {
+                // IMG 元素：innerHTML 永远为空，必须额外保存 src 属性
+                if (el.tagName === 'IMG') {
+                    var imgData = {
+                        html: stripTransientEditableHTML(el.innerHTML),
+                        src: el.getAttribute('src') || ''
+                    };
+                    localStorage.setItem(storageKey('e:' + id), JSON.stringify(imgData));
+                } else {
+                    localStorage.setItem(storageKey('e:' + id), stripTransientEditableHTML(el.innerHTML));
+                }
+            } catch (e) { }
         },
 
         /** 从 localStorage 恢复所有可编辑元素的内容 */
@@ -389,7 +410,26 @@
                 var id = el.getAttribute('data-edit-id');
                 try {
                     var saved = readStoredValue('e:' + id);
-                    if (saved !== null) el.innerHTML = stripTransientEditableHTML(saved);
+                    if (saved === null) return;
+                    // 尝试解析为 JSON（IMG 元素存储格式），回退为普通 HTML 字符串
+                    var parsed;
+                    try { parsed = JSON.parse(saved); } catch (e) { parsed = null; }
+                    if (parsed && typeof parsed === 'object' && 'html' in parsed) {
+                        el.innerHTML = stripTransientEditableHTML(parsed.html);
+                        // IMG 元素恢复 src 属性
+                        if (el.tagName === 'IMG' && parsed.src) {
+                            el.setAttribute('src', parsed.src);
+                            // 清除清空操作残留的 display:none
+                            if (el.style.display === 'none') {
+                                el.style.display = '';
+                            }
+                            // 如果是图片卡片内部的 img，同步空态
+                            var card = el.closest('.image-card');
+                            if (card) card.classList.remove('is-empty');
+                        }
+                    } else {
+                        el.innerHTML = stripTransientEditableHTML(saved);
+                    }
                 } catch (e) { }
             });
         },

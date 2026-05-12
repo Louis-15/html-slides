@@ -48,6 +48,8 @@
 
       // ====== IMG 元素：走简单图片框路径 ======
       if (el.tagName === "IMG") {
+        // 跳过图片卡片内部的图片（由 ImageCardRuntime 管理）
+        if (el.closest('.image-card')) return;
         // 如果已经包裹在 .simple-image-box 中，跳过
         if (el.closest('.simple-image-box')) return;
 

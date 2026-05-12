@@ -115,6 +115,10 @@
 
       img.setAttribute('src', relativePath);
       img.setAttribute('data-edit-id', img.getAttribute('data-edit-id') || ('img-' + Date.now()));
+      // 清除之前清空操作留下的 display:none，确保图片可见
+      if (img.style.display === 'none') {
+        img.style.display = '';
+      }
 
       this._syncEmptyState(block);
 
