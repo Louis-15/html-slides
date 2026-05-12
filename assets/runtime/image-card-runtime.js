@@ -183,14 +183,10 @@
 
         overlay.addEventListener('pointerup', function (e) {
           if (!dragState) return;
-          var wasMoved = dragState.moved;
           dragState = null;
           overlay.style.cursor = 'grab';
           overlay.releasePointerCapture(e.pointerId);
-          // 如果没有拖动（纯点击），关闭光箱
-          if (!wasMoved && !e.target.closest('button')) {
-            closeOverlay();
-          }
+          // 不自动关闭光箱——仅 Esc / ✕ 按钮可关闭，避免误触退出
         });
       }
 
