@@ -390,6 +390,14 @@
       targetParent.appendChild(img);
       // _injectControls 会自动包裹 .simple-image-box 并注入控件条和八爪鱼缩放点
       this._injectControls(img);
+
+      // 写 localStorage（与 saveElement / restoreAllElements 保持一致）
+      try {
+        if (window.PersistenceLayer) {
+          window.PersistenceLayer.saveElement(img);
+        }
+      } catch (e) {}
+
       return img.closest('.simple-image-box') || img;
     },
 

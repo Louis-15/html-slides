@@ -453,6 +453,7 @@
         saveCustomBoxes: function () {
             var slides = getAllSlides();
             var boxes = [];
+            // 保存自定义文本框（绝对定位）
             document.querySelectorAll('.editable-wrap.custom-box').forEach(function (wrap) {
                 var slide = wrap.closest('.slide');
                 var slideIndex = Array.from(slides).indexOf(slide);
@@ -477,6 +478,35 @@
                     });
                 }
             });
+            // 保存简单图片框（流式布局，无绝对定位）
+            document.querySelectorAll('.simple-image-box').forEach(function (wrap) {
+                var slide = wrap.closest('.slide');
+                var slideIndex = Array.from(slides).indexOf(slide);
+                var img = wrap.querySelector('img[data-edit-id]');
+                if (!img) return;
+                var id = img.getAttribute('data-edit-id');
+                if (!id) return;
+                // 避免与 custom-box 中的 image 重复保存
+                if (boxes.some(function (b) { return b.id === id; })) return;
+                // 计算父容器在 slide 中的 DOM 索引路径（slide.children 链）
+                var parent = wrap.parentNode;
+                var path = [];
+                var cur = parent;
+                while (cur && cur !== slide) {
+                    var parentOfCur = cur.parentNode;
+                    if (!parentOfCur) break;
+                    var idx = Array.prototype.indexOf.call(parentOfCur.children, cur);
+                    if (idx < 0) break;
+                    path.unshift(idx);
+                    cur = parentOfCur;
+                }
+                boxes.push({
+                    si: slideIndex, id: id, type: 'image',
+                    l: '', t: '', w: '', h: '',
+                    c: img.getAttribute('src') || '',
+                    ip: path.join(',')  // DOM 索引路径，如 "1,0" 表示 slide.children[1].children[0]
+                });
+            });
             try { localStorage.setItem(storageKey('boxes'), JSON.stringify(boxes)); } catch (e) { }
         },
 
@@ -493,7 +523,26 @@
                     if (ts) {
                         if (db.type === 'image') {
                             if (typeof window.BoxManager !== 'undefined') {
-                                var targetParent = ts.querySelector('.slide-content') || ts;
+                                // 优先使用 DOM 索引路径恢复父容器
+                                var targetParent = null;
+                                if (db.ip) {
+                                    var indices = db.ip.split(',');
+                                    var node = ts;
+                                    var valid = true;
+                                    for (var k = 0; k < indices.length; k++) {
+                                        var ci = parseInt(indices[k], 10);
+                                        if (!isNaN(ci) && node.children && node.children[ci]) {
+                                            node = node.children[ci];
+                                        } else {
+                                            valid = false;
+                                            break;
+                                        }
+                                    }
+                                    if (valid) targetParent = node;
+                                }
+                                if (!targetParent) {
+                                    targetParent = ts.querySelector('.slide-content') || ts;
+                                }
                                 window.BoxManager.createSimpleImageBox(db.id, db.c, targetParent);
                             }
                         } else {
