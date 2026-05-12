@@ -272,6 +272,50 @@
                 if (cloneBody) cloneBody.appendChild(ns);
             });
 
+            // 简单图片框：基线捕获时不存在，从实时 DOM 复制到基线的对应幻灯片中
+            document.querySelectorAll('.simple-image-box').forEach(function (liveWrap) {
+                var liveSlide = liveWrap.closest('.slide');
+                if (!liveSlide || !cloneBody) return;
+                // 找到基线中对应的幻灯片（按 data-slide 索引）
+                var slideIdx = liveSlide.getAttribute('data-slide');
+                var cloneSlide = clone.querySelector('.slide[data-slide="' + slideIdx + '"]');
+                if (!cloneSlide) return;
+                // 克隆整个 .simple-image-box 并追加到幻灯片末尾
+                var newWrap = liveWrap.cloneNode(true);
+                // 清理克隆体内的控件残留
+                newWrap.querySelectorAll('.box-controls, .rs-handle').forEach(function (n) { n.remove(); });
+                // 尝试插入到与实时 DOM 相同的位置（父容器对应索引）
+                var liveParent = liveWrap.parentNode;
+                if (liveParent && liveParent !== liveSlide) {
+                    var parentPath = [];
+                    var cur = liveParent;
+                    while (cur && cur !== liveSlide) {
+                        var p = cur.parentNode;
+                        if (!p) break;
+                        var idx = Array.prototype.indexOf.call(p.children, cur);
+                        if (idx < 0) break;
+                        parentPath.unshift(idx);
+                        cur = p;
+                    }
+                    var cloneTarget = cloneSlide;
+                    for (var pi = 0; pi < parentPath.length; pi++) {
+                        if (cloneTarget && cloneTarget.children && cloneTarget.children[parentPath[pi]]) {
+                            cloneTarget = cloneTarget.children[parentPath[pi]];
+                        } else {
+                            cloneTarget = null;
+                            break;
+                        }
+                    }
+                    if (cloneTarget) {
+                        cloneTarget.appendChild(newWrap);
+                    } else {
+                        cloneSlide.appendChild(newWrap);
+                    }
+                } else {
+                    cloneSlide.appendChild(newWrap);
+                }
+            });
+
             // 清理运行时残留：保存气泡、图片选择器
             clone.querySelectorAll('.save-bubble, input[type="file"]').forEach(function (el) { el.remove(); });
 
@@ -521,11 +565,10 @@
         loadCustomBoxes: function () {
             try {
                 var saved = readStoredValue('boxes');
-                // 先构建活跃 id 集合，然后清理遗留图片框（含无缓存的情况）
-                var activeIds = {};
                 if (saved) {
                     var boxes = JSON.parse(saved);
                     var slides = getAllSlides();
+                    var activeIds = {};
                     boxes.forEach(function (db) {
                         activeIds[db.id] = true;
                         var existing = document.querySelector('[data-edit-id="' + db.id + '"]');
@@ -568,17 +611,17 @@
                             }
                         }
                     });
-                }
-                // 清理 DOM 中残留但不在 activeIds 中的简单图片框（已删除但 HTML 文件遗留）
-                document.querySelectorAll('.simple-image-box').forEach(function (wrap) {
-                    var img = wrap.querySelector('img[data-edit-id]');
-                    if (img) {
-                        var id = img.getAttribute('data-edit-id');
-                        if (id && !activeIds[id]) {
-                            wrap.remove();
+                    // 清理 DOM 中残留但不在 activeIds 中的简单图片框（已删除但 HTML 文件遗留）
+                    document.querySelectorAll('.simple-image-box').forEach(function (wrap) {
+                        var img = wrap.querySelector('img[data-edit-id]');
+                        if (img) {
+                            var id = img.getAttribute('data-edit-id');
+                            if (id && !activeIds[id]) {
+                                wrap.remove();
+                            }
                         }
-                    }
-                });
+                    });
+                }
             } catch (e) { }
         },
 
