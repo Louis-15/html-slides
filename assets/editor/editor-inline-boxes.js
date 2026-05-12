@@ -138,7 +138,7 @@
       }
     },
 
-    /** 绑定上下排序拖拽逻辑（文本框和简单图片框共用） */
+    /** 绑定上下排序拖拽逻辑（文本框和简单图片框共用，带跟随光标和落点指示器） */
     _bindDrag: function (handle, el, wrap) {
       var dragState = null;
 
@@ -146,26 +146,98 @@
         if (!window.editorCore || !window.editorCore.isActive) return;
         e.preventDefault();
         e.stopPropagation();
-        handle.setPointerCapture(e.pointerId);
 
-        var parent = (wrap || el).parentNode;
+        var target = wrap || el;
+        var parent = target.parentNode;
         var siblings = Array.from(parent.children).filter(function (child) {
           return child.classList.contains('simple-image-box') ||
                  child.classList.contains('native-edit-wrap') ||
                  child.classList.contains('editable-wrap');
         });
-        var currentIndex = siblings.indexOf(wrap || el);
+        var currentIndex = siblings.indexOf(target);
         if (currentIndex < 0) return;
 
-        // 给所有同级框打上排序高亮
-        siblings.forEach(function (s) { s.classList.add('sort-highlight'); });
+        // 记录拖拽起始状态
+        var targetRect = target.getBoundingClientRect();
+        var scrollTop = window.scrollY || window.pageYOffset;
+        var scrollLeft = window.scrollX || window.pageXOffset;
+
+        // 创建跟随鼠标的克隆体
+        var ghost = target.cloneNode(true);
+        ghost.style.cssText =
+          'position:fixed;z-index:99999;pointer-events:none;' +
+          'width:' + targetRect.width + 'px;' +
+          'height:' + targetRect.height + 'px;' +
+          'top:' + targetRect.top + 'px;' +
+          'left:' + targetRect.left + 'px;' +
+          'opacity:0.85;box-shadow:0 12px 48px rgba(0,0,0,0.25);' +
+          'border-radius:8px;overflow:hidden;' +
+          'transition:opacity 0.15s ease;';
+        // 不可编辑
+        ghost.querySelectorAll('[contenteditable]').forEach(function (g) { g.removeAttribute('contenteditable'); });
+        document.body.appendChild(ghost);
+
+        // 原元素变半透明占位
+        target.style.opacity = '0.25';
+        target.style.transition = 'opacity 0.15s ease';
+
+        // 创建落点指示器（水平线）
+        var dropLine = document.createElement('div');
+        dropLine.style.cssText =
+          'height:3px;background:var(--accent-green,#3fb950);' +
+          'border-radius:2px;pointer-events:none;' +
+          'margin:2px 0;display:none;';
+        parent.insertBefore(dropLine, parent.firstChild);
+
+        // 计算落点位置：遍历所有可排序兄弟，用鼠标 Y 与各框中心线比较
+        function updateDropLine(cursorY) {
+          var bestIdx = siblings.length;
+          for (var i = 0; i < siblings.length; i++) {
+            var r = siblings[i].getBoundingClientRect();
+            if (cursorY < r.top + r.height / 2) {
+              bestIdx = i;
+              break;
+            }
+          }
+          // 因为目标自身变半透明且不参与视觉排序，实际有效索引以 DOM 当前顺序为准
+          // 获取当前 DOM 顺序中 target 的实时索引
+          var liveSiblings = Array.from(parent.children).filter(function (child) {
+            return child.classList.contains('simple-image-box') ||
+                   child.classList.contains('native-edit-wrap') ||
+                   child.classList.contains('editable-wrap');
+          });
+          var liveIdx = liveSiblings.indexOf(target);
+
+          // 显示指示器：只要 bestIdx 不等于目标所在插槽（即目标前后的位置都不算变化）
+          // 目标插槽 = 目标所在的 DOM 位置：目标占据一个位置，插入到它自己之前或之后都算原位
+          var atOwnSlot = (bestIdx === liveIdx) || (bestIdx === liveIdx + 1);
+          if (atOwnSlot) {
+            dropLine.style.display = 'none';
+          } else {
+            dropLine.style.display = 'block';
+            var ref = liveSiblings[bestIdx];
+            if (ref && ref !== target) {
+              parent.insertBefore(dropLine, ref);
+            } else {
+              parent.appendChild(dropLine);
+            }
+          }
+        }
+
+        handle.setPointerCapture(e.pointerId);
 
         dragState = {
           parent: parent,
           siblings: siblings,
           currentIndex: currentIndex,
-          startY: e.clientY,
-          target: wrap || el
+          offsetY: e.clientY - targetRect.top,
+          offsetX: e.clientX - targetRect.left,
+          target: target,
+          ghost: ghost,
+          dropLine: dropLine,
+          scrollTop: scrollTop,
+          scrollLeft: scrollLeft,
+          updateDropLine: updateDropLine
         };
       });
 
@@ -173,44 +245,43 @@
         if (!dragState) return;
         e.preventDefault();
 
-        var siblings = dragState.siblings;
-        var current = dragState.target;
-        var currentRect = current.getBoundingClientRect();
-        var currentCenterY = currentRect.top + currentRect.height / 2;
+        // 克隆体跟随鼠标
+        dragState.ghost.style.top = (e.clientY - dragState.offsetY) + 'px';
+        dragState.ghost.style.left = (e.clientX - dragState.offsetX) + 'px';
 
-        // 遍历同级框，检查鼠标是否越过了某个框的中线
-        for (var i = 0; i < siblings.length; i++) {
-          if (siblings[i] === current) continue;
-          var rect = siblings[i].getBoundingClientRect();
-          var centerY = rect.top + rect.height / 2;
-
-          // 鼠标越过中线且方向正确时执行交换
-          if (e.clientY < centerY && currentCenterY > rect.bottom - 5 && i < dragState.currentIndex) {
-            // 向上插入到该框之前
-            dragState.parent.insertBefore(current, siblings[i]);
-            dragState.currentIndex = i;
-            currentCenterY = current.getBoundingClientRect().top + current.getBoundingClientRect().height / 2;
-          } else if (e.clientY > centerY && currentCenterY < rect.top + 5 && i > dragState.currentIndex) {
-            // 向下插入到该框之后
-            if (siblings[i + 1]) {
-              dragState.parent.insertBefore(current, siblings[i + 1]);
-            } else {
-              dragState.parent.appendChild(current);
-            }
-            dragState.currentIndex = i;
-            currentCenterY = current.getBoundingClientRect().top + current.getBoundingClientRect().height / 2;
-          }
-        }
+        // 更新落点指示器
+        dragState.updateDropLine(e.clientY);
       });
 
       handle.addEventListener('pointerup', function () {
         if (!dragState) return;
-        // 移除排序高亮
-        dragState.siblings.forEach(function (s) { s.classList.remove('sort-highlight'); });
 
-        // 如果排序发生了变化，保存状态
-        window.PersistenceLayer.saveCustomBoxes();
-        window.historyMgr.recordState(true);
+        // 移除克隆体
+        if (dragState.ghost && dragState.ghost.parentNode) {
+          dragState.ghost.parentNode.removeChild(dragState.ghost);
+        }
+
+        // 恢复原元素透明度
+        dragState.target.style.opacity = '';
+        dragState.target.style.transition = '';
+
+        // 移动目标到落点指示器的位置（仅当指示器可见——即确实发生了位置变化）
+        var moved = false;
+        var dropLine = dragState.dropLine;
+        if (dropLine && dropLine.parentNode) {
+          if (dropLine.style.display !== 'none') {
+            // 指示器可见：将目标插入到指示器的位置（指示器被移除前作为占位标记）
+            dropLine.parentNode.insertBefore(dragState.target, dropLine);
+            moved = true;
+          }
+          dropLine.parentNode.removeChild(dropLine);
+        }
+
+        if (moved) {
+          window.PersistenceLayer.saveCustomBoxes();
+          window.historyMgr.recordState(true);
+        }
+
         dragState = null;
       });
     },
