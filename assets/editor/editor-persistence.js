@@ -518,34 +518,46 @@
                 var boxes = JSON.parse(saved);
                 var slides = getAllSlides();
                 boxes.forEach(function (db) {
-                    if (document.querySelector('[data-edit-id="' + db.id + '"]')) return;
+                    var existing = document.querySelector('[data-edit-id="' + db.id + '"]');
                     var ts = slides[db.si];
-                    if (ts) {
-                        if (db.type === 'image') {
-                            if (typeof window.BoxManager !== 'undefined') {
-                                // 优先使用 DOM 索引路径恢复父容器
-                                var targetParent = null;
-                                if (db.ip) {
-                                    var indices = db.ip.split(',');
-                                    var node = ts;
-                                    var valid = true;
-                                    for (var k = 0; k < indices.length; k++) {
-                                        var ci = parseInt(indices[k], 10);
-                                        if (!isNaN(ci) && node.children && node.children[ci]) {
-                                            node = node.children[ci];
-                                        } else {
-                                            valid = false;
-                                            break;
-                                        }
+                    if (!ts) return;
+
+                    if (db.type === 'image') {
+                        if (typeof window.BoxManager !== 'undefined') {
+                            // 优先使用 DOM 索引路径恢复父容器
+                            var targetParent = null;
+                            if (db.ip) {
+                                var indices = db.ip.split(',');
+                                var node = ts;
+                                var valid = true;
+                                for (var k = 0; k < indices.length; k++) {
+                                    var ci = parseInt(indices[k], 10);
+                                    if (!isNaN(ci) && node.children && node.children[ci]) {
+                                        node = node.children[ci];
+                                    } else {
+                                        valid = false;
+                                        break;
                                     }
-                                    if (valid) targetParent = node;
                                 }
-                                if (!targetParent) {
-                                    targetParent = ts.querySelector('.slide-content') || ts;
-                                }
+                                if (valid) targetParent = node;
+                            }
+                            if (!targetParent) {
+                                targetParent = ts.querySelector('.slide-content') || ts;
+                            }
+
+                            if (existing) {
+                                // 元素已在 DOM 中（来自 HTML 文件），
+                                // 按 boxes 数组顺序将其移到父容器末尾以匹配排序
+                                // 移动整个 .simple-image-box 包裹而非 img 本身
+                                var existingWrap = existing.closest('.simple-image-box') || existing;
+                                targetParent.appendChild(existingWrap);
+                            } else {
+                                // 元素不在 DOM 中，创建新元素
                                 window.BoxManager.createSimpleImageBox(db.id, db.c, targetParent);
                             }
-                        } else {
+                        }
+                    } else {
+                        if (!existing) {
                             window.BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
                         }
                     }
