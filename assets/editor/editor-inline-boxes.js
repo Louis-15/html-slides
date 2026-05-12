@@ -122,29 +122,19 @@
       this._bindDrag(controls.querySelector(".drag-handle"), el, wrap);
       this._bindDelete(controls.querySelector(".del-btn"), el, wrap);
 
-      // 简单图片框额外注入八爪鱼缩放点
+      // 简单图片框：让图片自适应父容器宽度
       if (isImg) {
         var resizeTarget = wrap || el;
-        if (!resizeTarget.querySelector('.rs-se')) {
-          this._injectResizeHandles(resizeTarget);
+        // 让图片宽度自动占满容器
+        el.style.maxWidth = '100%';
+        el.style.width = '100%';
+        el.style.height = 'auto';
+        // 容器本身也自适应宽度
+        if (wrap) {
+          wrap.style.width = '100%';
+          wrap.style.maxWidth = '100%';
         }
       }
-    },
-
-    /** 注入八爪鱼缩放点（简单图片框使用） */
-    _injectResizeHandles: function (target) {
-      if (!target || target.querySelector('.rs-se')) return;
-      var corners = ['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'];
-      var self = this;
-      corners.forEach(function (dir) {
-        var r = document.createElement('div');
-        r.className = 'rs-handle rs-' + dir;
-        r.setAttribute('data-dir', dir);
-        r.setAttribute('contenteditable', 'false');
-        target.appendChild(r);
-        self._bindResize(r, target);
-      });
-      target.style.resize = 'none';
     },
 
     /** 绑定上下排序拖拽逻辑（文本框和简单图片框共用） */
@@ -221,79 +211,6 @@
         window.PersistenceLayer.saveCustomBoxes();
         window.historyMgr.recordState(true);
         dragState = null;
-      });
-    },
-
-    /** 绑定 8 点缩放逻辑（简单图片框使用，八爪鱼拖拽） */
-    _bindResize: function (handle, target) {
-      var rsState = null;
-      handle.addEventListener("pointerdown", function (e) {
-        if (!window.editorCore || !window.editorCore.isActive) return;
-        e.preventDefault();
-        e.stopPropagation();
-        handle.setPointerCapture(e.pointerId);
-
-        var cs = window.getComputedStyle(target);
-        if (cs.position === "static") target.style.position = "relative";
-        target.style.maxWidth = "none";
-        target.style.maxHeight = "none";
-        target.style.flexShrink = "0";
-
-        // 确保内部图片填满容器
-        var innerImg = target.querySelector("img.slide-image");
-        if (innerImg) {
-          innerImg.style.width = "100%";
-          innerImg.style.height = "100%";
-          innerImg.style.maxHeight = "none";
-        }
-
-        var currLeft = parseFloat(target.style.left) || 0;
-        var currTop = parseFloat(target.style.top) || 0;
-
-        rsState = {
-          target: target,
-          dir: handle.getAttribute("data-dir"),
-          startX: e.clientX,
-          startY: e.clientY,
-          w: target.offsetWidth,
-          h: target.offsetHeight,
-          cLeft: currLeft,
-          cTop: currTop,
-        };
-      });
-
-      handle.addEventListener("pointermove", function (e) {
-        if (!rsState) return;
-        var dx = e.clientX - rsState.startX;
-        var dy = e.clientY - rsState.startY;
-        var t = rsState.target;
-
-        if (rsState.dir.indexOf("e") > -1)
-          t.style.width = Math.max(20, rsState.w + dx) + "px";
-        if (rsState.dir.indexOf("s") > -1)
-          t.style.height = Math.max(20, rsState.h + dy) + "px";
-        if (rsState.dir.indexOf("w") > -1) {
-          var pw = Math.max(20, rsState.w - dx);
-          if (pw > 20) {
-            t.style.width = pw + "px";
-            t.style.left = rsState.cLeft + (rsState.w - pw) + "px";
-          }
-        }
-        if (rsState.dir.indexOf("n") > -1) {
-          var ph = Math.max(20, rsState.h - dy);
-          if (ph > 20) {
-            t.style.height = ph + "px";
-            t.style.top = rsState.cTop + (rsState.h - ph) + "px";
-          }
-        }
-      });
-
-      handle.addEventListener("pointerup", function () {
-        if (!rsState) return;
-        rsState = null;
-        window.PersistenceLayer.saveCustomBoxes();
-        window.PersistenceLayer.saveNativeMods();
-        window.historyMgr.recordState(true);
       });
     },
 
