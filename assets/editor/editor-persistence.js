@@ -260,6 +260,9 @@
                 if (cloneBody) cloneBody.appendChild(ns);
             });
 
+            // 清理运行时残留：保存气泡、图片选择器
+            clone.querySelectorAll('.save-bubble, input[type="file"]').forEach(function (el) { el.remove(); });
+
             clone.querySelectorAll('.slide').forEach(function (s, i) { s.classList.toggle('active', i === 0); });
             if (EditorHooks) EditorHooks.fire('onExportClean', clone);
             return _normalizeSerializedHTML('<!DOCTYPE html>\n' + clone.outerHTML);
@@ -272,6 +275,8 @@
         clone2.querySelectorAll('.edit-hotzone, .edit-toggle, .rich-toolbar, #slidePager').forEach(function (el) {
             el.remove();
         });
+        // 移除运行时气泡和图片选择器残留
+        clone2.querySelectorAll('.save-bubble, input[type="file"]').forEach(function (el) { el.remove(); });
 
         // 清除 chrome 运行时状态
         var htmlEl2 = clone2.querySelector('html');
@@ -299,8 +304,8 @@
 
         // 移除浮动控件及注解工具栏
         clone2.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle, .image-actions').forEach(function (el) { el.remove(); });
-        clone2.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
-
+        clone2.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });        // 移除运行时气泡和图片选择器残留
+        clone2.querySelectorAll('.save-bubble, input[type="file"]').forEach(function (el) { el.remove(); });
         // 剥离 native-edit-wrap 壳
         clone2.querySelectorAll('.native-edit-wrap').forEach(function (wrap) {
             while (wrap.firstChild) wrap.parentNode.insertBefore(wrap.firstChild, wrap);
@@ -554,7 +559,7 @@
                 '/* Portable Safety Net */\n' +
                 '.rich-toolbar, .page-richtext-fragment-toolbar, .box-controls, .rt-dropdown-menu,\n' +
                 '#editToggle, .edit-toggle, #doodleToolbar, .doodle-layer,\n' +
-                '.floating-controls, .rs-handle, .image-actions {\n' +
+                '.floating-controls, .rs-handle, .image-actions, .save-bubble {\n' +
                 '    display: none !important;\n' +
                 '    visibility: hidden !important;\n' +
                 '    pointer-events: none !important;\n' +
@@ -577,6 +582,8 @@
             // 移除浮动控件及编辑器专有图元挂载节点
             clone.querySelectorAll('.floating-controls, .overlay-ctrl, .box-controls, .rs-handle, .image-actions').forEach(function (el) { el.remove(); });
             clone.querySelectorAll('.qa-annotation-toolbar, .qa-note-fragment-toolbar, .page-richtext-fragment-toolbar').forEach(function (el) { el.remove(); });
+            // 移除运行时气泡和图片选择器残留
+            clone.querySelectorAll('.save-bubble, input[type="file"]').forEach(function (el) { el.remove(); });
             // 清除所有交互组件瞬态（替代原来仅清除 qa-fragment-visible/data-fragment-manual-reveal）
             _stripAllTransientStates(clone);
 
