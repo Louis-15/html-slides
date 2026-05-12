@@ -632,16 +632,37 @@
 
       var targetParent = focusedEl || cs.querySelector('.slide-content') || cs;
 
-      // 简单图片框已合并到 BoxManager
-      if (typeof BoxManager !== 'undefined') {
-        BoxManager.createSimpleImageBox(
-          'simple-img-' + Date.now(),
-          null,  // src = null（空框，用户后续通过文件选择器填充）
-          targetParent
-        );
-        PersistenceLayer.saveCustomBoxes();
-        historyMgr.recordState(true);
-      }
+      // 弹出文件选择器，选中后创建简单图片框
+      var fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+
+      fileInput.addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var fileName = file.name;
+        if (!fileName || fileName.indexOf('.') === -1) {
+          alert('选择的文件没有扩展名，请确认文件格式。');
+          fileInput.remove();
+          return;
+        }
+        var relativePath = 'images/' + fileName;
+
+        if (typeof BoxManager !== 'undefined') {
+          BoxManager.createSimpleImageBox(
+            'simple-img-' + Date.now(),
+            relativePath,
+            targetParent
+          );
+          PersistenceLayer.saveCustomBoxes();
+          historyMgr.recordState(true);
+        }
+        fileInput.remove();
+      });
+
+      fileInput.click();
     });
   }
 

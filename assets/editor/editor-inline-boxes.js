@@ -380,11 +380,6 @@
     /** 创建简单图片框（流式布局，放入组件内部） */
     createSimpleImageBox: function (id, src, targetParent) {
       if (!targetParent) return null;
-      var wrap = document.createElement('div');
-      wrap.className = 'simple-image-box editable-wrap';
-      wrap.style.display = 'inline-block';
-      wrap.style.verticalAlign = 'top';
-
       var img = document.createElement('img');
       img.setAttribute('data-edit-id', id);
       img.className = 'simple-image';
@@ -392,10 +387,10 @@
       img.style.maxWidth = '100%';
       img.style.display = 'block';
 
-      wrap.appendChild(img);
-      targetParent.appendChild(wrap);
+      targetParent.appendChild(img);
+      // _injectControls 会自动包裹 .simple-image-box 并注入控件条和八爪鱼缩放点
       this._injectControls(img);
-      return wrap;
+      return img.closest('.simple-image-box') || img;
     },
 
     /**
