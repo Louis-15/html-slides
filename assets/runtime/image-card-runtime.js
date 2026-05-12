@@ -4,6 +4,8 @@
    负责：空态↔有图切换、插入/替换图片按钮、文件选择器
    依赖：editor-utils.js, PersistenceLayer
    暴露：window.ImageCardRuntime
+
+   放映模式：点击图片弹出内置光箱（可滚轮缩放、拖拽平移）
    =========================================== */
 
 (function () {
@@ -25,6 +27,8 @@
         //    但 _syncEmptyState 必须始终执行以匹配当前 DOM 状态
         self._syncEmptyState(block);
       });
+      // 放映模式看图：全局事件委托，避免重复绑定
+      self._initViewImageDelegate();
     },
 
     /** 确保 .image-card 内部结构完整（图片框/占位符/操作层） */
@@ -68,6 +72,164 @@
       // 同时检查 display:none（清空操作会隐藏 img 但不一定有 src）
       var isEmpty = !img || !img.getAttribute('src') || img.getAttribute('src') === '' || img.style.display === 'none';
       block.classList.toggle('is-empty', isEmpty);
+    },
+
+    /**
+     * 全局事件委托：点击 .image-card 区域 → 内置光箱看图
+     * 在原页面置顶图层放大显示图片，背景灰色滤镜，支持滚轮缩放
+     */
+    _initViewImageDelegate: function () {
+      if (document.body._imageCardViewDelegate) return;
+      document.body._imageCardViewDelegate = true;
+
+      // 创建光箱容器（单例，惰性创建）
+      var overlay = null;
+      var overlayImg = null;
+      var currentScale = 1;
+      var translateX = 0;
+      var translateY = 0;
+
+      function createOverlay() {
+        overlay = document.createElement('div');
+        overlay.className = 'image-card-lightbox';
+        overlay.style.cssText =
+          'display:none;position:fixed;inset:0;z-index:99999;' +
+          'background:rgba(0,0,0,0.65);' +
+          'backdrop-filter:blur(6px);' +
+          'cursor:grab;' +
+          'display:flex;align-items:center;justify-content:center;';
+
+        overlayImg = document.createElement('img');
+        overlayImg.style.cssText =
+          'max-width:90vw;max-height:90vh;' +
+          'object-fit:contain;' +
+          'border-radius:8px;' +
+          'box-shadow:0 24px 80px rgba(0,0,0,0.5);' +
+          'pointer-events:none;' +  /* 让鼠标事件穿透到 overlay，由拖拽逻辑统一处理 */
+          'display:block;' +
+          'transform-origin:center center;';
+        overlayImg.draggable = false;
+        overlay.appendChild(overlayImg);
+
+        // 关闭按钮
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.setAttribute('aria-label', '关闭');
+        closeBtn.style.cssText =
+          'position:fixed;top:20px;right:24px;' +
+          'width:40px;height:40px;border-radius:50%;' +
+          'border:none;background:rgba(0,0,0,0.4);' +
+          'color:#fff;font-size:22px;cursor:pointer;' +
+          'display:flex;align-items:center;justify-content:center;' +
+          'z-index:100000;transition:background 0.2s;';
+        closeBtn.addEventListener('mouseenter', function () { closeBtn.style.background = 'rgba(0,0,0,0.7)'; });
+        closeBtn.addEventListener('mouseleave', function () { closeBtn.style.background = 'rgba(0,0,0,0.4)'; });
+        closeBtn.addEventListener('click', closeOverlay);
+        overlay.appendChild(closeBtn);
+
+        document.body.appendChild(overlay);
+      }
+
+      function openOverlay(src) {
+        if (!overlay) createOverlay();
+        // 确保 overlay 的事件绑定已完成（首次打开时绑定，后续跳过）
+        _ensureEventsBound();
+        // 重置缩放和平移
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+        overlayImg.src = src;
+        overlayImg.style.transform = 'scale(1) translate(0,0)';
+        overlay.style.display = 'flex';
+        // 禁止背景滚动
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeOverlay() {
+        if (!overlay) return;
+        overlay.style.display = 'none';
+        overlayImg.src = '';
+        document.body.style.overflow = '';
+      }
+
+      // 在 overlay 首次创建后绑定一次拖拽事件（不能在 null 上绑定）
+      var dragState = null;
+      function _ensureEventsBound() {
+        if (overlay._eventsBound) return;
+        overlay._eventsBound = true;
+
+        overlay.addEventListener('pointerdown', function (e) {
+          if (e.target === overlay.querySelector('button') || e.target.closest('button')) return;
+          dragState = {
+            startX: e.clientX,
+            startY: e.clientY,
+            initTx: translateX,
+            initTy: translateY,
+            moved: false
+          };
+          overlay.setPointerCapture(e.pointerId);
+          overlay.style.cursor = 'grabbing';
+        });
+
+        overlay.addEventListener('pointermove', function (e) {
+          if (!dragState) return;
+          var dx = e.clientX - dragState.startX;
+          var dy = e.clientY - dragState.startY;
+          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragState.moved = true;
+          translateX = dragState.initTx + dx;
+          translateY = dragState.initTy + dy;
+          overlayImg.style.transform = 'scale(' + currentScale + ') translate(' + translateX + 'px,' + translateY + 'px)';
+        });
+
+        overlay.addEventListener('pointerup', function (e) {
+          if (!dragState) return;
+          var wasMoved = dragState.moved;
+          dragState = null;
+          overlay.style.cursor = 'grab';
+          overlay.releasePointerCapture(e.pointerId);
+          // 如果没有拖动（纯点击），关闭光箱
+          if (!wasMoved && !e.target.closest('button')) {
+            closeOverlay();
+          }
+        });
+      }
+
+      // 鼠标滚轮缩放（仅在光箱打开时生效）
+      document.body.addEventListener('wheel', function (e) {
+        if (!overlay || overlay.style.display === 'none') return;
+        e.preventDefault();
+        e.stopPropagation();
+        var delta = e.deltaY > 0 ? -0.1 : 0.1;
+        currentScale = Math.max(0.5, Math.min(8, currentScale + delta));
+        overlayImg.style.transform = 'scale(' + currentScale + ') translate(' + translateX + 'px,' + translateY + 'px)';
+      }, { passive: false });
+
+      // 键盘 Esc 关闭
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay && overlay.style.display !== 'none') {
+          closeOverlay();
+        }
+      });
+
+      // 拦截 .image-card 点击
+      document.body.addEventListener('click', function (e) {
+        var block = e.target.closest('.image-card');
+        if (!block) return;
+        if (window.editorCore && window.editorCore.isActive) return;
+        if (e.target.closest('.image-actions')) return;
+
+        var img = block.querySelector('.slide-image');
+        if (!img) return;
+        var src = img.getAttribute('src');
+        if (!src) return;
+
+        // 补全为绝对路径
+        var absSrc = src;
+        if (src.indexOf('http') !== 0 && src.indexOf('//') !== 0) {
+          absSrc = new URL(src, window.location.href).href;
+        }
+        openOverlay(absSrc);
+      }, true);
     },
 
     /** 绑定替换按钮：文件选择器 → 写 src */
