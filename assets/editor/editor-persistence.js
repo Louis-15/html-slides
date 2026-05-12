@@ -521,51 +521,61 @@
         loadCustomBoxes: function () {
             try {
                 var saved = readStoredValue('boxes');
-                if (!saved) return;
-                var boxes = JSON.parse(saved);
-                var slides = getAllSlides();
-                boxes.forEach(function (db) {
-                    var existing = document.querySelector('[data-edit-id="' + db.id + '"]');
-                    var ts = slides[db.si];
-                    if (!ts) return;
+                // 先构建活跃 id 集合，然后清理遗留图片框（含无缓存的情况）
+                var activeIds = {};
+                if (saved) {
+                    var boxes = JSON.parse(saved);
+                    var slides = getAllSlides();
+                    boxes.forEach(function (db) {
+                        activeIds[db.id] = true;
+                        var existing = document.querySelector('[data-edit-id="' + db.id + '"]');
+                        var ts = slides[db.si];
+                        if (!ts) return;
 
-                    if (db.type === 'image') {
-                        if (typeof window.BoxManager !== 'undefined') {
-                            // 优先使用 DOM 索引路径恢复父容器
-                            var targetParent = null;
-                            if (db.ip) {
-                                var indices = db.ip.split(',');
-                                var node = ts;
-                                var valid = true;
-                                for (var k = 0; k < indices.length; k++) {
-                                    var ci = parseInt(indices[k], 10);
-                                    if (!isNaN(ci) && node.children && node.children[ci]) {
-                                        node = node.children[ci];
-                                    } else {
-                                        valid = false;
-                                        break;
+                        if (db.type === 'image') {
+                            if (typeof window.BoxManager !== 'undefined') {
+                                // 优先使用 DOM 索引路径恢复父容器
+                                var targetParent = null;
+                                if (db.ip) {
+                                    var indices = db.ip.split(',');
+                                    var node = ts;
+                                    var valid = true;
+                                    for (var k = 0; k < indices.length; k++) {
+                                        var ci = parseInt(indices[k], 10);
+                                        if (!isNaN(ci) && node.children && node.children[ci]) {
+                                            node = node.children[ci];
+                                        } else {
+                                            valid = false;
+                                            break;
+                                        }
                                     }
+                                    if (valid) targetParent = node;
                                 }
-                                if (valid) targetParent = node;
-                            }
-                            if (!targetParent) {
-                                targetParent = ts.querySelector('.slide-content') || ts;
-                            }
+                                if (!targetParent) {
+                                    targetParent = ts.querySelector('.slide-content') || ts;
+                                }
 
-                            if (existing) {
-                                // 元素已在 DOM 中（来自 HTML 文件），
-                                // 按 boxes 数组顺序将其移到父容器末尾以匹配排序
-                                // 移动整个 .simple-image-box 包裹而非 img 本身
-                                var existingWrap = existing.closest('.simple-image-box') || existing;
-                                targetParent.appendChild(existingWrap);
-                            } else {
-                                // 元素不在 DOM 中，创建新元素
-                                window.BoxManager.createSimpleImageBox(db.id, db.c, targetParent);
+                                if (existing) {
+                                    var existingWrap = existing.closest('.simple-image-box') || existing;
+                                    targetParent.appendChild(existingWrap);
+                                } else {
+                                    window.BoxManager.createSimpleImageBox(db.id, db.c, targetParent);
+                                }
+                            }
+                        } else {
+                            if (!existing) {
+                                window.BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
                             }
                         }
-                    } else {
-                        if (!existing) {
-                            window.BoxManager.createTextBox(db.id, db.l, db.t, db.c, ts);
+                    });
+                }
+                // 清理 DOM 中残留但不在 activeIds 中的简单图片框（已删除但 HTML 文件遗留）
+                document.querySelectorAll('.simple-image-box').forEach(function (wrap) {
+                    var img = wrap.querySelector('img[data-edit-id]');
+                    if (img) {
+                        var id = img.getAttribute('data-edit-id');
+                        if (id && !activeIds[id]) {
+                            wrap.remove();
                         }
                     }
                 });
