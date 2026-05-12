@@ -215,6 +215,13 @@
         clone.querySelectorAll('.is-active').forEach(function (el) {
             el.classList.remove('is-active');
         });
+        // 折叠卡片/翻转卡片瞬态：expanded/flipped 是运行时点击产生的，不应固化到 HTML
+        clone.querySelectorAll('.collapse-card.expanded').forEach(function (el) {
+            el.classList.remove('expanded');
+        });
+        clone.querySelectorAll('.flip-card.flipped').forEach(function (el) {
+            el.classList.remove('flipped');
+        });
     }
 
     /**
