@@ -4,8 +4,8 @@
    原名 editor-text-manager.js，与 editor-images.js 合并而来
    负责：
    - 文本框：创建、控件注入、删除
-   - 简单图片框：创建、控件注入、八爪鱼缩放、删除
-   - 统一排序拖拽（上下排列模式）
+   - 简单图片框：创建、控件注入、删除
+   - 统一排序拖拽（上下排列模式，带光标跟随和落点指示器）
    图片卡片见 image-card-runtime.js
    依赖：editor-utils.js (window._editorUtils)
    运行时依赖：window.PersistenceLayer, window.editorCore, window.historyMgr

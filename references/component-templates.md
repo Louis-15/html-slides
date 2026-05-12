@@ -292,6 +292,8 @@ Styled data table with header row and hover highlights.
 Use `cell-highlight` for emphasis, `cell-muted` for secondary values.
 **When to use**: Feature comparisons, pricing tables, spec sheets.
 
+> **关于简单图片框 (`.simple-image-box`)**：它是与文本框同级的**内联可编辑元素**，不是组件。用户通过编辑工具栏的图片按钮插入到组件内部进行流式混排。由 `BoxManager`（`editor-inline-boxes.js`）统一管理 📍✖ 控件、排序拖拽和删除，与文本框共享同一套代码。宽度自动占满父容器，无八爪鱼缩放。
+
 ### 11. Image Card / 图片卡片 (`.image-card`)
 
 Image display component. No padding, fills the slot naturally.
