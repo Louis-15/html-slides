@@ -36,61 +36,41 @@
     },
 
     /**
-     * 为目标元素注入 📍✖ 控件条（文本框）或简单图片框包裹+八爪鱼缩放点（IMG）
-     * _injectControls 内部会按 el.tagName 分流处理
+     * 为目标元素注入 📍✖ 控件条（文本框和简单图片框共用同一套代码）
+     * 文本框：创建 .native-edit-wrap.editable-wrap 包裹
+     * 简单图片框（IMG）：创建 .simple-image-box.editable-wrap 包裹 + 额外八爪鱼缩放点
+     * 两者共享同一套 control/position/drag/delete 逻辑
      */
     _injectControls: function (el) {
       var self = this;
       var wrap = el.closest(".editable-wrap");
+      var isImg = (el.tagName === "IMG");
 
       // 批注气泡本身自带完整的控制界面（拖拽、删除、关联等），无需套壳与注入通用控件
       if (el.closest(".qa-note-bubble")) return;
 
-      // ====== IMG 元素：走简单图片框路径 ======
-      if (el.tagName === "IMG") {
-        // 跳过图片卡片内部的图片（由 ImageCardRuntime 管理）
-        if (el.closest('.image-card')) return;
-        // 如果已经包裹在 .simple-image-box 中，跳过
-        if (el.closest('.simple-image-box')) return;
+      // 图片卡片内部的图片由 ImageCardRuntime 管理，不在此处理
+      if (isImg && el.closest('.image-card')) return;
 
-        // 创建简单图片框包裹
-        var imgWrap = document.createElement('div');
-        imgWrap.className = 'simple-image-box editable-wrap';
-        imgWrap.style.display = 'inline-block';
-        imgWrap.style.verticalAlign = 'top';
-        el.parentNode.insertBefore(imgWrap, el);
-        imgWrap.appendChild(el);
-        wrap = imgWrap;
+      // ====== 包裹阶段：确保元素有 .editable-wrap 外壳 ======
 
-        // 暴力清理残留死节点
-        if (wrap.querySelectorAll) {
-          var zombies = wrap.querySelectorAll(".box-controls, .rs-handle");
-          zombies.forEach(function (node) { node.remove(); });
+      // 简单图片框：如果没有包裹，创建 .simple-image-box 包裹
+      if (isImg) {
+        var imgWrap = el.closest('.simple-image-box');
+        if (!imgWrap) {
+          imgWrap = document.createElement('div');
+          imgWrap.className = 'simple-image-box editable-wrap';
+          imgWrap.style.display = 'inline-block';
+          imgWrap.style.verticalAlign = 'top';
+          el.parentNode.insertBefore(imgWrap, el);
+          imgWrap.appendChild(el);
+          wrap = imgWrap;
+        } else {
+          wrap = imgWrap;
         }
-
-        // 确保目标容器有 position:relative 以便控件绝对定位
-        var cs = window.getComputedStyle(wrap);
-        if (cs.position === "static") wrap.style.position = "relative";
-
-        // 注入 📍✖ 控件条
-        var controls = document.createElement("div");
-        controls.className = "box-controls";
-        controls.setAttribute("contenteditable", "false");
-        controls.innerHTML =
-          '<span class="drag-handle" title="按住拖动📍">📍</span><span class="del-btn" title="删除">✖</span>';
-        wrap.appendChild(controls);
-
-        // 注入八爪鱼缩放点（简单图片框需要）
-        this._injectResizeHandles(wrap);
-
-        this._bindDrag(controls.querySelector(".drag-handle"), el, wrap);
-        this._bindDelete(controls.querySelector(".del-btn"), el, wrap);
-        return;
       }
 
-      // ====== 非 IMG 元素：文本框路径（原有逻辑） ======
-
-      // 为原生的文本编辑块安全隔离一层 wrapper，使悬浮控制条不被内部 contenteditable 吃掉和误删
+      // 文本框：为原生的文本编辑块安全隔离一层 wrapper
       if (
         !wrap &&
         el.tagName !== "TD" &&
@@ -141,6 +121,14 @@
 
       this._bindDrag(controls.querySelector(".drag-handle"), el, wrap);
       this._bindDelete(controls.querySelector(".del-btn"), el, wrap);
+
+      // 简单图片框额外注入八爪鱼缩放点
+      if (isImg) {
+        var resizeTarget = wrap || el;
+        if (!resizeTarget.querySelector('.rs-se')) {
+          this._injectResizeHandles(resizeTarget);
+        }
+      }
     },
 
     /** 注入八爪鱼缩放点（简单图片框使用） */
