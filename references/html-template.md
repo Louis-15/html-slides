@@ -264,7 +264,7 @@ Every text element that should be editable MUST have a unique `data-edit-id` att
 ```
 **Naming:** `s{slideNumber}-{type}{index}` (e.g., `s3-l2` for slide 3, list item 2).
 
-All elements get **unified drag/delete controls** (📍✖) at runtime. Text and simple image elements via `BoxManager._injectControls()`, image-card via `ImageCardRuntime` (from `image-card-runtime.js`). No separate CSS wrappers needed for native elements.
+All elements get **unified drag/delete controls** (📍✖) at runtime. Text and simple image elements via `BoxManager._injectControls()`, image-card via `ImageCardRuntime` (from `image-card-runtime.js`). Image cards also feature an **inline lightbox** — in presentation mode, click the image to open a fullscreen overlay with scroll-wheel zoom and drag-to-pan. No separate CSS wrappers needed for native elements.
 
 ### 4. JS Reference
 

@@ -399,7 +399,7 @@ If the user declines, stop here.
 | [zone2-quiz-annotation/](assets/runtime/zone2-quiz-annotation/)（17 个 JS 子模块，按依赖拓扑加载） | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
 | [example-card-audio.js](assets/audio/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
 | [example-card-core.js](assets/runtime/example-card-core.js) + [example-card-authoring.js](assets/runtime/example-card-authoring.js) + [example-card-student.js](assets/runtime/example-card-student.js) | 例题组件运行时（核心+作者态+学生态） | Phase 4 (when example-card is used) |
-| [image-card-runtime.js](assets/runtime/image-card-runtime.js) | 图片卡片运行时：替换按钮、空态切换、文件选择器 | Phase 4 (generation) |
+| [image-card-runtime.js](assets/runtime/image-card-runtime.js) | 图片卡片运行时：替换按钮、空态切换、文件选择器、放映光箱 | Phase 4 (generation) |
 | [editor/editor-*.js](assets/editor/) | 6 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
 | [page-richtext-annotation-runtime.js](assets/runtime/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
 | [editor/editor.css](assets/editor/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |

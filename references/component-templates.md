@@ -313,6 +313,8 @@ Image display component. No padding, fills the slot naturally.
 -->
 ```
 
+> **放映光箱**：在非编辑模式下点击图片，弹出全屏置顶光箱，支持鼠标滚轮缩放和拖拽平移。按 Esc 或点击 ✕ 按钮关闭（单击不关闭，防误触）。
+
 **Variants:** `image-screenshot` (border + shadow), `image-logo` (smaller), `image-fullbleed` (absolute positioned background).
 
 > **HISTORY**: Formerly `.image-block`, renamed to `.image-card` in v1.0.0 image system refactor (2026-05-12) to distinguish from the simple `.simple-image-box` component.
