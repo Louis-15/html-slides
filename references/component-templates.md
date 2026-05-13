@@ -411,7 +411,34 @@ A floating panel triggered by a bottom button. **NOT placed inside a layout slot
 
 **When to use**: 课件结尾页、章节结束页等需要鼓励性收束的场景。
 
+### 17. Chapter Hero / 章节封面页 (`.chapter-hero`)
+
+章节开篇页，展示章节序号和标题。放入 `layout-title` 布局中使用，整体居中。
+
+布局特点：三栏 grid（左列序号 | 竖线 | 右列标题），形成"左上右下"的错落感。
+- **章节序号**（`.chapter-hero-label`）— 左上、黄橙渐变、右贴竖线
+- **竖向分割线**（`.chapter-hero-divider-v`）— 橙→绿→蓝三色渐变
+- **章节标题**（`.chapter-hero-title`）— 右下、绿蓝渐变、左贴竖线
+
+自动触发沉浸式逃逸。
+
+```html
+<div class="chapter-hero">
+  <div class="chapter-hero-body">
+    <div class="chapter-hero-label" data-edit-id="ch-label" data-edit-id-auto="true">模块一</div>
+    <div class="chapter-hero-divider-v"></div>
+    <div class="chapter-hero-title" data-edit-id="ch-title" data-edit-id-auto="true">句子成分与结构</div>
+  </div>
+</div>
+```
+
+> **注意**：序号和标题文本均可编辑。竖向分割线为纯装饰元素，无需 `data-edit-id`。第一个 `layout-title` 之后出现的章节封面页，别忘了移除 `anim-*` 类以避免入场动画执行两轮。
+
+**When to use**: 每个新章节的起始页，用于清晰标识章节切换。
+
 ---
+
+
 
 ## Chrome Elements
 

@@ -386,7 +386,7 @@ If the user declines, stop here.
 | [zones/zone2-layout.css](assets/zones/zone2-layout.css) | Zone 2 布局系统 — 8+1 种布局模式 | Phase 4 (generation) |
 | [zones/zone2-components.css](assets/zones/zone2-components.css) | Zone 2 通用组件 — 12 种卡片与内容组件 | Phase 4 (generation) |
 | [zones/zone2-image-card.css](assets/zones/zone2-image-card.css) | 图片卡片样式（从 zone2-components.css 拆出） | Phase 4 (generation) |
-| [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面、封底鸡汤页等沉浸式组件结构 | Phase 4 (generation) |
+| [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面、章节封面、封底鸡汤页等沉浸式组件结构 | Phase 4 (generation) |
 | [zones/zone2-quiz-annotation/](assets/zones/zone2-quiz-annotation/)（13 个 CSS 子文件） | 答题与批注组件拆分后的视觉样式 | Phase 4 (generation) |
 | [zones/zone2-example-card.css](assets/zones/zone2-example-card.css) | 例题组件专属样式 | Phase 4 (when example-card is used) |
 | [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 4 (generation) |

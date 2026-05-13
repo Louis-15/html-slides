@@ -4,10 +4,10 @@
 
    当前包含：
    - 总封面组件 (.title-hero)
+   - 章节封面组件 (.chapter-hero)
    - 封底鸡汤页组件 (.ending-quote)
 
    未来预留：
-   - 章节封面组件
    - 封底二维码页组件
 
    注意：
@@ -126,4 +126,91 @@
   text-align: right;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ====== 组件 17: 章节封面页 (.chapter-hero) ======
+   章节开篇页，展示章节序号和标题。
+   放入 layout-title 布局中使用，整体居中。
+   左栏为章节序号（黄橙渐变），右栏为章节标题（绿蓝渐变），
+   中间以竖向渐变分割线连接，形成"左上右下"的错落布局。
+   自动触发沉浸式逃逸。
+   ====== */
+
+/* 沉浸式逃逸：含有 chapter-hero 的页面隐藏标题栏 */
+.slide:has(.chapter-hero) .slide-header {
+  display: none !important;
+}
+
+.slide:has(.chapter-hero) .slide-content {
+  margin-top: 0;
+  flex: 1;
+  max-width: none;
+  padding: 12px 0 0 0;
+}
+
+/* 根容器 — 整体居中 */
+.chapter-hero {
+  position: relative;
+  width: 100%;
+  padding: 20px 40px;
+  margin-top: -3vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* 三列 grid：左列(序号) | 中列(竖线) | 右列(标题) */
+.chapter-hero-body {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+}
+
+/* 章节序号 — 左上、靠右贴竖线、黄橙渐变 */
+.chapter-hero-label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: clamp(36px, 5.5vw, 72px);
+  font-weight: 700;
+  letter-spacing: 10px;
+  text-align: right;
+  padding-right: 14px;
+  padding-bottom: 8px;
+  background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 可编辑 */
+  word-break: break-word;
+}
+
+/* 竖向分割线 — 跨越两行，橙→绿→蓝三色渐变 */
+.chapter-hero-divider-v {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--accent-orange), var(--brand-primary), var(--accent-blue));
+  align-self: stretch;
+  min-height: 80px;
+}
+
+/* 章节标题 — 右下、靠左贴竖线、绿蓝渐变 */
+.chapter-hero-title {
+  grid-column: 3;
+  grid-row: 2;
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+  padding-left: 14px;
+  padding-top: 8px;
+  background: linear-gradient(90deg, var(--brand-primary), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 可编辑 */
+  word-break: break-word;
 }

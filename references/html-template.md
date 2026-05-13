@@ -440,7 +440,7 @@ assets/                        # CSS, JS modules, themes, images
 │   ├── zone2-layout.css       # Zone 2 layout modes (8+1)
 │   ├── zone2-components.css   # Zone 2 common components (12)
 │   ├── zone2-image-card.css    # Zone 2 image card styles (extracted from zone2-components.css)
-│   ├── zone2-immersive-components.css # Zone 2 immersive components (title-hero, ending-quote)
+│   ├── zone2-immersive-components.css # Zone 2 immersive components (title-hero, chapter-hero, ending-quote)
 │   ├── zone2-quiz-annotation.css      # Zone 2 quiz/annotation component
 │   ├── zone2-example-card.css         # Zone 2 example-card component
 │   └── zone3-summary.css      # Zone 3 summary panel
