@@ -211,14 +211,15 @@ Do NOT include summary for:
 
 **Before generating, read these supporting files:**
 
-- [layout-system.md](references/layout-system.md) — Canvas structure and 8+1 layout modes
+- [layout-system.md](references/layout-system.md) — Canvas structure and 8+2 layout modes
+- [draft-guide.md](references/draft-guide.md) — 草稿撰写指南（Phase 4）：Markdown 格式、组件字段、批注锚点标记
 - [component-templates.md](references/component-templates.md) — Component style reference for interactive elements
 - [html-template.md](references/html-template.md) — HTML architecture and JS features
 - [components.css](assets/components.css) — Shared component CSS (reference via `<link href="../../assets/components.css">` from generated courseware)
 - Theme CSS from `assets/themes/` — teaching theme (reference via `<link>`, BEFORE components.css)
 - Zone CSS from `assets/zones/` — reference in standard order: `zone1-header.css → zone2-layout.css → zone2-components.css → zone2-image-card.css → zone2-immersive-components.css → zone2-quiz-annotation/quiz-layout.css → zone2-quiz-annotation/quiz-passage.css → zone2-quiz-annotation/quiz-notes-panel.css → zone2-quiz-annotation/quiz-answer-panel.css → zone2-quiz-annotation/quiz-anchors-bubbles.css → zone2-quiz-annotation/quiz-connectors.css → zone2-quiz-annotation/quiz-dragdrop.css → zone2-quiz-annotation/quiz-isolation.css → zone2-quiz-annotation/quiz-linking.css → zone2-quiz-annotation/quiz-scrollbar.css → zone2-quiz-annotation/quiz-editor-toolbar.css → zone2-quiz-annotation/quiz-responsive.css → zone2-quiz-annotation/quiz-editor-mode.css → zone2-example-card.css → zone3-summary.css`
 - [navigation.js](assets/runtime/navigation.js) + [keyboard.js](assets/runtime/keyboard.js) + [step-through.js](assets/runtime/step-through.js) + [chart-integration.js](assets/runtime/chart-integration.js) + [speaker-notes.js](assets/runtime/speaker-notes.js) — 导航核心、键盘控制、交互步进、Chart.js 集成、讲者备注（按顺序引用）
-- [audio-runtime.js](assets/audio/audio-runtime.js) — Global audio cue bus; reference after `slides-runtime.js` for page-turn / focus / interaction cues
+- [audio-runtime.js](assets/audio/audio-runtime.js) — Global audio cue bus; reference after runtime modules (navigation.js, keyboard.js, etc.) for page-turn / focus / interaction cues
 - If any slide contains `.quiz-annotation`, also reference `quiz-annotation-audio.js → quiz-core.js → quiz-constants.js → quiz-fragments.js → quiz-persistence.js → quiz-connectors.js → quiz-panel.js → quiz-header.js → quiz-linking.js → quiz-activation.js → quiz-stepping.js → quiz-base.js → quiz-single.js → quiz-matching.js → quiz-blank.js → quiz-note-interactions.js → quiz-toolbar.js → quiz-init.js` after `audio-runtime.js` and before the editor modules.
 - If any slide contains `.example-card`, also reference `example-card-audio.js → example-card-runtime.js`; `example-card-core.js → example-card-authoring.js → example-card-student.js` must be loaded after `editor/editor-core.js → page-richtext-annotation-runtime.js → doodle-runtime.js`
 - Before ALL runtime `<script>` tags, include `<script>window.__BASELINE__=document.documentElement.cloneNode(true)</script>` for the clean save baseline. 详见 [本地化保存、读取系统](开发者文档/本地化保存、读取系统.md)
@@ -379,36 +380,36 @@ If the user declines, stop here.
 
 | File | Purpose | When to Read |
 |------|---------|-------------|
-| [layout-system.md](references/layout-system.md) | Canvas structure: header bar + content area (8+1 layout modes) + summary component | Phase 3 (layout planning) |
-| [component-templates.md](references/component-templates.md) | Component style reference — interactive elements for layout slots | Phase 4 (generation) |
-| [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards | Phase 4 (generation) |
-| [zones/zone1-header.css](assets/zones/zone1-header.css) | Zone 1 标题栏样式 — header bar 的固定结构 | Phase 4 (generation) |
-| [zones/zone2-layout.css](assets/zones/zone2-layout.css) | Zone 2 布局系统 — 8+1 种布局模式 | Phase 4 (generation) |
-| [zones/zone2-components.css](assets/zones/zone2-components.css) | Zone 2 通用组件 — 12 种卡片与内容组件 | Phase 4 (generation) |
-| [zones/zone2-image-card.css](assets/zones/zone2-image-card.css) | 图片卡片样式（从 zone2-components.css 拆出） | Phase 4 (generation) |
-| [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面、章节封面、封底鸡汤页等沉浸式组件结构 | Phase 4 (generation) |
-| [zones/zone2-quiz-annotation/](assets/zones/zone2-quiz-annotation/)（13 个 CSS 子文件） | 答题与批注组件拆分后的视觉样式 | Phase 4 (generation) |
-| [zones/zone2-example-card.css](assets/zones/zone2-example-card.css) | 例题组件专属样式 | Phase 4 (when example-card is used) |
-| [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 4 (generation) |
-| [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 4 (generation) |
-| [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 4 (generation) |
-| [navigation.js](assets/runtime/navigation.js) + [keyboard.js](assets/runtime/keyboard.js) + [step-through.js](assets/runtime/step-through.js) + [chart-integration.js](assets/runtime/chart-integration.js) + [speaker-notes.js](assets/runtime/speaker-notes.js) | 导航核心 + 键盘控制 + 交互步进 + Chart.js 集成 + 讲者备注 — 5 个模块按序加载 | Phase 4 (generation) |
-| [audio-runtime.js](assets/audio/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 4 (always included) |
-| [audio-runtime.js](assets/audio/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 4 (always included) |
-| [quiz-annotation-audio.js](assets/audio/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 4 (when quiz-annotation is used) |
-| [zone2-quiz-annotation/](assets/runtime/zone2-quiz-annotation/)（17 个 JS 子模块，按依赖拓扑加载） | 答题与批注组件运行时逻辑 | Phase 4 (when quiz-annotation is used) |
-| [example-card-audio.js](assets/audio/example-card-audio.js) | 例题组件音效适配层 | Phase 4 (when example-card is used) |
-| [example-card-core.js](assets/runtime/example-card-core.js) + [example-card-authoring.js](assets/runtime/example-card-authoring.js) + [example-card-student.js](assets/runtime/example-card-student.js) | 例题组件运行时（核心+作者态+学生态） | Phase 4 (when example-card is used) |
-| [image-card-runtime.js](assets/runtime/image-card-runtime.js) | 图片卡片运行时：替换按钮、空态切换、文件选择器、放映光箱 | Phase 4 (generation) |
-| [editor/editor-*.js](assets/editor/) | 7 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 4 (always included) |
-| [page-richtext-annotation-runtime.js](assets/runtime/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 4 (always included) |
-| [editor/editor.css](assets/editor/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 4 (always included) |
-| [doodle-runtime.js](assets/runtime/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 4 (always included) |
-| [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js, anime.js, Chart.js | Phase 4 (when content needs them) |
-| [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 8 validation rules | Phase 4 (reference) |
-| [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide | Phase 4 (generation) |
-| [viewport-base.css](assets/viewport-base.css) | Responsive CSS — reference via `<link>` | Phase 4 (generation) |
-| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 5 (PPT conversion) |
-| [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 6 (HTML conversion) |
-| [scripts/deploy.sh](scripts/deploy.sh) | Deploy courseware to Vercel for instant sharing | Phase 8 (sharing) |
-| [scripts/export-pdf.sh](scripts/export-pdf.sh) | Export courseware to PDF | Phase 8 (sharing) |
+| [layout-system.md](references/layout-system.md) | Canvas structure: header bar + content area (8+2 layout modes with compare variants) + summary component | Phase 3 (layout planning) |
+| [draft-guide.md](references/draft-guide.md) | 草稿撰写指南：定义每页草稿的 Markdown 格式、组件字段规范、批注锚点标记、审查修改流程 | Phase 4 (draft generation) |
+| [component-templates.md](references/component-templates.md) | Component style reference — interactive elements for layout slots | Phase 4 → 5 (draft & generation) |
+| [html-template.md](references/html-template.md) | HTML structure, JS features, code quality standards | Phase 5 (generation) |
+| [zones/zone1-header.css](assets/zones/zone1-header.css) | Zone 1 标题栏样式 — header bar 的固定结构 | Phase 5 (generation) |
+| [zones/zone2-layout.css](assets/zones/zone2-layout.css) | Zone 2 布局系统 — 8+2 种布局模式及对比变体 | Phase 5 (generation) |
+| [zones/zone2-components.css](assets/zones/zone2-components.css) | Zone 2 通用组件 — 12 种卡片与内容组件 | Phase 5 (generation) |
+| [zones/zone2-image-card.css](assets/zones/zone2-image-card.css) | 图片卡片样式（从 zone2-components.css 拆出） | Phase 5 (generation) |
+| [zones/zone2-immersive-components.css](assets/zones/zone2-immersive-components.css) | 总封面、章节封面、封底鸡汤页等沉浸式组件结构 | Phase 5 (generation) |
+| [zones/zone2-quiz-annotation/](assets/zones/zone2-quiz-annotation/)（13 个 CSS 子文件） | 答题与批注组件拆分后的视觉样式 | Phase 5 (generation) |
+| [zones/zone2-example-card.css](assets/zones/zone2-example-card.css) | 例题组件专属样式 | Phase 5 (when example-card is used) |
+| [zones/zone3-summary.css](assets/zones/zone3-summary.css) | Zone 3 总结面板样式 | Phase 5 (generation) |
+| [components.css](assets/components.css) | Shared component CSS — reference via `<link>` | Phase 5 (generation) |
+| [themes/](assets/themes/) | Theme CSS files — pick teaching theme, reference via `<link>` | Phase 5 (generation) |
+| [navigation.js](assets/runtime/navigation.js) + [keyboard.js](assets/runtime/keyboard.js) + [step-through.js](assets/runtime/step-through.js) + [chart-integration.js](assets/runtime/chart-integration.js) + [speaker-notes.js](assets/runtime/speaker-notes.js) | 导航核心 + 键盘控制 + 交互步进 + Chart.js 集成 + 讲者备注 — 5 个模块按序加载 | Phase 5 (generation) |
+| [audio-runtime.js](assets/audio/audio-runtime.js) | 全局音效总线；普通页和 quiz 页的焦点 / 翻页 / 互动 cue 都通过它播放 | Phase 5 (always included) |
+| [quiz-annotation-audio.js](assets/audio/quiz-annotation-audio.js) | 答题与批注组件音效适配层 | Phase 5 (when quiz-annotation is used) |
+| [zone2-quiz-annotation/](assets/runtime/zone2-quiz-annotation/)（17 个 JS 子模块，按依赖拓扑加载） | 答题与批注组件运行时逻辑 | Phase 5 (when quiz-annotation is used) |
+| [example-card-audio.js](assets/audio/example-card-audio.js) | 例题组件音效适配层 | Phase 5 (when example-card is used) |
+| [example-card-core.js](assets/runtime/example-card-core.js) + [example-card-authoring.js](assets/runtime/example-card-authoring.js) + [example-card-student.js](assets/runtime/example-card-student.js) | 例题组件运行时（核心+作者态+学生态） | Phase 5 (when example-card is used) |
+| [image-card-runtime.js](assets/runtime/image-card-runtime.js) | 图片卡片运行时：替换按钮、空态切换、文件选择器、放映光箱 | Phase 5 (generation) |
+| [editor/editor-*.js](assets/editor/) | 7 modular editor JS files — reference via `<script src>` in strict dependency order | Phase 5 (always included) |
+| [page-richtext-annotation-runtime.js](assets/runtime/page-richtext-annotation-runtime.js) | 普通页面隐藏型富文本运行时；把 authored fragment 接到一级焦点宿主上 | Phase 5 (always included) |
+| [editor/editor.css](assets/editor/editor.css) | Editor toolbar and controls CSS — reference via `<link>` | Phase 5 (always included) |
+| [doodle-runtime.js](assets/runtime/doodle-runtime.js) | Doodle/annotation overlay JS — reference via `<script src>` | Phase 5 (always included) |
+| [libraries.md](references/libraries.md) | CDN libraries: Mermaid.js, anime.js, Chart.js | Phase 5 (when content needs them) |
+| [presentation-layer.md](references/presentation-layer.md) | Shared spec: slide structure, speaker notes, 9 validation rules | Phase 5 (reference) |
+| [animation-patterns.md](references/animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide | Phase 5 (generation) |
+| [viewport-base.css](assets/viewport-base.css) | Responsive CSS — reference via `<link>` | Phase 5 (generation) |
+| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 6 (PPT conversion) |
+| [conversion-patterns.md](references/conversion-patterns.md) | Framework detection patterns and extraction rules | Phase 7 (HTML conversion) |
+| [scripts/deploy.sh](scripts/deploy.sh) | Deploy courseware to Vercel for instant sharing | Phase 9 (sharing) |
+| [scripts/export-pdf.sh](scripts/export-pdf.sh) | Export courseware to PDF | Phase 9 (sharing) |

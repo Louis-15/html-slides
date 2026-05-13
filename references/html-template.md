@@ -437,7 +437,7 @@ assets/                        # CSS, JS modules, themes, images
 ├── components.css             # Component CSS
 ├── zones/
 │   ├── zone1-header.css       # Zone 1 header bar
-│   ├── zone2-layout.css       # Zone 2 layout modes (8+1)
+│   ├── zone2-layout.css       # Zone 2 layout modes (8+2, with compare variants)
 │   ├── zone2-components.css   # Zone 2 common components (12)
 │   ├── zone2-image-card.css    # Zone 2 image card styles (extracted from zone2-components.css)
 │   ├── zone2-immersive-components.css # Zone 2 immersive components (title-hero, chapter-hero, ending-quote)

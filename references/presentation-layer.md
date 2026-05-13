@@ -107,7 +107,7 @@ The courseware must support:
 - Scroll: Mouse wheel with ~600ms cooldown
 - Click: Navigation dots
 
-Build navigation via external `slides-runtime.js`. Generate `goTo()`, `next()`, `prev()` as global functions, plus speaker notes console logging on each slide change.
+Build navigation via the 5-module runtime stack: `navigation.js → keyboard.js → step-through.js → chart-integration.js → speaker-notes.js`. Generate `goTo()`, `next()`, `prev()` as global functions (from navigation.js), plus speaker notes console logging on each slide change.
 
 ### Interactive Component Runtime Contracts
 

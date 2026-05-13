@@ -207,7 +207,7 @@ Framework navigation JS is **completely replaced**, not merged:
 
 3. **Replace with:**
    - Standard HTMLSlides navigation from [html-template.md](html-template.md) (for Vibe presets)
-   - Standard HTMLSlides navigation via `<script src="./assets/runtime/slides-runtime.js">` (external reference)
+   - Standard HTMLSlides runtime: `navigation.js → keyboard.js → step-through.js → chart-integration.js → speaker-notes.js` (5 modules via external `<script src>`)
 
 ## Image Handling
 

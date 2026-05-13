@@ -8,23 +8,23 @@ A skill for creating stunning, animation-rich HTML presentations — from scratc
 
 ## What This Does
 
-**HTML Slides** helps non-designers create beautiful web presentations without knowing CSS or JavaScript.
+**HTML Slides** helps educators create interactive HTML teaching courseware without knowing CSS or JavaScript.
 
-> **Default mode: Pro (Obsidian)** — Just say "create a presentation about [topic]" and you get interactive components, charts, and polished animations out of the box. No mode selection needed.
-
-It also offers a **Vibe mode** with 12 creative themes for non-technical presentations — say "create a vibe presentation" to use it.
+> **Single mode** — Say "帮我做成课件" and you get a fully editable, interactive teaching courseware with 17+ components out of the box. Designed for teaching scenarios with a single unified theme.
 
 ### Key Features
 
 - **Zero Dependencies** — HTML files with external CSS/JS references to a shared `assets/` folder. No npm, no build tools, no frameworks.
 - **Agent Skills Standard** — One install works across Claude Code, Gemini CLI, GitHub Copilot, and OpenAI Codex.
-- **Visual Style Discovery** — Can't articulate design preferences? Pick from generated visual previews.
-- **Rich Component Library** — Flip cards, expandable cards, code blocks, architecture flows, stats cards, charts (via Chart.js), tables, timelines, quiz-annotation pages, example-card walkthroughs, and more.
+- **Rich Component Library** — 17+ components: cards, flip cards, expandable cards, code blocks, stat cards, highlight cards, dual bars, timelines, charts (via Chart.js), tables, image cards, content blocks, title hero, chapter hero, ending quotes, quiz-annotation pages, example-card walkthroughs, and more.
+- **Three-Zone Canvas** — Header bar + content area (8+2 layout modes with compare variants) + optional summary panel.
 - **Host-Aware Stepping & Hidden Annotations** — Ordinary components, summary panels, and authored rich-text fragments share a top-level focus model with scoped left/right fragment stepping and dedicated audio cues.
 - **Teaching Interaction Contracts** — `.quiz-annotation` and `.example-card` have explicit asset stacks, editor-mode rules, and keyboard contracts, so generated courseware can safely mix reading quiz pages with lightweight worked-example cards.
+- **Draft-First Workflow** — AI generates a Markdown draft for user review before producing the final HTML. Full control over layout, components, and content.
+- **Full-Text Preservation** — Every word of the source material appears in the courseware. No summarizing, no omitting.
 - **PPT Conversion** — Convert existing PowerPoint files to web, preserving all images and content.
 - **HTML Conversion** — Convert any HTML file (reveal.js, Marp, Google Slides exports, articles, generic pages) into HTMLSlides format.
-- **Anti-AI-Slop** — Curated distinctive styles that avoid generic AI aesthetics.
+- **Glassmorphism Design** — Frosted glass card surfaces with dual-color ambient glow (brand green + academic blue).
 - **Inline Editing & Local Save** — Press E to enter edit mode, click any text to modify. Save changes directly to the HTML file (File System Access API), with IndexedDB-based file handle persistence across sessions. Interactive component states auto-reset on refresh. Zero runtime state in saved files. [Dev Docs](开发者文档/本地化保存、读取系统.md)
 
 ## Installation
@@ -116,71 +116,24 @@ claude plugin update html-slides@html-slides
 
 Restart your agent after updating.
 
-## Two Modes
+## Workflow (9-Phase Process)
 
-HTML Slides offers two modes. **Pro is the default** — if you don't specify a mode, you get the full interactive component system.
+HTML Slides follows a structured 9-phase workflow for generating teaching courseware:
 
-### Pro Mode (Default)
+| Phase | What happens |
+|-------|-------------|
+| **0** | Mode detection (New / PPT / Modify / HTML conversion) |
+| **1** | Collect teaching content and images from user |
+| **2** | Analyze content structure, identify modules and knowledge points |
+| **3** | Plan layout per slide (8+2 layout modes) |
+| **4** | Generate Markdown draft for user review and modification |
+| **5** | Generate final HTML with full CSS/JS references |
+| **6** | PPT conversion (optional) |
+| **7** | HTML conversion (optional) |
+| **8** | Delivery and user guidance |
+| **9** | Share & Export (Vercel deploy / PDF export, optional) |
 
-Structured interactive components with deterministic output. The AI maps your content to the right component type automatically. Multiple themes available — same components, different visual styles.
-
-> "Create a presentation about [topic]"
-
-or specify a theme:
-
-> "Create a presentation about [topic] using the Excalidraw theme"
-
-**Available themes:**
-
-| Theme | Vibe |
-|-------|------|
-| Obsidian (default) | Dark background, blue/green/orange accents |
-| Excalidraw Light | Hand-drawn, sketchy, whiteboard on white |
-| Excalidraw Dark | Hand-drawn, sketchy, whiteboard on dark |
-| Editorial Light | Luminous, editorial, tech-forward minimalism |
-| Binary Architect | Hacker-elite, sharp corners, neon on void-black |
-
-**Components included:**
-
-| Component | What it does |
-|-----------|-------------|
-| Title Slide | Opening with hero text and rainbow gradient |
-| Statement | Bold centered text with glow |
-| Flip Cards | 2x2 grid, click to reveal back side |
-| VS/Comparison | Side-by-side with visual contrast |
-| Architecture Flow | Connected boxes showing a pipeline |
-| Code Block | Syntax-highlighted terminal window |
-| Auth Flip Compare | Before/after with red/green flip cards |
-| Stats Cards | Large animated numbers |
-| Expandable Cards | Click to reveal hidden details |
-| Status Timeline | Vertical list with colored status dots |
-| Table | Styled data table with hover highlights |
-| Chart | 8 chart types via Chart.js (bar, line, pie, doughnut, radar, polar, scatter, bubble) |
-| CTA Box | Call-to-action with resource links |
-
-Best for: technical talks, product demos, data-rich presentations, API overviews.
-
-### Vibe Mode — Creative Themes
-
-AI interprets your content freely with distinctive visual styles. No structured templates — the AI decides the best layout for your content.
-
-> "Create a vibe presentation about [topic]"
-
-The skill will:
-1. Ask about your content (slides, messages, images)
-2. Ask about the feeling you want (impressed? excited? calm?)
-3. Generate 3 visual style previews to compare
-4. Create the full presentation in your chosen style
-
-**Available themes:**
-
-| Category | Themes |
-|----------|--------|
-| Dark | Bold Signal, Electric Studio, Creative Voltage, Dark Botanical |
-| Light | Notebook Tabs, Pastel Geometry, Split Pastel, Vintage Editorial |
-| Specialty | Neon Cyber, Terminal Green, Swiss Modern, Paper & Ink |
-
-Best for: pitch decks, keynotes, non-technical presentations.
+Phase 4 (Draft Review) is where the user has full control — AI generates a per-slide Markdown draft including all content, components, annotations, and speaker notes. The user reviews and iterates before the final HTML is produced.
 
 ### Convert a PowerPoint
 
@@ -235,25 +188,26 @@ This skill uses **progressive disclosure** — the main `SKILL.md` is a concise 
 | File | Purpose | Loaded When |
 |------|---------|-------------|
 | `SKILL.md` | Core workflow and rules | Always (entry point) |
-| `references/STYLE_PRESETS.md` | Curated visual presets | Phase 2 (style selection) |
-| `references/html-template.md` | HTML structure and JS features | Phase 3 (Vibe) |
-| `references/animation-patterns.md` | CSS/JS animation reference | Phase 3 (Vibe) |
-| `references/component-templates.md` | Structured component templates | Phase 3 (Pro) |
-| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 3 (all modes) |
-| `assets/components.css` | Shared component CSS for all Pro themes | Phase 3 (Pro) |
-| `assets/themes/*.css` | Theme CSS files (colors, fonts) | Phase 3 (Pro) |
-| `assets/runtime/navigation.js` + `keyboard.js` + `step-through.js` + `chart-integration.js` + `speaker-notes.js` | Navigation core, keyboard dispatch, interaction step-through, Chart.js, speaker notes | Phase 3 (Pro) |
-| `assets/audio/audio-runtime.js` | Global audio cue bus for page turns, focus, and interaction cues | Phase 3 (Pro) |
-| `assets/zones/zone2-example-card.css` | Example-card visual system | Phase 3 (when example-card is used) |
-| `assets/example-card-audio.js` | Example-card audio adapter | Phase 3 (when example-card is used) |
-| `assets/runtime/example-card-core.js` + `example-card-authoring.js` + `example-card-student.js` | Example-card runtime, authoring state, and question navigation | Phase 3 (when example-card is used) |
-| `assets/runtime/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping and hover runtime | Phase 3 (Pro) |
-| `assets/editor/editor-*.js` | 6 modular editor JS files | Phase 3 (always included for teaching courseware) |
-| `assets/editor/editor.css` | Editor toolbar and controls CSS | Phase 3 (always included for teaching courseware) |
-| `scripts/extract-pptx.py` | PPT content extraction | Phase 4 (PPT conversion) |
-| `references/conversion-patterns.md` | Framework detection patterns | Phase 5 (HTML conversion) |
-| `scripts/deploy.sh` | Deploy to Vercel | Phase 7 (sharing) |
-| `scripts/export-pdf.sh` | Export slides to PDF | Phase 7 (sharing) |
+| `references/layout-system.md` | Canvas structure and 8+2 layout modes | Phase 3 (layout planning) |
+| `references/draft-guide.md` | Draft generation guide for Phase 4 | Phase 4 (draft generation) |
+| `references/component-templates.md` | 17 component templates | Phase 4-5 (draft & generation) |
+| `references/html-template.md` | HTML structure and JS features | Phase 5 (generation) |
+| `references/animation-patterns.md` | CSS/JS animation reference | Phase 5 (generation) |
+| `assets/viewport-base.css` | Mandatory responsive CSS | Phase 5 (all modes) |
+| `assets/themes/xindongfang-green.css` | Single teaching theme | Phase 5 (generation) |
+| `assets/zones/zone2-immersive-components.css` | Title hero, chapter hero, ending quote | Phase 5 (generation) |
+| `assets/runtime/navigation.js` + `keyboard.js` + `step-through.js` + `chart-integration.js` + `speaker-notes.js` | Navigation core, keyboard dispatch, interaction step-through, Chart.js, speaker notes | Phase 5 (always included) |
+| `assets/audio/audio-runtime.js` | Global audio bus for page turns, focus, and interaction cues | Phase 5 (always included) |
+| `assets/runtime/zone2-quiz-annotation/` (17 JS modules) | Quiz & annotation runtime | Phase 5 (when quiz-annotation is used) |
+| `assets/runtime/image-card-runtime.js` | Image card runtime (replace/clear/lightbox) | Phase 5 (generation) |
+| `assets/runtime/page-richtext-annotation-runtime.js` | Ordinary-page hidden rich-text stepping | Phase 5 (always included) |
+| `assets/editor/editor-*.js` (7 modules) + `editor.css` | Editor system | Phase 5 (always included) |
+| `assets/runtime/doodle-runtime.js` | Doodle overlay | Phase 5 (always included) |
+| `assets/runtime/example-card-core.js` + `example-card-authoring.js` + `example-card-student.js` | Example-card runtime | Phase 5 (when example-card is used) |
+| `scripts/extract-pptx.py` | PPT content extraction | Phase 6 (PPT conversion) |
+| `references/conversion-patterns.md` | Framework detection patterns | Phase 7 (HTML conversion) |
+| `scripts/deploy.sh` | Deploy to Vercel | Phase 9 (sharing) |
+| `scripts/export-pdf.sh` | Export slides to PDF | Phase 9 (sharing) |
 
 ## Sharing Your Presentations
 
@@ -286,7 +240,7 @@ Screenshots each slide and combines into a PDF. Uses [Playwright](https://playwr
 ## Credits
 
 Inspired by the awesome [@zarazhangrui](https://github.com/zarazhangrui)'s [frontend-slides](https://github.com/zarazhangrui/frontend-slides).
-Obsidian component system, Pro/Vibe modes, and multi-theme support by [@bluedusk](https://github.com/bluedusk).
+Teaching interaction contracts by [@danzhu](https://github.com/danzhu). Component system and multi-theme support by [@bluedusk](https://github.com/bluedusk).
 
 ## License
 
