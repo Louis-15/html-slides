@@ -4,10 +4,10 @@
 
    当前包含：
    - 总封面组件 (.title-hero)
+   - 封底鸡汤页组件 (.ending-quote)
 
    未来预留：
    - 章节封面组件
-   - 封底鸡汤页组件
    - 封底二维码页组件
 
    注意：
@@ -66,4 +66,64 @@
   font-weight: 700;
   color: var(--text);
   margin-top: 16px;
+}
+
+/* ====== 组件 16: 封底鸡汤页 (.ending-quote) ======
+   课件结尾页，展示与课程内容相关的双语励志语句。
+   放入 layout-title 布局中使用，整体居中，文本框内部左对齐/右对齐。
+   由三个子元素构成：英文鸡汤、中文翻译、出处（可选）。
+   所有颜色使用主题变量，无需主题层覆写。
+   ====== */
+
+/* 沉浸式逃逸：含有 ending-quote 的页面隐藏标题栏，释放全屏空间 */
+.slide:has(.ending-quote) .slide-header {
+  display: none !important;
+}
+
+.slide:has(.ending-quote) .slide-content {
+  margin-top: 0;
+  flex: 1;
+  max-width: none;
+  padding: 12px 0 0 0;
+}
+
+/* 根容器 — 使用 layout-title 居中，自身限制最大宽度 */
+.ending-quote {
+  width: 100%;
+  max-width: min(100%, 1000px);
+  padding: 0 24px;
+}
+
+/* 英文鸡汤 — 最大字号，斜体左对齐，纯黑文字，首行缩进两汉字宽度 */
+.ending-quote-en {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.4;
+  text-align: left;
+  text-indent: 2em;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+/* 中文翻译 — 字号与英文一致（保证缩进统一），左对齐，色值略淡，首行缩进两汉字宽度 */
+.ending-quote-cn {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 500;
+  line-height: 1.6;
+  text-align: left;
+  text-indent: 2em;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+/* 出处 —— 小字斜体，右对齐，前面有 —— 双破折号。
+   作者和作品名必须使用中文，方便学生辨识。
+   如果没有明确出处（AI 现编的鸡汤），可省略此元素。 */
+.ending-quote-source {
+  font-size: clamp(16px, 2.2vw, 28px);
+  font-weight: 400;
+  text-align: right;
+  color: var(--text-muted);
+  font-style: italic;
 }

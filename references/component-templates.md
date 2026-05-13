@@ -388,6 +388,29 @@ A floating panel triggered by a bottom button. **NOT placed inside a layout slot
 
 **When to use**: 总封面和结束页（使用 `layout-title` 布局时）。
 
+### 16. Ending Quote / 封底鸡汤页 (`.ending-quote`)
+
+课件结尾页，展示与课程内容相关的双语励志语句。放入 `layout-title` 布局中使用，整体居中。
+
+由三个子元素构成：
+- **英文鸡汤**（`.ending-quote-en`）— 左对齐，大字，纯黑文字
+- **中文翻译**（`.ending-quote-cn`）— 左对齐，中字，色值略淡
+- **出处**（`.ending-quote-source`，可选）—— 右对齐，斜体小字
+
+自动触发沉浸式逃逸（隐藏 Zone 1 标题栏，全屏展示）。
+
+```html
+<div class="ending-quote">
+  <div class="ending-quote-en">Knowledge is a treasure that follows its owner everywhere.</div>
+  <div class="ending-quote-cn">知识是随时相伴的财富。</div>
+  <div class="ending-quote-source">—— 中国谚语</div>
+</div>
+```
+
+> **注意**：出处文本必须使用中文，方便学生辨识具体是谁。如果鸡汤为 AI 原创且无明确出处，可以省略 `.ending-quote-source` 元素。无需引号，无渐变色，所有颜色由主题变量自然决定。
+
+**When to use**: 课件结尾页、章节结束页等需要鼓励性收束的场景。
+
 ---
 
 ## Chrome Elements
