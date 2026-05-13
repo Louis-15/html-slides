@@ -74,7 +74,9 @@
   /* 主标题文字色（中性深灰，缓解纯黑压迫感） */
 
   /* ====== 品牌标识 ====== */
-  --brand-logo-url: url('file:///d:/Projects/html-slides/assets/images/xdf-logo-hd.png');
+  /* 注意：logo 的 background-image 不能使用 CSS 变量包装 url()，
+     因为 url() 在自定义属性中的解析行为在 file:// 协议下有浏览器兼容性问题。
+     改用直接覆写 .brand-logo 的方式，参见下方主题覆写区。 */
   --brand-logo-height: 36px;
   --brand-logo-width: 93px;
 }
@@ -103,6 +105,13 @@ body {
 
 .branding-icon {
   border-color: var(--text-dim) !important;
+}
+
+/* 品牌 Logo：直接覆写 background-image，不使用 CSS 变量包装 url()
+   避免 file:// 协议下自定义属性中 url() 的路径解析兼容性问题。
+   url() 路径相对于本 CSS 文件（assets/themes/），指向同目录下的图标文件。 */
+.brand-logo {
+  background-image: url('./xindongfang-logo.png') !important;
 }
 
 .progress-bar {
